@@ -371,9 +371,10 @@ bool ManagedProcess::watchForCompositor()
         logInfo(QString("process started (pid %1) - waiting for wayland socket...")
                    .arg(processId()));
         sleep(1);
-        int i = 1;
+        uint i = 1;
+        uint attempts = 10;
         auto socket = smApp->expectedCompositorSocket();
-        for(i = 1; i <= 5; ++i)
+        for(i = 1; i <= attempts; ++i)
         {
             if(verifyCompositorSocket())
             {
