@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Icon=utilities-terminal
+Exec=terminull
+Terminal=false
+Categories=Qt;System;Hollywood;TerminalEmulator;
+
+Name=Terminull
+Comment=Run system commands and scripts in Terminal
+GenericName=Terminal

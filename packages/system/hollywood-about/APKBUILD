@@ -1,0 +1,30 @@
+# Contributor: The Cat <cat@originull.org>
+# Maintainer: The Cat <cat@originull.org>
+pkgname=hollywood-about
+pkgver=1.0
+pkgrel=2
+pkgdesc="Hollywood About"
+url="https://originull.org"
+arch="all"
+options="!check" # no test suite
+license="GPL3"
+depends="qt6-qtbase"
+makedepends="qt6-qtbase-dev"
+source="https://depot.originull.org/upstream/hollywood-desktop-$pkgver.tar.gz"
+builddir="$srcdir/hollywood-desktop-$pkgver"
+
+build() {
+	cd $builddir/about
+	/usr/lib/qt6/bin/qmake
+	make
+	:
+}
+
+package() {
+	cd $builddir/about
+	make INSTALL_ROOT="$pkgdir" install
+}
+
+sha512sums="
+85256dcd38e88427187ae737a3e9a36ea1f036847242cefca3ec648ebc0f2e7120bf0f99fd58c6a8163f8cfdeb8745cd97b2f512dc1b59cddb8a82fcb85c8e3e  hollywood-desktop-1.0.tar.gz
+"

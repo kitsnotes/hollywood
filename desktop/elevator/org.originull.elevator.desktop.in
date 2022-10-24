@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Exec=/usr/libexec/hollywood/elevator
+Name=Elevator
+Terminal=False
+Icon=lock
+NoDisplay=true
+X-Hollywood-System=true

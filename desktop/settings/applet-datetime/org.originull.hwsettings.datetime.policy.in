@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd">
+<policyconfig>
+<vendor>Originull Software</vendor>
+<vendor_url>http://www.originull.org</vendor_url>
+<icon_name>preferences-system-time</icon_name>
+<action id="org.originull.hwsettings.datetime.auth">
+  <description>Authenticate</description>
+  <message>System Settings is attempting to unlock Date and Time Settings. Authenticate as an administrative user to allow this.</message>
+  <defaults>
+    <allow_inactive>auth_admin</allow_inactive>
+    <allow_active>auth_admin_keep</allow_active>
+  </defaults>
+  <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/hollywood/helpers/datetime</annotate>
+</action>
+
+
+  <action id="org.originull.hwsettings.datetime.set-time">
+    <description>Set Time</description>
+    <message>Sets the system time</message>
+    <defaults>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/hollywood/helpers/datetime</annotate>
+  </action>
+</policyconfig>

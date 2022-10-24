@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Exec=hwcalc
+Icon=accessories-calculator
+Categories=Accessories;Core;Qt;Hollywood;
+Name=Calculator
+GenericName=Calculator
+Description=Perform basic and scientific calculations

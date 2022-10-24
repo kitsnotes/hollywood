@@ -1,0 +1,20 @@
+# Maintainer: Originull Software <packages@originull.org>
+pkgname=hollywood
+pkgver=1.0
+pkgrel=7
+url="https://originull.org/hollywood/"
+pkgdesc="Hollywood Desktop"
+#TODO: re-add qt5-libs and sddm
+depends="hollywood-base hollywood-shell hollywood-qt6-libs hollywood-compositor
+	 hollywood-assets hollywood-settings hollywood-sysmon terminull hollywood-about"
+arch="noarch"
+license="GPL-2.0"
+
+build() {
+	# meta package
+	return 0
+}
+
+package() {
+	mkdir -p "$pkgdir"
+}

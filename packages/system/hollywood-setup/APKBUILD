@@ -1,0 +1,73 @@
+# Maintainer: Originull Software <packages@originull.org>
+pkgname=hollywood-setup
+pkgver=1.0
+pkgrel=1
+pkgdesc="Hollywood Setup Assistant"
+url="https://originull.org/hollywood"
+arch="all"
+options="!archcheck !check"  # Unpackaged dependency ruby-aruba.
+license="AGPL-3.0+"
+depends=""
+checkdepends="ruby-aruba ruby-rspec valgrind"
+makedepends="bcnm-dev boost-dev cmake curl-dev eudev-dev libarchive-dev
+	linux-headers parted-dev skalibs-dev util-linux-dev
+
+	libcap-dev libxkbfile-dev qt6-qtbase-dev"
+subpackages="$pkgname-image $pkgname-dbg $pkgname-dev $pkgname-doc"
+source="http://depot.originull.org/upstream/horizon-$pkgver.tar.gz"
+builddir="$srcdir/horizon-$pkgver"
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DBUILD_SHARED_LIBS=True \
+		-DBUILD_TOOLS=ON \
+		-DCMAKE_BUILD_TYPE=RelWithDebugInfo \
+		-DCMAKE_CXX_FLAGS="$CXXFLAGS -Wno-format-truncation" \
+		-DCMAKE_C_FLAGS="$CFLAGS" \
+		-DINSTALL=ON \
+		-DBUILD_ISO=ON \
+		${CMAKE_CROSSOPTS} \
+		-Bbuild
+	make -C build
+
+	#cmake \
+	#	-DCMAKE_INSTALL_PREFIX=/usr \
+	#	-DBUILD_SHARED_LIBS=False \
+	#	-DBUILD_TOOLS=OFF \
+#		-DBUILD_UI=ON \
+#		-DCMAKE_BUILD_TYPE=RelWithDebugInfo \
+#		-DCMAKE_CXX_FLAGS="$CXXFLAGS -Wno-format-truncation" \
+#		-DCMAKE_C_FLAGS="$CFLAGS" \
+#		-DUNSUPPORTED_NONFREE_FIRMWARE=ON \
+#		-DINSTALL=OFF \
+#		${CMAKE_CROSSOPTS} \
+#		-Bbuild-wizard
+#	make -C build-wizard
+}
+
+check() {
+	CTEST_OUTPUT_ON_FAILURE=TRUE make -C build test
+}
+
+package() {
+	make DESTDIR="$pkgdir" -C build install
+}
+
+image() {
+	pkgdesc="Tools for generating images using HorizonScript"
+	depends="dracut mtools"
+	mkdir -p "$subpkgdir"/usr/bin
+	mkdir -p "$subpkgdir"/usr/lib
+	mkdir -p "$subpkgdir"/usr/share/horizon
+
+	mv "$pkgdir"/usr/bin/hscript-image "$subpkgdir"/usr/bin/
+	mv "$pkgdir"/usr/lib/libhi-backends.so "$subpkgdir"/usr/lib/
+	mv "$pkgdir"/usr/share/horizon/iso "$subpkgdir"/usr/share/horizon/
+}
+
+sha512sums="
+2de4d125be64388252a7b2cc94e2b812352745aa8aeee5841f10a803d823a9a74d8b01b8c27b88d768f179021372361dccd7aea6b1de7492f7ef2c41175a9488  horizon-1.0.tar.gz
+"

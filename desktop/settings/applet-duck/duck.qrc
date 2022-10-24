@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/Duck">
+        <file alias="Mallard">res/duck.jpg</file>
+        <file alias="Icon">res/icon.svg</file>
+    </qresource>
+</RCC>

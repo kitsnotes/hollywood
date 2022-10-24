@@ -1,0 +1,13 @@
+build/*
+build-qt6/*
+build-qt5/*
+*/build/*
+*.pro.user
+*.pro.user*
+.qmake.stash
+*.so
+*.so.*
+*.o
+Makefile
+*/output
+*/build-qt*

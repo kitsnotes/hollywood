@@ -1,0 +1,30 @@
+# Contributor: The Cat <cat@originull.org>
+# Maintainer: The Cat <cat@originull.org>
+pkgname=hollywood-compositor
+pkgver=1.0
+pkgrel=39
+pkgdesc="Hollywood Window Compositor"
+url="https://originull.org"
+arch="all"
+options="!check" # no test suite
+license="GPL3"
+depends="qt6-qtwayland libinput"
+makedepends="qt6-qtwayland-dev"
+source="https://depot.originull.org/upstream/hollywood-desktop-$pkgver.tar.gz"
+builddir="$srcdir/hollywood-desktop-$pkgver"
+
+build() {
+	cd $builddir/compositor
+	/usr/lib/qt6/bin/qmake
+	make
+	:
+}
+
+package() {
+	cd $builddir/compositor
+	make INSTALL_ROOT="$pkgdir" install
+}
+
+sha512sums="
+29e6fc401e0a58f968436f484e9d6acb48d896e9a7093c942c38dbdefa70e4974220d404d194804487ff19746f86d344c86fa4478328fefed82c4de3057f2420  hollywood-desktop-1.0.tar.gz
+"

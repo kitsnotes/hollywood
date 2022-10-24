@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/libshell">
+        <file alias="SymlinkOverlay">res/shortcut-overlay.svg</file>
+    </qresource>
+</RCC>

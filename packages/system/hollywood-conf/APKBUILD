@@ -1,0 +1,29 @@
+# Maintainer: Originull Software <packages@originull.org>
+pkgname=hollywood-conf
+pkgver=1.1.0
+pkgrel=1
+pkgdesc="hollywood configuration management scripts"
+url="https://originull.org/hollywood"
+arch="all"
+license="MIT"
+depends="openrc>=0.24.1-r6 dash"
+source="http://depot.originull.org/$pkgname-$pkgver.tar.gz
+	"
+
+builddir="$srcdir"/$pkgname-$pkgver
+build() {
+	cd "$builddir"
+	make VERSION=$pkgver-r$pkgrel
+}
+
+package() {
+	cd "$builddir"
+	make install PREFIX= DESTDIR="$pkgdir"
+	for i in commit exclude include status update; do
+		ln -s lbu "$pkgdir"/usr/sbin/lbu_$i
+	done
+}
+
+sha512sums="
+24d3ce57effe5840b17886083788882a421471c1b3e239d9fca0dad86f9d21f19558f3bc6ddf08fbe29d6ce415fd9c9ce99d244f27d8679d7d58eebfe9197ec9  hollywood-conf-1.1.0.tar.gz
+"

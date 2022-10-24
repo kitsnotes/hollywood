@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog</class>
+ <widget class="QDialog" name="Dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>568</width>
+    <height>488</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Login URL:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLineEdit" name="lineEdit_url">
+     <property name="whatsThis">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;You need to continue login with a web browser. This box shows the URL that contains the login page.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="accessibleName">
+      <string>Captive Portal URL</string>
+     </property>
+     <property name="accessibleDescription">
+      <string>The Internet URL to be visited in a web browser to complete connection to Wireless.</string>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="label_browser_url">
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Hollywood is requesting that you open a web browser to complete the login process.&lt;/p&gt;&lt;p&gt;We have scanned your PATH for browsers and any browsers found are shown in the list below. You may select any one browser to use it for the login. If your web browser is not shown in the list you may enter it directly in the&lt;span style=&quot; font-weight:600;&quot;&gt; Choose or enter a browser box&lt;/span&gt;.&lt;/p&gt;&lt;p&gt;To launch the browser click the &lt;span style=&quot; font-weight:600;&quot;&gt;Launch Browser&lt;/span&gt; button. &lt;/p&gt;&lt;p&gt;If you wish to login manually close this dialog, start your web browser and proceed to the URL shown in the &lt;span style=&quot; font-weight:600;&quot;&gt;Login URL&lt;/span&gt; box.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Brave Browser Users:&lt;/span&gt; Note that Brave does not seem to accept a URL to start with. After the browser starts you will need to enter the URL manually. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="label_browser">
+     <property name="text">
+      <string>Choose or enter a browser:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLineEdit" name="lineEdit_browser">
+     <property name="accessibleName">
+      <string>Browser Executable Name</string>
+     </property>
+     <property name="accessibleDescription">
+      <string>Specify the name of the web browser to use to complete login.</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QListView" name="listView_browsers">
+     <property name="accessibleName">
+      <string>Detected Browser List</string>
+     </property>
+     <property name="accessibleDescription">
+      <string>You can select one of these detected web browsers to complete the wireless login process.</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="pushButton_launch_browser">
+     <property name="whatsThis">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Use this button to launch the selected browser. The browser will open at the page shown in the Login URL box.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="accessibleName">
+      <string>Launch Browser</string>
+     </property>
+     <property name="accessibleDescription">
+      <string>Select this button to launch the selected web browser.</string>
+     </property>
+     <property name="text">
+      <string>Launch &amp;Browser</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>0</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

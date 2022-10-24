@@ -1,0 +1,108 @@
+{
+  "*": {
+    "desc":"Global parameters applicable to all tags",
+    "params": {
+      "accesskey": {
+        "type": "string",
+        "desc": "Shortcut key to activate element."
+      },
+      "class": {
+        "type": "string",
+        "desc": "Class name(s) from a stylesheet to apply to an element."
+      },
+      "contenteditable": {
+        "type": "string",
+        "desc": "Shortcut key to activate element."
+      },
+      "contextmenu": {
+        "type": "string",
+        "desc": "Class name(s) from a stylesheet to apply to an element."
+      },
+      "dir": {
+        "type": "string",
+        "desc": "Direction of text."
+      }
+    }
+  },
+  "a": {
+    "desc":"Anchor to another page (link)",
+    "params": {
+      "charset": {
+        "type": "string",
+        "removed", "html5",
+        "desc": "Character Set of a linked document."
+      },
+      "coords": {
+        "type": "string",
+        "desc": "Coordinates of a link."
+      },
+      "download": {
+        "type": "standalone",
+        "html5": true,
+        "desc": "Instruct the browser to download file to disk."
+      },
+      "href": {
+        "type": "string",
+        "desc": "URL to the target."
+      },
+      "hreflang": {
+        "type": "string",
+        "desc": "Language of the document linked in href."
+      },
+      "media": {
+        "type": "string",
+        "html5": true,
+        "desc": "Specify the media selector the link is optimized for."
+      },
+      "name": {
+        "type": "string",
+        "removed", "html5",
+        "desc": "Name of this anchor.)"
+      },
+      "rel": {
+        "type": [
+          "alternate",
+          "author",
+          "bookmark",
+          "external",
+          "help",
+          "license",
+          "next",
+          "nofollow",
+          "noreferrer",
+          "noopener",
+          "prev",
+          "search",
+          "tag"
+        ],
+        "desc": "Specify relationship between this and linked document."
+      },
+      "rev": {
+        "type": "string",
+        "desc": "Language of the document linked in href."
+      },
+      "shape": {
+        "type": [
+          "default",
+          "rect",
+          "circle",
+          "poly"
+          ],
+        "desc": "Specify the media selector the link is optimized for. (HTML5)"
+      },
+      "target": {
+        "type": [
+          "_blank",
+          "_parent",
+          "_self",
+          "_top"
+          ],
+        "desc": "Where to open linked document."
+      },
+      "type": {
+        "type": "string",
+        "desc": "Specifies media type of link."
+      }
+    }
+  }
+}

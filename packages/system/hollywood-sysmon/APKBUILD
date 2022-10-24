@@ -1,0 +1,30 @@
+# Contributor: The Cat <cat@originull.org>
+# Maintainer: The Cat <cat@originull.org>
+pkgname=hollywood-sysmon
+pkgver=1.0
+pkgrel=18
+pkgdesc="Hollywood System Monitor"
+url="https://originull.org"
+arch="all"
+options="!check" # no test suite
+license="GPL2"
+depends="qt6-qtbase hollywood-shell hollywood-qt6-libs qt6-qtcharts"
+makedepends="qt6-qtwayland-dev qt6-qtcharts-dev mdnsresponder-dev"
+source="https://depot.originull.org/upstream/hollywood-desktop-$pkgver.tar.gz"
+builddir="$srcdir/hollywood-desktop-$pkgver"
+
+build() {
+	cd $builddir/sysmon
+	/usr/lib/qt6/bin/qmake
+	make
+	:
+}
+
+package() {
+	cd $builddir/sysmon
+	make INSTALL_ROOT="$pkgdir" install
+}
+
+sha512sums="
+29e6fc401e0a58f968436f484e9d6acb48d896e9a7093c942c38dbdefa70e4974220d404d194804487ff19746f86d344c86fa4478328fefed82c4de3057f2420  hollywood-desktop-1.0.tar.gz
+"

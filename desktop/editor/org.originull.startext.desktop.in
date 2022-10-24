@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Icon=accessories-text-editor
+Exec=startext
+Terminal=false
+Categories=Accessories;Qt;Hollywood;Utility;TextEditor;
+
+Name=StarText
+Comment=A feature filled plain text editor.
+GenericName=StarText

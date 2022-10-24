@@ -1,0 +1,37 @@
+<RCC>
+    <qresource prefix="/IconActions">
+        <file alias="Information">default-icons/dialog-information.png</file>
+        <file alias="Warning">default-icons/dialog-warning.png</file>
+        <file alias="NewDocument">default-icons/document-new.png</file>
+        <file alias="Open">default-icons/document-open.png</file>
+        <file alias="Print">default-icons/document-print.png</file>
+        <file alias="PrintPreview">default-icons/document-print-preview.png</file>
+        <file alias="Properties">default-icons/document-properties.png</file>
+        <file alias="Save">default-icons/document-save.png</file>
+        <file alias="SaveAs">default-icons/document-save-as.png</file>
+        <file alias="Clear">default-icons/edit-clear.png</file>
+        <file alias="Copy">default-icons/edit-copy.png</file>
+        <file alias="Cut">default-icons/edit-cut.png</file>
+        <file alias="Delete">default-icons/edit-delete.png</file>
+        <file alias="Find">default-icons/edit-find.png</file>
+        <file alias="FindReplace">default-icons/edit-find-replace.png</file>
+        <file alias="Paste">default-icons/edit-paste.png</file>
+        <file alias="Redo">default-icons/edit-redo.png</file>
+        <file alias="SelectAll">default-icons/edit-select-all.png</file>
+        <file alias="Undo">default-icons/edit-undo.png</file>
+        <file alias="Heart">default-icons/emblem-favorite.png</file>
+        <file alias="GetHelp">default-icons/help-browser.png</file>
+        <file alias="OnTheWeb">default-icons/internet-web-browser.png</file>
+        <file alias="ListAdd">default-icons/list-add.png</file>
+        <file alias="ListRemove">default-icons/list-remove.png</file>
+        <file alias="SendMail">default-icons/mail-forward.png</file>
+        <file alias="Server">default-icons/network-server.png</file>
+        <file alias="Stop">default-icons/process-stop.png</file>
+        <file alias="UpdateAvailable">default-icons/software-update-available.png</file>
+        <file alias="UpdateUrgent">default-icons/software-update-urgent.png</file>
+        <file alias="Reload">default-icons/view-refresh.png</file>
+        <file alias="Bold">default-icons/format-text-bold.png</file>
+        <file alias="Italic">default-icons/format-text-italic.png</file>
+        <file alias="Underline">default-icons/format-text-underline.png</file>
+    </qresource>
+</RCC>

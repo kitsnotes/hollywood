@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Exec=hwsettings
+Icon=preferences
+Terminal=false
+Name=System Settings
+GenericName=System Settings
+Comment=Configure System Settings
+Categories=Settings;DesktopSettings;Qt;Hollywood;HardwareSettings;

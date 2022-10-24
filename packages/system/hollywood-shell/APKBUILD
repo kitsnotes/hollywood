@@ -1,0 +1,68 @@
+# Contributor: The Cat <cat@originull.org>
+# Maintainer: The Cat <cat@originull.org>
+pkgname=hollywood-shell
+pkgver=1.0
+pkgrel=23
+pkgdesc="Hollywood Desktop Shell"
+url="https://originull.org"
+arch="all"
+options="!check" # no test suite
+license="GPL2"
+# TODO: re-add breeze-icons
+depends="qt6-qtbase qt6-qtwayland hollywood-qt6-libs hollywood-compositor ttf-hack ttf-opensans qt6-polkit-qt-1 qt6-qtsvg breeze-icons"
+makedepends="qt6-qtwayland-dev mdnsresponder-dev qt6-polkit-qt-1-dev qt6-qtsvg-dev mdnsresponder-dev"
+source="https://depot.originull.org/upstream/hollywood-desktop-$pkgver.tar.gz"
+builddir="$srcdir/hollywood-desktop-$pkgver"
+
+build() {
+	cd $builddir/libshell
+	/usr/lib/qt6/bin/qmake
+	make
+
+        cd $builddir/menuserver
+        /usr/lib/qt6/bin/qmake
+        make
+
+	cd $builddir/elevator
+        /usr/lib/qt6/bin/qmake
+        make
+
+        cd $builddir/session
+        /usr/lib/qt6/bin/qmake
+        make
+
+	cd $builddir/coreshell
+        /usr/lib/qt6/bin/qmake
+        make
+
+	cd $builddir/shellfm
+        /usr/lib/qt6/bin/qmake
+        make
+
+}
+
+package() {
+	cd $builddir/libshell
+	make INSTALL_ROOT="$pkgdir" install
+
+        cd $builddir/menuserver
+        make INSTALL_ROOT="$pkgdir" install
+
+	cd $builddir/elevator
+	make INSTALL_ROOT="$pkgdir" install
+
+        cd $builddir/session
+        make INSTALL_ROOT="$pkgdir" install
+	mkdir -p "$pkgdir"/usr/bin/
+	ln -s /usr/libexec/hollywood/session "$pkgdir"/usr/bin/hollywood
+
+	cd $builddir/coreshell
+        make INSTALL_ROOT="$pkgdir" install
+
+        cd $builddir/shellfm
+        make INSTALL_ROOT="$pkgdir" install
+}
+
+sha512sums="
+29e6fc401e0a58f968436f484e9d6acb48d896e9a7093c942c38dbdefa70e4974220d404d194804487ff19746f86d344c86fa4478328fefed82c4de3057f2420  hollywood-desktop-1.0.tar.gz
+"

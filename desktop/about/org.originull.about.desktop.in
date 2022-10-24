@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Exec=hwabout
+Icon=ktip
+Name=About Hollywood
+GenericName=About Hollywood
+Terminal=false
+Comment=Show Hollywood, Kernel, and Library Versions as well as System Information.
+Categories=System;Core;Qt;Hollywood;

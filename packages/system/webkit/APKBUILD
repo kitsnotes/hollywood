@@ -1,0 +1,71 @@
+# Maintainer: Originull Software <packages@originull.org>
+pkgname=webkit
+pkgver=2.37.1
+pkgrel=0
+pkgdesc="WebKit port optimized for embedded devices"
+url="https://wpewebkit.org"
+arch="all !x86 !riscv64" # x86: Out of memory, riscv64: fails to link
+license="other"
+makedepends="
+	at-spi2-atk-dev
+	atk-dev
+	bubblewrap
+	qt5-qtbase-dev
+	qt6-qtbase-dev
+	cairo-dev
+	cmake
+	gperf
+	gst-plugins-base-dev
+	harfbuzz-dev
+	lcms2-dev
+	libepoxy-dev
+	libgcrypt-dev
+	libseccomp-dev
+	libsoup-dev
+	libtasn1-dev
+	libwpe-dev
+	libwpebackend-fdo-dev
+	libxkbcommon-dev
+	libxslt-dev
+	ninja
+	openjpeg-dev
+	perl
+	ruby-dev
+	wayland-dev
+	wayland-protocols
+	woff2-dev
+	xdg-dbus-proxy
+	"
+subpackages="$pkgname-dev $pkgname-doc"
+source="https://wpewebkit.org/releases/wpewebkit-$pkgver.tar.xz
+	patch-gettext.patch
+	"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=None \
+		-DPORT=WPE \
+		-DENABLE_MINIBROWSER=On \
+		-DENABLE_GTKDOC=Off \
+		-DUSE_SOUP2=On \
+		-DUSE_SYSTEMD=Off \
+		-DENABLE_WPE_QT=ON \
+		-GNinja \
+		$CMAKE_CROSSOPTS .
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+4bee70a61612e085304fea5b2da834d7adc0b1dc8ab658ae3249615c9171a6e63fa28f33dc82777198180ef85bc1b9af24c13ad67ab12c2cb23dea0546ccab77  wpewebkit-2.37.1.tar.xz
+4316330f0c42fcfe800210bdbeabbb6bdcf532b71e2761550b8a753499d801fd0405cc961a516dfddfc28c3a6cf0c17b6db461ff51158238b8d874bf75b799f2  patch-gettext.patch
+"

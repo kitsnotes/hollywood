@@ -1,0 +1,30 @@
+#include <windows.h>
+#include "../../include/rcdefs.h"
+
+
+#define RT_MANIFEST 24
+#define APP_MANIFEST 1
+
+APP_MANIFEST RT_MANIFEST "arioneditor.exe.manifest"
+
+IDI_ICON ICON "editor.ico"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     FILE_VERSION
+PRODUCTVERSION  PRODUCT_VERSION
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904E4"
+        BEGIN
+            VALUE "CompanyName",        ORGANIZATION_NAME
+            VALUE "FileDescription",    FRIENDLY_DESCRIPTION
+            VALUE "FileVersion",        APPLICATION_VERSION
+            VALUE "InternalName",       WINDOWS_APP_NAME
+            VALUE "OriginalFilename",   WINDOWS_APP_NAME
+            VALUE "ProductName",        APPLICATION_NAME
+            VALUE "ProductVersion",     APPLICATION_VERSION
+        END
+    END
+END
+

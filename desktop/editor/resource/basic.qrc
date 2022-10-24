@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/AppIcon">
+        <file alias="PNG">luvedit.png</file>
+    </qresource>
+    <qresource prefix="/Keywords">
+        <file alias="CPP">cppkeywords.db</file>
+    </qresource>
+</RCC>

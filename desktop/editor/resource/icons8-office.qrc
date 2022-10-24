@@ -1,0 +1,57 @@
+<RCC>
+    <qresource prefix="/IconActions">
+        <file>office-icons/icons8-animation-40.png</file>
+        <file alias="Find">office-icons/icons8-binoculars-40.png</file>
+        <file alias="Bold">office-icons/icons8-bold-40.png</file>
+        <file alias="Bookmark">office-icons/icons8-bookmark-40.png</file>
+        <file>office-icons/icons8-cloud-checked-40.png</file>
+        <file alias="Copy">office-icons/icons8-copy-40.png</file>
+        <file alias="NewDocument">office-icons/icons8-file-40.png</file>
+        <file alias="Help">office-icons/icons8-help-40.png</file>
+        <file alias="Open">office-icons/icons8-open-40.png</file>
+        <file alias="PageSetup">office-icons/icons8-page-setup-40.png</file>
+        <file alias="ScreenColors">office-icons/icons8-paint-palette-40.png</file>
+        <file alias="Paste">office-icons/icons8-paste-40.png</file>
+        <file alias="Print">office-icons/icons8-print-40.png</file>
+        <file>office-icons/icons8-printer-maintenance-40.png</file>
+        <file alias="Save">office-icons/icons8-save-40.png</file>
+        <file alias="SaveAs">office-icons/icons8-save-as-40.png</file>
+        <file alias="Cut">office-icons/icons8-scissors-40.png</file>
+        <file alias="Search">office-icons/icons8-search-40.png</file>
+        <file>office-icons/icons8-trash-40.png</file>
+        <file alias="Undo">office-icons/icons8-undo-40.png</file>
+        <file alias="Italic">office-icons/icons8-italic-40.png</file>
+        <file alias="Reload">office-icons/icons8-process-40.png</file>
+        <file alias="Redo">office-icons/icons8-redo-40.png</file>
+        <file alias="Underline">office-icons/icons8-underline-40.png</file>
+        <file alias="Sort">office-icons/icons8-alphabetical-sorting-40.png</file>
+        <file alias="CodeFile">office-icons/icons8-code-file-40.png</file>
+        <file>office-icons/icons8-code-fork-40.png</file>
+        <file>office-icons/icons8-commit-git-40.png</file>
+        <file>office-icons/icons8-compare-40.png</file>
+        <file>office-icons/icons8-compare-git-40.png</file>
+        <file alias="CSSFile">office-icons/icons8-css-filetype-40.png</file>
+        <file alias="FullScreen">office-icons/icons8-expand-40.png</file>
+        <file alias="ColumnEdit">office-icons/icons8-grid-40.png</file>
+        <file alias="HTMLFile">office-icons/icons8-html-filetype-40.png</file>
+        <file alias="JSONFile">office-icons/icons8-json-40.png</file>
+        <file alias="VisualizeWhitespace">office-icons/icons8-paragraph-40.png</file>
+        <file alias="Replace">office-icons/icons8-replace-40.png</file>
+        <file alias="SaveAll">office-icons/icons8-save-all-40.png</file>
+        <file alias="SelectAll">office-icons/icons8-select-all-40.png</file>
+        <file alias="TXTFile">office-icons/icons8-txt-40.png</file>
+        <file alias="FoldIn">office-icons/icons8-up-left-40.png</file>
+        <file alias="PrintPreview">office-icons/icons8-view-40.png</file>
+        <file alias="TabNext">office-icons/icons8-tab-next.png</file>
+        <file alias="TabPrev">office-icons/icons8-tab-prev.png</file>
+        <file alias="FindAndReplace">office-icons/icons8-find-and-replace-40.png</file>
+        <file alias="CloseDocument">office-icons/icons8-close-40.png</file>
+        <file alias="CloseAll">office-icons/icons8-close-all-40.png</file>
+        <file alias="CheckSpelling">office-icons/icons8-spellcheck-40.png</file>
+        <file alias="NextBookmark">office-icons/icons8-bookmark-next-40.png</file>
+        <file alias="PreviousBookmark">office-icons/icons8-bookmark-prev-40.png</file>
+        <file alias="ScreenColors">office-icons/icons8-rainbow-40.png</file>
+        <file alias="Fonts">office-icons/icons8-fonts-40.png</file>
+        <file alias="SearchHistory">office-icons/icons8-sesarch-history-30.png</file>
+    </qresource>
+</RCC>

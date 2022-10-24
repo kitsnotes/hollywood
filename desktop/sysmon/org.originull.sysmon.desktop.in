@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Exec=hwsysmon
+Icon=utilities-system-monitor
+Name=System Monitor
+GenericName=System Monitor
+Terminal=false
+Comment=Monitor CPU, RAM, Network, GPU performance. Manage processes, logged in users and system services.
+Categories=System;Core;Qt;Hollywood;Monitor;

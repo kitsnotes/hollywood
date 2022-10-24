@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Exec=/usr/libexec/hollywood/compositor
+Name=Desktop Window Compositor
+Terminal=False
+Icon=wayland
+NoDisplay=true
+X-Hollywood-System=true

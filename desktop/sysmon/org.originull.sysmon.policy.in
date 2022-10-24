@@ -1,0 +1,19 @@
+<?xml version=\"1.0\" encoding=\"utf-8\"?>
+<!DOCTYPE policyconfig PUBLIC
+ \"-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN\"
+ \"http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd\">
+<policyconfig>
+<vendor>Originull Software</vendor>
+<vendor_url>http://www.originull.org</vendor_url>
+<icon_name>utilities-system-monitor</icon_name>
+<action id=\"org.originull.sysmon.signal\">
+  <description>Control Privileged Process</description>
+  <message>System Monitor is attempting to control a process you do not own. Authenticate as an administrative user to allow this.</message>
+  <defaults>
+    <allow_inactive>auth_admin</allow_inactive>
+    <allow_active>auth_admin_keep</allow_active>
+  </defaults>
+  <annotate key=\"org.freedesktop.policykit.exec.path\">/usr/libexec/hollywood/helpers/sysmon</annotate>
+</action>
+
+</policyconfig>
