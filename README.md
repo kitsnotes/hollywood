@@ -26,8 +26,9 @@ The Hollywood desktop is designed specifically for the Hollywood packages and vi
  
 ![System Monitor](screenshots/sysmon.png "System Monitor")
 *System Monitor utility.*
+
 ![polkit authentication agent](screenshots/polkit.png "System Monitor Polkit Auth")
-*polkit authentication agent support.*
+*System monitor utility controlling foreign owned process via polkit authentication agent.*
 
 ![Dual Screen Terminal](screenshots/dual-screen-term.jpg "Dual Screen Terminull")
 *Beginning of multiple-screen support with spanning Terminull window.*
