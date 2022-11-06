@@ -1,0 +1,16 @@
+The Horizon installer system has differences between
+Adélie Linux and Hollywood.  HorizonScripts should
+NOT be shared between the two.
+
+* Changed naming and visual UI
+* Moved default script from /etc/horizon/installfile to /etc/hollywood.hs
+* Removed all architecture support besides aarch64 and x86_64
+* Added token 'kernel' for supplying linux (lts, mainline or none)
+* Removed requirement of 'pkginstall' - hollywood base installed by default
+* Removed netif/interface support for connman
+* Added support for deploying refind bootloader
+* Added vfat support to GRUB in ISO image builder (for rufus/etc USB support)
+* Added support for using btrfs as volume file system.
+* Removal of jfs/xfs support (only vfat, btrfs, ext4 supported)
+* /etc/fstab and boot loader configuration uses UUID instead of /dev/sdaX names
+

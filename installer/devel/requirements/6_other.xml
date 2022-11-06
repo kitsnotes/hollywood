@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<chapter label="6" id="other">
+    <title>Other Requirements</title>
+    <para>This chapter describes requirements that apply to the system but do not fit cleanly in other chapters.</para>
+    <section id="documentation">
+        <title>User Documentation</title>
+        <formalpara id="UserDoc.JargonFree">
+            <title>UserDoc.JargonFree</title>
+            <para>The system documentation must contain minimal uses of technical jargon.  The system documentation must define technical jargon where it is first used.  "Jargon" is defined as a word that is technical in nature and is not listed in a Webster's or Oxford English dictionary.</para>
+        </formalpara>
+        <formalpara id="UserDoc.ContextAware">
+            <title>UserDoc.ContextAware</title>
+            <para>The system must allow the user to read documentation relevant to the phase of installation that is currently on-screen.</para>
+        </formalpara>
+    </section>
+    <section id="logging">
+        <title>Logging Requirements</title>
+        <formalpara id="Logging.Levels">
+            <title>Logging.Levels</title>
+            <para>The system shall have four levels of logging: Error, Warning, Information, Debug.</para>
+        </formalpara>
+        <formalpara id="Logging.Levels.Tiers">
+            <title>Logging.Levels.Tiers</title>
+            <para>The system shall treat each level of logging as containing the prior level: for example, a level of Warning will additionally contain all Error output.</para>
+        </formalpara>
+        <formalpara id="Logging.Levels.Default">
+            <title>Logging.Levels.Default</title>
+            <para>The system shall default to a logging level of Information unless a different logging level is chosen during invocation.</para>
+        </formalpara>
+        <formalpara id="Logging.ExtProcess">
+            <title>Logging.ExtProcess</title>
+            <para>The system shall log all processes executed, including binary path, arguments, and environment, in the Debug logging level.</para>
+        </formalpara>
+        <formalpara id="Logging.ExtProcess.ReturnCode">
+            <title>Logging.ExtProcess.ReturnCode</title>
+            <para>The system shall log all external process return codes, including name of binary and brief description of purpose of execution, in the Information log level.</para>
+        </formalpara>
+        <formalpara id="Logging.ExtProcess.ReturnCode.Error">
+            <title>Logging.ExtProcess.ReturnCode.Error</title>
+            <para>If the return code of an external process is non-zero, the system shall log the external process return code message in the Error log level.</para>
+        </formalpara>
+        <formalpara id="Logging.UIKeys">
+            <title>Logging.UIKeys</title>
+            <para>The Horizon UI system shall log the values it uses for each key as it gathers information in the Debug logging level.</para>
+        </formalpara>
+    </section>
+    <section id="i18n">
+        <title>Internationalisation Requirements</title>
+        <formalpara id="I18n.Meow">
+            <title>I18n.Meow</title>
+            <para>The Horizon UI system shall be implemented in English and at least one fake language for the purposes of ensuring that all strings are translatable.</para>
+        </formalpara>
+    </section>
+</chapter>

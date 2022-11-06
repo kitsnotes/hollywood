@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<chapter label="5" id="nonfunctional">
+    <title>Non-functional Requirements</title>
+    <para/>
+    <section id="performance">
+        <title>Performance Requirements</title>
+        <para>For the purposes of this section, the base hardware platforms shall be defined as follows.</para>
+        <variablelist id="Performance.BasePPC">
+            <title>Base hardware platform, PowerPC</title>
+            <varlistentry>
+                <term>CPU</term>
+                <listitem><para>PowerPC "G3" 750 at 600 MHz</para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>RAM</term>
+                <listitem><para>640 MB PC133</para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>Disk drive</term>
+                <listitem><para>40 GB PATA</para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>Optical drive</term>
+                <listitem><para>8X DVD-ROM drive</para></listitem>
+            </varlistentry>
+        </variablelist>
+        <variablelist id="Performance.BaseIntel">
+            <title>Base hardware platform, Intel</title>
+            <varlistentry>
+                <term>CPU</term>
+                <listitem><para>Pentium III at 550 MHz</para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>RAM</term>
+                <listitem><para>256 MB PC133</para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>Disk drive</term>
+                <listitem><para>80 GB PATA</para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>Optical drive</term>
+                <listitem><para>24X CD-ROM drive</para></listitem>
+            </varlistentry>
+        </variablelist>
+        <variablelist id="Performance.BootToX">
+            <title>Performance.BootToX</title>
+            <varlistentry>
+                <term>Ambition</term>
+                <listitem><para>Fast boot times for the installation environment.</para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>Scale</term>
+                <listitem><para>Seconds elapsed between the kernel being loaded by GRUB and the display of the initial Horizon UI window accepting input.</para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>Meter</term>
+                <listitem><para>Stopwatch testing performed five times on each base hardware platform.  Does not include <xref linkend="UI.Early.MultiGfx" />.</para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>Must</term>
+                <listitem><para>70 seconds.</para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>Plan</term>
+                <listitem><para>60 seconds.</para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>Wish</term>
+                <listitem><para>45 seconds.</para></listitem>
+            </varlistentry>
+        </variablelist>
+        <variablelist id="Performance.ScreenChange">
+            <title>Performance.ScreenChange</title>
+            <varlistentry>
+                <term>Ambition</term>
+                <listitem><para>Responsiveness for screen changes in the Horizon UI.</para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>Scale</term>
+                <listitem><para>Milliseconds elapsed between choosing the "Next" button in the Horizon UI and the next screen being displayed and able to accept input.</para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>Meter</term>
+                <listitem><para>Printed statements to the stderr log including a timestamp when the system is aware of the Next button being pressed and when the system has fully loaded the next screen and is accepting input.  Test each screen through a complete installation flow on each base hardware platform ten times.</para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>Must</term>
+                <listitem><para>1000 milliseconds for the worst case.</para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>Plan</term>
+                <listitem><para>750 milliseconds for the worst case.</para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>Wish</term>
+                <listitem><para>300 milliseconds for the worst case.</para></listitem>
+            </varlistentry>
+        </variablelist>
+        <variablelist id="Performance.Validation">
+            <title>Performance.Validation</title>
+            <varlistentry>
+                <term>Ambition</term>
+                <listitem><para>Fast validation of HorizonScript files.</para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>Scale</term>
+                <listitem><para>Seconds elapsed between the start and completion of a validation job.  Test validation of "typical" installation scripts on each base hardware platform 50 times.  Do not include network resources in installation scripts.</para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>Meter</term>
+                <listitem><para>Shell <command>time</command> built-in running the validation tool.</para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>Must</term>
+                <listitem><para>5 seconds.</para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>Plan</term>
+                <listitem><para>3 seconds.</para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>Wish</term>
+                <listitem><para>1 second or less.</para></listitem>
+            </varlistentry>
+        </variablelist>
+    </section>
+    <section id="safety">
+        <title>Safety Requirements</title>
+        <formalpara id="Safety.DiskLock.UI">
+            <title>Safety.DiskLock.UI</title>
+            <para>The Horizon UI system shall not write any data to any block device, except to save log files and/or an HorizonScript file explicitly requested to be saved by the User.</para>
+        </formalpara>
+        <formalpara id="Safety.DiskLock.Runner">
+            <title>Safety.DiskLock.Runner</title>
+            <para>The Horizon Runner system shall not write any data to any block device until the HorizonScript is fully validated.</para>
+        </formalpara>
+    </section>
+    <section id="security">
+        <title>Security Requirements</title>
+        <formalpara id="Security.PasswordHash">
+            <title>Security.PasswordHash</title>
+            <para>The Horizon UI system shall store passwords in memory in their hashed versions only, and securely clear the memory storage that contained plain-text passwords once the hash is stored.</para>
+        </formalpara>
+    </section>
+    <section id="sqa">
+        <title>Software Quality Attributes</title>
+        <formalpara id="SQA.Flexibility.ScriptFormat">
+            <title>SQA.Flexibility.ScriptFormat</title>
+            <para>A programmer with two years of C++ experience shall be able to change the on-disk format of HorizonScript with no more than two hours of labour.</para>
+        </formalpara>
+        <formalpara id="SQA.Flexibility.Firmware">
+            <title>SQA.Flexibility.Firmware</title>
+            <para>The firmware support described under the UI.Firmware.* requirements branch shall be disableable at compile-time.</para>
+        </formalpara>
+        <formalpara id="SQA.Flexibility.FirmwareConf">
+            <title>SQA.Flexibility.FirmwareConf</title>
+            <para>The firmware support described under the UI.Firmware.* requirements branch shall be disableable at run-time via a configuration setting.</para>
+        </formalpara>
+        <formalpara id="SQA.Robustness.ScriptSync">
+            <title>SQA.Robustness.ScriptSync</title>
+            <para>The system shall provide a method to save the executed HorizonScript and log messages in the event of a fatal error.</para>
+        </formalpara>
+        <formalpara id="SQA.Usability.TTI.Experienced">
+            <title>SQA.Usability.TTI.Experienced</title>
+            <para>A User with experience installing other Linux distributions shall be able to complete the Horizon UI flow from language selection through <xref linkend="ui_perform" /> in less than 15 minutes.</para>
+        </formalpara>
+        <formalpara id="SQA.Usability.TTI.Green">
+            <title>SQA.Usability.TTI.Green</title>
+            <para>A User with no prior experience with Linux shall be able to complete the Horizon UI flow from language selection through <xref linkend="ui_perform" /> in less than one hour.</para>
+        </formalpara>
+        <formalpara id="SQA.Portability.Bitness">
+            <title>SQA.Portability.Bitness</title>
+            <para>A HorizonScript shall be readable on 32-bit and 64-bit computers regardless of what type of computer was used to create it.</para>
+        </formalpara>
+        <formalpara id="SQA.Portability.Endianness">
+            <title>SQA.Portability.Endianness</title>
+            <para>A HorizonScript shall be readable on big endian and little endian computers regardless of what type of computer was used to create it.</para>
+        </formalpara>
+        <formalpara id="SQA.Verifiability.BlockMock">
+            <title>SQA.Verifiability.BlockMock</title>
+            <para>The system shall support the ability to use "mock" block devices for purposes of testing and verification.</para>
+        </formalpara>
+        <formalpara id="SQA.Maintainability.Comments">
+            <title>SQA.Maintainability.Comments</title>
+            <para>All functions and methods in the system shall have a comment describing what action the function or method performs, and its inputs, outputs, and any side effects (if applicable).</para>
+        </formalpara>
+        <formalpara id="SQA.Maintainability.Methods">
+            <title>SQA.Maintainability.Methods</title>
+            <para>Each class in the system shall have no more than 20 methods.</para>
+        </formalpara>
+        <formalpara id="SQA.Maintainability.NoOPFuncs">
+            <title>SQA.Maintainability.NoOPFuncs</title>
+            <para>Each function or method in the system shall take no more than six input parameters.</para>
+        </formalpara>
+    </section>
+</chapter>

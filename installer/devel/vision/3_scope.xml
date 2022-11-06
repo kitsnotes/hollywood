@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<chapter label="3" id="scope">
+    <title>Scope and Limitations</title>
+    <section id="v1">
+        <title>Scope of Version 1.0</title>
+        <para>The 1.0 release of Project Horizon must have a focus on reliability over featureset.  Advanced use cases may require manual (chroot-based) installation if the schedule extends too far out.</para>
+        <para>The needs of the Enthusiast class, or "Dakota", should be considered the highest priority, followed by the Beginner class, or "Charlie".  The other two user classes do not have a high priority for version 1.0.</para>
+        <para>For the 1.0 release, if a feature requires higher hardware requirements than the minimum operating environment specified, it may be accepted and optimised later.</para>
+    </section>
+    <section id="vNext">
+        <title>Scope of Future Versions</title>
+        <para>It is widely desired that a future version of Project Horizon have a post-installation OOBE (Out of Box Experience) that allows users to customise time zone, user account, and other information after the installation is already completed.  This matches the installation flow of Windows and Mac OS X, and would allow OEMs to pre-install Adélie Linux on their machines for end users.</para>
+    </section>
+    <section id="exclusions">
+        <title>Purposeful Exclusions</title>
+        <orderedlist id="EXL">
+            <listitem id="EXL-1"><para>Project Horizon will not support fetching HorizonScript files over the Gopher protocol.</para></listitem>
+        </orderedlist>
+    </section>
+</chapter>

@@ -1,0 +1,1014 @@
+<?xml version="1.0" encoding="utf-8"?>
+<chapter label="3" id="functional">
+    <title>Functional System Requirements</title>
+    <section id="ui">
+        <title>Horizon UI</title>
+        <para>The Horizon UI is the wizard-style user interface component of Project Horizon.  The system takes the input of the User and creates a HorizonScript.  The resultant HorizonScript is either executed on the running system when started in an installation environment, or saved for later use when started in a runtime environment.</para>
+        <section id="ui_early">
+            <title>System Initialisation</title>
+            <section id="ui_early_meta">
+                <title>Description / Priority</title>
+                <para>This section describes the boot-up and initialisation procedures for the Horizon UI Installation Environment.</para>
+            </section>
+            <section id="ui_early_req">
+                <title>Functional Requirements</title>
+                <formalpara id="UI.Early.LoadFirmware">
+                    <title>UI.Early.LoadFirmware</title>
+                    <para>If the User has specified to load firmware in the installation environment, the system shall install the linux-firmware package to the installation environment before eudev is started.</para>
+                </formalpara>
+                <formalpara id="UI.Early.DetectGfx">
+                    <title>UI.Early.DetectGfx</title>
+                    <para>The system shall detect all usable graphics adaptors present in the computer.</para>
+                </formalpara>
+                <formalpara id="UI.Early.NoGfx">
+                    <title>UI.Early.NoGfx</title>
+                    <para>If there are no usable graphics adaptors present, the system shall display a message that installation cannot continue, and allow the User to login to a virtual TTY or reboot the computer.</para>
+                </formalpara>
+                <formalpara id="UI.Early.MultiGfx">
+                    <title>UI.Early.MultiGfx</title>
+                    <para>If multiple graphics adaptors are present, the system shall attempt to determine which graphics adaptor has a monitor attached.  If the determiniation is that multiple graphics adaptors have monitors attached, or it is indeterminiate which adaptor has a monitor attached, then the system shall prompt the User to choose which graphics adaptor to use for installation.</para>
+                </formalpara>
+            </section>
+        </section>
+        <section id="ui_global">
+            <title>Global UI Requirements</title>
+            <section id="ui_global_meta">
+                <title>Description / Priority</title>
+                <para>The system must obey these requirements on all screens, except where explicitly noted.</para>
+            </section>
+            <section id="ui_global_req">
+                <title>Functional Requirements</title>
+                <formalpara id="UI.Global.Cancel">
+                    <title>UI.Global.Cancel</title>
+                    <para>The system shall display a Cancel button on every screen.</para>
+                </formalpara>
+                <formalpara id="UI.Global.Cancel.Confirm">
+                    <title>UI.Global.Cancel.Confirm</title>
+                    <para>If the User chooses the Cancel button, the system shall confirm that the User wishes to cancel installation.  The system shall additionally explain that no data has been modified yet, and that cancelling installation will cause the computer to reboot.</para>
+                </formalpara>
+                <formalpara id="UI.Global.Cancel.Perform">
+                    <title>UI.Global.Cancel.Perform</title>
+                    <para>If the User chooses to confirm cancellation of the installation, the system shall reboot the computer.</para>
+                </formalpara>
+                <formalpara id="UI.Global.Back">
+                    <title>UI.Global.Back</title>
+                    <para>The system shall display a Back button on every screen except the initial screen, which will move the User back to the previous screen.</para>
+                </formalpara>
+                <formalpara id="UI.Global.Back.Save">
+                    <title>UI.Global.Back.Save</title>
+                    <para>If the User chooses to go back to a previous screen, the system shall save any changes the User has made to the current screen before moving back to the previous screen.  The system shall then redisplay those changes when the current screen is shown again.</para>
+                </formalpara>
+            </section>
+        </section>
+        <section id="ui_language">
+            <title>User Language Selection</title>
+            <section id="ui_language_meta">
+                <title>Description / Priority</title>
+                <para>A User must determine what natural language they are most comfortable with using for installing Adélie Linux.  The system will allow the User to select their preferred natural language from a list of the languages to which the system has been translated.  Priority: Medium.</para>
+            </section>
+            <section id="ui_language_pre">
+                <title>Prerequisites</title>
+                <formalpara id="UI.Language.Prerequisites">
+                    <title>UI.Language.Prerequisites</title>
+                    <para>The system must have more than one language translation available for use.  If only one language translation is available, the system shall skip display of this screen.</para>
+                </formalpara>
+            </section>
+            <section id="ui_language_req">
+                <title>Functional Requirements</title>
+                <formalpara id="UI.Language.List">
+                    <title>UI.Language.List</title>
+                    <para>The system shall present the User with a list of natural languages, in the form of: "Install Adélie using English", "Installer Adélie en français".</para>
+                </formalpara>
+                <formalpara id="UI.Language.Button">
+                    <title>UI.Language.Button</title>
+                    <para>For this screen only, the system shall present the "Next" button as a single right-facing arrow.  The system shall not present the Cancel button on this screen.</para>
+                </formalpara>
+                <formalpara id="UI.Language.Enable">
+                    <title>UI.Language.Enable</title>
+                    <para>When the User chooses a language from the list, the system shall enable the Next button to be clicked.</para>
+                </formalpara>
+            </section>
+            <section id="ui_language_key">
+                <title>HorizonScript Keys</title>
+                <formalpara id="Script.Key.language">
+                    <title>Script.Key.language</title>
+                    <para><varname>language</varname> &mdash; The locale identifier of the chosen language.</para>
+                </formalpara>
+            </section>
+        </section>
+        <section id="ui_introduction">
+            <title>Initial Introduction</title>
+            <section id="ui_introduction_meta">
+                <title>Description / Priority</title>
+                <para>The system will explain to the User an overview of the installation process, and introduce common UI elements.  A User may choose to run a tool or proceed with the installation.</para>
+            </section>
+            <section id="ui_introduction_req">
+                <title>Functional Requirements</title>
+                <formalpara id="UI.Intro.Describe">
+                    <title>UI.Intro.Describe</title>
+                    <para>The system shall present the User with a greeting message including a high-level overview of the installation process.  The system shall reassure the User that the installation process will not modify any data until the final step.</para>
+                </formalpara>
+                <formalpara id="UI.Intro.Elements">
+                    <title>UI.Intro.Elements</title>
+                    <para>The system shall describe the UI elements common to each screen, including the Help button, the Back/Next buttons, and the Cancel button.</para>
+                </formalpara>
+                <formalpara id="UI.Intro.Tools">
+                    <title>UI.Intro.Tools</title>
+                    <para>The system shall allow the User to start a tool from the following list before beginning the installation.
+                        <orderedlist id="UIT">
+                            <listitem id="UIT-1"><para>A terminal.</para></listitem>
+                            <listitem id="UIT-2"><para>An external partition editor.</para></listitem>
+                            <listitem id="UIT-3"><para>A lightweight Web browser.</para></listitem>
+                        </orderedlist>
+                    </para>
+                </formalpara>
+            </section>
+        </section>
+        <section id="ui_input">
+            <title>Input Device Configuration</title>
+            <section id="ui_input_meta">
+                <title>Description / Priority</title>
+                <para>A User may have a keyboard that is not the Linux default of US QWERTY.  As such, a User must be able to choose a keyboard layout that matches their hardware.</para>
+            </section>
+            <section id="ui_input_req">
+                <title>Functional Requirements</title>
+                <formalpara id="UI.Input.LayoutList">
+                    <title>UI.Input.LayoutList</title>
+                    <para>The system shall present the User with a list of available keyboard layouts.</para>
+                </formalpara>
+                <formalpara id="UI.Input.ChooseLayout">
+                    <title>UI.Input.ChooseLayout</title>
+                    <para>When the User selects a keyboard layout, the system shall load the keyboard layout and apply it.</para>
+                </formalpara>
+                <formalpara id="UI.Input.Test">
+                    <title>UI.Input.Test</title>
+                    <para>The system shall present an input box for the User to test their selected keyboard layout.</para>
+                </formalpara>
+            </section>
+            <section id="ui_input_key">
+                <title>HorizonScript Keys</title>
+                <formalpara id="Script.Key.keymap">
+                    <title>Script.Key.keymap</title>
+                    <para><varname>keymap</varname> &mdash; The identifier of the chosen keyboard layout.</para>
+                </formalpara>
+            </section>
+        </section>
+        <section id="ui_partition">
+            <title>Disk Partitioning Setup</title>
+            <section id="ui_partition_meta">
+                <title>Description / Priority</title>
+                <para>The User must partition their hard disk drive to be able to install Adélie Linux to it.  The system will allow the User to do so, using automatic partitioning based on the platform and disk size, or allowing the User full control over partitioning.  (Priority: High)</para>
+                <para>The system will additionally allow the User to set up a dual-boot system, if the disk has enough free space to create the requisite partitions for an Adélie Linux installation.  (Priority: Medium)</para>
+                <para>The system will <emphasis>not</emphasis> allow the user to resize or delete existing partitions.</para>
+                <para>If the system is running in a runtime environment, the User must describe the disks and any operations to perform on them.</para>
+            </section>
+            <section id="ui_partition_req">
+                <title>Functional Requirements</title>
+                <formalpara id="UI.Partition">
+                    <title>UI.Partition</title>
+                    <para>The system shall allow the User to partition their block devices.</para>
+                </formalpara>
+                <formalpara id="UI.Partition.Runtime">
+                    <title>UI.Partition.Runtime</title>
+                    <para>If the system is running in a runtime environment, the system shall prompt the User to enter details about the block devices present on the target computer.</para>
+                </formalpara>
+                <formalpara id="UI.Partition.Runtime.DiskDetails">
+                    <title>UI.Partition.Runtime.DiskDetails</title>
+                    <para>The system shall prompt the User to enter the path to the block device, the size of the block device, and an optional identification string which can be used to ensure the proper block device is selected on the target computer.</para>
+                </formalpara>
+                <formalpara id="UI.Partition.Runtime.Labels">
+                    <title>UI.Partition.Runtime.Labels</title>
+                    <para>The system shall allow the User to choose whether to retain an existing disklabel on the block device, or create a new one.</para>
+                </formalpara>
+                <formalpara id="UI.Partition.Runtime.Labels.Type">
+                    <title>UI.Partition.Runtime.LabelType</title>
+                    <para>The type of the disklabel on the block device must be specified, and of type APM, MBR, or GPT.</para>
+                </formalpara>
+                <formalpara id="UI.Partition.Runtime.Partition">
+                    <title>UI.Partition.Runtime.Partition</title>
+                    <para>The system shall allow the User to create partitions on the specified block devices.</para>
+                </formalpara>
+                <formalpara id="UI.Partition.Runtime.Partition.ExistingLabel">
+                    <title>UI.Partition.Runtime.Partition.ExistingLabel</title>
+                    <para>If the User has specified to retain an existing disklabel on a block device, the system shall stress to the user that they may only create new partitions on the disk and must not specify existing partitions on the disk.</para>
+                </formalpara>
+                <formalpara id="UI.Partition.Runtime.FS">
+                    <title>UI.Partition.Runtime.FS</title>
+                    <para>The system shall allow the User to choose to create new file systems on any named block device, including partitions that may not have been specified (since they may already exist on the block device).</para>
+                </formalpara>
+                <formalpara id="UI.Partition.Runtime.FS.Type">
+                    <title>UI.Partition.Runtime.FS.Type</title>
+                    <para>The system shall allow the User to choose which type of file system to create on the block device, and inform the User that Linux filesystems cannot be easily used from Windows or Mac OS.</para>
+                </formalpara>
+                <formalpara id="UI.Partition.Runtime.Mount">
+                    <title>UI.Partition.Runtime.Mount</title>
+                    <para>The system shall allow the User to choose what block devices to mount, and the mount point to use for each mounted block device.</para>
+                </formalpara>
+                <formalpara id="UI.Partition.Runtime.Mount.Options">
+                    <title>UI.Partition.Runtime.Mount.Options</title>
+                    <para>The system shall allow the User to specify custom mount options for each mounted block device.</para>
+                </formalpara>
+                <formalpara id="UI.Partition.Install">
+                    <title>UI.Partition.Install</title>
+                    <para>If the system is running in an installation environment, the system shall gather details about available block devices on the computer.</para>
+                </formalpara>
+                <formalpara id="UI.Partition.Install.Ignore">
+                    <title>UI.Partition.Install.Ignore</title>
+                    <para>When gathering details about available block devices on the computer, the system shall ignore optical disc and tape drive units.</para>
+                </formalpara>
+                <formalpara id="UI.Partition.Install.Details">
+                    <title>UI.Partition.Install.Details</title>
+                    <para>The system shall gather the following details about available block devices: identification string (manufacturer, model), total size, current disklabel or file system (if any).</para>
+                </formalpara>
+                <formalpara id="UI.Partition.Install.ExistingLabels">
+                    <title>UI.Partition.Install.ExistingLabels</title>
+                    <para>If the system contains one or more block devices with disklabels, the system shall gather the partition layout of each disklabel, and file system and type code information for each partition.</para>
+                </formalpara>
+                <formalpara id="UI.Partition.Install.ExistingOS">
+                    <title>UI.Partition.Install.ExistingOS</title>
+                    <para>The system shall use the <literal>os-prober</literal> tool to determine if any operating systems are currently installed on the computer.</para>
+                </formalpara>
+                <formalpara id="UI.Partition.Install.FreeSpace">
+                    <title>UI.Partition.Install.FreeSpace</title>
+                    <para>The system shall determine if any block device with existing disklabels has enough free space in the existing disklabel to create the requisite partitions needed for an installation of Adélie Linux.</para>
+                </formalpara>
+                <formalpara id="UI.Partition.Install.UserPrompt">
+                    <title>UI.Partition.Install.UserPrompt</title>
+                    <para>The system shall prompt the user for the desired partitioning action to take.</para>
+                </formalpara>
+                <formalpara id="UI.Partition.Install.UserPrompt.MultiDisk">
+                    <title>UI.Partition.Install.UserPrompt.MultiDisk</title>
+                    <para>If the computer has multiple available block devices, the system shall allow the User to choose which block device to use for installation, and display the appropriate screen based on the block device chosen.</para>
+                </formalpara>
+                <formalpara id="UI.Partition.Install.UserPrompt.SingleDisk">
+                    <title>UI.Partition.Install.UserPrompt.SingleDisk</title>
+                    <para>If the computer has only one available block device, the system shall display the appropriate screen based on that block device.</para>
+                </formalpara>
+                <formalpara id="UI.Partition.Install.UserPrompt.NoDisk">
+                    <title>UI.Partition.Install.UserPrompt.NoDisk</title>
+                    <para>If the computer has no available block device, the system shall inform the User that no block devices are available, and that installation cannot continue.</para>
+                </formalpara>
+                <formalpara id="UI.Partition.Install.UserPrompt.Unlabelled">
+                    <title>UI.Partition.Install.UserPrompt.Unlabelled</title>
+                    <para>If the block device contains no label, the system shall allow the User to choose an automatic disk label and partition layout based on the platform or to specify their own partition layout.</para>
+                </formalpara>
+                <formalpara id="UI.Partition.Install.UserPrompt.LabelledWithSpace">
+                    <title>UI.Partition.Install.UserPrompt.LabelledWithSpace</title>
+                    <para>If the block device contains a disklabel, and the disklabel has enough free space for a minimal installation based on the platform, the system shall allow the User to choose an automatic partition layout, to use the existing partition layout, to specify their own partition layout, or to remove the existing data and automatically label and partition the entire disk.</para>
+                </formalpara>
+                <formalpara id="UI.Partition.Install.UserPrompt.LabelledAndFull">
+                    <title>UI.Partition.Install.UserPrompt.LabelledAndFull</title>
+                    <para>If the block device contains a disklabel, and the disklabel is either full or does not have enough free space for a minimal installation based on the platform, the system shall allow the User to choose to use the existing partition layout, to specify their own partition layout, or to remove the existing data and automatically label and partition the entire disk.</para>
+                </formalpara>
+                <formalpara id="UI.Partition.Install.Automatic">
+                    <title>UI.Partition.Install.Automatic</title>
+                    <para>If the User chooses to use an automatic disklabel and/or partition layout on the block device, the system shall create the necessary partition layout as defined by the platform of the computer.</para>
+                </formalpara>
+                <formalpara id="UI.Partition.Install.Manual">
+                    <title>UI.Partition.Install.Manual</title>
+                    <para>If the User chooses to specify their own partition layout, the system shall allow the User to create partitions as desired.</para>
+                </formalpara>
+                <formalpara id="UI.Partition.Install.Mount">
+                    <title>UI.Partition.Install.Mount</title>
+                    <para>If the User chooses to specify their own partition layout, or to use the existing partition layout on the disk, the system shall allow the User to choose the mount points for any extant partitions.</para>
+                </formalpara>
+            </section>
+            <section id="ui_partition_key">
+                <title>HorizonScript Keys</title>
+                <formalpara id="Script.Key.diskid">
+                    <title>Script.Key.diskid</title>
+                    <para><varname>diskid</varname> &mdash; The identification strings of the disk(s).</para>
+                </formalpara>
+                <formalpara id="Script.Key.disklabel">
+                    <title>Script.Key.disklabel</title>
+                    <para><varname>disklabel</varname> &mdash; Disklabels to create, if any.</para>
+                </formalpara>
+                <formalpara id="Script.Key.partition">
+                    <title>Script.Key.partition</title>
+                    <para><varname>partition</varname> &mdash; Partitions to create, if any.</para>
+                </formalpara>
+                <formalpara id="Script.Key.lvm_pv">
+                    <title>Script.Key.lvm_pv</title>
+                    <para><varname>lvm_pv</varname> &mdash; LVM PVs to create, if any.</para>
+                </formalpara>
+                <formalpara id="Script.Key.lvm_vg">
+                    <title>Script.Key.lvm_vg</title>
+                    <para><varname>lvm_vg</varname> &mdash; LVM VGs to create, if any.</para>
+                </formalpara>
+                <formalpara id="Script.Key.lvm_lv">
+                    <title>Script.Key.lvm_lv</title>
+                    <para><varname>lvm_lv</varname> &mdash; LVM LVs to create, if any.</para>
+                </formalpara>
+                <formalpara id="Script.Key.encrypt">
+                    <title>Script.Key.encrypt</title>
+                    <para><varname>encrypt</varname> &mdash; Block devices to encrypt, if any.</para>
+                </formalpara>
+                <formalpara id="Script.Key.fs">
+                    <title>Script.Key.fs</title>
+                    <para><varname>fs</varname> &mdash; File systems to create, if any.</para>
+                </formalpara>
+                <formalpara id="Script.Key.mount">
+                    <title>Script.Key.mount</title>
+                    <para><varname>mount</varname> &mdash; File systems to mount, including block device and mountpoint.</para>
+                </formalpara>
+            </section>
+        </section>
+        <section id="ui_firmware">
+            <title>Firmware Setup</title>
+            <section id="ui_firmware_meta">
+                <title>Description / Priority</title>
+                <para>A User may possess hardware that requires non-free binary firmware to operate.  This screen will allow the User to choose whether to load such firmware or not.  Note that this feature can be compiled out of Horizon UI, and can also be disabled at run-time with a configuration setting.</para>
+            </section>
+            <section id="ui_firmware_pre">
+                <title>Prerequisites</title>
+                <formalpara id="UI.Firmware.Prerequisites">
+                    <title>UI.Firmware.Prerequisites</title>
+                    <para>The system must have firmware support compiled in.</para>
+                </formalpara>
+            </section>
+            <section id="ui_firmware_req">
+                <title>Functional Requirements</title>
+                <formalpara id="UI.Firmware.Prompt">
+                    <title>UI.Firmware.Prompt</title>
+                    <para>The system shall ask the User whether or not to load binary firmware, stressing that security-sensitive systems must not choose this option.</para>
+                </formalpara>
+                <formalpara id="UI.Firmware.Load">
+                    <title>UI.Firmware.Load</title>
+                    <para>If the User chooses to load binary firmware, the system shall add the APK Fission repository and the <literal>linux-firmware</literal> package to the installed environment.</para>
+                </formalpara>
+            </section>
+            <section id="ui_firmware_key">
+                <title>HorizonScript Keys</title>
+                <formalpara id="Script.Key.firmware">
+                    <title>Script.Key.firmware</title>
+                    <para><varname>firmware</varname> &mdash; Whether to load firmware.</para>
+                </formalpara>
+            </section>
+        </section>
+        <section id="ui_network">
+            <title>Networking Setup</title>
+            <section id="ui_network_meta">
+                <title>Description / Priority</title>
+                <para>Most Users will want to configure a network connection on their computer.  The system will allow the User to configure their wired or wireless network connection, including authentication information (wireless), IP v4 and v6 addressing, routing, and DNS.</para>
+            </section>
+            <section id="ui_network_pre">
+                <title>Prerequisites</title>
+                <formalpara id="UI.Network.Prerequisites">
+                    <title>UI.Network.Prerequisites</title>
+                    <para>The system must have at least one non-loopback network interface detected by the kernel.</para>
+                </formalpara>
+            </section>
+            <section id="ui_network_req">
+                <title>Functional Requirements</title>
+                <formalpara id="UI.Network.AddressType">
+                    <title>UI.Network.AddressType</title>
+                    <para>The system shall ask the User whether they wish to use automatic addressing (DHCP), manual addressing, or disable network connectivity.</para>
+                </formalpara>
+                <formalpara id="UI.Network.AddressType.MaybeNotDisable">
+                    <title>UI.Network.AddressType.MaybeNotDisable</title>
+                    <para>The system shall not allow the User to disable network connectivity if any required repository is unavailable locally.</para>
+                </formalpara>
+                <formalpara id="UI.Network.AddressType.Skip">
+                    <title>UI.Network.AddressType.Skip</title>
+                    <para>If the User chooses to disable network connectivity, the system shall proceed to the System Metadata screen.</para>
+                </formalpara>
+                <formalpara id="UI.Network.RuntimeEnv">
+                    <title>UI.Network.RuntimeEnv</title>
+                    <para>If Horizon UI is running in a runtime environment instead of an installation environment, the system shall allow the User to add their network interface by device name before proceeding.</para>
+                </formalpara>
+                <formalpara id="UI.Network.ChooseIface">
+                    <title>UI.Network.ChooseIface</title>
+                    <para>If the computer has more than one network interface, the system shall prompt the User to choose which interface to use for installation.</para>
+                </formalpara>
+                <formalpara id="UI.Network.Wireless">
+                    <title>UI.Network.Wireless</title>
+                    <para>If the chosen network interface is a wireless network interface, the system shall display a Wireless Configuration screen.</para>
+                </formalpara>
+                <formalpara id="UI.Network.Wireless.None">
+                    <title>UI.Network.Wireless.None</title>
+                    <para>The system shall allow the User to disable wireless connectivity.</para>
+                </formalpara>
+                <formalpara id="UI.Network.Wireless.None.Multi">
+                    <title>UI.Network.Wireless.None.Multi</title>
+                    <para>If the User has chosen to disable wireless connectivity, and the computer has multiple network interfaces, the system shall start at UI.Network.ChooseIface again.</para>
+                </formalpara>
+                <formalpara id="UI.Network.Wireless.None.Single">
+                    <title>UI.Network.Wireless.None.Single</title>
+                    <para>If the User has chosen to disable wireless connectivity, and the computer only has wireless networking, the system shall prompt the User to confirm they wish to continue without networking.</para>
+                </formalpara>
+                <formalpara id="UI.Network.Wireless.APs">
+                    <title>UI.Network.Wireless.APs</title>
+                    <para>The system shall display a list of access points in range of the wireless interface for the User to select from.</para>
+                </formalpara>
+                <formalpara id="UI.Network.Wireless.ReloadAPs">
+                    <title>UI.Network.Wireless.ReloadAPs</title>
+                    <para>The system shall allow the User to refresh the list of access points in range.</para>
+                </formalpara>
+                <formalpara id="UI.Network.Wireless.CustomAP">
+                    <title>UI.Network.Wireless.CustomAP</title>
+                    <para>The system shall allow the User to input a custom access point name.</para>
+                </formalpara>
+                <formalpara id="UI.Network.Wireless.Security">
+                    <title>UI.Network.Wireless.Security</title>
+                    <para>If the chosen access point uses authentication, the system shall prompt the User for the requisite credentials.</para>
+                </formalpara>
+                <formalpara id="UI.Network.Wireless.CustomSecurity">
+                    <title>UI.Network.Wireless.CustomSecurity</title>
+                    <para>If the User inputs a custom access point name, the system shall prompt the User for the type of security used (or none) and requisite credentials.</para>
+                </formalpara>
+                <formalpara id="UI.Network.Wireless.Enable">
+                    <title>UI.Network.Wireless.Enable</title>
+                    <para>The system shall enable the Next button when an access point is selected or input, and the requisite credentials (if any) have been input.</para>
+                </formalpara>
+                <formalpara id="UI.Network.Wireless.Connect">
+                    <title>UI.Network.Wireless.Connect</title>
+                    <para>When the User chooses Next, the system shall attempt to connect to the specified wireless network.</para>
+                </formalpara>
+                <formalpara id="UI.Network.Wireless.Error">
+                    <title>UI.Network.Wireless.Error</title>
+                    <para>If an error occurs during wireless network connection, the system shall display a message explaning the error condition, and redisplay the Wireless Configuration screen.</para>
+                </formalpara>
+                <formalpara id="UI.Network.Wireless.ConnectTimeOut">
+                    <title>UI.Network.Wireless.ConnectTimeOut</title>
+                    <para>The system shall time out after waiting 15 seconds for the wireless network to connect, and consider a time out an error condition as specified in UI.Network.Wireless.Error.</para>
+                </formalpara>
+                <formalpara id="UI.Network.Automatic">
+                    <title>UI.Network.Automatic</title>
+                    <para>If the User selected automatic addressing, the system shall attempt to obtain an IPv4 address via DHCP and an IPv6 address via Router Solicitation and DHCPv6.</para>
+                </formalpara>
+                <formalpara id="UI.Network.Automatic.TimeOut">
+                    <title>UI.Network.Automatic.TimeOut</title>
+                    <para>If no IP address is obtained for v4 or v6 after 15 seconds, the system shall display a message that automatic configuration failed, and ask the User whether to retry the attempt, use manual addressing, or skip networking configuration.</para>
+                </formalpara>
+                <formalpara id="UI.Network.WirelessPortal">
+                    <title>UI.Network.WirelessPortal</title>
+                    <para>If the computer has obtained an address automatically and is using a wireless network, the system shall test if the network is using a captive portal by attempting to download the file at http://detectportal.firefox.com and determining if the response is <literal>success</literal>.</para>
+                </formalpara>
+                <formalpara id="UI.Network.WirelessPortal.Open">
+                    <title>UI.Network.WirelessPortal.Open</title>
+                    <para>If the captive portal test determines a captive portal is in use, the system shall open a lightweight Web browser and attempt to navigate to http://detectportal.firefox.com/.</para>
+                </formalpara>
+                <formalpara id="UI.Network.WirelessPortal.Open.Message">
+                    <title>UI.Network.WirelessPortal.Open.Message</title>
+                    <para>The system shall display a message on the lightweight Web browser that instructs the user to close the Web browser when network connectivity is established in order to continue the installation.</para>
+                </formalpara>
+                <formalpara id="UI.Network.Manual">
+                    <title>UI.Network.Manual</title>
+                    <para>If the User selected manual address, the system shall prompt the User for the following information:
+                        <table frame="topbot" colsep="0" rowsep="1">
+                            <title>Network information to collect from User for manual configuration</title>
+                            <tgroup cols="2" align="left">
+                            <thead>
+                                <row>
+                                    <entry>Information</entry>
+                                    <entry>Description</entry>
+                                </row>
+                            </thead>
+                            <tbody>
+                                <row>
+                                    <entry>IPv4 host address</entry>
+                                    <entry>The address of this computer</entry>
+                                </row>
+                                <row>
+                                    <entry>IPv4 subnet mask</entry>
+                                    <entry>The subnet mask / prefix of the network</entry>
+                                </row>
+                                <row>
+                                    <entry>IPv4 default gateway</entry>
+                                    <entry>The router on the network</entry>
+                                </row>
+                                <row>
+                                    <entry>IPv4 DNS resolver</entry>
+                                    <entry>The DNS resolver to use on IPv4 networks; default to 9.9.9.9</entry>
+                                </row>
+                                <row>
+                                    <entry>IPv6 host address</entry>
+                                    <entry>The address of this computer</entry>
+                                </row>
+                                <row>
+                                    <entry>IPv6 network prefix length</entry>
+                                    <entry>The prefix length of the network</entry>
+                                </row>
+                                <row>
+                                    <entry>IPv6 default gateway</entry>
+                                    <entry>The router on the network</entry>
+                                </row>
+                                <row>
+                                    <entry>IPv6 DNS resolver</entry>
+                                    <entry>The DNS resolver to use on IPv6 networks; default to 2620:fe::fe</entry>
+                                </row>
+                            </tbody>
+                            </tgroup>
+                        </table>
+                    </para>
+                </formalpara>
+                <formalpara id="UI.Network.Manual.Test">
+                    <title>UI.Network.Manual.Test</title>
+                    <para>The system shall allow the User to test their network configuration by attempting to connect to distfiles.adelielinux.org.</para>
+                </formalpara>
+                <formalpara id="UI.Network.Manual.Enable">
+                    <title>UI.Network.Manual.Enable</title>
+                    <para>The system shall enable the Next button when either an IPv4 or IPv6 configuration is complete (address, subnet mask, gateway, DNS resolver).</para>
+                </formalpara>
+            </section>
+            <section id="ui_network_key">
+                <title>HorizonScript Keys</title>
+                <formalpara id="Script.Key.network">
+                    <title>Script.Key.network</title>
+                    <para><varname>network</varname> &mdash; Whether to enable network connectivity.</para>
+                </formalpara>
+                <formalpara id="Script.Key.netaddress">
+                    <title>Script.Key.netaddress</title>
+                    <para><varname>netaddress</varname> &mdash; Connection information.</para>
+                </formalpara>
+                <formalpara id="Script.Key.nameserver">
+                    <title>Script.Key.nameserver</title>
+                    <para><varname>nameserver</varname> &mdash; DNS resolver information.</para>
+                </formalpara>
+                <formalpara id="Script.Key.netssid">
+                    <title>Script.Key.netssid</title>
+                    <para><varname>netssid</varname> &mdash; Wireless networking information.</para>
+                </formalpara>
+            </section>
+        </section>
+        <section id="ui_sysmeta">
+            <title>System Metadata Setup</title>
+            <section id="ui_sysmeta_meta">
+                <title>Description / Priority</title>
+                <para>A User needs to specify the timezone the computer will be running in, and the computer's name.  The computer's name is used even on non-networked computers, for shell prompts and login screens.  The system will also allow the User to ensure the current date and time are accurate.</para>
+            </section>
+            <section id="ui_sysmeta_req">
+                <title>Functional Requirements</title>
+                <formalpara id="UI.SysMeta.DateTime">
+                    <title>UI.SysMeta.DateTime</title>
+                    <para>If the system is running in an installation environment, the system shall display the date and time currently stored in the RTC (Real Time Clock), and allow the User to update the date and time stored in the RTC.</para>
+                </formalpara>
+                <formalpara id="UI.SysMeta.Timezone">
+                    <title>UI.SysMeta.Timezone</title>
+                    <para>The system shall allow the User to choose the time zone to use for time display.</para>
+                </formalpara>
+                <formalpara id="UI.SysMeta.DefaultTimezone">
+                    <title>UI.SysMeta.DefaultTimezone</title>
+                    <para>The system shall use UTC as the default time zone.</para>
+                </formalpara>
+                <formalpara id="UI.SysMeta.Timezone.RTC">
+                    <title>UI.SysMeta.Timezone.RTC</title>
+                    <para>If the system is running in an Installation Environment, and the system is an Intel machine, the system shall allow the User to select whether to store UTC or local time in the RTC, noting that local time is necessary to coexist with most Windows installations but could result in system instability.</para>
+                </formalpara>
+                <formalpara id="UI.SysMeta.Hostname">
+                    <title>UI.SysMeta.Hostname</title>
+                    <para>The system shall allow the User to input the host name of the computer.</para>
+                </formalpara>
+                <formalpara id="UI.SysMeta.DefaultHostname">
+                    <title>UI.SysMeta.DefaultHostname</title>
+                    <para>The system shall provide a default host name for the User, calculated using the following algorithm:
+                        <orderedlist id="UI.SysMeta.DefaultHostname.Algo">
+                            <listitem><para>If the system is running in a non-installation environment, use "Adelie" and end calculation.</para></listitem>
+                            <listitem><para>If the system has a manufacturer available via DMI or similar API, use that name truncated to 11 characters.  Otherwise, use "Adelie".</para></listitem>
+                            <listitem><para>If the system has a network adaptor installed, even if it is not configured for use, use the last six characters of the MAC address from the first network adaptor.  Otherwise, use a random fruit name.</para></listitem>
+                        </orderedlist>
+                    </para>
+                </formalpara>
+                <formalpara id="UI.SysMeta.VerifyHostname">
+                    <title>UI.SysMeta.VerifyHostname</title>
+                    <para>The system shall ensure that the host name input by the User uses only valid characters for DNS names, and not accept characters that are invalid.</para>
+                </formalpara>
+                <formalpara id="UI.SysMeta.VerifyHostname.Info">
+                    <title>UI.SysMeta.VerifyHostname.Info</title>
+                    <para>The system shall inform the User which characters are valid, and provide feedback to the User when an invalid character is typed into the host name input field.</para>
+                </formalpara>
+                <formalpara id="UI.SysMeta.Enable">
+                    <title>UI.SysMeta.Enable</title>
+                    <para>The system shall enable the Next button when the host name field contains a valid name, and disable the Next button when it is empty.</para>
+                </formalpara>
+            </section>
+            <section id="ui_sysmeta_key">
+                <title>HorizonScript Keys</title>
+                <formalpara id="Script.Key.timezone">
+                    <title>Script.Key.timezone</title>
+                    <para><varname>timezone</varname> &mdash; The zoneinfo name of the system's timezone.  Ex: Africa/Nairobi.</para>
+                </formalpara>
+                <formalpara id="Script.Key.hostname">
+                    <title>Script.Key.hostname</title>
+                    <para><varname>hostname</varname> &mdash; The name of the system.</para>
+                </formalpara>
+            </section>
+        </section>
+        <section id="ui_packages">
+            <title>Package and Package Set Selection</title>
+            <section id="ui_packages_meta">
+                <title>Description / Priority</title>
+                <para>The system will let the User choose what packages and sets of packages to install on their computer.</para>
+            </section>
+            <section id="ui_packages_req">
+                <title>Functional Requirements</title>
+                <formalpara id="UI.Packages.DisabledNetwork">
+                    <title>UI.Packages.DisabledNetwork</title>
+                    <para>If the User has chosen to disable the network, the system shall only display presets and packages available for installation locally.</para>
+                </formalpara>
+                <formalpara id="UI.Packages.SimpleSel">
+                    <title>UI.Packages.SimpleSel</title>
+                    <para>The system shall allow the User to choose from one of the following four preset package sets, or to customise the packages installed.</para>
+                </formalpara>
+                <formalpara id="UI.Packages.SimpleSel.Standard">
+                    <title>UI.Packages.SimpleSel.Standard</title>
+                    <para>The system shall allow the User to choose the Standard preset, which uses <literal>adelie-base-posix</literal> as an anchor package, and includes the <literal>firefox-esr</literal>, <literal>libreoffice</literal>, <literal>thunderbird</literal>, and <literal>vlc</literal> packages, and the <literal>kde</literal> and <literal>x11</literal> metapackages.</para>
+                </formalpara>
+                <formalpara id="UI.Packages.SimpleSel.Notebook">
+                    <title>UI.Packages.SimpleSel.Notebook</title>
+                    <para>The system shall allow the User to choose the Notebook preset, which includes the Standard preset and additional power management tools (UPower, pm-utils).</para>
+                </formalpara>
+                <formalpara id="UI.Packages.SimpleSel.Minimal">
+                    <title>UI.Packages.SimpleSel.Minimal</title>
+                    <para>The system shall allow the User to choose the Minimal preset, which uses <literal>adelie-base</literal> as an anchor package, and includes the <literal>lxqt-desktop</literal>, <literal>featherpad</literal>, <literal>netsurf</literal>, <literal>xorg-apps</literal>, <literal>xorg-drivers</literal>, and <literal>xorg-server</literal> packages.</para>
+                </formalpara>
+                <formalpara id="UI.Packages.SimpleSel.MinimalTUI">
+                    <title>UI.Packages.SimpleSel.MinimalTUI</title>
+                    <para>The system shall allow the User to choose the Minimal Non-Graphical preset, which uses <literal>adelie-base</literal> as an anchor package, and includes the <literal>elinks</literal> and <literal>tmux</literal> packages.</para>
+                </formalpara>
+                <formalpara id="UI.Packages.SimpleSel.Custom">
+                    <title>UI.Packages.SimpleSel.Custom</title>
+                    <para>The system shall allow the User to choose to customise the packages installed on their computer.</para>
+                </formalpara>
+                <formalpara id="UI.Packages.SimpleSel.Enable">
+                    <title>UI.Packages.SimpleSel.Enable</title>
+                    <para>The system shall enable the Next button when a selection is made.</para>
+                </formalpara>
+                <formalpara id="UI.Packages.Custom">
+                    <title>UI.Packages.Custom</title>
+                    <para>If the User chooses Custom from UI.Packages.SimpleSel, the system shall present the User with a list of packages and package sets and allow the User to choose any or all of the packages listed.  The system shall display the disk space used by each selection, and the total required for installation.</para>
+                </formalpara>
+                <formalpara id="UI.Packages.Custom.Packages">
+                    <title>UI.Packages.Custom.Packages</title>
+                    <para>The system shall offer at least the following packages, with the following names, descriptions, and corresponding APK package names.
+                        <table frame="topbot" colsep="0" rowsep="1">
+                            <title>Custom packages offered on the Package Selection screen</title>
+                            <tgroup cols="3" align="left">
+                            <thead>
+                                <row>
+                                    <entry>Name</entry>
+                                    <entry>Description</entry>
+                                    <entry>APK name</entry>
+                                </row>
+                            </thead>
+                            <tbody>
+                                <row>
+                                    <entry>Firefox Web browser</entry>
+                                    <entry>The most popular and powerful Web browser for Linux.  Includes JavaScript and multimedia (audio/video) playback support.</entry>
+                                    <entry><literal><package>firefox-esr</package></literal></entry>
+                                </row>
+                                <row>
+                                    <entry>Netsurf Web browser</entry>
+                                    <entry>Lightweight Web browser.  Does not include JavaScript support.</entry>
+                                    <entry><literal><package>netsurf</package></literal></entry>
+                                </row>
+                                <row>
+                                    <entry>Thunderbird Email</entry>
+                                    <entry>Read and compose email, and participate in newsgroups.</entry>
+                                    <entry><literal><package>thunderbird</package></literal></entry>
+                                </row>
+                                <row>
+                                    <entry>FeatherPad</entry>
+                                    <entry>Lightweight text editor.</entry>
+                                    <entry><literal><package>featherpad</package></literal></entry>
+                                </row>
+                                <row>
+                                    <entry>LibreOffice</entry>
+                                    <entry>Popular, extensible office suite.</entry>
+                                    <entry><literal><package>libreoffice</package></literal>: <literal><package>libreoffice-base</package></literal>, <literal><package>libreoffice-calc</package></literal>, <literal><package>libreoffice-draw</package></literal>, <literal><package>libreoffice-impress</package></literal>, <literal><package>libreoffice-math</package></literal>, <literal><package>libreoffice-writer</package></literal></entry>
+                                </row>
+                                <row>
+                                    <entry>VLC Media Player</entry>
+                                    <entry>Popular multimedia player, including support for a wide variety of audio and video types.</entry>
+                                    <entry><literal><package>vlc</package></literal></entry>
+                                </row>
+                                <row>
+                                    <entry>Development Tools</entry>
+                                    <entry>Tools used to create, build, and test software.</entry>
+                                    <entry><literal><package>build-tools</package></literal></entry>
+                                </row>
+                                <row>
+                                    <entry>Programming Environments</entry>
+                                    <entry>Interpreters, language tools, and other packages related to popular programming environments.</entry>
+                                    <entry><literal><package>gcc-gnat</package></literal> (Ada), <literal><package>gnucobol</package></literal> (COBOL), <literal><package>gcc-go</package></literal> (Go), <literal><package>perl</package></literal>, <literal><package>python3</package></literal>, <literal><package>ruby</package></literal>, <literal><package>erlang</package></literal>, <literal><package>openjdk8-jdk</package></literal> (Java), <literal><package>php7</package></literal>, <literal><package>rust</package></literal>, <literal><package>node</package></literal>.</entry>
+                                </row>
+                                <row>
+                                    <entry>KDE Applications</entry>
+                                    <entry>A variety of applications including a word processor, media player, and many games.</entry>
+                                    <entry><literal><package>kde</package></literal></entry>
+                                </row>
+                                <row>
+                                    <entry>KDE Plasma</entry>
+                                    <entry>Modern desktop environment with graphical effect support.</entry>
+                                    <entry><literal><package>plasma-desktop</package></literal></entry>
+                                </row>
+                                <row>
+                                    <entry>LXQt Desktop Environment</entry>
+                                    <entry>Lightweight desktop environment using the Openbox window manager and Qt widgets.</entry>
+                                    <entry><literal><package>lxqt-desktop</package></literal></entry>
+                                </row>
+                                <row>
+                                    <entry>MATE Desktop Environment</entry>
+                                    <entry>Traditional desktop environment based on the GNOME 2 look and feel.</entry>
+                                    <entry><literal><package>mate-complete</package></literal></entry>
+                                </row>
+                                <row>
+                                    <entry>XFCE Desktop Environment</entry>
+                                    <entry>Desktop environment based on Gtk+.</entry>
+                                    <entry><literal><package>xfce-desktop</package></literal></entry>
+                                </row>
+                                <row>
+                                    <entry>Window Managers</entry>
+                                    <entry>Individual window managers that are not part of a desktop environment.</entry>
+                                    <entry><literal><package>awesome</package></literal>, <literal><package>fluxbox</package></literal>, <literal><package>i3wm</package></literal>, <literal><package>icewm</package></literal>, <literal><package>openbox</package></literal>, <literal><package>spectrwm</package></literal></entry>
+                                </row>
+                                <row>
+                                    <entry>Command Line Software</entry>
+                                    <entry>Popular utilities used on the command line.</entry>
+                                    <entry><literal><package>elinks</package></literal>, <literal><package>tmux</package></literal></entry>
+                                </row>
+                            </tbody>
+                            </tgroup>
+                        </table>
+                    </para>
+                </formalpara>
+                <formalpara id="UI.Packages.Choices">
+                    <title>UI.Packages.Choices</title>
+                    <para>If the User chooses Custom from UI.Packages.SimpleSel, the system shall present the User with choices for the default shell (/bin/sh), init system (/sbin/init), and MTA.</para>
+                </formalpara>
+                <formalpara id="UI.Packages.Choices.Default">
+                    <title>UI.Packages.Choices.Default</title>
+                    <para>The system shall choose dash-binsh, s6-linux-init, and ssmtp as defaults for UI.Packages.Choices, and shall use these if the User did not choose Custom from UI.Packages.SimpleSel.</para>
+                </formalpara>
+                <formalpara id="UI.Packages.Size">
+                    <title>UI.Packages.Size</title>
+                    <para>If the User has selected a package set or packages that will use 80% of more of the computer's disk space selected for use with Adélie Linux, the system shall prompt the User to confirm the selection and warn that installation may not be successful.</para>
+                </formalpara>
+            </section>
+            <section id="ui_packages_key">
+                <title>HorizonScript Keys</title>
+                <formalpara id="Script.Key.pkginstall">
+                    <title>Script.Key.pkginstall</title>
+                    <para><varname>pkginstall</varname> &mdash; A space-separated list of packages to install.</para>
+                </formalpara>
+            </section>
+        </section>
+        <section id="ui_boot">
+            <title>Boot Setup</title>
+            <section id="ui_boot_meta">
+                <title>Description / Priority</title>
+                <para>The User selects the kernel to use, if their platform requires kernel selection, and chooses boot parameters.</para>
+            </section>
+            <section id="ui_boot_req">
+                <title>Functional Requirements</title>
+                <formalpara id="UI.Boot.Kernel.Choice">
+                    <title>UI.Boot.Kernel.Choice</title>
+                    <para>If the target platform requires a choice between multiple kernels, the system shall prompt the User to choose which kernel to use.</para>
+                </formalpara>
+                <formalpara id="UI.Boot.Kernel.Selection">
+                    <title>UI.Boot.Kernel.Selection</title>
+                    <para>The system shall add the platform's kernel, or the User's choice of kernel if the target platform requires a choice between multiple kernels, to the list of packages to install.</para>
+                </formalpara>
+            </section>
+        </section>
+        <section id="ui_accounts">
+            <title>System Accounts Setup</title>
+            <section id="ui_accounts_meta">
+                <title>Description / Priority</title>
+                <para>The User needs to configure the administrator password, and provide their name/alias and password for their own account.</para>
+            </section>
+            <section id="ui_accounts_req">
+                <title>Functional Requirements</title>
+                <formalpara id="UI.Accounts.RootPW">
+                    <title>UI.Accounts.RootPW</title>
+                    <para>The system shall prompt the User to enter a password for the root user.</para>
+                </formalpara>
+                <formalpara id="UI.Accounts.RootPW.Confirm">
+                    <title>UI.Accounts.RootPW.Confirm</title>
+                    <para>The system shall prompt the User to re-enter the root user password to confirm accuracy.</para>
+                </formalpara>
+                <formalpara id="UI.Accounts.RootPW.Explain">
+                    <title>UI.Accounts.RootPW.Explain</title>
+                    <para>The system shall explain to the User the importance of keeping the root user's password secure, and written in a safe place, as it is used for system administration.</para>
+                </formalpara>
+                <formalpara id="UI.Accounts.RootPW.Enable">
+                    <title>UI.Accounts.RootPW.Enable</title>
+                    <para>The system shall enable the Next button when the root password and confirmation are non-blank and match.</para>
+                </formalpara>
+                <formalpara id="UI.Accounts.UserAcct">
+                    <title>UI.Accounts.UserAcct</title>
+                    <para>The system shall prompt the User to enter their name or alias to personalise their copy of Adélie Linux, and up to four others.</para>
+                </formalpara>
+                <formalpara id="UI.Accounts.UserAcct.AcctName">
+                    <title>UI.Accounts.UserAcct.AcctName</title>
+                    <para>The system shall prompt the User to enter an account name for their user account.</para>
+                </formalpara>
+                <formalpara id="UI.Accounts.UserAcct.AcctName.Default">
+                    <title>UI.Accounts.UserAcct.AcctName.Default</title>
+                    <para>The system shall use the following algorithm to provide a default account name for the User:
+                        <orderedlist id="UI.Accounts.UserAcct.AcctName.Default.Algo">
+                            <listitem><para>If the User's name or alias contains no spaces, let the account name be the entire name or alias.</para></listitem>
+                            <listitem><para>If the User's name or alias contains spaces, let the account name be the first character of each word that is not the last word, and the full last word.</para></listitem>
+                            <listitem><para>Transform the account name to a Latinised, lower-case form, as described by Unicode Normalization Form NFKC_Casefold.</para></listitem>
+                            <listitem><para>If the account name is longer than 32 characters, truncate the account name to 32 characters.</para></listitem>
+                        </orderedlist>
+                    </para>
+                </formalpara>
+                <formalpara id="UI.Accounts.UserAcct.Icon">
+                    <title>UI.Accounts.UserAcct.Icon</title>
+                    <para>The system shall allow the User to choose a personal icon to be shown on the system login screen from a list of preset icons.</para>
+                </formalpara>
+                <formalpara id="UI.Accounts.UserAcct.Password">
+                    <title>UI.Accounts.UserAcct.Password</title>
+                    <para>The system shall prompt the User to enter a password for their personal account.</para>
+                </formalpara>
+                <formalpara id="UI.Accounts.UserAcct.Password.Confirm">
+                    <title>UI.Accounts.UserAcct.Password.Confirm</title>
+                    <para>The system shall prompt the User to re-enter their personal password to confirm accuracy.</para>
+                </formalpara>
+                <formalpara id="UI.Accounts.UserAcct.Enable">
+                    <title>UI.Accounts.UserAcct.Enable</title>
+                    <para>The system shall enable the Next button when the user name, account name are valid, and the password and confirm password fields match and represent a valid password.</para>
+                </formalpara>
+                <formalpara id="UI.Accounts.UserAcct.Others">
+                    <title>UI.Accounts.UserAcct.Others</title>
+                    <para>The system shall allow the User to add up to four more user accounts, with account name, personal name/alias, personal icon, and password entry using the same requirements as the primary user acconut.</para>
+                </formalpara>
+                <formalpara id="UI.Accounts.UserAcct.Others.Wheel">
+                    <title>UI.Accounts.UserAcct.Others.Wheel</title>
+                    <para>For each account the User adds, the system shall ask the User if the user should be an administrator or not.  The primary user account will always be an administrator.</para>
+                </formalpara>
+            </section>
+            <section id="ui_accounts_key">
+                <title>HorizonScript Keys</title>
+                <formalpara id="Script.Key.rootpw">
+                    <title>Script.Key.rootpw</title>
+                    <para><varname>rootpw</varname> &mdash; The crypt(3)-formatted, SHA-512 hashed password for the root account.</para>
+                </formalpara>
+                <formalpara id="Script.Key.username">
+                    <title>Script.Key.username</title>
+                    <para><varname>username</varname> &mdash; The account name(s) given.</para>
+                </formalpara>
+                <formalpara id="Script.Key.useralias">
+                    <title>Script.Key.useralias</title>
+                    <para><varname>useralias</varname> &mdash; The user's name or alias.</para>
+                </formalpara>
+                <formalpara id="Script.Key.userpw">
+                    <title>Script.Key.userpw</title>
+                    <para><varname>userpw</varname> &mdash; The crypt(3)-formatted, SHA-512 hashed password for the account(s).</para>
+                </formalpara>
+                <formalpara id="Script.Key.usericon">
+                    <title>Script.Key.usericon</title>
+                    <para><varname>usericon</varname> &mdash; Absolute path in the target environment to the chosen icon for the account(s).</para>
+                </formalpara>
+                <formalpara id="Script.Key.usergroups">
+                    <title>Script.Key.usergroups</title>
+                    <para><varname>usergroups</varname> &mdash; The groups to which the user account(s) will belong.  "users,lp,audio,cdrom,cdrw,scanner,camera,video,games" for normal users; add ",usb,kvm,wheel" for administrators.</para>
+                </formalpara>
+            </section>
+        </section>
+        <section id="ui_writeout">
+            <title>Save HorizonScript</title>
+            <section id="ui_writeout_meta">
+                <title>Description / Priority</title>
+                <para>The User is now able to save the HorizonScript they have created using the Horizon UI.  Priority: Medium, since installation environment concerns are paramount for release 1.0.</para>
+            </section>
+            <section id="ui_writeout_pre">
+                <title>Prerequisites</title>
+                <formalpara id="UI.Writeout.Prerequisites">
+                    <title>UI.Writeout.Prerequisites</title>
+                    <para>The system must be running in a runtime environment, not an installation environment.</para>
+                </formalpara>
+            </section>
+            <section id="ui_writeout_req">
+                <title>Functional Requirements</title>
+                <formalpara id="UI.Writeout.Explain">
+                    <title>UI.Writeout.Explain</title>
+                    <para>The system shall inform the User that the system has finished collecting information and is now ready to save the resultant HorizonScript.</para>
+                </formalpara>
+                <formalpara id="UI.Writeout.Button">
+                    <title>UI.Writeout.Button</title>
+                    <para>The system shall replace the "Next" button with a "Save" button using the same keyboard accelerator as Next.</para>
+                </formalpara>
+                <formalpara id="UI.Writeout.Save">
+                    <title>UI.Writeout.Save</title>
+                    <para>When the User chooses "Save", the system shall open a dialogue for the user to navigate to the directory in which they wish to save the HorizonScript, and the name of the file-on disk which shall default to <literal>installfile</literal>.</para>
+                </formalpara>
+                <formalpara id="UI.Writeout.Close">
+                    <title>UI.Writeout.Close</title>
+                    <para>If the HorizonScript file is saved successfully, the system shall exit.</para>
+                </formalpara>
+                <formalpara id="UI.Writeout.Failure">
+                    <title>UI.Writeout.Failure</title>
+                    <para>If the HorizonScript file cannot be saved successfully, the system shall display a message indicating the error, and then redisplay the writeout screen.</para>
+                </formalpara>
+            </section>
+        </section>
+        <section id="ui_commit">
+            <title>Begin Installation</title>
+            <section id="ui_commit_meta">
+                <title>Description / Priority</title>
+                <para>The system will describe to the User what will be done.  The User may confirm, or go back.</para>
+            </section>
+            <section id="ui_commit_req">
+                <title>Functional Requirements</title>
+                <formalpara id="UI.Commit.Explain">
+                    <title>UI.Commit.Explain</title>
+                    <para>The system shall explain to the User that the next step will be performing the installation.</para>
+                </formalpara>
+                <formalpara id="UI.Commit.Explain.Disk">
+                    <title>UI.Commit.Explain.Disk</title>
+                    <para>If the disk partitioning will cause existing data to be modified or destroyed, the system shall additionally explain to the User that proceeding will modify or destroy the data on the disk(s) partitioned.</para>
+                </formalpara>
+                <formalpara id="UI.Commit.Explain.Info">
+                    <title>UI.Commit.Explain.Info</title>
+                    <para>The system shall display the major choices the User has made in the installation.  The choices shown shall be determined later during the UX design phase and are intentionally omitted from this requirements specification.</para>
+                </formalpara>
+                <formalpara id="UI.Commit.Buttons">
+                    <title>UI.Commit.Buttons</title>
+                    <para>The system shall label the Next button as "Install", or its translation.</para>
+                </formalpara>
+            </section>
+        </section>
+        <section id="ui_perform">
+            <title>Perform Installation</title>
+            <section id="ui_perform_meta">
+                <title>Description / Priority</title>
+                <para>The system installs Adélie Linux per the User's choices.</para>
+            </section>
+            <section id="ui_perform_pre">
+                <title>Prerequisites</title>
+                <formalpara id="UI.Perform.Prerequisites.Wizard">
+                    <title>UI.Perform.Prerequisites.Wizard</title>
+                    <para>If the system is running in a graphical installation environment, the HorizonScript used shall be the HorizonScript generated from the User's choices in the Horizon UI.</para>
+                </formalpara>
+                <formalpara id="UI.Perform.Prerequisites.GUIServer">
+                    <title>UI.Perform.Prerequisites.GUIServer</title>
+                    <para>If the system was booted with a HorizonScript specified, and the graphical progress output option is enabled, the HorizonScript used shall be the HorizonScript loaded from the file or network location specified.</para>
+                </formalpara>
+            </section>
+            <section id="ui_perform_req">
+                <title>Functional Requirements</title>
+                <formalpara id="UI.Perform">
+                    <title>UI.Perform</title>
+                    <para>The system shall execute the Horizon Runner with the specified HorizonScript, and display the installation progress.</para>
+                </formalpara>
+                <formalpara id="UI.Perform.Buttons">
+                    <title>UI.Perform.Buttons</title>
+                    <para>The system shall display no buttons during installation.</para>
+                </formalpara>
+                <formalpara id="UI.Perform.Status">
+                    <title>UI.Perform.Status</title>
+                    <para>The system shall update the current step being performed, the progress of the step being performed, and the overall progress of the installation, whenever it receives an update from the Horizon Runner.</para>
+                </formalpara>
+                <formalpara id="UI.Perform.Error">
+                    <title>UI.Perform.Error</title>
+                    <para>If the Horizon Runner reports an error, the system shall display a screen explaining the error, possible causes, possible solutions, and that the installation has failed.</para>
+                </formalpara>
+                <formalpara id="UI.Perform.Error.Save">
+                    <title>UI.Perform.Error.Save</title>
+                    <para>The system shall allow the User to save the HorizonScript used, along with relevant log files, to a storage location.</para>
+                </formalpara>
+                <formalpara id="UI.Perform.Complete">
+                    <title>UI.Perform.Complete</title>
+                    <para>When Horizon Runner reports that installation is complete, the system shall continue to UI.Finish.</para>
+                </formalpara>
+            </section>
+        </section>
+        <section id="ui_finish">
+            <title>Installation Completion</title>
+            <section id="ui_finish_meta">
+                <title>Description / Priority</title>
+                <para>The system informs the User that installation has completed successfully, and allows the User to optionally save the HorizonScript and log files, then remove any media and reboot the computer.</para>
+            </section>
+            <section id="ui_finish_req">
+                <title>Functional Requirements</title>
+                <formalpara id="UI.Finish">
+                    <title>UI.Finish</title>
+                    <para>The system shall display a screen congratulating the User on a successful installation of Adélie Linux and that the next step is to reboot into the new Adélie Linux system.</para>
+                </formalpara>
+                <formalpara id="UI.Finish.Save">
+                    <title>UI.Finish.Save</title>
+                    <para>The system shall allow the User to save the HorizonScript and log files related to this installation to a storage location.</para>
+                </formalpara>
+                <formalpara id="UI.Finish.Save.Error">
+                    <title>UI.Finish.Save.Error</title>
+                    <para>If an error occurs while saving the HorizonScript and log files, the system shall display a message explaining the error, and allow the User to choose a different storage location.</para>
+                </formalpara>
+                <formalpara id="UI.Finish.Buttons">
+                    <title>UI.Finish.Buttons</title>
+                    <para>The system shall only display a single button: Complete, which uses the same keyboard accelerator as the Next button.  The Complete button shall cause the system to reboot.</para>
+                </formalpara>
+                <formalpara id="UI.Finish.Automatic">
+                    <title>UI.Finish.Automatic</title>
+                    <para>If the system is using a HorizonScript loaded from a file or network location, then the system shall automatically reboot the computer in 15 seconds.</para>
+                </formalpara>
+                <formalpara id="UI.Finish.RemoveMedia">
+                    <title>UI.Finish.RemoveMedia</title>
+                    <para>If the system is not using a HorizonScript loaded from a file or network location, then the system shall prompt the User to remove any installation media used, including optical media, as part of the shutdown routine.</para>
+                </formalpara>
+            </section>
+        </section>
+    </section>
+    &runner;
+</chapter>

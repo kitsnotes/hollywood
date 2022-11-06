@@ -1,0 +1,28 @@
+<h2>Software Selection</h2>
+
+<p>This page allows you to choose the software you want to install on this
+computer.  You will have the option to add and remove software using the
+Package Manager once Adélie Linux is installed, so you can change your mind
+at any time.</p>
+
+<h3>Which option should I choose?</h3>
+
+<ul>
+<li><strong>Most users should choose Standard.</strong>  This option will
+install software for everday computing: a Web browser, an email client, a
+media player, a word processor, and more.</li>
+<li><strong>Mobile</strong> installs the same software as Standard, with
+additional tools and utilities that are useful for laptop and tablet
+computers.  This includes touchpad software, tablet control software, and
+extra power management tools.</li>
+<li><strong>Compact</strong> installs a desktop environment, LXQt, that
+is more suitable for less powerful computers.  It also includes the light
+Netsurf Web browser, and the Featherpad text editor.</li>
+<li><strong>Text-Only</strong> installs only text-mode or command line
+software.  You should select this option if you are installing Adélie
+Linux on a server, or if you do not want to use a graphical user interface
+on your computer.</li>
+<li>If you want to have finer-grained selection on the software that will be
+installed on your computer, choose <strong>Custom</strong>.  This option
+will allow you to select software to install from a list.</li>
+</ul>

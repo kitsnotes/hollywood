@@ -1,0 +1,833 @@
+    <section id="runner">
+        <title>Horizon Runner</title>
+        <para>The Horizon Runner is the component of Project Horizon that configures a computer to match an input HorizonScript.</para>
+        <section id="runner_locate">
+            <title>Locate HorizonScript</title>
+            <section id="runner_locate_meta">
+                <title>Description / Priority</title>
+                <para>The system needs to load the HorizonScript into memory.  If the HorizonScript is a local file, the system needs to ensure it is present and readable.  If the HorizonScript is remote, the system needs to proceed to Network Configuration before continuing.</para>
+            </section>
+            <section id="runner_locate_req">
+                <title>Functional Requirements</title>
+                <formalpara id="Runner.Locate.DetermineLocality">
+                    <title>Runner.Locate.DetermineLocality</title>
+                    <para>The system shall determine if the HorizonScript is stored locally or remotely using the following algorithm:
+                        <orderedlist id="Runner.Locate.DetermineLocality.Algo">
+                            <listitem><para>If the path to the HorizonScript is not provided, assume the HorizonScript is remote and end the calculation.  Priority: Low.</para></listitem>
+                            <listitem><para>If the path to the HorizonScript begins with a single "/" followed by an alphanumeric character, the HorizonScript is local.</para></listitem>
+                            <listitem><para>If the path to the HorizonScript begins with a recognised valid protocol for downloading a HorizonScript followed by the characters "://", the HorizonScript is remote.</para></listitem>
+                            <listitem><para>If the path to the HorizonScript begins with an alphanumeric character, the HorizonScript is local and relative to the path <filename class="directory">/etc/horizon</filename>.</para></listitem>
+                            <listitem><para>If the path to the HorizonScript does not match any of the rules specified before this line, the path provided is invalid and the system shall return an error describing the specified path and the fact it is invalid.</para></listitem>
+                        </orderedlist>
+                    </para>
+                </formalpara>
+                <formalpara id="Runner.Locate.Local">
+                    <title>Runner.Locate.Local</title>
+                    <para>If the HorizonScript is local, the system shall ensure the HorizonScript specified exists at the specified path, is readable by the system, and is the correct format.</para>
+                </formalpara>
+                <formalpara id="Runner.Locate.Local.Failure">
+                    <title>Runner.Locate.Local.Failure</title>
+                    <para>If the HorizonScript fails the tests in Runner.Locate.Local, the system shall return an error describing the reason the HorizonScript could not be used.</para>
+                </formalpara>
+                <formalpara id="Runner.Locate.Remote">
+                    <title>Runner.Locate.Remote</title>
+                    <para>If the HorizonScript is remote, the system shall configure the network and then ensure the HorizonScript specified is accessible, as described in the following requirements sections.</para>
+                </formalpara>
+                <formalpara id="Runner.Locate.Remote.Configure">
+                    <title>Runner.Locate.Remote.Configure</title>
+                    <para>The system shall use the network settings configured by the Administrator on the command line, if they have been provided.</para>
+                </formalpara>
+                <formalpara id="Runner.Locate.Remote.Configure.Automatic">
+                    <title>Runner.Locate.Remote.Configure.Automatic</title>
+                    <para>If no network configuration was provided on the command line, the system shall initiate a DHCP request on each available network interface, waiting for a 15 second time out period before continuing to the next network interface.  An "available network interface" is defined as a non-loopback network interface that currently has a carrier signal.</para>
+                </formalpara>
+                <formalpara id="Runner.Locate.Remote.Configure.AutoFailure">
+                    <title>Runner.Locate.Remote.Configure.AutoFailure</title>
+                    <para>If no network configuration can be found using DHCP, the system shall return an error describing the inability to configure a network connection.</para>
+                </formalpara>
+                <formalpara id="Runner.Locate.Remote.FullAuto">
+                    <title>Runner.Locate.Remote.FullAuto</title>
+                    <para>If no HorizonScript path was provided, the system shall download the HorizonScript from a TFTP server using the filename <filename>MACADDRESS.installfile</filename> where MACADDRESS is the MAC address of the active network adaptor with colons (:) replaced by dashes (-).  The system shall use the following algorithm to determine the TFTP server, using the first match.
+                        <orderedlist id="Runner.Locate.Remote.FullAuto.Algo">
+                            <listitem><para>The TFTP server specified on the command line, if one was provided.</para></listitem>
+                            <listitem><para>The TFTP server specified in the DHCP options, if DHCP was used to configure the network and the DHCP response provided one.</para></listitem>
+                            <listitem><para>The DHCP server, if DHCP was used to configure the network.</para></listitem>
+                            <listitem><para>The default gateway IP.</para></listitem>
+                        </orderedlist>
+                    </para>
+                </formalpara>
+                <formalpara id="Runner.Locate.Remote.Verify">
+                    <title>Runner.Locate.Remote.Verify</title>
+                    <para>The system shall ensure that the server where the HorizonScript is kept is reachable over the protocol specified and that the HorizonScript exists.</para>
+                </formalpara>
+                <formalpara id="Runner.Locate.Remote.Download">
+                    <title>Runner.Locate.Remote.Download</title>
+                    <para>The system shall download the HorizonScript from the remote server to <filename class="directory">/etc/horizon/</filename>.</para>
+                </formalpara>
+            </section>
+        </section>
+        <section id="runner_validate">
+            <title>Validate HorizonScript</title>
+            <section id="runner_validate_meta">
+                <title>Description / Priority</title>
+                <para>The system needs to validate the supplied HorizonScript before executing it.</para>
+            </section>
+            <section id="runner_validate_req">
+                <title>Functional Requirements</title>
+                <formalpara id="Runner.Validate.Exception">
+                    <title>Runner.Validate.Exception</title>
+                    <para>If the HorizonScript fails any validation step performed by the system, the system shall report the error.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.Exception.Install">
+                    <title>Runner.Validate.Exception.Install</title>
+                    <para>If the system is running in an installation environment, the system shall report validation step failure to the listening agent.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.Exception.Continue">
+                    <title>Runner.Validate.Exception.Continue</title>
+                    <para>The system shall support a mode where the system will continue validation after encountering a validation failure, to display all validation failures for a given HorizonScript.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.SkipBlanksAndComments">
+                    <title>Runner.Validate.SkipBlanksAndComments</title>
+                    <para>The system shall ignore any lines that are entirely blank, or start with the ASCII octothorpe (<literal>#</literal>) character.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.Required">
+                    <title>Runner.Validate.Required</title>
+                    <para>The system shall verify the presence of each required keyword in the HorizonScript: <literal>mount</literal>, <literal>network</literal>, <literal>hostname</literal>, <literal>pkginstall</literal>, and <literal>rootpw</literal>.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.network">
+                    <title>Runner.Validate.network</title>
+                    <para>The system shall verify that a single <literal>network</literal> entry is present in the HorizonScript, and that the value is either <literal>true</literal> or <literal>false</literal>.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.network.netaddress">
+                    <title>Runner.Validate.network.netaddress</title>
+                    <para>If the value in the HorizonScript for the <literal>network</literal> key is <literal>true</literal>, the system shall verify that at least one <literal>netaddress</literal> key is present.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.network.netaddress.Validity">
+                    <title>Runner.Validate.network.netaddress.Validity</title>
+                    <para>The system shall verify that each <literal>netaddress</literal> key has a valid form of at least two values in a space-separated tuple.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.network.netaddress.Validity.Type">
+                    <title>Runner.Validate.network.netaddress.Validity.Type</title>
+                    <para>The system shall verify that the second value in each <literal>netaddress</literal> tuple is either <literal>dhcp</literal>, <literal>slaac</literal>, or <literal>static</literal>.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.network.netaddress.Validity.DHCP">
+                    <title>Runner.Validate.network.netaddress.Validity.DHCP</title>
+                    <para>The system shall verify that each <literal>netaddress</literal> key is a two value tuple if the second value is <literal>dhcp</literal>.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.network.netaddress.Validity.Static">
+                    <title>Runner.Validate.network.netaddress.Validity.Static</title>
+                    <para>The system shall verify that each <literal>netaddress</literal> key is either a four value tuple or a five value tuple if the second value is <literal>static</literal>.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.network.netaddress.Interface">
+                    <title>Runner.Validate.network.netaddress.Interface</title>
+                    <para>If the system is running in an installation environment, the system shall ensure that the interface specified as the first value in each <literal>netaddress</literal> tuple is present on the system.  Failure of this requirement is a "soft" error.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.network.netaddress.Address">
+                    <title>Runner.Validate.network.netaddress.Address</title>
+                    <para>If the second value of the <literal>netaddress</literal> key is <literal>static</literal>, the system shall ensure that the third value in the tuple is a valid IPv4 or IPv6 address.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.network.netaddress.Mask">
+                    <title>Runner.Validate.network.netaddress.Mask</title>
+                    <para>If the second value of the <literal>netaddress</literal> key is <literal>static</literal>, the system shall ensure that the fourth value in the tuple is a valid prefix length, in the form of a whole number between 0 and 32 inclusive if the third value is an IPv4 address, a whole number between 0 and 128 inclusive if the third value is an IPv6 address, or a network mask in the form of four octets separated by the period (<literal>.</literal>) symbol if the third value is an IPv4 address.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.network.netaddress.Gateway">
+                    <title>Runner.Validate.network.netaddress.Gateway</title>
+                    <para>If the second value of the <literal>netaddress</literal> key is <literal>static</literal>, and the tuple contains a fifth value, the system shall ensure that the fifth value is a valid IP address of the same type as the third value in the tuple.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.network.netaddress.Count">
+                    <title>Runner.Validate.network.netaddress.Count</title>
+                    <para>The system shall verify that <literal>netaddress</literal> is not specified more than 255 times per interface.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.network.netssid">
+                    <title>Runner.Validate.network.netssid</title>
+                    <para>The system shall verify the validity of any present <literal>netssid</literal> key.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.network.netssid.Validity">
+                    <title>Runner.Validate.network.netssid.Validity</title>
+                    <para>The system shall verify that each <literal>netssid</literal> key has a valid form of either three values or four values in a space-separated tuple.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.network.netssid.Interface">
+                    <title>Runner.Validate.network.netssid.Interface</title>
+                    <para>If the system is running in an installation environment, the system shall ensure that the interface specified as the first value in each <literal>netssid</literal> tuple is present on the system and supports wireless extensions.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.network.netssid.SSID">
+                    <title>Runner.Validate.network.netssid.SSID</title>
+                    <para>The system shall verify that the second value of each <literal>netssid</literal> tuple is a valid SSID enclosed in ASCII double-quotes (<literal>"</literal>).</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.network.netssid.Security">
+                    <title>Runner.Validate.network.netssid.Security</title>
+                    <para>The system shall verify that the third value of each <literal>netssid</literal> tuple is a valid security type: either <literal>none</literal>, <literal>wep</literal>, or <literal>wpa</literal>.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.network.netssid.Key">
+                    <title>Runner.Validate.network.netssid.Key</title>
+                    <para>If the third value of a <literal>netssid</literal> tuple is a valid security type and not <literal>none</literal>, the system shall ensure that the <literal>netssid</literal> tuple has a fourth value that specifies the security key.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.netconfigtype">
+                    <title>Runner.Validate.netconfigtype</title>
+                    <para>The system shall verify that the HorizonScript contains zero or one <literal>netconfigtype</literal> key.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.netconfigtype.Validity">
+                    <title>Runner.Validate.netconfigtype.Validity</title>
+                    <para>If the HorizonScript contains a <literal>netconfigtype</literal> key, the system shall ensure that the <literal>netconfigtype</literal> key has a valid form of a single string containing a recognised network configuration type.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.netconfigtype.netifrc">
+                    <title>Runner.Validate.netconfigtype.netifrc</title>
+                    <para>If the value of the <literal>netconfigtype</literal> key is <literal>netifrc</literal>, the system shall write any network configuration in a manner that can be used by the netifrc package.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.netconfigtype.eni">
+                    <title>Runner.Validate.netconfigtype.eni</title>
+                    <para>If the value of the <literal>netconfigtype</literal> key is <literal>eni</literal>, the system shall write any network configuration to a <filename>/etc/network/interfaces</filename> file that conforms to the standard provided.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.nameserver">
+                    <title>Runner.Validate.nameserver</title>
+                    <para>The system shall verify any <literal>nameserver</literal> keys contained in the HorizonScript.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.nameserver.IP">
+                    <title>Runner.Validate.nameserver.IP</title>
+                    <para>The system shall verify that the value of each <literal>nameserver</literal> key is an IPv4 or IPv6 address.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.hostname">
+                    <title>Runner.Validate.hostname</title>
+                    <para>The system shall verify that the HorizonScript contains exactly one <literal>hostname</literal> key.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.hostname.Chars">
+                    <title>Runner.Validate.hostname.Chars</title>
+                    <para>The system shall verify that the value for the <literal>hostname</literal> key contains only alphanumeric and optionally one or more period (<literal>.</literal>) characters.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.hostname.Begin">
+                    <title>Runner.Validate.hostname.Begin</title>
+                    <para>The system shall verify that the value for the <literal>hostname</literal> key begins with an alphanumeric character.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.hostname.Length">
+                    <title>Runner.Validate.hostname.Length</title>
+                    <para>The system shall verify that the value for the <literal>hostname</literal> key does not exceed 320 characters in length.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.hostname.PartLength">
+                    <title>Runner.Validate.hostname.PartLength</title>
+                    <para>The system shall verify that the value for each part of the value of the <literal>hostname</literal> key, separated by an ASCII period (<literal>.</literal>), does not exceed 64 characters in length.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.pkginstall">
+                    <title>Runner.Validate.pkginstall</title>
+                    <para>The system shall verify that the HorizonScript contains at least one <literal>pkginstall</literal> key.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.rootpw">
+                    <title>Runner.Validate.rootpw</title>
+                    <para>The system shall verify that the HorizonScript contains exactly one <literal>rootpw</literal> key.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.rootpw.Crypt">
+                    <title>Runner.Validate.rootpw.Crypt</title>
+                    <para>The system shall verify that the value for the <literal>rootpw</literal> key is in the format: <literal>$</literal>, either <literal>2</literal> for Blowfish or <literal>6</literal> for SHA-512, <literal>$</literal>, and then variant data.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.arch">
+                    <title>Runner.Validate.arch</title>
+                    <para>The system shall verify that the HorizonScript contains zero or one <literal>arch</literal> key.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.arch.Validity">
+                    <title>Runner.Validate.arch.Validity</title>
+                    <para>The system shall warn if the value specified in <literal>arch</literal> is not recognised as a valid APK-supported CPU architecture.  This shall not be a fatal error, because not all Tier 3 systems may be recognised.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.language">
+                    <title>Runner.Validate.language</title>
+                    <para>The system shall verify that the HorizonScript contains zero or one <literal>language</literal> key.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.language.Format">
+                    <title>Runner.Validate.language.Format</title>
+                    <para>The system shall verify that the value of the <literal>language</literal> key, if present, is a valid ISO 639-1 language code, optionally followed by an ASCII underscore (<literal>_</literal>) and ISO 3166-1 country code, optionally followed by the string literal <literal>.UTF-8</literal>.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.keymap">
+                    <title>Runner.Validate.keymap</title>
+                    <para>The system shall verify that the HorizonScript contains zero or one <literal>keymap</literal> key.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.keymap.Valid">
+                    <title>Runner.Validate.keymap.Valid</title>
+                    <para>The system shall verify that the value of the <literal>keymap</literal> key, if present, is a valid keyboard layout available for use in an Adélie Linux system.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.firmware">
+                    <title>Runner.Validate.firmware</title>
+                    <para>The system shall verify that the HorizonScript contains zero or one <literal>firmware</literal> key.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.firmware.Boolean">
+                    <title>Runner.Validate.firmware.Boolean</title>
+                    <para>The system shall verify that the value of the <literal>firmware</literal> key, if present, is either <literal>true</literal> or <literal>false</literal>.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.firmware.ForceOff">
+                    <title>Runner.Validate.firmware.ForceOff</title>
+                    <para>If the system has firmware support compiled out, the system shall verify that the value of the <literal>firmware</literal> key, if present, is <literal>false</literal>.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.timezone">
+                    <title>Runner.Validate.timezone</title>
+                    <para>The system shall verify that the HorizonScript contains zero or one <literal>timezone</literal> key.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.timezone.zoneinfo">
+                    <title>Runner.Validate.timezone.zoneinfo</title>
+                    <para>The system shall verify that the value of the <literal>timezone</literal> key, if present, represents a valid zoneinfo time zone name.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.repository">
+                    <title>Runner.Validate.repository</title>
+                    <para>The system shall verify that the HorizonScript contains zero to ten <literal>repository</literal> keys.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.repository.ValidPath">
+                    <title>Runner.Validate.repository.ValidPath</title>
+                    <para>The system shall verify that the value of each <literal>repository</literal> key is either an absolute local path beginning with an ASCII oblique (<literal>/</literal>), or a valid URL utilising the HTTP or HTTPS protocols.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.signingkey">
+                    <title>Runner.Validate.signingkey</title>
+                    <para>The system shall verify that the HorizonScript contains zero to ten <literal>signingkey</literal> keys.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.signingkey.ValidPath">
+                    <title>Runner.Validate.signingkey.ValidPath</title>
+                    <para>The system shall verify that the value of each <literal>signingkey</literal> key is either an absolute local path beginning with an ASCII oblique (<literal>/</literal>), or a valid URL utilising the HTTPS protocol.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.username">
+                    <title>Runner.Validate.username</title>
+                    <para>The system shall verify that the HorizonScript contains zero to 255 <literal>username</literal> keys.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.username.Unique">
+                    <title>Runner.Validate.username.Unique</title>
+                    <para>The system shall verify that the value of each <literal>username</literal> key is unique.</para>
+                </formalpara>
+                <formalpara id="Runnver.Verify.username.System">
+                    <title>Runner.Validate.username.System</title>
+                    <para>The system shall verify that the value of each <literal>username</literal> key does not match a system-defined account.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.username.Valid">
+                    <title>Runner.Validate.username.Valid</title>
+                    <para>The system shall verify that the value of each <literal>username</literal> key is a valid Linux user account name.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.useralias">
+                    <title>Runner.Validate.useralias</title>
+                    <para>The system shall verify that the HorizonScript contains a number of <literal>useralias</literal> keys equal or less than the number of <literal>username</literal> keys.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.useralias.Validity">
+                    <title>Runner.Validate.useralias.Validity</title>
+                    <para>The system shall verify that each <literal>useralias</literal> key has a valid form of two values in a space-separated tuple, with the second value reading to the end of the line (optionally containing spaces).</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.useralias.Name">
+                    <title>Runner.Validate.useralias.Name</title>
+                    <para>The system shall verify that the first value in each <literal>useralias</literal> key tuple is an account name specified in a <literal>username</literal> key.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.useralias.Unique">
+                    <title>Runner.Validate.useralias.Unique</title>
+                    <para>The system shall verify that only one <literal>useralias</literal> key is specified per account name.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.userpw">
+                    <title>Runner.Validate.userpw</title>
+                    <para>The system shall verify that the HorizonScript contains a number of <literal>userpw</literal> keys equal or less than the number of <literal>username</literal> keys.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.userpw.Validity">
+                    <title>Runner.Validate.userpw.Validity</title>
+                    <para>The system shall verify that each <literal>userpw</literal> key has a valid form of two values in a space-separated tuple.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.userpw.Name">
+                    <title>Runner.Validate.userpw.Name</title>
+                    <para>The system shall verify that the first value in each <literal>userpw</literal> key tuple is an account name specified in a <literal>username</literal> key.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.userpw.Unique">
+                    <title>Runner.Validate.userpw.Unique</title>
+                    <para>The system shall verify that only one <literal>userpw</literal> key is specified per account name.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.userpw.Crypt">
+                    <title>Runner.Validate.userpw.Crypt</title>
+                    <para>The system shall verify that the second value for each <literal>userpw</literal> key tuple is in the format: <literal>$</literal>, either <literal>2</literal> for Blowfish or <literal>6</literal> for SHA-512, <literal>$</literal>, and then variant data.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.userpw.None">
+                    <title>Runner.Validate.userpw.None</title>
+                    <para>If a <literal>username</literal> key exists with no matching <literal>userpw</literal> key tuple, the system shall display a warning message that the user account will have no passphrase set.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.usericon">
+                    <title>Runner.Validate.usericon</title>
+                    <para>The system shall verify that the HorizonScript contains a number of <literal>usericon</literal> keys equal or less than the number of <literal>username</literal> keys.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.usericon.Validity">
+                    <title>Runner.Validate.usericon.Validity</title>
+                    <para>The system shall verify that each <literal>usericon</literal> key has a valid form of two values in a space-separated tuple.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.usericon.Name">
+                    <title>Runner.Validate.usericon.Name</title>
+                    <para>The system shall verify that the first value in each <literal>usericon</literal> key tuple is an account name specified in a <literal>username</literal> key.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.usericon.Unique">
+                    <title>Runner.Validate.usericon.Unique</title>
+                    <para>The system shall verify that only one <literal>usericon</literal> key is specified per account name.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.usericon.ValidPath">
+                    <title>Runner.Validate.usericon.ValidPath</title>
+                    <para>The system shall verify that the second value of each <literal>usericon</literal> key tuple is either an absolute local path beginning with an ASCII backslash (<literal>/</literal>), or a valid URL utilising the HTTP or HTTPS protocols.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.usergroups">
+                    <title>Runner.Validate.usergroups</title>
+                    <para>The system shall verify any <literal>usergroups</literal> keys contained in the HorizonScript.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.usergroups.Validity">
+                    <title>Runner.Validate.usergroups.Validity</title>
+                    <para>The system shall verify that each <literal>usergroups</literal> key has a valid form of two values in a space-separated tuple.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.usergroups.Name">
+                    <title>Runner.Validate.usergroups.Name</title>
+                    <para>The system shall verify that the first value in each <literal>usergroups</literal> key tuple is an account name specified in a <literal>username</literal> key.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.usergroups.Count">
+                    <title>Runner.Validate.usergroups.Count</title>
+                    <para>The system shall verify that all <literal>usergroups</literal> key tuples for a specified account name specify a combined total of sixteen or fewer groups.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.usergroups.Unique">
+                    <title>Runner.Validate.usergroups.Unique</title>
+                    <para>The system shall verify that a group is specified only once for each account name.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.usergroups.Group">
+                    <title>Runner.Validate.usergroups.Group</title>
+                    <para>The system shall verify that each group specified is a valid system-defined group name that is present in the base system image <filename>/etc/group</filename> file.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.diskid">
+                    <title>Runner.Validate.diskid</title>
+                    <para>The system shall verify any <literal>diskid</literal> keys contained in the HorizonScript.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.diskid.Validity">
+                    <title>Runner.Validate.diskid.Validity</title>
+                    <para>The system shall verify that each <literal>diskid</literal> key has a valid form of two values in a space-separated tuple, with the second value reading to the end of the line (optionally containing spaces).</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.diskid.Unique">
+                    <title>Runner.Validate.diskid.Unique</title>
+                    <para>The system shall verify that the first value of each <literal>diskid</literal> key tuple is unique in the HorizonScript.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.diskid.Block">
+                    <title>Runner.Validate.diskid.Block</title>
+                    <para>If the system is running in an installation environment, the system shall ensure that the first value of each <literal>diskid</literal> key tuple specifies a valid block device.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.disklabel">
+                    <title>Runner.Validate.disklabel</title>
+                    <para>The system shall verify any <literal>disklabel</literal> keys contained in the HorizonScript.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.disklabel.Validity">
+                    <title>Runner.Validate.disklabel.Validity</title>
+                    <para>The system shall verify that each <literal>disklabel</literal> key has a valid form of two values in a space-separated tuple.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.disklabel.Unique">
+                    <title>Runner.Validate.disklabel.Unique</title>
+                    <para>The system shall verify that the first value of each <literal>disklabel</literal> key tuple is unique in the HorizonScript.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.disklabel.Block">
+                    <title>Runner.Validate.disklabel.Block</title>
+                    <para>If the system is running in an installation environment, the system shall ensure that the first value of each <literal>disklabel</literal> key tuple specifies a valid block device.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.disklabel.LabelType">
+                    <title>Runner.Validate.disklabel.LabelType</title>
+                    <para>The system shall verify that the second value of each <literal>disklabel</literal> key tuple is one of the following three values: <literal>apm</literal>, <literal>mbr</literal>, or <literal>gpt</literal>.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.partition">
+                    <title>Runner.Validate.partition</title>
+                    <para>The system shall verify any <literal>partition</literal> keys contained in the HorizonScript.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.partition.Validity">
+                    <title>Runner.Validate.partition.Validity</title>
+                    <para>The system shall verify that each <literal>partition</literal> key has a valid form of three or four values in a space-separated tuple.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.partition.Validity.PartNo">
+                    <title>Runner.Validate.partition.Validity.PartNo</title>
+                    <para>The system shall verify that the second value of each <literal>partition</literal> key tuple is a valid positive whole integer.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.partition.Unique">
+                    <title>Runner.Validate.partition.Unique</title>
+                    <para>The system shall verify that the union of the first and second values in each <literal>partition</literal> key tuple are unique.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.partition.Block">
+                    <title>Runner.Validate.partition.Block</title>
+                    <para>If the system is running in an installation environment, the system shall ensure that the first value of each <literal>partition</literal> key tuple specifies a valid block device.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.partition.Size">
+                    <title>Runner.Validate.partition.Size</title>
+                    <para>The system shall verify that the third value in each <literal>partition</literal> key tuple specifies a valid size as described in <xref linkend="REF-5" />.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.partition.TypeCode">
+                    <title>Runner.Validate.partition.TypeCode</title>
+                    <para>If a <literal>partition</literal> key tuple contains a fourth value, the system shall verify that the fourth value of the <literal>partition</literal> key tuple is a valid type code, which is one of the following two values: <literal>boot</literal>, or <literal>esp</literal>.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.lvm_pv">
+                    <title>Runner.Validate.lvm_pv</title>
+                    <para>The system shall verify any <literal>lvm_pv</literal> keys contained in the HorizonScript.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.lvm_pv.Validity">
+                    <title>Runner.Validate.lvm_pv.Validity</title>
+                    <para>The system shall verify that the value of each <literal>lvm_pv</literal> is an absolute path to a device node.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.lvm_pv.Block">
+                    <title>Runner.Validate.lvm_pv.Block</title>
+                    <para>If the system is running in an installation environment, the system shall verify that the value of each <literal>lvm_pv</literal> key specifies a valid block device or a block device that will be created.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.lvm_vg">
+                    <title>Runner.Validate.lvm_vg</title>
+                    <para>The system shall verify any <literal>lvm_vg</literal> keys contained in the HorizonScript.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.lvm_vg.Validity">
+                    <title>Runner.Validate.lvm_vg.Validity</title>
+                    <para>The system shall verify that each <literal>lvm_vg</literal> key has a valid form of two values in a space-separated tuple.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.lvm_vg.Block">
+                    <title>Runner.Validate.lvm_vg.Block</title>
+                    <para>If the system is running in an installation environment, the system shall verify that the first value of each <literal>lvm_vg</literal> key tuple specifies a valid block device or a block device that will be created.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.lvm_vg.PhysicalVolume">
+                    <title>Runner.Validate.lvm_vg.PhysicalVolume</title>
+                    <para>If the system is running in an installation environment, the system shall verify that the first value of each <literal>lvm_vg</literal> key tuple specifies a valid physical volume or a physical volume that will be created.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.lvm_vg.Name">
+                    <title>Runner.Validate.lvm_vg.Name</title>
+                    <para>The system shall verify that the second value of each <literal>lvm_vg</literal> key specifies a string that would be valid as an LVM volume group name.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.lvm_lv">
+                    <title>Runner.Validate.lvm_lv</title>
+                    <para>The system shall verify any <literal>lvm_lv</literal> keys contained in the HorizonScript.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.lvm_lv.Validity">
+                    <title>Runner.Validate.lvm_lv.Validity</title>
+                    <para>The system shall verify that each <literal>lvm_lv</literal> key has a valid form of three values in a space-separated tuple.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.lvm_lv.VolumeGroup">
+                    <title>Runner.Validate.lvm_lv.VolumeGroup</title>
+                    <para>If the system is running in an installation environment, the system shall verify that the first value of each <literal>lvm_lv</literal> key specifies a valid LVM volume group, or one specified in an <literal>lvm_vg</literal> key.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.lvm_lv.Name">
+                    <title>Runner.Validate.lvm_lv.Name</title>
+                    <para>The system shall verify that the second value of each <literal>lvm_lv</literal> key specifies a string that would be valid as an LVM logical volume name.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.lvm_lv.Size">
+                    <title>Runner.Validate.lvm_lv.Size</title>
+                    <para>The system shall verify that the third value in each <literal>lvm_lv</literal> key tuple specifies a valid size as described in <xref linkend="REF-5" />.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.encrypt">
+                    <title>Runner.Validate.encrypt</title>
+                    <para>The system shall verify any <literal>encrypt</literal> keys contained in the HorizonScript.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.encrypt.Validity">
+                    <title>Runner.Validate.encrypt.Validity</title>
+                    <para>The system shall verify that the value of each <literal>encrypt</literal> key is a string value that is an absolute path to a device node, with an optional second value as a space-separated tuple.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.encrypt.Block">
+                    <title>Runner.Validate.encrypt.Block</title>
+                    <para>If the system is running in an installation environment, the system shall verify that the value of each <literal>encrypt</literal> key, and the first value of each <literal>encrypt</literal> key tuple, specifies a valid block device or a block device that will be created.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.encrypt.Unique">
+                    <title>Runner.Validate.encrypt.Unique</title>
+                    <para>The system shall verify that the value of each <literal>encrypt</literal> key, and the first value of each <literal>encrypt</literal> key tuple, is unique to all <literal>encrypt</literal> keys and <literal>encrypt</literal> key tuples in the HorizonScript.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.fs">
+                    <title>Runner.Validate.fs</title>
+                    <para>The systemm shall verify any <literal>fs</literal> keys contained in the HorizonScript.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.fs.Validity">
+                    <title>Runner.Validate.fs.Validity</title>
+                    <para>The system shall verify that each <literal>fs</literal> key has a valid form of two values in a space-separated tuple.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.fs.Block">
+                    <title>Runner.Validate.fs.Block</title>
+                    <para>If the system is running in an installation environment, the system shall verify that the first value of each <literal>fs</literal> key tuple specifies a valid block device or a block device that will be created.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.fs.Type">
+                    <title>Runner.Validate.fs.Type</title>
+                    <para>The system shall verify that the second value of each <literal>fs</literal> key tuple specifies a valid file system supported by Horizon, using lower case characters.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.fs.Unique">
+                    <title>Runner.Validate.fs.Unique</title>
+                    <para>The system shall verify that the first value of each <literal>fs</literal> key is unique in the HorizonScript.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.mount">
+                    <title>Runner.Validate.mount</title>
+                    <para>The system shall verify that the HorizonScript contains at least one valid <literal>mount</literal> key.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.mount.Validity">
+                    <title>Runner.Validate.mount.Validity</title>
+                    <para>The system shall verify that each <literal>mount</literal> key has a valid form of two or three values in a space-separated tuple.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.mount.Block">
+                    <title>Runner.Validate.mount.Block</title>
+                    <para>If the system is running in an installation environment, the system shall verify that the first value of each <literal>mount</literal> key tuple specifies a valid block device or a block device that will be created.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.mount.Point">
+                    <title>Runner.Validate.mount.Point</title>
+                    <para>The system shall verify that the second value of each <literal>mount</literal> key tuple specifies a valid mount point beginning with a <literal>/</literal>.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.mount.Unique">
+                    <title>Runner.Validate.mount.Unique</title>
+                    <para>The system shall verify that the second value of each <literal>mount</literal> key is unique.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.mount.Root">
+                    <title>Runner.Validate.mount.Root</title>
+                    <para>The system shall verify that one <literal>mount</literal> key tuple specifies the root (<literal>/</literal>) mount.</para>
+                </formalpara>
+                <formalpara id="Runner.Validate.PackageAvail">
+                    <title>Runner.Validate.PackageAvail</title>
+                    <para>If the system is running in a runtime environment, the system shall verify that all of the packages specified in <literal>pkginstall</literal> keys are available in the specified repositories; either the repositories specified in <literal>repository</literal> keys, or the system-default repositories if no <literal>repository</literal> keys have been specified.</para>
+                </formalpara>
+            </section>
+        </section>
+        <section id="runner_execute">
+            <title>Execute HorizonScript</title>
+            <section id="runner_execute_meta">
+                <title>Description / Priority</title>
+                <para>The system executes the instructions provided in the HorizonScript, in the specified order.  The system reports progress, and all warnings and errors, to the listening agent.  Once the system has finished, it reports the completion status to the listening agent.</para>
+            </section>
+            <section id="runner_execute_req">
+                <title>Functional Requirements</title>
+                <formalpara id="Runner.Execute">
+                    <title>Runner.Execute</title>
+                    <para>The system shall execute the instructions provided in the HorizonScript in the order described.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.Exception">
+                    <title>Runner.Execute.Exception</title>
+                    <para>The system shall report any exception encountered during execution to the listening agent, following the specification in <xref linkend="runner_agent"/>.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.Status">
+                    <title>Runner.Execute.Status</title>
+                    <para>If an operation has taken more than 10 seconds, the system shall report the status of the operation to the listening agent, following the specification in <xref linkend="runner_agent"/>.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.StepBegin">
+                    <title>Runner.Execute.StepBegin</title>
+                    <para>When the system begins a step, the system shall report the step as beginning to the listening agent, following the specification in <xref linkend="runner_agent"/>.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.StepDone">
+                    <title>Runner.Execute.StepDone</title>
+                    <para>When the system completes a step, the system shall report the step as completed to the listening agent, following the specification in <xref linkend="runner_agent"/>.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.Verify">
+                    <title>Runner.Execute.Verify</title>
+                    <para>The system shall validate the HorizonScript, using the process specified in the section <xref linkend="runner_validate"/>, before execution.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.Verify.Failure">
+                    <title>Runner.Execute.Verify.Failure</title>
+                    <para>If the HorizonScript fails validation, the system shall report a fatal exception (<xref linkend="Runner.Execute.Exception"/>) and stop execution.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.diskid">
+                    <title>Runner.Execute.diskid</title>
+                    <para>The system shall verify that each block device specified in a <literal>diskid</literal> key tuple matches the identification string provided.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.diskid.Failure">
+                    <title>Runner.Execute.diskid.Failure</title>
+                    <para>If any block device fails the <literal>diskid</literal> identification string check, the system shall consider this a fatal error and stop execution of the HorizonScript.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.disklabel">
+                    <title>Runner.Execute.disklabel</title>
+                    <para>The system shall create any disklabels specified in <literal>disklabel</literal> key tuples.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.disklabel.Overwrite">
+                    <title>Runner.Execute.disklabel.Overwrite</title>
+                    <para>If a disklabel already exists on the block device where a new disklabel will be written, the system shall erase the existing disklabel before creating the new disklabel.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.disklabel.Failure">
+                    <title>Runner.Execute.disklabel.Failure</title>
+                    <para>If a disklabel cannot be created due to an I/O error, or due to a non-existent block device, the system shall consider this a fatal error and stop execution of the HorizonScript.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.partition">
+                    <title>Runner.Execute.partition</title>
+                    <para>The system shall create any partitions specified in <literal>partition</literal> key tuples.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.partition.Failure">
+                    <title>Runner.Execute.partition.Failure</title>
+                    <para>The system shall consider any failure to create a partition as a fatal error and stop execution of the HorizonScript, unless otherwise specified by a requirement in this tree.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.partition.Failure.Device">
+                    <title>Runner.Execute.partition.Failure.Device</title>
+                    <para>If a partition cannot be created due to an I/O error, or due to a non-existent block device, the system shall consider this condition a fatal error and stop execution of the HorizonScript.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.partition.Failure.Numbering">
+                    <title>Runner.Execute.partition.Failure.Numbering</title>
+                    <para>The system shall consider a numbering error, defined as creating a partition with the same index as an existing partition or creating a partition with an invalid index for the block device's label, a fatal error and stop execution of the HorizonScript.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.partition.Failure.Duplicate">
+                    <title>Runner.Execute.partition.Failure.Duplicate</title>
+                    <para>If the partition cannot be created because it already exists, and all properties are identical (index, size, type codes), the system shall continue as if the partitioning succeeded.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.encrypt.PVs">
+                    <title>Runner.Execute.encrypt.PVs</title>
+                    <para>If any <literal>lvm_pv</literal> keys are specified, and any <literal>encrypt</literal> keys specify the block device where an LVM physical volume will be created, the system shall execute the <literal>encrypt</literal> keys that correlate with <literal>lvm_pv</literal> keys before executing the <literal>lvm_pv</literal> keys.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.lvm_pv">
+                    <title>Runner.Execute.lvm_pv</title>
+                    <para>The system shall create any LVM physical volumes specified in <literal>lvm_pv</literal> keys.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.lvm_pv.Failure">
+                    <title>Runner.Execute.lvm_pv.Failure</title>
+                    <para>If a LVM physical volume cannot be created due to an I/O error, or due to a non-existent block device, the system shall consider this condition a fatal error and stop execution of the HorizonScript.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.lvm_vg">
+                    <title>Runner.Execute.lvm_vg</title>
+                    <para>The system shall create any LVM volume groups specified in <literal>lvm_vg</literal> keys.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.lvm_vg.Duplicate">
+                    <title>Runner.Execute.lvm_vg.Duplicate</title>
+                    <para>If an LVM volume group with the specified name already exists on the computer, the system shall consider this condition a fatal error and stop execution of the HorizonScript unless the volume group is using the same physical volume as specified, in which case the system shall continue as if creation of the LVM volume group succeeded.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.lvm_vg.Failure">
+                    <title>Runner.Execute.lvm_vg.Failure</title>
+                    <para>If an LVM volume group cannot be created due to an I/O error, or due to a non-existent physical volume, the system shall consider this condition a fatal error and stop execution of the HorizonScript.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.lvm_lv">
+                    <title>Runner.Execute.lvm_lv</title>
+                    <para>The system shall create any LVM logical volumes specified in <literal>lvm_lv</literal> keys.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.lvm_lv.Failure">
+                    <title>Runner.Execute.lvm_lv.Failure</title>
+                    <para>If an LVM logical volume cannot be created due to an I/O error, or due to a non-existent volume group, the system shall consider this condition a fatal error and stop execution of the HorizonScript.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.encrypt">
+                    <title>Runner.Execute.encrypt</title>
+                    <para>The system shall create LUKS containers specified in <literal>encrypt</literal> keys.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.encrypt.Prompt">
+                    <title>Runner.Execute.encrypt.Prompt</title>
+                    <para>If an <literal>encrypt</literal> key does not specify a passphrase, the system shall prompt the User for a passphrase via the listening agent, following the specification in <xref linkend="runner_agent"/>.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.fs">
+                    <title>Runner.Execute.fs</title>
+                    <para>The system shall create file systems specified in <literal>fs</literal> key tuples.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.fs.Overwrite">
+                    <title>Runner.Execute.fs.Overwrite</title>
+                    <para>If a file system is present on the block device where a new file system is to be created, the system shall overwrite the existing file system.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.fs.Failure">
+                    <title>Runner.Execute.fs.Failure</title>
+                    <para>If a file system cannot be created due to an I/O error, or due to a non-existent block device, the system shall consider this condition a fatal error and stop execution of the HorizonScript.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.mount">
+                    <title>Runner.Execute.mount</title>
+                    <para>The system shall mount the file systems specified in <literal>mount</literal> keys, under the <literal>/target</literal> namespace.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.mount.UnreadableFS">
+                    <title>Runner.Execute.mount.UnreadableFS</title>
+                    <para>If a block device specified in a <literal>mount</literal> key tuple has a file system that is unreadable by the computer, the system shall consider this condition a fatal error and stop execution of the HorizonScript.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.mount.InvalidOption">
+                    <title>Runner.Execute.mount.InvalidOption</title>
+                    <para>If a mount option specified in a <literal>mount</literal> key tuple is invalid, and the file system successfully mounts without that option set, the system shall log a warning to the listening agent and proceed with installation.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.mount.Failure">
+                    <title>Runner.Execute.mount.Failure</title>
+                    <para>If a file system cannot be mounted due to an I/O error, or due to a non-existent block device, the system shall consider this condition a fatal error and stop execution of the HorizonScript.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.hostname">
+                    <title>Runner.Execute.hostname</title>
+                    <para>The system shall set the hostname of the computer to the hostname specified in the <literal>hostname</literal> key.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.hostname.Write">
+                    <title>Runner.Execute.hostname.Write</title>
+                    <para>The system shall write the hostname of the computer to the <literal>/etc/hostname</literal> file in the target namespace.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.repository">
+                    <title>Runner.Execute.repository</title>
+                    <para>If one or more <literal>repository</literal> keys are specified in the HorizonScript, the system shall write the repository locations to the <literal>/etc/apk/repositories</literal> file in the target namespace; otherwise, the system shall write the default repository locations to the <literal>/etc/apk/repositories</literal> file in the target namespace.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.repository.DefaultVersion">
+                    <title>Runner.Execute.repository.Default</title>
+                    <para>If a <literal>version</literal> key is specified in the HorizonScript, and no <literal>repository</literal> keys are specified in the HorizonScript, the system shall use the value of the <literal>version</literal> key as the version portion of the default repository location(s) written to the target namespace.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.firmware">
+                    <title>Runner.Execute.firmware</title>
+                    <para>If a <literal>firmware</literal> key is specified in the HorizonScript, and the system is compiled with firmware support enabled, and the value of the <literal>firmware</literal> key is <literal>true</literal>, the system shall add <literal>linux-firmware</literal> to the list of packages to install.</para>
+                    </formalpara>
+                <formalpara id="Runner.Execute.firmware.Repository">
+                    <title>Runner.Execute.firmware.Repository</title>
+                    <para>If no <literal>repository</literal> keys are specified in the HorizonScript, the system shall append the repository <literal>https://distfiles.apkfission.net/adelie-$VERSION/nonfree</literal> to the <literal>/etc/apk/repositories</literal> file in the target namespace, where <literal>$VERSION</literal> is the version of Adélie Linux being installed.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.netssid">
+                    <title>Runner.Execute.netssid</title>
+                    <para>The system shall write the wireless networking configuration specified by any <literal>netssid</literal> keys to the <literal>/etc/wpa_supplicant/wpa_supplicant.conf</literal> file in the target namespace.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.netaddress">
+                    <title>Runner.Execute.netaddress</title>
+                    <para>The system shall write the networking configuration specified by any <literal>netaddress</literal> keys to the <literal>/etc/conf.d/net</literal> file in the target namespace.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.netaddress.OpenRC">
+                    <title>Runner.Execute.netaddress.OpenRC</title>
+                    <para>This requirement is under discussion.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.nameserver">
+                    <title>Runner.Execute.nameserver</title>
+                    <para>If one or more <literal>nameserver</literal> keys are specified in the HorizonScript, the system shall write the nameservers specified to the <literal>/etc/resolv.conf</literal> file in the target namespace.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.nameserver.FQDN">
+                    <title>Runner.Execute.nameserver.FQDN</title>
+                    <para>If the <literal>hostname</literal> key contains a domain name part (at least one ASCII period <literal>.</literal> followed by at least one alphanumeric character), the system shall write the domain name to the <literal>/etc/resolv.conf</literal> file in the target namespace.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.network">
+                    <title>Runner.Execute.network</title>
+                    <para>If the value of the <literal>network</literal> key is <literal>true</literal>, the system shall execute the <literal>netssid</literal>, <literal>netaddress</literal>, and <literal>nameserver</literal> keys in the installation environment.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.network.netaddress">
+                    <title>Runner.Execute.network.netaddress</title>
+                    <para>If the value of the <literal>network</literal> key is <literal>true</literal>, the system shall use the networking configuration specified in any <literal>netaddress</literal> keys in the installation environment.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.network.netssid">
+                    <title>Runner.Execute.network.netssid</title>
+                    <para>If the value of the <literal>network</literal> key is <literal>true</literal>, the system shall use the wireless networking configuration specified in any <literal>netssid</literal> keys in the installation environment.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.network.nameserver">
+                    <title>Runner.Execute.network.nameserver</title>
+                    <para>If the value of the <literal>network</literal> key is <literal>true</literal>, the system shall use the nameservers specified in any <literal>nameserver</literal> keys in the installation environment.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.usericon">
+                    <title>Runner.Execute.usericon</title>
+                    <para>The system shall use the icons specified in any <literal>usericon</literal> key tuples for identification of users in user interface elements in the target namespace.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.usericon.Remote">
+                    <title>Runner.Execute.usericon.Remote</title>
+                    <para>If any <literal>usericon</literal> location is remote, the system shall download the contents of the remote file to the <literal>/usr/share/user-manager/avatars/remote/</literal> directory in the target namespace.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.signingkey">
+                    <title>Runner.Execute.signingkey</title>
+                    <para>If any <literal>signingkey</literal> key is specified in the HorizonScript, the system shall copy all specified files to the <literal>/etc/apk/keys/</literal> directory in the target namespace; otherwise, the system shall copy the default Adélie Linux signing keys to the <literal>/etc/apk/keys/</literal> directory in the target namespace.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.signingkey.Firmware">
+                    <title>Runner.Execute.signingkey.Firmware</title>
+                    <para>If the <literal>firmware</literal> key is specified in the HorizonScript, and the system is compiled with firmware support enabled, and the value of the <literal>firmware</literal> key is <literal>true</literal>, then the system shall copy the APK Fission signing key(s) to the <literal>/etc/apk/keys/</literal> directory in the target namespace.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.pkginstall">
+                    <title>Runner.Execute.pkginstall</title>
+                    <para>The system shall install all packages requested via the <literal>pkginstall</literal> key to the target namespace utilising the repositories configured in the target namespace.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.pkginstall.APKDB">
+                    <title>Runner.Execute.pkginstall.APKDB</title>
+                    <para>The system shall initialise the APK database in the target namespace before installing packages.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.pkginstall.arch">
+                    <title>Runner.Execute.pkginstall.arch</title>
+                    <para>If a <literal>arch</literal> key is specified in the HorizonScript, the system shall set the architecture of the target computer before installing packages and after initialising the APK database.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.pkginstall.Keys">
+                    <title>Runner.Execute.pkginstall.Keys</title>
+                    <para>The system shall use the signing keys as specified in any <literal>signingkey</literal> keys for ensuring package integrity during package installation.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.rootpw">
+                    <title>Runner.Execute.rootpw</title>
+                    <para>The system shall set the root password in the target namespace to the value specified in the <literal>rootpw</literal> key.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.language">
+                    <title>Runner.Execute.language</title>
+                    <para>If a <literal>language</literal> key is specified in the HorizonScript, the system shall add a script to <literal>/etc/profile.d</literal> setting the <varname>LANG</varname> environment variable to the value of the <literal>language</literal> key.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.keymap">
+                    <title>Runner.Execute.keymap</title>
+                    <para>If a <literal>keymap</literal> key is specified in the HorizonScript, the system shall set the <varname>XKBLAYOUT</varname> variable in the <literal>/etc/default/keyboard</literal> file in the target namespace to value of the <literal>keymap</literal> key.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.UserAccounts">
+                    <title>Runner.Execute.UserAccounts</title>
+                    <para>The system shall configure user accounts in the target namespace as specified in keys <literal>username</literal>, <literal>useralias</literal>, <literal>userpw</literal>, and <literal>usergroups</literal>.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.timezone">
+                    <title>Runner.Execute.timezone</title>
+                    <para>If a <literal>timezone</literal> key is specified in the HorizonScript, the system shall set the timezone in the target namespace to the specified timezone; otherwise, the system shall set the timezone in the target namespace to UTC.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.timezone.Missing">
+                    <title>Runner.Execute.timezone.Missing</title>
+                    <para>If the zoneinfo file for the specified timezone in the <literal>timezone</literal> key is missing in the target namespace, but present in the installation environment, the system shall copy the zoneinfo file from the installation environment to the <literal>/etc/localtime</literal> file in the target namespace.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.bootloader">
+                    <title>Runner.Execute.bootloader</title>
+                    <para>If a <literal>bootloader</literal> key is specified in the HorizonScript, the system shall perform the requested bootloader configuration.</para>
+                </formalpara>
+                <formalpara id="Runner.Execute.Finish">
+                    <title>Runner.Execute.Finish</title>
+                    <para>The system shall notify the listening agent that the HorizonScript has executed successfully and that the target is installed.</para>
+                </formalpara>
+            </section>
+        </section>
+    </section>

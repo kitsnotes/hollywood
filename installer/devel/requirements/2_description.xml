@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<chapter label="2" id="description">
+    <title>Overall Description</title>
+    <para>This chapter provides a high-level description of Project Horizon.  For more information on the background of Project Horizon, see <xref linkend="REF-1"/>.</para>
+    <section id="perspective">
+        <title>Project Perspective</title>
+        <para>Project Horizon is a new system that provides computer users and administrators the ability to install the Adélie Linux operating system.  It is intended to replace the current manual installation procedure for the use cases identified in <citetitle pubwork="chapter"><xref linkend="REF-1"/> sections 1.2.2 and 1.4</citetitle>.</para>
+        <para>It is expected over the next few years that Project Horizon will evolve with the Adélie family of software and services to provide a well-accepted libre environment for general purpose computing.</para>
+    </section>
+    <section id="components">
+        <title>Project Components</title>
+        <para>Project Horizon contains two main components: the Horizon UI, which collects information about the desired target configuration from the user, and the Horizon Runner, which runs on the target computer and performs the installation.</para>
+        <para>The Horizon UI supports two different modes, or "environments".  The primary environment is the Installation Environment.  This is the environment when Horizon UI runs on the target computer and can collect information from the running computer about the target system.  The Installation Environment is our primary focus for development of Project Horizon release 1.0.  The secondary environment is the Runtime Environment.  This is the environment when Horizon UI is running on an administrator's computer and is not running on the target computer.  This environment does not allow collection of any information from the running computer, as it is not the target system.</para>
+        <para>The Horizon Runner is the component which takes as input a HorizonScript, and uses it to configure the target system.  It runs directly on the target system and can retrieve a HorizonScript from a local or remote location.</para>
+    </section>
+    <section id="users">
+        <title>User Classes and Characteristics</title>
+        <para>The identified user classes are defined in <citetitle pubwork="section"><xref linkend="REF-1"/> section 1.4</citetitle>.  A summary of these classes is included below.</para>
+        <table frame="all">
+            <title>User classes for release 1.0 of Project Horizon</title>
+            <tgroup cols="2" align="left" colsep="1" rowsep="1">
+            <thead>
+                <row>
+                    <entry>User Class</entry>
+                    <entry>Description</entry>
+                </row>
+            </thead>
+            <tbody>
+                <row>
+                    <entry>The Beginner "Charlie" (favoured)</entry>
+                    <entry>This class of users has never used Linux before, but has used another operating system on their computer.
+                        Users of this class will need documentation that contains clear descriptions of what their option selection will cause to happen.
+                        Users of this class typically will want to keep their existing operating system while installing Adélie Linux to a second partition or disk.</entry>
+                </row>
+                <row>
+                    <entry>The Enthusiast "Dakota" (favoured)</entry>
+                    <entry>This class of users has experience with other Linux distributions, and wishes to install Adélie Linux.
+                        Users of this class will want to feel in control of their computer and the system being installed to it.
+                        Users of this class will use the majority of the features denoted as "advanced" in this requirements specification.</entry>
+                </row>
+                <row>
+                    <entry>The Administrator "Jamie"</entry>
+                    <entry>This class of users is interested in using HorizonScript to automate installation of Adélie Linux to one or more computers.
+                        Users of this class may or may not use the Horizon UI to create the HorizonScript.</entry>
+                </row>
+                <row>
+                    <entry>The Developer "River"</entry>
+                    <entry>This class of users has significant Linux experience and wishes to install Adélie Linux on more "esoteric" hardware, such as a BeagleBone Black or Pentium III.</entry>
+                </row>
+            </tbody>
+            </tgroup>
+        </table>
+    </section>
+    <section id="environment">
+        <title>Operating Environment</title>
+        <formalpara id="OE-Defined">
+            <title>OE-Defined</title>
+            <para>In this document, the term "installation environment" refers to the Horizon UI or Horizon Runner executing on the target computer that will install Adélie Linux.  The term "runtime environment" refers to the Horizon UI or Horizon Runner executing on a computer that is already running an existing OS.</para>
+        </formalpara>
+        <formalpara id="OE-1">
+            <title>OE-1</title>
+            <para>Horizon Runner shall run on any computer that is supported by the Easy Kernel and is using a Tier 1 supported CPU architecture as defined at <xref linkend="REF-2"/>.</para>
+        </formalpara>
+        <formalpara id="OE-2">
+            <title>OE-2</title>
+            <para>Horizon UI shall run under the X11 display server with a screen resolution no smaller than 800x600 pixels.</para>
+        </formalpara>
+        <formalpara id="OE-3">
+            <title>OE-3</title>
+            <para>The system shall provide the <package>adelie-base-posix</package> package in the installation environment.</para>
+        </formalpara>
+    </section>
+    <section id="constraints">
+        <title>Implementation Constraints</title>
+        <formalpara id="IC-1">
+            <title>IC-1</title>
+            <para>Project Horizon code written in C-based languages shall conform to the Adélie Linux code style.</para>
+        </formalpara>
+        <formalpara id="IC-2">
+            <title>IC-2</title>
+            <para>Horizon UI shall be written in C++ using the Qt widget toolkit.</para>
+        </formalpara>
+        <formalpara id="IC-3">
+            <title>IC-3</title>
+            <para>The system shall use the Modular Crypt Format as described in <xref linkend="REF-3"/> and as implemented in the musl C library to encrypt passwords with the SHA-512 and/or Blowfish algorithms.</para>
+        </formalpara>
+        <formalpara id="IC-4">
+            <title>IC-4</title>
+            <para>Horizon Runner shall be written in a programming language that is present in the System repository of Adélie Linux, as listed at <xref linkend="REF-4"/>.</para>
+        </formalpara>
+        <formalpara id="IC-5">
+            <title>IC-5</title>
+            <para>The system shall perform all communication with external packages via documented APIs, and shall not use pipes to user-facing commands.</para>
+        </formalpara>
+    </section>
+    <section id="assumptions">
+        <title>Assumptions</title>
+        <formalpara id="ASM-1">
+            <title>ASM-1</title>
+            <para>The Perform Installation and Installation Completion sections of Horizon UI are assumed to be their own executable, which is run when either: the Horizon UI completes gathering information from the User and has created the HorizonScript to use for installation, or an Administrator has started Horizon automatically and wishes to have graphical output of the installation progress.</para>
+        </formalpara>
+    </section>
+    <section id="dependencies">
+        <title>Project Dependencies</title>
+        <formalpara id="DEP-1">
+            <title>DEP-1</title>
+            <para>The Horizon UI depends on the Horizon Runner.</para>
+        </formalpara>
+    </section>
+</chapter>

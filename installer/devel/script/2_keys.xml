@@ -1,0 +1,1287 @@
+<?xml version="1.0" encoding="utf-8"?>
+<chapter label="2" id="keys">
+    <title>HorizonScript Keys</title>
+    <section id="key_intro">
+        <title>Introduction</title>
+        <para>A HorizonScript file is, at its core, a collection of values that determine the actions and configuration values used to transform a computer from an indeterminate state to a well-known state running Adélie Linux.  These values are categorised into <firstterm>key</firstterm>s, which is a logical unit of a value.</para>
+        <para>This chapter defines and specifies for every valid key for a HorizonScript file: its name, its purpose, its format, and one or more example values with explanations.</para>
+    </section>
+    <section id="reqd_keys">
+        <title>Required Keys</title>
+        <para>Each key specified in this section is required to be present in a HorizonScript.  If any key from this section is missing, the HorizonScript will be considered invalid and Horizon Runner will not execute it.</para>
+        <section id="network">
+            <title><literal>network</literal></title>
+            <formalpara id="network.name">
+                <title>Name</title>
+                <para><literal>network</literal></para>
+            </formalpara>
+            <formalpara id="network.purpose">
+                <title>Purpose</title>
+                <para>The <literal>network</literal> key determines if the target computer will support networking or not.  If the value is <literal>true</literal>, the computer will support networking, and at least one <literal>netaddress</literal> key will then be required.</para>
+            </formalpara>
+            <formalpara id="network.format">
+                <title>Format</title>
+                <para>The <literal>network</literal> key is a Boolean value &mdash; valid values are <literal>true</literal> and <literal>false</literal>.  <literal>network</literal> must appear exactly once in a HorizonScript.</para>
+            </formalpara>
+            <formalpara id="network.example">
+                <title>Example</title>
+                <para>
+                    <example>
+                        <title>The <literal>network</literal> Key</title>
+                        <programlisting>
+network true
+                        </programlisting>
+                        <para>This enables networking for the target computer.</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+        <section id="hostname">
+            <title><literal>hostname</literal></title>
+            <formalpara id="hostname.name">
+                <title>Name</title>
+                <para><literal>hostname</literal></para>
+            </formalpara>
+            <formalpara id="hostname.purpose">
+                <title>Purpose</title>
+                <para>The <literal>hostname</literal> key determines the hostname of the target computer.  This key is always required, even when the target computer will not participate in a network.  The computer's hostname is used on shell prompts, most window manager launchers, and in log files.</para>
+            </formalpara>
+            <formalpara id="hostname.format">
+                <title>Format</title>
+                <para>The <literal>hostname</literal> key is a string value that must contain only alphanumeric characters and optionally one or more '.' characters.  If hostname contains one or more '.' characters, all content before the first '.' is considered the hostname, and all content after the first '.' is considered the domain name.  <literal>hostname</literal> must appear exactly once in a HorizonScript.</para>
+            </formalpara>
+            <formalpara id="hostname.examples">
+                <title>Examples</title>
+                <para>
+                    <example>
+                        <title>The <literal>hostname</literal> Key &mdash; Setting a Host Name</title>
+                        <programlisting>
+hostname gwyn
+                        </programlisting>
+                        <para>This sets the hostname of the target computer to <literal>gwyn</literal>.</para>
+                    </example>
+                    <example>
+                        <title>The <literal>hostname</literal> Key &mdash; Setting a Host Name and Domain Name</title>
+                        <programlisting>
+hostname gwyn.foxkit.internal
+                        </programlisting>
+                        <para>This sets the hostname of the target computer to <literal>gwyn.foxkit.internal</literal>.</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+        <section id="pkginstall">
+            <title><literal>pkginstall</literal></title>
+            <formalpara id="pkginstall.name">
+                <title>Name</title>
+                <para><literal>pkginstall</literal></para>
+            </formalpara>
+            <formalpara id="pkginstall.purpose">
+                <title>Purpose</title>
+                <para>The <literal>pkginstall</literal> key lists the packages that will be installed on the target computer.</para>
+            </formalpara>
+            <formalpara id="pkginstall.format">
+                <title>Format</title>
+                <para>The <literal>pkginstall</literal> key is a space-separated list of APK packages.  They must be available in the repositories used during the installation process.  <literal>pkginstall</literal> must appear at least once in a HorizonScript.  There is no limit to the number of times <literal>pkginstall</literal> may be specified; each one will append to the list of packages to install.</para>
+            </formalpara>
+            <formalpara id="pkginstall.default">
+                <title>Default</title>
+                <para>If no anchor package (adelie-core, adelie-base, adelie-base-posix, adelie-base-lsb) is specified in any <literal>pkginstall</literal> key, <literal>adelie-core</literal> will be added automatically.</para>
+            </formalpara>
+            <formalpara id="pkginstall.examples">
+                <title>Examples</title>
+                <para>
+                    <example>
+                        <title>The <literal>pkginstall</literal> Key &mdash; Simple Usage</title>
+                        <programlisting>
+pkginstall adelie-base-posix kde x11
+                        </programlisting>
+                        <para>This installs the <literal><package>adelie-base-posix</package></literal>, <literal><package>kde</package></literal>, and <literal><package>x11</package></literal> packages on the target computer.</para>
+                    </example>
+                    <example>
+                        <title>The <literal>pkginstall</literal> Key &mdash; Multiple Invocations</title>
+                        <programlisting>
+pkginstall adelie-base-posix
+pkginstall x11 i3wm
+pkginstall claws-mail
+                        </programlisting>
+                        <para>This installs the <literal><package>adelie-base-posix</package></literal>, <literal><package>x11</package></literal>, <literal><package>i3wm</package></literal>, and <literal><package>claws-mail</package></literal> packages on the target computer.  This advanced usage may be useful if you use a templating engine to generate HorizonScript files.</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+        <section id="rootpw">
+            <title><literal>rootpw</literal></title>
+            <formalpara id="rootpw.name">
+                <title>Name</title>
+                <para><literal>rootpw</literal></para>
+            </formalpara>
+            <formalpara id="rootpw.purpose">
+                <title>Purpose</title>
+                <para>The <literal>rootpw</literal> key provides the encrypted passphrase for the administrative <literal>root</literal> user on the machine.</para>
+            </formalpara>
+            <formalpara id="rootpw.format">
+                <title>Format</title>
+                <para>The <literal>rootpw</literal> key is a string value containing a crypt(3) style, SHA-512 or Blowfish hashed passphrase.  It is invalid to provide a plaintext passphrase.</para>
+            </formalpara>
+            <formalpara id="rootpw.example">
+                <title>Example</title>
+                <para>
+                    <example>
+                        <title>The <literal>rootpw</literal> Key</title>
+                        <programlisting>
+rootpw $6$gumtLGmHwOVIRpQR$2M9PUO24hy5mofzWWf9a.YLbzOgOlUby1g0hDj.wG67E2wrrvys59fq02PPdxBdbgkLZFtjfEx6MHZwMBamwu/
+                        </programlisting>
+                        <para>This sets the target computer's root passphrase to "Test Password".  (Please do not use this passphrase.)</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+    </section>
+    <section id="opt_keys">
+        <title>Optional Keys</title>
+        <para>Each key specified in this section may be present in a HorizonScript.  This section additionally defines the default value or action taken if the specified key is not present.</para>
+        <section id="arch">
+            <title><literal>arch</literal></title>
+            <formalpara id="arch.name">
+                <title>Name</title>
+                <para><literal>arch</literal></para>
+            </formalpara>
+            <formalpara id="arch.purpose">
+                <title>Purpose</title>
+                <para>The <literal>arch</literal> key determines the CPU architecture of the target computer.  The value of this key will be written to the <filename>/etc/apk/arch</filename> file in the target computer, which influences what packages are installed.</para>
+            </formalpara>
+            <formalpara id="arch.format">
+                <title>Format</title>
+                <para>
+                    The <literal>arch</literal> key is a single string value that specifies a valid, APK-recognised CPU architecture.  Currently recongised architectures for the Horizon 1.0 release include:
+                    <itemizedlist id="arch.recognised">
+                        <listitem><para><literal>aarch64</literal> (64-bit little-endian ARMv8)</para></listitem>
+                        <listitem><para><literal>aarch64_be</literal> (64-bit big-endian ARMv8)</para></listitem>
+                        <listitem><para><literal>alpha</literal> (64-bit DEC Alpha)</para></listitem>
+                        <listitem><para><literal>armel</literal> (32-bit ARMv5 or newer)</para></listitem>
+                        <listitem><para><literal>armhf</literal> (32-bit ARM with hardware VFP)</para></listitem>
+                        <listitem><para><literal>armv7</literal> (32-bit ARMv7)</para></listitem>
+                        <listitem><para><literal>m68k</literal> (32-bit Motorola 68020 or newer)</para></listitem>
+                        <listitem><para><literal>mips</literal> (32-bit big-endian MIPS, MIPS III or newer)</para></listitem>
+                        <listitem><para><literal>mips64</literal> (64-bit big-endian MIPS, MIPS III or newer)</para></listitem>
+                        <listitem><para><literal>mipsel</literal> (32-bit little-endian MIPS, MIPS III or newer)</para></listitem>
+                        <listitem><para><literal>mips64el</literal> (64-bit little-endian MIPS, MIPS III or newer)</para></listitem>
+                        <listitem><para><literal>pmmx</literal> (32-bit x86 with MMX extensions)</para></listitem>
+                        <listitem><para><literal>ppc</literal> (32-bit PowerPC)</para></listitem>
+                        <listitem><para><literal>ppc64</literal> (64-bit big-endian POWER/PowerPC with AltiVec/VMX Extensions)</para></listitem>
+                        <listitem><para><literal>riscv</literal> (32-bit RISC-V)</para></listitem>
+                        <listitem><para><literal>riscv64</literal> (64-bit RISC-V)</para></listitem>
+                        <listitem><para><literal>s390x</literal> (64-bit IBM System/390)</para></listitem>
+                        <listitem><para><literal>sparc</literal> (32-bit SPARC)</para></listitem>
+                        <listitem><para><literal>sparc64</literal> (64-bit SPARCv9 or newer)</para></listitem>
+                        <listitem><para><literal>x86</literal> (32-bit x86, 486-class or newer)</para></listitem>
+                        <listitem><para><literal>x86_64</literal> (64-bit x86)</para></listitem>
+                    </itemizedlist>
+                    <warning><title>Warning</title><para>Not all of the architectures listed here are supported by Adélie Linux at this time.</para></warning>
+                </para>
+            </formalpara>
+            <formalpara id="arch.default">
+                <title>Default</title>
+                <para>If the <literal>arch</literal> key is not present, the packages installed to the target will be the same CPU architecture as the system that executes the HorizonScript.  Typically, this is the intended behaviour and the <literal>arch</literal> key will not need to be specified.  However, if the HorizonScript will be executed on a different computer than the target &mdash; for example, if the target is an embedded system or single-board computer that is not capable of running the Horizon system &mdash; this key can be used to install packages compatible with the target.</para>
+            </formalpara>
+            <formalpara id="arch.examples">
+                <title>Example</title>
+                <para>
+                    <example>
+                        <title>The <literal>arch</literal> Key</title>
+                        <programlisting>
+arch ppc
+                        </programlisting>
+                        <para>This sets the CPU architecture of the target computer to 32-bit PowerPC.</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+        <section id="language">
+            <title><literal>language</literal></title>
+            <formalpara id="language.name">
+                <title>Name</title>
+                <para><literal>language</literal></para>
+            </formalpara>
+            <formalpara id="language.purpose">
+                <title>Purpose</title>
+                <para>The <literal>language</literal> key determines the default natural language for the target computer.  The value of this key will be used to configure the <envar>LANG</envar> and <envar>LC_ALL</envar> environment variables, in addition to installing language packs for certain software.</para>
+            </formalpara>
+            <formalpara id="language.format">
+                <title>Format</title>
+                <para>The <literal>language</literal> key is a string value that specifies a valid locale code.  A locale code must match one of the following formats: <replaceable>xx</replaceable>, or <replaceable>xx</replaceable><literal>_</literal><replaceable>YY</replaceable>, or <replaceable>xx</replaceable><literal>_</literal><replaceable>YY</replaceable><literal>.UTF-8</literal>, where <replaceable>xx</replaceable> is a valid ISO 639-1 language code, and <replaceable>YY</replaceable> is a valid ISO 3166-1 country code.  <literal>language</literal> may appear at most once in a HorizonScript.</para>
+            </formalpara>
+            <formalpara id="language.default">
+                <title>Default</title>
+                <para>If the <literal>language</literal> key is not present, no setting will be defined for the <envar>LANG</envar> environment variable.  Otherwise, this setting will be written to <filename>/etc/profile.d/00-language.sh</filename> for the definition of the <envar>LANG</envar> environment variable.  Most software treats this as either "C.UTF-8" or "en_US.UTF-8".  No language packs will be installed for software that supports multiple language; due to English being the <emphasis role="italics">de facto</emphasis> language of software engineering, this implies all software will run in English.</para>
+            </formalpara>
+            <formalpara id="language.examples">
+                <title>Examples</title>
+                <para>
+                    <example>
+                        <title>The <literal>language</literal> Key &mdash; Simple Language</title>
+                        <programlisting>
+language cy
+                        </programlisting>
+                        <para>This sets the language of the target computer to Welsh.</para>
+                    </example>
+                    <example>
+                        <title>The <literal>language</literal> Key &mdash; Language with Country Localisation</title>
+                        <programlisting>
+language fr_CA
+                        </programlisting>
+                        <para>This sets the language of the target computer to Canadian French.</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+        <section id="keymap">
+            <title><literal>keymap</literal></title>
+            <formalpara id="keymap.name">
+                <title>Name</title>
+                <para><literal>keymap</literal></para>
+            </formalpara>
+            <formalpara id="keymap.purpose">
+                <title>Purpose</title>
+                <para>The <literal>keymap</literal> key determines the keyboard layout used for input on the target computer.</para>
+            </formalpara>
+            <formalpara id="keymap.format">
+                <title>Format</title>
+                <para>The <literal>keymap</literal> key is a string value that specifies the name of a keyboard layout.  Valid keyboard layouts are listed in <filename>/etc/console-setup/ckb/rules/xorg.lst</filename> under the <literal>! layout</literal> heading.  <literal>keymap</literal> may appear at most once in a HorizonScript.</para>
+            </formalpara>
+            <formalpara id="keymap.default">
+                <title>Default</title>
+                <para>If the <literal>keymap</literal> key is not present, the target computer will use the default keyboard settings from Linux.  These settings are architecture-dependent, but almost universally use a US QWERTY-style layout.</para>
+            </formalpara>
+            <formalpara id="keymap.example">
+                <title>Example</title>
+                <para>
+                    <example>
+                        <title>The <literal>keymap</literal> Key</title>
+                        <programlisting>
+keymap fr
+                        </programlisting>
+                        <para>This sets the keyboard layout of the target computer to French AZERTY.</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+        <section id="firmware">
+            <title><literal>firmware</literal></title>
+            <formalpara id="firmware.name">
+                <title>Name</title>
+                <para><literal>firmware</literal></para>
+            </formalpara>
+            <formalpara id="firmware.purpose">
+                <title>Purpose</title>
+                <para>The <literal>firmware</literal> key determines if the target computer will load potentially insecure, proprietary firmware.</para>
+            </formalpara>
+            <formalpara id="firmware.format">
+                <title>Format</title>
+                <para>The <literal>firmware</literal> key is a Boolean value &mdash; valid values are <literal>true</literal> and <literal>false</literal>.  <literal>firmware</literal> may appear at most once in a HorizonScript.</para>
+            </formalpara>
+            <formalpara id="firmware.default">
+                <title>Default</title>
+                <para>If the <literal>firmware</literal> key is not present, the target computer will not load proprietary firmware.  This is to ensure the integrity, security, and reliability of the target computer.</para>
+            </formalpara>
+            <formalpara id="firmware.example">
+                <title>Example</title>
+                <para>
+                    <example>
+                        <title>The <literal>firmware</literal> Key</title>
+                        <programlisting>
+firmware false
+                        </programlisting>
+                        <para>This explicitly disables loading of firmware on the target computer.</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+        <section id="netconfigtype">
+            <title><literal>netconfigtype</literal></title>
+            <formalpara id="netconfigtype.name">
+                <title>Name</title>
+                <para><literal>netconfigtype</literal></para>
+            </formalpara>
+            <formalpara id="netconfigtype.purpose">
+                <title>Purpose</title>
+                <para>The <literal>netconfigtype</literal> key determines the desired network configuration type used on the target computer.</para>
+            </formalpara>
+            <formalpara id="netconfigtype.format">
+                <title>Format</title>
+                <para>The <literal>netconfigtype</literal> key is a single string that describes the desired network configuration system used on the target computer.  <literal>netconfigtype</literal> may appear at most once in a HorizonScript.
+                    Currently recognised network configuration systems for Horizon 1.0 are:
+                    <orderedlist id="netconfigtype.format.items">
+                        <listitem><para><literal>netifrc</literal> &mdash; The netifrc system, as used by Adélie Linux</para></listitem>
+                        <listitem><para><literal>eni</literal> &mdash; The /etc/network/interfaces system, as used by Alpine Linux</para></listitem>
+                        <!-- <listitem><para><literal>networkmanager</literal> &mdash; The NetworkManager system, usable by both Adélie and Alpine Linux</para></listitem> -->
+                    </orderedlist>
+                </para>
+            </formalpara>
+            <formalpara id="netconfigtype.default">
+                <title>Default</title>
+                <para>If no <literal>netconfigtype</literal> key is specified, the system will default to the <literal>netifrc</literal> configuration system.</para>
+            </formalpara>
+            <formalpara id="netconfigtype.examples">
+                <title>Examples</title>
+                <para>
+                    <example>
+                        <title>The <literal>netconfigtype</literal> Key &mdash; netifrc</title>
+                        <programlisting>
+netconfigtype netifrc
+                        </programlisting>
+                        <para>This configures the target computer to use netifrc for network configuration.</para>
+                    </example>
+                    <example>
+                        <title>The <literal>netconfigtype</literal> Key &mdash; /etc/network/interfaces</title>
+                        <programlisting>
+netconfigtype eni
+                        </programlisting>
+                        <para>This configures the target computer to use an /etc/network/interfaces file for network configuration.</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+        <section id="netaddress">
+            <title><literal>netaddress</literal></title>
+            <formalpara id="netaddress.name">
+                <title>Name</title>
+                <para><literal>netaddress</literal></para>
+            </formalpara>
+            <formalpara id="netaddress.purpose">
+                <title>Purpose</title>
+                <para>The <literal>netaddress</literal> key determines the network configuration used on the target computer.</para>
+            </formalpara>
+            <formalpara id="netaddress.format">
+                <title>Format</title>
+                <para>The <literal>netaddress</literal> key is a space-separated list of network configuration information:
+                    <orderedlist id="netaddress.format.items">
+                        <listitem><para>The kernel interface name.  If the interface specified does not exist, the system will issue a soft error (logging the failure but attempting to continue with installation).</para></listitem>
+                        <listitem><para>The addressing type.  Valid values are <literal>dhcp</literal> for DHCP v4 and v6, <literal>slaac</literal> for IPv6 Stateless Automatic Address Configuration, and <literal>static</literal> for Administrator-specified addressing.  The list must end here unless the address type specified is <literal>static</literal>.  Any additional items constitute a configuration error and an invalid HorizonScript.</para></listitem>
+                        <listitem><para>The IP address.  The value specified must be a valid IPv4 or IPv6 address.</para></listitem>
+                        <listitem><para>The prefix or network mask.  The value must be either:
+                                <orderedlist id="netaddress.format.prefix_types">
+                                    <listitem><para>A whole number in the range of 1-32 for IPv4 addresses, or 1-64 for IPv6 addresses.</para></listitem>
+                                    <listitem><para>An IPv4 network mask, in the format <literal><replaceable>octet</replaceable>.<replaceable>octet</replaceable>.<replaceable>octet</replaceable>.<replaceable>octet</replaceable></literal>.  This format cannot be used for IPv6 addresses.</para></listitem>
+                                </orderedlist>
+                        </para></listitem>
+                        <listitem><para>Optionally, the default gateway.  The value specified must be a valid IP address of the same family as the IP address specified in item 3.</para></listitem>
+                    </orderedlist>
+                    If <literal>network</literal> is <literal>true</literal>, then <literal>netaddress</literal> must appear at least once.  If <literal>network</literal> is <literal>false</literal>, the network configuration specified in <literal>netaddress</literal> will be written to the target computer but will not be used during installation.  <literal>netaddress</literal> may appear up to 255 times per interface.
+                </para>
+            </formalpara>
+            <formalpara id="netaddress.default">
+                <title>Default</title>
+                <para>There is no default for this key.  It is invalid to enable networking and not provide at least one <literal>netaddress</literal> key.</para>
+            </formalpara>
+            <formalpara id="netaddress.examples">
+                <title>Examples</title>
+                <para>
+                    <example>
+                        <title>The <literal>netaddress</literal> Key &mdash; Simple DHCP</title>
+                        <programlisting>
+netaddress eth0 dhcp
+                        </programlisting>
+                        <para>This configures the target computer to use DHCP on interface <literal>eth0</literal>.</para>
+                    </example>
+                    <example>
+                        <title>The <literal>netaddress</literal> Key &mdash; Static Addressing</title>
+                        <programlisting>
+netaddress eth0 2001:db8::1337 64 2001:db8::1
+netaddress eth0 198.51.100.37 24 198.51.100.1
+                        </programlisting>
+                        <para>This configures the target computer to use the addresses <literal>2001:db::1337/64</literal> and <literal>198.51.100.37/24</literal> on interface <literal>eth0</literal>.  The default gateways are <literal>2001:db::1</literal> and <literal>198.51.100.1</literal>.</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+        <section id="pppoe">
+            <title><literal>pppoe</literal></title>
+            <formalpara id="pppoe.name">
+                <title>Name</title>
+                <para><literal>pppoe</literal></para>
+            </formalpara>
+            <formalpara id="pppoe.purpose">
+                <title>Purpose</title>
+                <para>The <literal>pppoe</literal> key configures a PPPoE link on a specified interface.</para>
+            </formalpara>
+            <formalpara id="pppoe.format">
+                <title>Format</title>
+                <para>The <literal>pppoe</literal> key is a space-separated list of configuration information.  The first item shall be the name of the Ethernet interface used to establish the link.  Each additional item must be in the form <literal><userinput>key</userinput>=<userinput>value</userinput></literal>, where <userinput>key</userinput> is one of the following:
+                    <orderedlist id="pppoe.format.keys">
+                        <listitem><para><literal>mtu</literal> &mdash; The desired MTU of the interface.</para></listitem>
+                        <listitem><para><literal>username</literal> &mdash; The username to use for authentication.</para></listitem>
+                        <listitem><para><literal>password</literal> &mdash; The password/secret to use for authentication.</para></listitem>
+                        <listitem><para><literal>lcp-echo-interval</literal> &mdash; The number of seconds between echo-requests to ensure the connection is still functioning.</para></listitem>
+                        <listitem><para><literal>lcp-echo-failure</literal> &mdash; The number of failed echo-requests before the connection is determined to have a fault.</para></listitem>
+                    </orderedlist>
+                    There shall be zero or one <literal>pppoe</literal> keys specified per interface.  If an interface additionally has a <literal>netaddress</literal> specified for it, the <literal>netaddress</literal> configuration shall be ignored.
+                </para>
+            </formalpara>
+            <formalpara id="pppoe.default">
+                <title>Default</title>
+                <para>If the <literal>pppoe</literal> key is not specified, no PPPoE link will be established.</para>
+            </formalpara>
+            <formalpara id="pppoe.example">
+                <title>Example</title>
+                <para>
+                    <example>
+                        <title>The <literal>pppoe</literal> Key</title>
+                        <programlisting>
+pppoe eth0 mtu=9120 username=awilfox password=fuzzball lcp-echo-interval=15 lcp-echo-failure=3
+                        </programlisting>
+                        <para>This configures a PPPoE link on the interface <literal>eth0</literal>, with an MTU of 9120 and authentiation and LCP configuration as specified.</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+        <section id="nameserver">
+            <title><literal>nameserver</literal></title>
+            <formalpara id="nameserver.name">
+                <title>Name</title>
+                <para><literal>nameserver</literal></para>
+            </formalpara>
+            <formalpara id="nameserver.purpose">
+                <title>Purpose</title>
+                <para>The <literal>nameserver</literal> key determines the DNS server used for name queries on the target computer.</para>
+            </formalpara>
+            <formalpara id="nameserver.format">
+                <title>Format</title>
+                <para>The <literal>nameserver</literal> key takes either an IPv4 address or IPv6 address.  Any other value is invalid.  The <literal>nameserver</literal> may appear up to three times in a HorizonScript, or be omitted.  It is valid to specify <literal>nameserver</literal> even if <literal>network</literal> is <literal>false</literal>, but name queries will not function properly without a network configuration.</para>
+            </formalpara>
+            <formalpara id="nameserver.default">
+                <title>Default</title>
+                <para>If the <literal>nameserver</literal> key is not specified, name queries requiring the DNS will not succeed on the target computer.</para>
+            </formalpara>
+            <formalpara id="nameserver.example">
+                <title>Example</title>
+                <para>
+                    <example>
+                        <title>The <literal>nameserver</literal> Key</title>
+                        <programlisting>
+nameserver 2620:fe::fe
+                        </programlisting>
+                        <para>This configures the target computer to use <ulink url="https://www.quad9.net/about/">Quad9</ulink>'s public resolver, <literal>2620:fe::fe</literal>, for name queries.</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+        <section id="netssid">
+            <title><literal>netssid</literal></title>
+            <formalpara id="netssid.name">
+                <title>Name</title>
+                <para><literal>netssid</literal></para>
+            </formalpara>
+            <formalpara id="netssid.purpose">
+                <title>Purpose</title>
+                <para>The <literal>netssid</literal> key determines the wireless networking configuration on the target computer.</para>
+            </formalpara>
+            <formalpara id="netssid.format">
+                <title>Format</title>
+                <para>The <literal>netssid</literal> is a space-separated list of wireless networking configuration information:
+                    <orderedlist id="netssid.format.items">
+                        <listitem><para>The kernel interface name.  If the interface specified does not exist, the system will issue a soft error (logging the failure but attempting to continue with installation).</para></listitem>
+                        <listitem><para>The SSID name to connect to.  This must be a string value enclosed by ASCII double-quotes (<literal>"</literal>).  System behaviour is undefined if the SSID name contains an ASCII double-quote.</para></listitem>
+                        <listitem><para>The security type of the SSID.  Valid values are <literal>none</literal> for an open access point, <literal>wep</literal> for a WEP passphrase, and <literal>wpa</literal> for a WPA pre-shared key (PSK).</para></listitem>
+                        <listitem><para>If the security type is not <literal>none</literal>, the passphrase or pre-shared key.  WPA PSKs may be specified in hexadecimal or as a raw string.  The remainder of the line will be used verbatim.</para></listitem>
+                    </orderedlist>
+                </para>
+            </formalpara>
+            <formalpara id="netssid.default">
+                <title>Default</title>
+                <para>If the <literal>netssid</literal> key is not specified, no wireless network configuration will be present on the target computer.</para>
+            </formalpara>
+            <formalpara id="netssid.examples">
+                <title>Examples</title>
+                <para>
+                    <example>
+                        <title>The <literal>netssid</literal> Key &mdash; Open Network</title>
+                        <programlisting>
+netssid wlan0 "h" none
+                        </programlisting>
+                        <para>This configures the target computer to connect to the access point with name <literal>h</literal>, with no security.</para>
+                    </example>
+                    <example>
+                        <title>The <literal>netssid</literal> Key &mdash; WEP Network</title>
+                        <programlisting>
+netssid wlan0 "Hophop" wep omgitsarabbit
+                        </programlisting>
+                        <para>This configures the target computer to connect to the access point with name <literal>Hophop</literal>, with the WEP passphrase <literal>omgitsarabbit</literal>.</para>
+                    </example>
+                    <example>
+                        <title>The <literal>netssid</literal> Key &mdash; WPA2 Network</title>
+                        <programlisting>
+netssid wlan0 "The New Fox 5G" wpa shh sekrit
+                        </programlisting>
+                        <para>This configures the target computer to connect to the access point with name <literal>The New Fox 5G</literal>, with the WPA PSK <literal>shh sekrit</literal>.</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+        <section id="timezone">
+            <title><literal>timezone</literal></title>
+            <formalpara id="timezone.name">
+                <title>Name</title>
+                <para><literal>timezone</literal></para>
+            </formalpara>
+            <formalpara id="timezone.purpose">
+                <title>Purpose</title>
+                <para>The <literal>timezone</literal> key determines the local time zone on the target computer.</para>
+            </formalpara>
+            <formalpara id="timezone.format">
+                <title>Format</title>
+                <para>The <literal>timezone</literal> key is a string value that must correspond with a valid zoneinfo time zone name.  A list of valid time zone names may be found using the following command on any Adélie Linux computer: <command>find /usr/share/zoneinfo</command>.  <literal>timezone</literal> may appear at most once in a HorizonScript.</para>
+            </formalpara>
+            <formalpara id="timezone.default">
+                <title>Default</title>
+                <para>If the <literal>timezone</literal> key is not specified, the target computer will use UTC (Universal Coordinated Time) as its time zone.</para>
+            </formalpara>
+            <formalpara id="timezone.example">
+                <title>Example</title>
+                <para>
+                    <example>
+                        <title>The <literal>timezone</literal> Key</title>
+                        <programlisting>
+timezone Africa/Nairobi
+                        </programlisting>
+                        <para>This configures the target computer to use East Africa Time, as observed in Nairobi, Kenya, for the local time zone.</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+        <section id="version">
+            <title><literal>version</literal></title>
+            <formalpara id="version.name">
+                <title>Name</title>
+                <para><literal>version</literal></para>
+            </formalpara>
+            <formalpara id="version.purpose">
+                <title>Purpose</title>
+                <para>The <literal>version</literal> key specifies the version of Adélie Linux being installed.  The value of this key is used if <literal>repository</literal> is not specified to determine the repositories to use by default.  If <literal>repository</literal> is provided, this key has no effect.</para>
+            </formalpara>
+            <formalpara id="version.format">
+                <title>Format</title>
+                <para>The <literal>version</literal> key is a string value which describes a version of Adélie Linux.</para>
+            </formalpara>
+            <formalpara id="version.default">
+                <title>Default</title>
+                <para>If the <literal>version</literal> key is not specified, the system will proceed as if the key had been specified with the value "stable".</para>
+            </formalpara>
+            <formalpara id="version.example">
+                <title>Example</title>
+                <para>
+                    <example>
+                        <title>The <literal>version</literal> Key</title>
+                        <programlisting>
+version 1.1
+                        </programlisting>
+                        <para>This configures the target computer to install version 1.1 of Adélie Linux.</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+        <section id="repository">
+            <title><literal>repository</literal></title>
+            <formalpara id="repository.name">
+                <title>Name</title>
+                <para><literal>repository</literal></para>
+            </formalpara>
+            <formalpara id="repository.purpose">
+                <title>Purpose</title>
+                <para>The <literal>repository</literal> key specifies the location of an APK package repository to use on the target computer.  This repository will be used for initial installation, and added to the <filename>/etc/apk/repository</filename> file on the target computer.</para>
+            </formalpara>
+            <formalpara id="repository.format">
+                <title>Format</title>
+                <para>The <literal>repository</literal> key is a string value which must describe either an absolute local path or a HTTP or HTTPS location on the network.  <literal>repository</literal> may appear up to ten times in a HorizonScript, or be omitted.</para>
+            </formalpara>
+            <formalpara id="repository.default">
+                <title>Default</title>
+                <para>If the <literal>repository</literal> key is not specified, the default repositories for Adélie Linux will be used:
+                    <itemizedlist id="repository.default.repos">
+                        <listitem><para>https://distfiles.adelielinux.org/adelie/$VERSION/system</para></listitem>
+                        <listitem><para>https://distfiles.adelielinux.org/adelie/$VERSION/user</para></listitem>
+                    </itemizedlist>
+                    where <replaceable>$VERSION</replaceable> is the version of Adélie Linux being installed.  Additionally, if the <literal>firmware</literal> key is specified and set to <literal>true</literal>, the <literal>https://distfiles.apkfission.net/adelie-$VERSION/nonfree</literal> repository will be added.  If <literal>repository</literal> is specified, <emphasis>none of these repositories will be used unless manually specified</emphasis>.
+                </para>
+            </formalpara>
+            <formalpara id="repository.example">
+                <title>Example</title>
+                <para>
+                    <example>
+                        <title>The <literal>repository</literal> Key</title>
+                        <programlisting>
+repository https://mirrors.servercentral.com/adelie/1.0/system
+repository https://mirrors.servercentral.com/adelie/1.0/user
+                        </programlisting>
+                        <para>This configures the target computer to use the Server Central mirrors.</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+        <section id="svcenable">
+            <title><literal>svcenable</literal></title>
+            <formalpara id="svcenable.name">
+                <title>Name</title>
+                <para><literal>svcenable</literal></para>
+            </formalpara>
+            <formalpara id="svcenable.purpose">
+                <title>Purpose</title>
+                <para>The <literal>svcenable</literal> key specifies a service to start up on system boot.</para>
+            </formalpara>
+            <formalpara id="svcenable.format">
+                <title>Format</title>
+                <para>The <literal>svcenable</literal> key is a space-separate list which contains the name of a OpenRC service and an optional runlevel specification.  The service file must be installed as part of a <literal>pkginstall</literal> key.  <literal>svcenable</literal> may appear any number of times in a HorizonScript.  If the runlevel is not specified, the <literal>default</literal> runlevel will be used.</para>
+            </formalpara>
+            <formalpara id="svcenable.examples">
+                <title>Examples</title>
+                <para>
+                    <example>
+                        <title>The <literal>svcenable</literal> Key &mdash; Enable SSH on Boot</title>
+                        <programlisting>
+svcenable sshd
+                        </programlisting>
+                        <para>This configures the target computer to start the SSH daemon during system boot.</para>
+                    </example>
+                    <example>
+                        <title>The <literal>svcenable</literal> Key &mdash; Start udev on Boot</title>
+                        <programlisting>
+svcenable udev boot
+svcenable udev-trigger boot
+                        </programlisting>
+                        <para>This configures the target computer to start the <literal>udev</literal> and <literal>udev-trigger</literal> services during early boot, in the <literal>boot</literal> runlevel.</para>
+                    </example>
+                    <example>
+                        <title>The <literal>svcenable</literal> Key &mdash; Typical Desktop</title>
+                        <programlisting>
+svcenable dbus
+svcenable elogind
+svcenable sddm
+                        </programlisting>
+                        <para>This configures the target computer to start up a display manager and its required daemons during system boot, enabling graphical logins.</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+        <section id="signingkey">
+            <title><literal>signingkey</literal></title>
+            <formalpara id="signingkey.name">
+                <title>Name</title>
+                <para><literal>signingkey</literal></para>
+            </formalpara>
+            <formalpara id="signingkey.purpose">
+                <title>Purpose</title>
+                <para>The <literal>signingkey</literal> key specifies a key to trust for APK package repositories.</para>
+            </formalpara>
+            <formalpara id="signingkey.format">
+                <title>Format</title>
+                <para>The <literal>signingkey</literal> key is a string value which must describe either an absolute local path or an HTTPS location on the network.  It is not valid to use an HTTP connection for <literal>signingkey</literal>.  <literal>signingkey</literal> may appear up to ten times in a HorizonScript, or be omitted.</para>
+            </formalpara>
+            <formalpara id="signingkey.default">
+                <title>Default</title>
+                <para>If the <literal>signingkey</literal> key is not specified, the Adélie Linux repository signing key will be used.  Additionally, if the <literal>firmware</literal> key is specified and set to <literal>true</literal>, the APK Fission signing key will be used.  If <literal>signingkey</literal> is specified, <emphasis>none of these signing keys will be trusted unless manually specified</emphasis>.</para>
+            </formalpara>
+            <formalpara id="signingkey.example">
+                <title>Example</title>
+                <para>
+                    <example>
+                        <title>The <literal>signingkey</literal> Key</title>
+                        <programlisting>
+signingkey /etc/apk/keys/packages@adelielinux.org.pub
+signingkey https://packages/builder@ourcompany.net.pub
+                        </programlisting>
+                        <para>This configures the target computer to use the default Adélie Linux repository signing key, and also a repository signing key that is available for download from the URL <literal>https://packages/builder@ourcompany.net.pub</literal>.</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+        <section id="bootloader">
+            <title><literal>bootloader</literal></title>
+            <formalpara id="bootloader.name">
+                <title>Name</title>
+                <para><literal>bootloader</literal></para>
+            </formalpara>
+            <formalpara id="bootloader.purpose">
+                <title>Purpose</title>
+                <para>The <literal>bootloader</literal> key specifies the bootloader configuration for the target computer.</para>
+            </formalpara>
+            <formalpara id="bootloader.format">
+                <title>Format</title>
+                <para>The <literal>bootloader</literal> key is a space-separated list of the desired bootloader configuration.  The first item, which is required, determines the block device that the bootloader will be installed on.  The second item determines which bootloader to install.  If the second value is not specified, or if the value is <literal>true</literal>, Horizon will install the platform's preferred bootloader.  If the value is a string value, Horizon will attempt to install the specified bootloader.  If the string value does not correspond to a bootloader available for the target computer, script execution will fail.</para>
+            </formalpara>
+            <formalpara id="bootloader.default">
+                <title>Default</title>
+                <para>If no <literal>bootloader</literal> key is specified, no bootloader will be installed on the target computer and boot configuration must be performed externally.</para>
+            </formalpara>
+            <formalpara id="bootloader.example">
+                <title>Example</title>
+                <para>
+                    <example>
+                        <title>The <literal>bootloader</literal> Key</title>
+                        <programlisting>
+bootloader /dev/sda
+                        </programlisting>
+                        <para>This will configure the target computer with the platform's preferred bootloader installed to <literal>/dev/sda</literal>.</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+        <section id="username">
+            <title><literal>username</literal></title>
+            <formalpara id="username.name">
+                <title>Name</title>
+                <para><literal>username</literal></para>
+            </formalpara>
+            <formalpara id="username.purpose">
+                <title>Purpose</title>
+                <para>The <literal>username</literal> key specifies a user account to create on the target computer.</para>
+            </formalpara>
+            <formalpara id="username.format">
+                <title>Format</title>
+                <para>The <literal>username</literal> key is a string value, describing the user account's name.  This name must be a valid Linux account name.  <literal>username</literal> may be specified up to 255 times.  It is invalid to specify the same account name more than once.  It is invalid to specify the name of a system account.</para>
+            </formalpara>
+            <formalpara id="username.default">
+                <title>Default</title>
+                <para>If no <literal>username</literal> key is specified, no user accounts will be created on the system beyond the built-in system accounts.  Only <literal>root</literal> will be able to log in.</para>
+            </formalpara>
+            <formalpara id="username.examples">
+                <title>Examples</title>
+                <para>
+                    <example>
+                        <title>The <literal>username</literal> Key &mdash; Simple Usage</title>
+                        <programlisting>
+username awilfox
+                        </programlisting>
+                        <para>This creates an account with name <literal>awilfox</literal> on the target computer.</para>
+                    </example>
+                    <example>
+                        <title>The <literal>username</literal> Key &mdash; Advanced Usage</title>
+                        <programlisting>
+username chris
+username kayla
+username meg
+username steph
+username amanada
+                        </programlisting>
+                        <para>This creates five accounts on the target computer.</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+        <section id="useralias">
+            <title><literal>useralias</literal></title>
+            <formalpara id="useralias.name">
+                <title>Name</title>
+                <para><literal>useralias</literal></para>
+            </formalpara>
+            <formalpara id="useralias.purpose">
+                <title>Purpose</title>
+                <para>The <literal>useralias</literal> key provides the friendly name or alias of a user account on the target computer.</para>
+            </formalpara>
+            <formalpara id="useralias.format">
+                <title>Format</title>
+                <para>The <literal>useralias</literal> key is a space-separated tuple of two string values: the user account name, and the friendly name or alias to use.  The friendly name is read to the end of the line and may contain spaces.  <literal>useralias</literal> may appear up to once per <literal>username</literal>.  It is invalid to specify more than one <literal>useralias</literal> for a given <literal>username</literal>.  It is invalid to specify a <literal>useralias</literal> for an account that is not created by <literal>username</literal>.</para>
+            </formalpara>
+            <formalpara id="useralias.default">
+                <title>Default</title>
+                <para>If no <literal>useralias</literal> key is specified for a <literal>username</literal>, the alias "Adélie User" will be used.</para>
+            </formalpara>
+            <formalpara id="useralias.examples">
+                <title>Examples</title>
+                <para>
+                    <example>
+                        <title>The <literal>useralias</literal> Key</title>
+                        <programlisting>
+useralias awilfox A. Wilcox
+                        </programlisting>
+                        <para>This sets the friendly name of the <literal>awilfox</literal> account to <literal>A. Wilcox</literal>.</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+        <section id="userpw">
+            <title><literal>userpw</literal></title>
+            <formalpara id="userpw.name">
+                <title>Name</title>
+                <para><literal>userpw</literal></para>
+            </formalpara>
+            <formalpara id="userpw.purpose">
+                <title>Purpose</title>
+                <para>The <literal>userpw</literal> key specifies the passphrase to use for a given user account on the target computer.</para>
+            </formalpara>
+            <formalpara id="userpw.format">
+                <title>Format</title>
+                <para>The <literal>userpw</literal> key is a space-separated tuple of two string elements: the user account name, and the encrypted, SHA-512 or Blowfish hashed passphrase.  It is invalid to specify a plaintext passphrase.  <literal>userpw</literal> may appear up to once per <literal>username</literal>.  It is invalid to specify more than one <literal>userpw</literal> for a given <literal>username</literal>.  It is invalid to specify a <literal>userpw</literal> for an account that is not created by <literal>username</literal>.</para>
+            </formalpara>
+            <formalpara id="userpw.default">
+                <title>Default</title>
+                <para>If no <literal>userpw</literal> key is specified for a <literal>username</literal>, it will have no passphrase set.  By default, this will prevent users from logging in to the account.</para>
+            </formalpara>
+            <formalpara id="userpw.example">
+                <title>Example</title>
+                <para>
+                    <example>
+                        <title>The <literal>userpw</literal> Key</title>
+                        <programlisting>
+userpw awilfox $6$UZJm/vBmVgyIdMZr$ppKEulz/HY0/e7RcXXujQbcqDXkUYgIqNEVPQJO6.le9kUpz8GvvRezY3ifqUUEwjhSo9tTOMG7lhqjn8gGpH0
+                        </programlisting>
+                        <para>This sets the passphrase of the <literal>awilfox</literal> account to <literal>My Passphrase</literal>.  (Please do not use this passphrase.)</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+        <section id="usericon">
+            <title><literal>usericon</literal></title>
+            <formalpara id="usericon.name">
+                <title>Name</title>
+                <para><literal>usericon</literal></para>
+            </formalpara>
+            <formalpara id="usericon.purpose">
+                <title>Purpose</title>
+                <para>The <literal>usericon</literal> key specifies a icon used to identify a given user account on the target computer.</para>
+            </formalpara>
+            <formalpara id="usericon.format">
+                <title>Format</title>
+                <para>The <literal>usericon</literal> key is a space-separated tuple of two string elements: the user account name, and a path to the icon.  The icon must be in JPEG, PNG, TGA, or TIFF format.  The path must be an absolute path accessible from the installation environment, or a supported URL.  <literal>usericon</literal> may appear up to once per <literal>username</literal>.  It is invalid to specify more than one <literal>usericon</literal> for a given <literal>username</literal>.  It is invalid to specify a <literal>usericon</literal> for an account that is not created by <literal>username</literal>.</para>
+            </formalpara>
+            <formalpara id="usericon.default">
+                <title>Default</title>
+                <para>If no <literal>usericon</literal> key is specified for a <literal>username</literal>, a default silhouette icon will be used for that account.</para>
+            </formalpara>
+            <formalpara id="usericon.example">
+                <title>Example</title>
+                <para>
+                    <example>
+                        <title>The <literal>usericon</literal> Key</title>
+                        <programlisting>
+usericon awilfox /usr/share/user-manager/avatars/circles/Cat.png
+                        </programlisting>
+                        <para>This sets the icon of the <literal>awilfox</literal> account to the default Cat avatar.</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+        <section id="usergroups">
+            <title><literal>usergroups</literal></title>
+            <formalpara id="usergroups.name">
+                <title>Name</title>
+                <para><literal>usergroups</literal></para>
+            </formalpara>
+            <formalpara id="usergroups.purpose">
+                <title>Purpose</title>
+                <para>The <literal>usergroups</literal> key specifies group membership for a given user account on the target computer.</para>
+            </formalpara>
+            <formalpara id="usergroups.format">
+                <title>Format</title>
+                <para>The <literal>usergroups</literal> key is a space-separated tuple of two string elements: the user account name, and a comma-separated list of groups of which the account should become a member.  <literal>usergroups</literal> may appear at least once per <literal>username</literal>.  Each <literal>usergroups</literal> key for a given <literal>username</literal> appends to an existing list, if any.  It is invalid to specify the same group more than once for a given <literal>username</literal>.  It is invalid to specify more than 16 groups for a given <literal>username</literal> across all <literal>usergroups</literal> specified for it.</para>
+            </formalpara>
+            <formalpara id="usergroups.default">
+                <title>Default</title>
+                <para>If no <literal>usergroups</literal> is specified for a given <literal>username</literal>, it will be added to the <literal>users</literal> group.  If it is given, the <literal>users</literal> group must be explicitly specified if desired.</para>
+            </formalpara>
+            <formalpara id="usergroups.examples">
+                <title>Examples</title>
+                <para>
+                    <example>
+                        <title>The <literal>usergroups</literal> Key &mdash; Simple Usage</title>
+                        <programlisting>
+usergroups awilfox users,wheel
+                        </programlisting>
+                        <para>This specifies that the <literal>awilfox</literal> account will become a member of the groups <literal>users</literal> and <literal>wheel</literal> on the target computer.</para>
+                    </example>
+                    <example>
+                        <title>The <literal>usergroups</literal> Key &mdash; Advanced Usage</title>
+                        <programlisting>
+usergroups chris disk,lp,wheel,floppy,audio,cdrom,video,games,cdrw,usb,users
+usergroups kayla lp,audio,cdrom,video,games,users
+usergroups meg lp,audio,cdrom,video,games,users
+usergroups steph lp,audio,cdrom,video,games,users
+usergroups amanda lp,audio,cdrom,video,games,users
+                        </programlisting>
+                        <para>This specifies that the <literal>chris</literal> account will become an administrative account and have access to most peripherals of the system, while the rest will have access to printers, sound, optical storage, graphics, and the ability to play games.</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+    </section>
+    <section id="disk">
+        <title>Disk Partitioning Keys</title>
+        <para>This section describes the keys used for partitioning one or more hard disk drives using HorizonScript.  Of these, only the <literal>mount</literal> key is required to be present in a valid HorizonScript.</para>
+        <section id="disk.sizing">
+            <title>Sizing</title>
+            <formalpara id="sizing.purpose">
+                <title>Purpose</title>
+                <para>All disk partitioning keys that take a size argument shall follow the format described in this section.  There are three forms of valid size that may be specified.</para>
+            </formalpara>
+            <formalpara id="sizing.format1">
+                <title>Format #1: Block Size</title>
+                <para>Block sizing format is: <replaceable>number</replaceable>{K|M|G|T}.  K, M, G, and T represent IEC binary prefixes; for example, "150G" would specify 150 GiB.</para>
+            </formalpara>
+            <formalpara id="sizing.format2">
+                <title>Format #2: Percentage</title>
+                <para>Percentage format is: <replaceable>number</replaceable>%, where <replaceable>number</replaceable> is a number from 1 to 100 inclusive.  It is invalid to specify multiple partitions that would use more than 100% of a containing block device.</para>
+            </formalpara>
+            <formalpara id="sizing.format3">
+                <title>Format #3: Fill</title>
+                <para>The literal string <literal>fill</literal> specifies that the partition shall fill the remaining space of the containing block device.  No partitions may come after one that specifies <literal>fill</literal> on the same containing block device.</para>
+            </formalpara>
+        </section>
+        <section id="diskid">
+            <title><literal>diskid</literal></title>
+            <formalpara id="diskid.name">
+                <title>Name</title>
+                <para><literal>diskid</literal></para>
+            </formalpara>
+            <formalpara id="diskid.purpose">
+                <title>Purpose</title>
+                <para>The <literal>diskid</literal> key specifies a substring of a disk's identification string.  The system matches this string to the specified block device's identification string to ensure that the proper disk is partitioned.</para>
+            </formalpara>
+            <formalpara id="diskid.format">
+                <title>Format</title>
+                <para>The <literal>diskid</literal> key is a space-separated tuple of values that contains exactly two string elements: a valid block device file name, and the substring of its identification string.  The second element is read to the end of the string, so it may contain further spaces.  <literal>diskid</literal> may appear up to one time per block device file name.  It is invalid to specify more than one <literal>diskid</literal> for the same block device.</para>
+            </formalpara>
+            <formalpara id="diskid.default">
+                <title>Default</title>
+                <para>If the <literal>diskid</literal> key is not specified for a block device, the system will not be able to verify that the block device is the intended target of partitioning commands.</para>
+            </formalpara>
+            <formalpara id="diskid.examples">
+                <title>Examples</title>
+                <para>
+                    <example>
+                        <title>The <literal>diskid</literal> Key &mdash; Verify Manufacturer of Hard Disk</title>
+                        <programlisting>
+diskid /dev/sda HITACHI
+                        </programlisting>
+                        <para>This ensures that the identification string of the disk at <filename>/dev/sda</filename> contains the string 'HITACHI'.</para>
+                    </example>
+                    <example>
+                        <title>The <literal>diskid</literal> Key &mdash; Verify Model of NVMe Device</title>
+                        <programlisting>
+diskid /dev/nvme0n1 WDC WDS512G1X0C-00ENX0
+                        </programlisting>
+                        <para>This ensures that the identification string of the NVMe device at <filename>/dev/nvme0n1</filename> contains the string 'WDC WDS512G1X0C-00ENX0'.</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+        <section id="disklabel">
+            <title><literal>disklabel</literal></title>
+            <formalpara id="disklabel.name">
+                <title>Name</title>
+                <para><literal>disklabel</literal></para>
+            </formalpara>
+            <formalpara id="disklabel.purpose">
+                <title>Purpose</title>
+                <para>The <literal>disklabel</literal> key specifies the type of partitioning a disk will use.</para>
+            </formalpara>
+            <formalpara id="disklabel.format">
+                <title>Format</title>
+                <para>The <literal>disklabel</literal> key is a space-separated tuple of values that contains exactly two string elements: a valid block device file name, and the type of disk label to use.  Valid disk labels are:
+                    <orderedlist id="disklabel.format.labels">
+                        <listitem><para><literal>mbr</literal> &mdash; Master Boot Record (MBR)</para></listitem>
+                        <listitem><para><literal>gpt</literal> &mdash; GUID Partition Table (GPT)</para></listitem>
+                        <listitem><para><literal>apm</literal> &mdash; Apple Partition Map (APM)</para></listitem>
+                    </orderedlist>
+                    <literal>disklabel</literal> may appear up to once per block device file name.  It is invalid to specify more than one <literal>disklabel</literal> for the same block device.
+                </para>
+            </formalpara>
+            <formalpara id="disklabel.default">
+                <title>Default</title>
+                <para>If the <literal>disklabel</literal> key is not specified for a block device, the existing disk label will be used.  If no disk label is currently written to the device, the device will not contain a disk label.</para>
+            </formalpara>
+            <formalpara id="disklabel.examples">
+                <title>Examples</title>
+                <para>
+                    <example>
+                        <title>The <literal>disklabel</literal> Key &mdash; Simple Usage</title>
+                        <programlisting>
+disklabel /dev/sda mbr
+                        </programlisting>
+                        <para>This erases any present disk label on the block device at <filename>/dev/sda</filename> and creates a new MBR disk label.</para>
+                    </example>
+                    <example>
+                        <title>The <literal>disklabel</literal> Key &mdash; Multiple Disks</title>
+                        <programlisting>
+disklabel /dev/sda apm
+disklabel /dev/sdb gpt
+disklabel /dev/nvme0n1 gpt
+                        </programlisting>
+                        <para>This erases any present disk labels on the block devices <filename>/dev/sda</filename>, <filename>/dev/sdb</filename>, and <filename>/dev/nvme0n1</filename>.  The system will then create a new APM disk label on <filename>/dev/sda</filename>, and new GPT disk labels on each of <filename>/dev/sdb</filename> and <filename>/dev/nvme0n1</filename>.  This example would allow you to use mass storage (greater than 2 TB) on a Power Mac G5 while retaining OpenFirmware boot compatibility on the first disk.</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+        <section id="partition">
+            <title><literal>partition</literal></title>
+            <formalpara id="partition.name">
+                <title>Name</title>
+                <para><literal>partition</literal></para>
+            </formalpara>
+            <formalpara id="partition.purpose">
+                <title>Purpose</title>
+                <para>The <literal>partition</literal> key specifies a new partition to be created on a block device.</para>
+            </formalpara>
+            <formalpara id="partition.format">
+                <title>Format</title>
+                <para>The <literal>partition</literal> key is a space-separated tuple of values that contains either three or four elements: a valid block device file name, the partition number to create, the size of the new partition as specified in <xref linkend="disk.sizing" />, and optionally a type code for the partition.  Valid type codes are:
+                    <orderedlist id="partition.format.types">
+                        <listitem><para><literal>boot</literal> &mdash; Marks the partition as bootable.  On MBR disk labels, this enables the Bootable flag.  On APM disk labels, this sets the partition type to <literal>Apple_Bootstrap</literal>.  On GPT disk labels, this sets the partition's type to BIOS Boot.</para></listitem>
+                        <listitem><para><literal>esp</literal> &mdash; Marks the partition as an EFI System Partition (ESP).  This type is only valid on GPT disk labels.</para></listitem>
+                        <listitem><para><literal>bios</literal> &mdash; Marks the partition as a BIOS Boot partition.  This type is only valid on GPT disk labels.</para></listitem>
+                        <listitem><para><literal>prep</literal> &mdash; Marks the partition as a PowerPC Boot partition.  This type is only valid on MBR disk labels.</para></listitem>
+                    </orderedlist>
+                    <literal>partition</literal> may appear many times per block device file name; the exact maximum depend on the disk label in use on the block device.  It is invalid to specify a <literal>partition</literal> for a partition number that already exists on the block device.  It is invalid to specify a <literal>partition</literal> for a block device that does not have a disk label supported by Horizon.
+                </para>
+            </formalpara>
+            <formalpara id="partition.default">
+                <title>Default</title>
+                <para>If no <literal>partition</literal> key is specified for a given block device, then the partition table on that block device is not modified.</para>
+            </formalpara>
+            <formalpara id="partition.examples">
+                <title>Examples</title>
+                <para>
+                    <example>
+                        <title>The <literal>partition</literal> Key &mdash; Simple Usage</title>
+                        <programlisting>
+partition /dev/sda 1 40M boot
+partition /dev/sda 2 fill
+                        </programlisting>
+                        <para>This configures <filename>/dev/sda</filename> to contain a 40 MiB boot partition, and uses the rest of the disk as a single data partition.</para>
+                    </example>
+                    <example>
+                        <title>The <literal>partition</literal> Key &mdash; Advanced Usage</title>
+                        <programlisting>
+partition /dev/sda 1 1G boot
+partition /dev/sda 2 20%
+partition /dev/sda 3 40%
+partition /dev/sda 4 fill
+                        </programlisting>
+                        <para>This configures <filename>/dev/sda</filename> to contain a 1 GiB boot partition, a second partition using 20% of the disk's total size, a third partition using 40% of the disk's total size, and a fourth partition that utilises the rest of the disk.</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+        <section id="lvm_pv">
+            <title><literal>lvm_pv</literal></title>
+            <formalpara id="lvm_pv.name">
+                <title>Name</title>
+                <para><literal>lvm_pv</literal></para>
+            </formalpara>
+            <formalpara id="lvm_pv.purpose">
+                <title>Purpose</title>
+                <para>The <literal>lvm_pv</literal> key specifies a block device to use as a LVM physical volume.</para>
+            </formalpara>
+            <formalpara id="lvm_pv.format">
+                <title>Format</title>
+                <para>The <literal>lvm_pv</literal> key is a string value which must describe a path to a valid block device.  This is typically either a whole disk or a partition on a disk.  <literal>lvm_pv</literal> may be specified up to once per block device specification.  If an <literal>lvm_pv</literal> key is specified for both a block device and an underlying partition already extant on the block device, system behaviour is undefined.</para>
+            </formalpara>
+            <formalpara id="lvm_pv.default">
+                <title>Default</title>
+                <para>If no <literal>lvm_pv</literal> key is specified, no LVM physical volume will be created by the system.</para>
+            </formalpara>
+            <formalpara id="lvm_pv.examples">
+                <title>Examples</title>
+                <para>
+                    <example>
+                        <title>The <literal>lvm_pv</literal> Key &mdash; Whole Disk LVM</title>
+                        <programlisting>
+lvm_pv /dev/sda
+                        </programlisting>
+                        <para>This configures the entire block device at <filename>/dev/sda</filename> to be an LVM physical volume.  Any existing data on the specified disk will be destroyed.</para>
+                    </example>
+                    <example>
+                        <title>The <literal>lvm_pv</literal> Key &mdash; LVM Partition</title>
+                        <programlisting>
+disklabel /dev/sda gpt
+partition /dev/sda 1 4M boot
+partition /dev/sda 2 fill
+lvm_pv /dev/sda2
+                        </programlisting>
+                        <para>This configures the block device at <filename>/dev/sda</filename> with a new GPT disk label, creates a 4 MiB BIOS Boot partition, and then uses the rest of the disk as an LVM physical volume.</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+        <section id="lvm_vg">
+            <title><literal>lvm_vg</literal></title>
+            <formalpara id="lvm_vg.name">
+                <title>Name</title>
+                <para><literal>lvm_vg</literal></para>
+            </formalpara>
+            <formalpara id="lvm_vg.purpose">
+                <title>Purpose</title>
+                <para>The <literal>lvm_vg</literal> key specifies parameters for creating a new LVM volume group on the target computer.</para>
+            </formalpara>
+            <formalpara id="lvm_vg.format">
+                <title>Format</title>
+                <para>The <literal>lvm_vg</literal> key is a space-separated tuple of exactly two string values: a path to a valid block device containing an LVM physical volume, and a valid LVM volume group name.  A volume group will be created on the specified LVM physical volume with the specified name.  It is invalid to specify a block device that does not contain an LVM physical volume.</para>
+            </formalpara>
+            <formalpara id="lvm_vg.default">
+                <title>Default</title>
+                <para>If no <literal>lvm_vg</literal> key is specified, no LVM volume groups will be created on the target computer.</para>
+            </formalpara>
+            <formalpara id="lvm_vg.example">
+                <title>Example</title>
+                <para>
+                    <example>
+                        <title>The <literal>lvm_vg</literal> Key</title>
+                        <programlisting>
+lvm_vg /dev/sda2 elaine
+                        </programlisting>
+                        <para>This creates a new LVM volume group named <literal>elaine</literal> on the LVM physical volume <literal>/dev/sda2</literal>.</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+        <section id="lvm_lv">
+            <title><literal>lvm_lv</literal></title>
+            <formalpara id="lvm_lv.name">
+                <title>Name</title>
+                <para><literal>lvm_lv</literal></para>
+            </formalpara>
+            <formalpara id="lvm_lv.purpose">
+                <title>Purpose</title>
+                <para>The <literal>lvm_lv</literal> key specifies parameters for creating a new LVM logical volume on the target computer.</para>
+            </formalpara>
+            <formalpara id="lvm_lv.format">
+                <title>Format</title>
+                <para>The <literal>lvm_lv</literal> key is a space-separated tuple of exactly three values: the name of an extant LVM volume group, the name of the LVM logical volume to create, and the size of the new LVM logical volume as specified in <xref linkend="disk.sizing" />.  The name of the new LVM logical volume must be a valid logical volume name.  It is invalid to specify a logical volume size larger than the available space in the volume group.</para>
+            </formalpara>
+            <formalpara id="lvm_lv.default">
+                <title>Default</title>
+                <para>If no <literal>lvm_lv</literal> key is specified, no LVM logical volumes will be created on the target computer.</para>
+            </formalpara>
+            <formalpara id="lvm_lv.examples">
+                <title>Examples</title>
+                <para>
+                    <example>
+                        <title>The <literal>lvm_lv</literal> Key</title>
+                        <programlisting>
+lvm_lv elaine root fill
+                        </programlisting>
+                        <para>This creates a new LVM logical volume named <literal>root</literal> on the LVM volume group <literal>elaine</literal>, using all available space in the volume group.</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+        <section id="encrypt">
+            <title><literal>encrypt</literal></title>
+            <formalpara id="encrypt.name">
+                <title>Name</title>
+                <para><literal>encrypt</literal></para>
+            </formalpara>
+            <formalpara id="encrypt.purpose">
+                <title>Purpose</title>
+                <para>The <literal>encrypt</literal> key specifies block devices to encrypt with LUKS.</para>
+            </formalpara>
+            <formalpara id="encrypt.format">
+                <title>Format</title>
+                <para>The <literal>encrypt</literal> key has two forms.  The first form is a string value which must be a path to a valid block device.  The second form is a tuple of two string values which are a path to a valid block device, and the passphrase to use to encrypt the volume.
+                    <warning>
+                        <para>The passphrase to encrypt the volume should not be provided if a non-encrypted network transport is used to transfer the HorizonScript to the target computer.  This could expose the passphrase to attackers.</para>
+                    </warning>
+                    The passphrase will be read to the end of the line, so it may contain spaces if desired.
+                    If no passphrase is specified, the system will interactively prompt for a passphrase during the installation.  There is no time out for entering a passphrase.
+                    <literal>encrypt</literal> may be specified up to once per block device.  It is invalid to specify an <literal>encrypt</literal> key more than once for the same block device.
+                </para>
+            </formalpara>
+            <formalpara id="encrypt.default">
+                <title>Default</title>
+                <para>If no <literal>encrypt</literal> key is specified, no LUKS containers will be created.  If no passphrase is specified in an <literal>encrypt</literal> key, the system will interactively prompt for one.</para>
+            </formalpara>
+            <formalpara id="encrypt.examples">
+                <title>Examples</title>
+                <para>
+                    <example>
+                        <title>The <literal>encrypt</literal> Key &mdash; Prompt for Passphrase</title>
+                        <programlisting>
+encrypt /dev/elaine/root
+                        </programlisting>
+                        <para>This configures the block device at <filename>/dev/elaine/root</filename> to use LUKS, and prompts the installing technician for a passphrase.</para>
+                    </example>
+                    <example>
+                        <title>The <literal>encrypt</literal> Key &mdash; Use Plaintext Passphrase</title>
+                        <programlisting>
+encrypt /dev/elaine/home oh. so. secret.
+                        </programlisting>
+                        <para>This configures the block device at <filename>/dev/elaine/home</filename> to use LUKS with the passphrase <literal>oh. so. secret.</literal> in plaintext.</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+        <section id="fs">
+            <title><literal>fs</literal></title>
+            <formalpara id="fs.name">
+                <title>Name</title>
+                <para><literal>fs</literal></para>
+            </formalpara>
+            <formalpara id="fs.purpose">
+                <title>Purpose</title>
+                <para>The <literal>fs</literal> key specifies file systems to create on the target computer.</para>
+            </formalpara>
+            <formalpara id="fs.format">
+                <title>Format</title>
+                <para>The <literal>fs</literal> key is a space-separated tuple of two string elements: a path to a valid block device, and the type of file system to use.  Valid file systems are:
+                    <orderedlist id="fs.format.fses">
+                        <listitem><para><literal>ext2</literal> &mdash; The ext2 file system, a non-journaled Linux filesystem.</para></listitem>
+                        <listitem><para><literal>ext3</literal> &mdash; The ext3 file system, a journaled Linux filesystem.</para></listitem>
+                        <listitem><para><literal>ext4</literal> &mdash; The ext4 file system, a journaled Linux filesystem.</para></listitem>
+                        <listitem><para><literal>hfs+</literal> &mdash; The HFS Plus file system, a non-journaled filesystem from Apple used for boot partitions on Macintosh computers.</para></listitem>
+                        <listitem><para><literal>jfs</literal> &mdash; The JFS file system, a journaled filesystem from IBM.</para></listitem>
+                        <listitem><para><literal>xfs</literal> &mdash; The XFS file system, a journaled filesystem orginally developed by SGI.</para></listitem>
+                        <listitem><para><literal>vfat</literal> &mdash; The FAT32 file system, a non-journaled filesystem used for EFI System Partitions on computers with EFI firmware.</para></listitem>
+                        <listitem><para><literal>swap</literal> &mdash; Swap space, used for virtual memory.</para></listitem>
+                    </orderedlist>
+                    <literal>fs</literal> may be specified up to once per block device.  It is invalid to specify <literal>fs</literal> more than once for the same block device.
+                </para>
+            </formalpara>
+            <formalpara id="fs.default">
+                <title>Default</title>
+                <para>If no <literal>fs</literal> key is specified, no file systems will be created on the target computer.</para>
+            </formalpara>
+            <formalpara id="fs.examples">
+                <title>Examples</title>
+                <para>
+                    <example>
+                        <title>The <literal>fs</literal> Key</title>
+                        <programlisting>
+fs /dev/elaine/root ext4
+fs /dev/elaine/home xfs
+                        </programlisting>
+                        <para>This creates a new ext4 file system on the block device at <filename>/dev/elaine/root</filename>, and creates a new XFS file system on <filename>/dev/elaine/home</filename>.</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+        <section id="mount">
+            <title><literal>mount</literal></title>
+            <formalpara id="mount.name">
+                <title>Name</title>
+                <para><literal>mount</literal></para>
+            </formalpara>
+            <formalpara id="mount.purpose">
+                <title>Purpose</title>
+                <para>The <literal>mount</literal> key describes the filesystems and mountpoints to use on the target computer.</para>
+            </formalpara>
+            <formalpara id="mount.format">
+                <title>Format</title>
+                <para>The <literal>mount</literal> key is a space-separated tuple of two or three string elements: a path to a valid block device, the mountpoint on the target computer, and optionally mounting options.  The mountpoint must start with <literal>/</literal>.  Valid mounting options depend on the file system chosen, but typically include options such as <literal>noatime</literal>, <literal>user</literal>, and so on.  See the mount manpage for the file system you are using for more information on mounting options.  Mounting options are separated with commas.  Mounting options will be used in the installation environment and additionally saved to the target computer's <filename>/etc/fstab</filename> file.
+                    <literal>mount</literal> must be specified at least once, for the root (<literal>/</literal>) partition.  It is invalid to specify <literal>mount</literal> more than once for the same block device.  It is invalid to specify <literal>mount</literal> more than once for the same mountpoint.
+                </para>
+            </formalpara>
+            <formalpara id="mount.examples">
+                <title>Examples</title>
+                <para>
+                    <example>
+                        <title>The <literal>mount</literal> Key</title>
+                        <programlisting>
+mount /dev/elaine/root /
+mount /dev/elaine/home /home noquota,wsync
+                        </programlisting>
+                        <para>The filesystem at <filename>/dev/elaine/root</filename> will be mounted at <literal>/</literal>.  The filesystem at <filename>/dev/elaine/home</filename> will be mounted at <literal>/home</literal>, with the <literal>noquota</literal> and <literal>wsync</literal> options.</para>
+                    </example>
+                </para>
+            </formalpara>
+        </section>
+    </section>
+</chapter>
