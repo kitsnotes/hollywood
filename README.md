@@ -8,9 +8,14 @@ Hollywood is also a set of minimal packages to produce a Linux distribution.  Ho
 
 The Hollywood desktop is designed specifically for the Hollywood packages and vice versa.  The end result goal is an easy to use, low maintenance fully integrated Linux system ready to run your favorite applications.
 
+This is designed for AMD64 and ARM64.  Usage on AMD64 requires UEFI firmware.
+
 ## Screenshots
 
 **Hollywood is not yet ready for regular usage!** It has bugs and still requires more work.  Here's some screenshots of current progress:
+
+![Screenshot of a Hollywood desktop](screenshots/nov05-2022-desktop.png "Hollywood Desktop")
+> *A Hollywood desktop as of Nov 05 2022 containing layer-shell/xdg-popups, new icon support, etc.*
 
 ![Screenshot of the About Hollywood application showing system specifications](screenshots/about.jpg "About Hollywood")
 > *About Hollywood, showing system specifications.*
