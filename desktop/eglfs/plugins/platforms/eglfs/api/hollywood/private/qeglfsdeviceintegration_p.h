@@ -40,17 +40,6 @@
 #ifndef QEGLFSDEVICEINTEGRATION_H
 #define QEGLFSDEVICEINTEGRATION_H
 
-//
-//  W A R N I N G
-//  -------------
-//
-// This file is not part of the Qt API.  It exists purely as an
-// implementation detail.  This header file may change from version to
-// version without notice, or even be removed.
-//
-// We mean it.
-//
-
 #include "qeglfsglobal_p.h"
 #include <qpa/qplatformintegration.h>
 #include <qpa/qplatformscreen.h>
@@ -59,17 +48,15 @@
 #include <QtGui/QImage>
 #include <QtGui/private/qeglplatformcontext_p.h>
 
-QT_BEGIN_NAMESPACE
-
 class QPlatformSurface;
-class QEglFSWindow;
+class HWEglFSWindow;
 
-#define QEglFSDeviceIntegrationFactoryInterface_iid "org.qt-project.qt.qpa.egl.QEglFSDeviceIntegrationFactoryInterface.5.5"
+#define QEglFSDeviceIntegrationFactoryInterface_iid "org.originull.qpa.egl.QEglFSDeviceIntegrationFactoryInterface.5.5"
 
-class Q_EGLFS_EXPORT QEglFSDeviceIntegration
+class Q_EGLFS_EXPORT HWEglFSDeviceIntegration
 {
 public:
-    virtual ~QEglFSDeviceIntegration() { }
+    virtual ~HWEglFSDeviceIntegration() { }
 
     virtual void platformInit();
     virtual void platformDestroy();
@@ -89,7 +76,7 @@ public:
     virtual qreal refreshRate() const;
     virtual QSurfaceFormat surfaceFormatFor(const QSurfaceFormat &inputFormat) const;
     virtual EGLint surfaceType() const;
-    virtual QEglFSWindow *createWindow(QWindow *window) const;
+    virtual HWEglFSWindow *createWindow(QWindow *window) const;
     virtual EGLNativeWindowType createNativeWindow(QPlatformWindow *platformWindow,
                                                    const QSize &size,
                                                    const QSurfaceFormat &format);
@@ -112,25 +99,23 @@ public:
     static EGLConfig chooseConfig(EGLDisplay display, const QSurfaceFormat &format);
 };
 
-class Q_EGLFS_EXPORT QEglFSDeviceIntegrationPlugin : public QObject
+class Q_EGLFS_EXPORT HWEglFSDeviceIntegrationPlugin : public QObject
 {
     Q_OBJECT
 
 public:
-    virtual QEglFSDeviceIntegration *create() = 0;
+    virtual HWEglFSDeviceIntegration *create() = 0;
 
     // the pattern expected by qLoadPlugin calls for a QString argument.
     // we don't need it, so don't bother subclasses with it:
-    QEglFSDeviceIntegration *create(const QString &) { return create(); }
+    HWEglFSDeviceIntegration *create(const QString &) { return create(); }
 };
 
-class Q_EGLFS_EXPORT QEglFSDeviceIntegrationFactory
+class Q_EGLFS_EXPORT HWEglFSDeviceIntegrationFactory
 {
 public:
     static QStringList keys(const QString &pluginPath = QString());
-    static QEglFSDeviceIntegration *create(const QString &name, const QString &platformPluginPath = QString());
+    static HWEglFSDeviceIntegration *create(const QString &name, const QString &platformPluginPath = QString());
 };
-
-QT_END_NAMESPACE
 
 #endif // QEGLDEVICEINTEGRATION_H

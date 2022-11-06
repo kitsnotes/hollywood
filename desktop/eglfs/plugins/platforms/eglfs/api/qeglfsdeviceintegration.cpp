@@ -43,7 +43,7 @@
 # include "qeglfscursor_p.h"
 #endif
 #include "qeglfswindow_p.h"
-#include "qeglfsscreen_p.h"
+#include "eglfsscreen_p.h"
 #include "qeglfshooks_p.h"
 
 #include <QtGui/private/qeglconvenience_p.h>
@@ -79,7 +79,7 @@ Q_GLOBAL_STATIC_WITH_ARGS(QFactoryLoader, directLoader,
 
 #endif // QT_CONFIG(library)
 
-QStringList QEglFSDeviceIntegrationFactory::keys(const QString &pluginPath)
+QStringList HWEglFSDeviceIntegrationFactory::keys(const QString &pluginPath)
 {
     QStringList list;
 #if QT_CONFIG(library)
@@ -103,19 +103,19 @@ QStringList QEglFSDeviceIntegrationFactory::keys(const QString &pluginPath)
     return list;
 }
 
-QEglFSDeviceIntegration *QEglFSDeviceIntegrationFactory::create(const QString &key, const QString &pluginPath)
+HWEglFSDeviceIntegration *HWEglFSDeviceIntegrationFactory::create(const QString &key, const QString &pluginPath)
 {
-    QEglFSDeviceIntegration *integration = nullptr;
+    HWEglFSDeviceIntegration *integration = nullptr;
 #if QT_CONFIG(library)
     if (!pluginPath.isEmpty()) {
         QCoreApplication::addLibraryPath(pluginPath);
-        integration = qLoadPlugin<QEglFSDeviceIntegration, QEglFSDeviceIntegrationPlugin>(directLoader(), key);
+        integration = qLoadPlugin<HWEglFSDeviceIntegration, HWEglFSDeviceIntegrationPlugin>(directLoader(), key);
     }
 #else
     Q_UNUSED(pluginPath);
 #endif
     if (!integration)
-        integration = qLoadPlugin<QEglFSDeviceIntegration, QEglFSDeviceIntegrationPlugin>(loader(), key);
+        integration = qLoadPlugin<HWEglFSDeviceIntegration, HWEglFSDeviceIntegrationPlugin>(loader(), key);
     if (integration)
         qCDebug(qLcEglDevDebug) << "Using EGL device integration" << key;
     else
@@ -126,7 +126,7 @@ QEglFSDeviceIntegration *QEglFSDeviceIntegrationFactory::create(const QString &k
 
 static int framebuffer = -1;
 
-QByteArray QEglFSDeviceIntegration::fbDeviceName() const
+QByteArray HWEglFSDeviceIntegration::fbDeviceName() const
 {
 #ifdef Q_OS_LINUX
     QByteArray fbDev = qgetenv("QT_QPA_EGLFS_FB");
@@ -139,7 +139,7 @@ QByteArray QEglFSDeviceIntegration::fbDeviceName() const
 #endif
 }
 
-int QEglFSDeviceIntegration::framebufferIndex() const
+int HWEglFSDeviceIntegration::framebufferIndex() const
 {
     int fbIndex = 0;
 #if QT_CONFIG(regularexpression)
@@ -151,7 +151,7 @@ int QEglFSDeviceIntegration::framebufferIndex() const
     return fbIndex;
 }
 
-void QEglFSDeviceIntegration::platformInit()
+void HWEglFSDeviceIntegration::platformInit()
 {
 #ifdef Q_OS_LINUX
     QByteArray fbDev = fbDeviceName();
@@ -169,7 +169,7 @@ void QEglFSDeviceIntegration::platformInit()
 #endif
 }
 
-void QEglFSDeviceIntegration::platformDestroy()
+void HWEglFSDeviceIntegration::platformDestroy()
 {
 #ifdef Q_OS_LINUX
     if (framebuffer != -1)
@@ -177,52 +177,44 @@ void QEglFSDeviceIntegration::platformDestroy()
 #endif
 }
 
-EGLNativeDisplayType QEglFSDeviceIntegration::platformDisplay() const
+EGLNativeDisplayType HWEglFSDeviceIntegration::platformDisplay() const
 {
     return EGL_DEFAULT_DISPLAY;
 }
 
-EGLDisplay QEglFSDeviceIntegration::createDisplay(EGLNativeDisplayType nativeDisplay)
+EGLDisplay HWEglFSDeviceIntegration::createDisplay(EGLNativeDisplayType nativeDisplay)
 {
     return eglGetDisplay(nativeDisplay);
 }
 
-bool QEglFSDeviceIntegration::usesDefaultScreen()
+bool HWEglFSDeviceIntegration::usesDefaultScreen()
 {
     return true;
 }
 
-void QEglFSDeviceIntegration::screenInit()
+void HWEglFSDeviceIntegration::screenInit()
 {
     // Nothing to do here. Called only when usesDefaultScreen is false.
 }
 
-void QEglFSDeviceIntegration::screenDestroy()
+void HWEglFSDeviceIntegration::screenDestroy()
 {
     QGuiApplication *app = qGuiApp;
-#if QT_VERSION < QT_VERSION_CHECK(5, 12, 3)
-    QEglFSIntegration *platformIntegration = static_cast<QEglFSIntegration *>(
-        QGuiApplicationPrivate::platformIntegration());
-#endif
     while (!app->screens().isEmpty())
-#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 3)
         QWindowSystemInterface::handleScreenRemoved(app->screens().constLast()->handle());
-#else
-        platformIntegration->removeScreen(app->screens().constLast()->handle());
-#endif
 }
 
-QSizeF QEglFSDeviceIntegration::physicalScreenSize() const
+QSizeF HWEglFSDeviceIntegration::physicalScreenSize() const
 {
     return q_physicalScreenSizeFromFb(framebuffer, screenSize());
 }
 
-QSize QEglFSDeviceIntegration::screenSize() const
+QSize HWEglFSDeviceIntegration::screenSize() const
 {
     return q_screenSizeFromFb(framebuffer);
 }
 
-QDpi QEglFSDeviceIntegration::logicalDpi() const
+QDpi HWEglFSDeviceIntegration::logicalDpi() const
 {
     const QSizeF ps = physicalScreenSize();
     const QSize s = screenSize();
@@ -234,42 +226,42 @@ QDpi QEglFSDeviceIntegration::logicalDpi() const
         return QDpi(100, 100);
 }
 
-QDpi QEglFSDeviceIntegration::logicalBaseDpi() const
+QDpi HWEglFSDeviceIntegration::logicalBaseDpi() const
 {
     return QDpi(100, 100);
 }
 
-Qt::ScreenOrientation QEglFSDeviceIntegration::nativeOrientation() const
+Qt::ScreenOrientation HWEglFSDeviceIntegration::nativeOrientation() const
 {
     return Qt::PrimaryOrientation;
 }
 
-Qt::ScreenOrientation QEglFSDeviceIntegration::orientation() const
+Qt::ScreenOrientation HWEglFSDeviceIntegration::orientation() const
 {
     return Qt::PrimaryOrientation;
 }
 
-int QEglFSDeviceIntegration::screenDepth() const
+int HWEglFSDeviceIntegration::screenDepth() const
 {
     return q_screenDepthFromFb(framebuffer);
 }
 
-QImage::Format QEglFSDeviceIntegration::screenFormat() const
+QImage::Format HWEglFSDeviceIntegration::screenFormat() const
 {
     return screenDepth() == 16 ? QImage::Format_RGB16 : QImage::Format_RGB32;
 }
 
-qreal QEglFSDeviceIntegration::refreshRate() const
+qreal HWEglFSDeviceIntegration::refreshRate() const
 {
     return q_refreshRateFromFb(framebuffer);
 }
 
-EGLint QEglFSDeviceIntegration::surfaceType() const
+EGLint HWEglFSDeviceIntegration::surfaceType() const
 {
     return EGL_WINDOW_BIT;
 }
 
-QSurfaceFormat QEglFSDeviceIntegration::surfaceFormatFor(const QSurfaceFormat &inputFormat) const
+QSurfaceFormat HWEglFSDeviceIntegration::surfaceFormatFor(const QSurfaceFormat &inputFormat) const
 {
     QSurfaceFormat format = inputFormat;
 
@@ -283,17 +275,17 @@ QSurfaceFormat QEglFSDeviceIntegration::surfaceFormatFor(const QSurfaceFormat &i
     return format;
 }
 
-bool QEglFSDeviceIntegration::filterConfig(EGLDisplay, EGLConfig) const
+bool HWEglFSDeviceIntegration::filterConfig(EGLDisplay, EGLConfig) const
 {
     return true;
 }
 
-QEglFSWindow *QEglFSDeviceIntegration::createWindow(QWindow *window) const
+HWEglFSWindow *HWEglFSDeviceIntegration::createWindow(QWindow *window) const
 {
-    return new QEglFSWindow(window);
+    return new HWEglFSWindow(window);
 }
 
-EGLNativeWindowType QEglFSDeviceIntegration::createNativeWindow(QPlatformWindow *platformWindow,
+EGLNativeWindowType HWEglFSDeviceIntegration::createNativeWindow(QPlatformWindow *platformWindow,
                                                     const QSize &size,
                                                     const QSurfaceFormat &format)
 {
@@ -303,34 +295,34 @@ EGLNativeWindowType QEglFSDeviceIntegration::createNativeWindow(QPlatformWindow 
     return 0;
 }
 
-EGLNativeWindowType QEglFSDeviceIntegration::createNativeOffscreenWindow(const QSurfaceFormat &format)
+EGLNativeWindowType HWEglFSDeviceIntegration::createNativeOffscreenWindow(const QSurfaceFormat &format)
 {
     Q_UNUSED(format);
     return 0;
 }
 
-void QEglFSDeviceIntegration::destroyNativeWindow(EGLNativeWindowType window)
+void HWEglFSDeviceIntegration::destroyNativeWindow(EGLNativeWindowType window)
 {
     Q_UNUSED(window);
 }
 
-bool QEglFSDeviceIntegration::hasCapability(QPlatformIntegration::Capability cap) const
+bool HWEglFSDeviceIntegration::hasCapability(QPlatformIntegration::Capability cap) const
 {
     Q_UNUSED(cap);
     return false;
 }
 
-QPlatformCursor *QEglFSDeviceIntegration::createCursor(QPlatformScreen *screen) const
+QPlatformCursor *HWEglFSDeviceIntegration::createCursor(QPlatformScreen *screen) const
 {
 #ifndef QT_NO_OPENGL
-    return new QEglFSCursor(static_cast<QEglFSScreen *>(screen));
+    return new QEglFSCursor(static_cast<HWEglFSScreen *>(screen));
 #else
     Q_UNUSED(screen);
     return nullptr;
 #endif
 }
 
-void QEglFSDeviceIntegration::waitForVSync(QPlatformSurface *surface) const
+void HWEglFSDeviceIntegration::waitForVSync(QPlatformSurface *surface) const
 {
     Q_UNUSED(surface);
 
@@ -344,46 +336,46 @@ void QEglFSDeviceIntegration::waitForVSync(QPlatformSurface *surface) const
 #endif
 }
 
-void QEglFSDeviceIntegration::presentBuffer(QPlatformSurface *surface)
+void HWEglFSDeviceIntegration::presentBuffer(QPlatformSurface *surface)
 {
     Q_UNUSED(surface);
 }
 
-bool QEglFSDeviceIntegration::supportsPBuffers() const
+bool HWEglFSDeviceIntegration::supportsPBuffers() const
 {
     return true;
 }
 
-bool QEglFSDeviceIntegration::supportsSurfacelessContexts() const
+bool HWEglFSDeviceIntegration::supportsSurfacelessContexts() const
 {
     return true;
 }
 
-QFunctionPointer QEglFSDeviceIntegration::platformFunction(const QByteArray &function) const
+QFunctionPointer HWEglFSDeviceIntegration::platformFunction(const QByteArray &function) const
 {
     Q_UNUSED(function);
     return nullptr;
 }
 
-void *QEglFSDeviceIntegration::nativeResourceForIntegration(const QByteArray &name)
+void *HWEglFSDeviceIntegration::nativeResourceForIntegration(const QByteArray &name)
 {
     Q_UNUSED(name);
     return nullptr;
 }
 
-void *QEglFSDeviceIntegration::nativeResourceForScreen(const QByteArray &resource, QScreen *screen)
+void *HWEglFSDeviceIntegration::nativeResourceForScreen(const QByteArray &resource, QScreen *screen)
 {
     Q_UNUSED(resource);
     Q_UNUSED(screen);
     return nullptr;
 }
 
-void *QEglFSDeviceIntegration::wlDisplay() const
+void *HWEglFSDeviceIntegration::wlDisplay() const
 {
     return nullptr;
 }
 
-EGLConfig QEglFSDeviceIntegration::chooseConfig(EGLDisplay display, const QSurfaceFormat &format)
+EGLConfig HWEglFSDeviceIntegration::chooseConfig(EGLDisplay display, const QSurfaceFormat &format)
 {
     class Chooser : public QEglConfigChooser {
     public:

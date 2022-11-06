@@ -437,19 +437,24 @@ void QWaylandXdgSurface::setPopup(QWaylandWindow *parent)
 void QWaylandXdgSurface::setGrabPopup(QWaylandWindow *parent, QWaylandInputDevice *device, int serial)
 {
     auto parentXdgSurface = static_cast<QWaylandXdgSurface *>(parent->shellSurface());
+    auto parentLayerSurface = static_cast<LayerShellQt::QWaylandLayerSurface *>(parent->shellSurface());
 
     auto *top = m_shell->m_topmostGrabbingPopup;
 
     if (top && top->m_xdgSurface != parentXdgSurface) {
-        qCWarning(lcQpaWayland) << "setGrabPopup called with a parent," << parentXdgSurface
-                                << "which does not match the current topmost grabbing popup,"
-                                << top->m_xdgSurface << "According to the xdg-shell protocol, this"
-                                << "is not allowed. The wayland QPA plugin is currently handling"
-                                << "it by setting the parent to the topmost grabbing popup."
-                                << "Note, however, that this may cause positioning errors and"
-                                << "popups closing unxpectedly because xdg-shell mandate that child"
-                                << "popups close before parents";
-        parent = top->m_xdgSurface->m_window;
+        if(parentLayerSurface == nullptr)
+            qCWarning(lcQpaWayland) << "setGrabPopup called with a parent," << parentXdgSurface
+                                    << "which does not match the current topmost grabbing popup,"
+                                    << /* top->m_xdgSurface */ "According to the xdg-shell protocol, this"
+                                    << "is not allowed. The wayland QPA plugin is currently handling"
+                                    << "it by setting the parent to the topmost grabbing popup."
+                                    << "Note, however, that this may cause positioning errors and"
+                                    << "popups closing unxpectedly because xdg-shell mandate that child"
+                                    << "popups close before parents";
+        if(parentLayerSurface != nullptr)
+            parent = parentLayerSurface->window();
+        else
+            parent = top->m_xdgSurface->m_window;
     }
     setPopup(parent);
     m_popup->grab(device, serial);

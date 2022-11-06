@@ -10,6 +10,8 @@
 
 #include "qwayland-server-wlr-layer-shell-unstable-v1.h"
 
+#include "xdgshell.h"
+
 class WlrLayerSurfaceV1;
 class WlrLayerShellV1
         : public QWaylandCompositorExtensionTemplate<WlrLayerShellV1>
@@ -155,6 +157,7 @@ signals:
     void changed();
     void mappedChanged();
     void configuredChanged();
+    void xdgPopupParentChanged(HWWaylandXdgPopup *popup);
 
 protected:
     void zwlr_layer_surface_v1_set_size(Resource *resource, uint32_t width,

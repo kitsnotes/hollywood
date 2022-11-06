@@ -10,6 +10,7 @@
 #include <QWaylandOutputMode>
 #include <QScreen>
 
+class Surface;
 class OutputWindow;
 class Output : public QObject
 {
@@ -22,8 +23,12 @@ public:
     QSize size() const;
     bool primary() const { return m_primary; }
     void setPrimary(bool primary) { m_primary = primary; };
+    bool reserveLayerShellRegion(Surface *surface);
+    bool removeLayerShellReservation(Surface *surface);
 signals:
+    void reservedRegionsChanged();
 private:
+    void updateUsableGeometry();
     void configureForScreen(QScreen *s, bool defaultScreen = false);
     void configureDebugWindow();
     void configureDebugWindow2();
@@ -35,6 +40,7 @@ private:
     QScreen *m_screen;
     OutputWindow *m_window;
     QWaylandOutput *m_wlOutput;
+    QList<Surface*> m_reserved;
 };
 
 #endif // OUTPUT_H

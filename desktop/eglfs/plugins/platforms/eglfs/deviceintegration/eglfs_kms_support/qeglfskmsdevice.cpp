@@ -39,35 +39,24 @@
 ****************************************************************************/
 
 #include "qeglfskmsdevice.h"
-#include "qeglfskmsintegration.h"
 #include "qeglfskmsscreen.h"
 #include "private/qeglfsintegration_p.h"
 #include <QtGui/private/qguiapplication_p.h>
 
-QT_BEGIN_NAMESPACE
-
-QEglFSKmsDevice::QEglFSKmsDevice(QKmsScreenConfig *screenConfig, const QString &path)
-    : QKmsDevice(screenConfig, path)
+HWEglFSKmsDevice::HWEglFSKmsDevice(HWKmsScreenConfig *screenConfig, const QString &path)
+    : HWKmsDevice(screenConfig, path)
 {
 }
 
-void QEglFSKmsDevice::registerScreen(QPlatformScreen *screen,
+void HWEglFSKmsDevice::registerScreen(QPlatformScreen *screen,
                                      bool isPrimary,
                                      const QPoint &virtualPos,
                                      const QList<QPlatformScreen *> &virtualSiblings)
 {
-    QEglFSKmsScreen *s = static_cast<QEglFSKmsScreen *>(screen);
+    HWEglFSKmsScreen *s = static_cast<HWEglFSKmsScreen *>(screen);
     s->setVirtualPosition(virtualPos);
     s->setVirtualSiblings(virtualSiblings);
-#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 3)
     QWindowSystemInterface::handleScreenAdded(s, isPrimary);
-#else
-    static_cast<QEglFSIntegration *>(QGuiApplicationPrivate::platformIntegration())->addScreen(s, isPrimary);
-#endif
-
-    qCInfo(qLcEglfsKmsDebug) << "Adding QPlatformScreen" << s << "(" << s->name() << ")"
-                             << "to QPA with geometry" << s->geometry()
-                             << "and isPrimary=" << isPrimary;
 }
 
 QT_END_NAMESPACE

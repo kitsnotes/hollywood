@@ -89,6 +89,12 @@ QRect LibInputTouch::screenGeometry(DeviceState *state)
     return screen ? QHighDpi::toNativePixels(screen->geometry(), screen) : QRect();
 }
 
+QPointF LibInputTouch::getPos(libinput_event_touch *e)
+{
+    // TODO: fix me;
+    QPointF(0,0);
+}
+
 LibInputTouch::LibInputTouch(LibInputHandler *h)
     :m_handler(h) {}
 

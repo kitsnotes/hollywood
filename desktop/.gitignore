@@ -1,4 +1,7 @@
 build/*
+build-*-*-Debug/*
+build-*-*-Release/
+output/*    
 build-qt6/*
 build-qt5/*
 */build/*
@@ -11,3 +14,5 @@ build-qt5/*
 Makefile
 */output
 */build-qt*
+*.a
+.DS_Store

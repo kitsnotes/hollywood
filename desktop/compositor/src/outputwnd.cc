@@ -24,7 +24,6 @@
 #include <QOpenGLFramebufferObject>
 #include <QOpenGLFramebufferObjectFormat>
 #include <QRectF>
-#include <sys/utsname.h>
 #include <hollywood/hollywood.h>
 
 
@@ -90,7 +89,7 @@ void OutputWindow::paintGL()
     for(Surface *obj : hwComp->bottomLayerSurfaces())
         drawTextureForObject(obj, false);
 
-    //drawDesktopInfoString();
+    drawDesktopInfoString();
 
     bool useShadow = !hwComp->legacyRender();
 
@@ -162,6 +161,7 @@ void OutputWindow::drawTextureForObject(Surface *obj, bool useShadow)
 
     QRect dispRect(m_output->wlOutput()->position(), m_output->size());
     QRect objRect(obj->decoratedRect().toRect());
+
     if(!objRect.intersects(dispRect))
         return;
 
@@ -188,6 +188,7 @@ void OutputWindow::drawTextureForObject(Surface *obj, bool useShadow)
             // we use FBO's to construct a final thing to ouptut
             // including shadow, server decorations and the window contents
             QOpenGLFramebufferObjectFormat fbofmt;
+            fbofmt.setInternalTextureFormat(texture->format());
             fbofmt.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
 
             QSize dsize = obj->decoratedRect().size().toSize();
@@ -235,12 +236,13 @@ void OutputWindow::drawTextureForObject(Surface *obj, bool useShadow)
             {
                 targetRect.adjust(sm,sm,sm,sm);
             }
+            texture->bind();
             QMatrix4x4 targetTransform = QOpenGLTextureBlitter::targetTransform(targetRect,
                                       QRect(QPoint(0,0), QSize(dsize.width(), dsize.height())));
             m_textureBlitter.blit(texture->textureId(), targetTransform, surfaceOrigin);
             m_textureBlitter.release();
+            texture->release();
 
-            functions->glDisable(GL_BLEND);
             m_fbo->release();
             // we are done rendering our window into fbo
 
@@ -266,6 +268,7 @@ void OutputWindow::drawTextureForObject(Surface *obj, bool useShadow)
             m_textureBlitter.blit(m_fbo->texture(), targetTransform2, QOpenGLTextureBlitter::OriginBottomLeft);
             m_textureBlitter.release();
             functions->glDisable(GL_BLEND);
+            //qDebug() << "drawTextureForObject" << obj->uuid().toString() << objRect;
         }
     }
 }
@@ -341,46 +344,25 @@ void OutputWindow::drawShadowForObject(uint shadowOffset, Surface *obj)
     functions->glDisable(GL_BLEND);
 }
 
-void OutputWindow::drawDesktopInfoString(QPainter *p)
+void OutputWindow::drawDesktopInfoString()
 {
-    Q_UNUSED(p);
-    QPainter px(this);
-    px.endNativePainting();
-    QStringList lines;
-    auto kernel = QString();
-    struct utsname unb;
-    if(uname(&unb) != 0)
-        kernel = QLatin1String("Unknown");
-    else
-        kernel = QLatin1String(unb.release);
+    QImage* img = hwComp->desktopLabelImage();
 
-    lines << QString("Hollywood %1 (API %2, Kernel %3)")
-        .arg(QLatin1String(HOLLYWOOD_OS_VERSION))
-        .arg(QLatin1String(QT_VERSION_STR))
-        .arg(kernel);
+    QOpenGLFunctions *functions = context()->functions();
+    m_textureBlitter.bind();
+    functions->glEnable(GL_BLEND);
+    functions->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    auto env = qgetenv("HOLLYWOOD_GENUINE");
-    if(!env.isEmpty())
-        lines << QLatin1String("This copy of Linux is not genuine.");
-    QTextOption to;
-    to.setAlignment(Qt::AlignRight);
-    px.setRenderHint(QPainter::TextAntialiasing);
-    px.setPen(Qt::white);
-    QFont font(HOLLYWOOD_DEF_STDFONT, 9);
-    px.setFont(font);
-    QFontMetrics m = QFontMetrics(font);
-    int textHeight = m.height();
-    for(int i = 0; i < lines.count(); i++)
-    {
-        auto text = lines.at(i);
-        auto rect = m.boundingRect(text, to);
-        int y = size().height() - (textHeight * lines.count()) +
-                (textHeight * (i+1)) - 5;
-        int x = size().width() - rect.width() - 5;
-        px.drawText(QPoint(x,y), text);
-    }
-    px.end();
-    px.beginNativePainting();
+    QOpenGLTexture texture(*img);
+    texture.bind();
+    QPoint startPoint(m_output->wlOutput()->availableGeometry().size().width()-img->width()
+                      ,m_output->wlOutput()->availableGeometry().size().height()-img->height());
+    QMatrix4x4 tf = QOpenGLTextureBlitter::targetTransform(QRect(startPoint, img->size()),
+                                                 QRect(QPoint(0,0), size()));
+    m_textureBlitter.blit(texture.textureId(), tf, QOpenGLTextureBlitter::OriginTopLeft);
+    texture.release();
+    texture.destroy();
+    m_textureBlitter.release();
 }
 
 void OutputWindow::drawServerSideDecoration(const QSize buf, uint shadowOffset, Surface *obj)
@@ -392,7 +374,7 @@ void OutputWindow::drawServerSideDecoration(const QSize buf, uint shadowOffset, 
         return;
 
     if(obj->decorationImage() == nullptr)
-        return;
+        obj->renderDecoration();
 
     QImage* img = obj->decorationImage();
 
@@ -440,7 +422,7 @@ Surface* OutputWindow::surfaceAt(const QPointF &point)
         // check children of the menuserver
         for(auto *s : ms->childSurfaceObjects())
         {
-            QRectF geom(s->position(), s->size());
+            QRectF geom(s->parentBasedPosition(), s->size());
             if (geom.contains(adjustedPoint))
                 ret = s;
         }
@@ -455,7 +437,7 @@ Surface* OutputWindow::surfaceAt(const QPointF &point)
         // check children of the menuserver
         for(auto *s : surf->childSurfaceObjects())
         {
-            QRectF geom(s->position(), s->size());
+            QRectF geom(s->parentBasedPosition(), s->size());
             if (geom.contains(adjustedPoint))
                 ret = s;
         }
@@ -467,10 +449,10 @@ Surface* OutputWindow::surfaceAt(const QPointF &point)
         if (geom.contains(point))
             ret = surf;
 
-        // check children of the menuserver
+        // check children of the tolayer surfaces
         for(auto *s : surf->childSurfaceObjects())
         {
-            QRectF geom(s->position(), s->size());
+            QRectF geom(s->parentBasedPosition(), s->size());
             if (geom.contains(adjustedPoint))
                 ret = s;
         }
@@ -485,7 +467,7 @@ Surface* OutputWindow::surfaceAt(const QPointF &point)
             {
                 if (surface == m_dragIconSurfaceObject)
                     continue;
-                QRectF geom(surface->position(), surface->size());
+                QRectF geom(surface->parentBasedPosition(), surface->size());
                 if (geom.contains(adjustedPoint))
                     ret = surface;
             }
@@ -501,7 +483,7 @@ Surface* OutputWindow::surfaceAt(const QPointF &point)
             {
                 if (surface == m_dragIconSurfaceObject)
                     continue;
-                QRectF geom(surface->position(), surface->size());
+                QRectF geom(surface->parentBasedPosition(), surface->size());
                 if (geom.contains(adjustedPoint))
                     ret = surface;
             }
@@ -517,7 +499,7 @@ Surface* OutputWindow::surfaceAt(const QPointF &point)
             {
                 if (surface == m_dragIconSurfaceObject)
                     continue;
-                QRectF geom(surface->position(), surface->size());
+                QRectF geom(surface->parentBasedPosition(), surface->size());
                 if (geom.contains(adjustedPoint))
                     ret = surface;
             }
@@ -718,11 +700,9 @@ void OutputWindow::mousePressEvent(QMouseEvent *e)
         m_initialMousePos = adjustedPoint;
         m_mouseOffset = adjustedPoint - m_mouseSelectedSurfaceObject->position();
 
-        qDebug() << "btn1" << e->position() << e->globalPosition();
         QMouseEvent moveEvent(QEvent::MouseMove, adjustedPoint, e->globalPosition(), Qt::NoButton, Qt::NoButton, e->modifiers());
         sendMouseEvent(&moveEvent, m_mouseSelectedSurfaceObject->primaryView());
     }
-    qDebug() << "btn2" << e->position() << e->globalPosition();
     sendMouseEvent(&e2, m_mouseSelectedSurfaceObject->primaryView()); //(m_output));
 }
 
@@ -786,8 +766,9 @@ void OutputWindow::mouseMoveEvent(QMouseEvent *e)
             }
             else
             {
-                if(view->surfaceObject()->surfaceType() == Surface::TopLevel ||
-                        view->surfaceObject()->surfaceType() == Surface::TopLevelTool )
+                if((view->surfaceObject()->surfaceType() == Surface::TopLevel ||
+                        view->surfaceObject()->surfaceType() == Surface::TopLevelTool) &&
+                    !view->surfaceObject()->isMaximized())
                 {
                     m_resizeCursor = true;
                     if(mouseedge == 0x01 || mouseedge == 0x08)
@@ -831,12 +812,26 @@ void OutputWindow::sendMouseEvent(QMouseEvent *e, SurfaceView *target)
     QPointF mappedPos = adjustedPoint;
     if (target)
     {
-        mappedPos -= target->surfaceObject()->position();
+        if(!target->surfaceObject()->isMaximized())
+            mappedPos -= target->surfaceObject()->parentBasedPosition();
+        else
+            mappedPos -= target->output()->availableGeometry().topLeft();
+
         if(target->surfaceObject()->serverDecorated())
         {
             // re-map our position to account for SSD
             mappedPos.setY(mappedPos.y() - hwComp->decorationSize());
             mappedPos.setX(mappedPos.x() - hwComp->borderSize());
+        }
+        if(target->surfaceObject()->surfaceType() == Surface::Popup &&
+                target->surfaceObject()->parentSurfaceObject() != nullptr)
+        {
+            // re-map our position to account for PARENT
+            if(target->surfaceObject()->parentSurfaceObject()->serverDecorated())
+            {
+                mappedPos.setY(mappedPos.y() - hwComp->decorationSize());
+                mappedPos.setX(mappedPos.x() - hwComp->borderSize());
+            }
         }
     }
     QMouseEvent viewEvent(e->type(), mappedPos, adjustedPoint, e->button(), e->buttons(), e->modifiers());

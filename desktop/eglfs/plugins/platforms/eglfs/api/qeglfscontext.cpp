@@ -59,7 +59,7 @@ QEglFSContext::QEglFSContext(const QSurfaceFormat &format, QPlatformOpenGLContex
 EGLSurface QEglFSContext::eglSurfaceForPlatformSurface(QPlatformSurface *surface)
 {
     if (surface->surface()->surfaceClass() == QSurface::Window)
-        return static_cast<QEglFSWindow *>(surface)->surface();
+        return static_cast<HWEglFSWindow *>(surface)->surface();
     else
         return static_cast<QEGLPbuffer *>(surface)->pbuffer();
 }

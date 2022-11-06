@@ -7,8 +7,16 @@
 #include <QLocalServer>
 #include <signal.h>
 #include <QDBusConnection>
+#include <QLoggingCategory>
 
 #include "dbus.h"
+
+QLoggingCategory lcSession("hollywood.session");
+QLoggingCategory lcCompositor("hollywood.compositor");
+QLoggingCategory lcStage("hollywood.stage");
+QLoggingCategory lcDesktop("hollywood.shell");
+QLoggingCategory lcMenuServer("hollywood.shell");
+QLoggingCategory lcElevator("hollywood.elevator");
 
 void handleShutDownSignal(int /* signalId */)
 {
@@ -22,6 +30,11 @@ SMApplication::SMApplication(int &argc, char **argv)
     setOrganizationDomain(HOLLYWOOD_OS_DOMAIN);
     setOrganizationName(HOLLYWOOD_OS_ORGNAME);
     setApplicationName("SessionManager");
+    qputenv("DESKTOP_SESSION", "Hollywood");
+
+    qputenv("XDG_CURRENT_DESKTOP", "Hollywood");
+    qputenv("XDG_SESSION_TYPE", "wayland");
+    qputenv("XDG_MENU_PREFIX", "hollywood-");
 }
 
 bool SMApplication::startSession()
@@ -46,7 +59,7 @@ bool SMApplication::startSession()
 
     if(!verifyXdgRuntime())
     {
-        qCritical() << "SM: Unable to verify XDG_RUNTIME_DIR. Exiting.";
+        qCCritical(lcSession) << "Unable to verify XDG_RUNTIME_DIR. Exiting.";
         return false;
     }
 
@@ -57,7 +70,7 @@ bool SMApplication::startSession()
     socket->abort();
     delete socket;
     if (b_connected) {
-       qCritical() <<  QCoreApplication::translate("Session", "Another Hollywood session is running. This instance is aborting");
+       qCCritical(lcSession) <<  QCoreApplication::translate("Session", "Another Hollywood session is running. This instance is aborting");
        return false;
     }
 
@@ -68,21 +81,16 @@ bool SMApplication::startSession()
     qDebug() << "XDG Runtime DIR: " << m_xdg_runtime_dir;
     if(!startCompositor())
     {
-        qCritical() << "SessionManager: Unable to launch compositor process";
+        qCCritical(lcSession) << "Unable to launch compositor process";
         return false;
     }
     else
     {
         qputenv("QT_QPA_PLATFORM", "hollywood");
         qputenv("QT_QPA_PLATFORMTHEME", "hollywood");
-        qputenv("DESKTOP_SESSION", "Hollywood");
-
-        qputenv("XDG_CURRENT_DESKTOP", "Hollywood");
-        qputenv("XDG_SESSION_TYPE", "wayland");
-        qputenv("XDG_MENU_PREFIX", "hollywood-");
         if(!startElevator())
         {
-            qCritical() << "SessionManager: Unable to launch elevator process";
+            qCCritical(lcSession) << "Unable to launch elevator process";
             if(m_compProcess->isOpen())
                 m_compProcess->kill();
 
@@ -91,7 +99,7 @@ bool SMApplication::startSession()
 
         /*if(!startMenuServer())
         {
-            qCritical() << "SessionManager: Unable to launch menuserver process";
+            qCCritical(lcSession) << "Unable to launch menuserver process";
             if(m_compProcess->isOpen())
                 m_compProcess->kill();
             if(m_elevatorProcess->isOpen())
@@ -100,34 +108,35 @@ bool SMApplication::startSession()
             return false;
         }*/
 
-        if(!startStage())
-        {
-            qCritical() << "SessionManager: Unable to launch stage process";
-            if(m_compProcess->isOpen())
-                m_compProcess->kill();
-            if(m_elevatorProcess->isOpen())
-                m_elevatorProcess->kill();
-            if(m_menuProcess->isOpen())
-                m_menuProcess->kill();
-
-            return false;
-        }
-
-        sleep(1);
         if(!startDesktop())
         {
-            qCritical() << "SessionManager: Unable to launch desktop process";
+            qCCritical(lcSession) << "Unable to launch desktop process";
             if(m_compProcess->isOpen())
                 m_compProcess->kill();
             if(m_elevatorProcess->isOpen())
                 m_elevatorProcess->kill();
             if(m_menuProcess->isOpen())
                 m_menuProcess->kill();
-            if(m_stageProcess->isOpen())
-                m_stageProcess->kill();
+
 
             return false;
         }
+
+        usleep(300*1000);
+        if(!startStage())
+        {
+            qCCritical(lcSession) << "Unable to launch stage process";
+            if(m_compProcess->isOpen())
+                m_compProcess->kill();
+            if(m_elevatorProcess->isOpen())
+                m_elevatorProcess->kill();
+            if(m_menuProcess->isOpen())
+                m_menuProcess->kill();
+            if(m_desktopProcess->isOpen())
+                m_desktopProcess->kill();
+            return false;
+        }
+
         m_sessionStarted = true;
         m_dbus = new SessionDBus(this);
         QDBusConnection::sessionBus().registerService(QLatin1String(HOLLYWOOD_SESSION_DBUS));
@@ -176,7 +185,7 @@ bool SMApplication::startCompositor()
     {
         if(m_compProcess->state() != QProcess::Running)
         {
-            qInfo() << QString("SMApplication::startCompositor: reaping old compositor (pid %1)")
+            qCInfo(lcSession) << QString("SMApplication::startCompositor: reaping old compositor (pid %1)")
                        .arg(m_compProcess->processId());
             delete m_compProcess;
         }
@@ -184,22 +193,30 @@ bool SMApplication::startCompositor()
             return false;
     }
 
-    QProcessEnvironment env = createCompositorEnvironment();
     m_compProcess = new QProcess(this);
     m_compProcess->setObjectName("WindowCompositor");
     const QString processPath = applicationDirPath() + "/compositor";
     m_compProcess->setProgram(processPath);
-    qputenv("QT_QPA_PLATFORMTHEME", "hollywood");
-    if(qgetenv("DISPLAY").isEmpty())
+    auto env = QProcessEnvironment::systemEnvironment();
+    env.insert("QT_QPA_PLATFORMTHEME", "hollywood");
+#ifdef QT_DEBUG
+    env.insert("LD_LIBRARY_PATH", applicationDirPath().toUtf8());
+#endif
+    if(!env.contains("DISPLAY"))
     {
-        qputenv("QT_QPA_PLATFORM", "hollywood-eglfs");
-        qInfo() << QString("SMApplication::startCompositor: starting compositor with hollywood-eglfs");
+        env.remove("QT_QPA_PLATFORM");
+        env.insert("QT_QPA_PLATFORM", "hollywood-eglfs");
+        qCInfo(lcSession) << QString("Starting compositor with hollywood-eglfs");
     }
-    qputenv("QT_QPA_NO_SIGNAL_HANDLER", "1");
+    else
+    {
+        qCInfo(lcSession) << QString("Starting nested compositor session (for debugging)");
+    }
+    env.insert("QT_QPA_NO_SIGNAL_HANDLER", "1");
 
     // TODO: fix this bold assumption
     m_compSocket = QString("%1/wayland-0").arg(m_xdg_runtime_dir);
-    //m_compProcess->setProcessEnvironment(createCompositorEnvironment());
+    m_compProcess->setProcessEnvironment(env);
     connect(m_compProcess, &QProcess::finished, this, &SMApplication::compositorStopped);
     connect(m_compProcess, &QProcess::errorOccurred, this, &SMApplication::compositorStopped);
     connect(m_compProcess, &QProcess::readyReadStandardError, this, &SMApplication::processStdError);
@@ -208,7 +225,7 @@ bool SMApplication::startCompositor()
     m_compProcess->start();
     if(m_compProcess->isOpen())
     {
-        qInfo() << QString("SessionManager: Started WindowCompositor (pid %1) - waiting for socket...")
+        qCInfo(lcSession) << QString("SessionManager: Started WindowCompositor (pid %1) - waiting for socket...")
                    .arg(m_compProcess->processId());
         sleep(1);
         int i = 1;
@@ -216,18 +233,18 @@ bool SMApplication::startCompositor()
         {
             if(verifyCompositorSocketAvailable())
             {
-                qInfo() << QString("SessionManager: Compositor socket %1 available.")
+                qCInfo(lcSession) << QString("Compositor socket %1 available.")
                            .arg(m_compSocket);
                 return true;
             }
             else
             {
-                qWarning() << QString("SessionManager: Compositor socket %1 not available (check %2).")
+                qCWarning(lcSession) << QString("Compositor socket %1 not available (check %2).")
                            .arg(m_compSocket).arg(i);
             }
             sleep(2);
         }
-        qCritical() << QString("SessionManager: Compositor socket %1 not available after %2 attempts.  Giving up.")
+        qCCritical(lcSession) << QString("Compositor socket %1 not available after %2 attempts.  Giving up.")
                    .arg(m_compSocket).arg(i--);
     }
     return false;
@@ -248,17 +265,6 @@ bool SMApplication::verifyCompositorSocketAvailable()
     return false;
 }
 
-QProcessEnvironment SMApplication::createCompositorEnvironment()
-{
-    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-    if(env.contains("QT_QPA_PLATFORM"))
-        env.remove("QT_QPA_PLATFORM");
-
-    env.insert("QT_QPA_PLATFORM", "wayland");
-
-    return env;
-}
-
 void SMApplication::compositorStopped()
 {
 #ifdef QT_DEBUG
@@ -277,16 +283,78 @@ void SMApplication::compositorStopped()
 
 void SMApplication::processStdError()
 {
+    auto proc = qobject_cast<QProcess*>(sender());
     const QString senderProc = sender()->objectName();
-    qWarning() << QString("%1 (stderr): %2")
-                  .arg(senderProc).arg(m_compProcess->readAllStandardError());
+    auto lines = proc->readAllStandardError().split('\n');
+
+    if(proc == m_elevatorProcess)
+    {
+        for(auto line : lines)
+            if(!line.isEmpty())
+                qCWarning(lcElevator) << line;
+    }
+    if(proc == m_menuProcess)
+    {
+        for(auto line : lines)
+            if(!line.isEmpty())
+                qCWarning(lcMenuServer) << line;
+    }
+    if(proc == m_compProcess)
+    {
+        for(auto line : lines)
+            if(!line.isEmpty())
+                qCWarning(lcCompositor) << line;
+    }
+    if(proc == m_stageProcess)
+    {
+        for(auto line : lines)
+            if(!line.isEmpty())
+                qCWarning(lcStage) << line;
+    }
+    if(proc == m_desktopProcess)
+    {
+        for(auto line : lines)
+            if(!line.isEmpty())
+                qCWarning(lcDesktop) << line;
+    }
 }
 
 void SMApplication::processStdOut()
 {
+    auto proc = qobject_cast<QProcess*>(sender());
     const QString senderProc = sender()->objectName();
-    qInfo() << QString("%1 (stdout): %2")
-                  .arg(senderProc).arg(m_compProcess->readAllStandardOutput());
+    auto lines = proc->readAllStandardOutput().split('\n');
+
+    if(proc == m_elevatorProcess)
+    {
+        for(auto line : lines)
+            if(!line.isEmpty())
+                qCInfo(lcElevator) << line;
+    }
+    if(proc == m_menuProcess)
+    {
+        for(auto line : lines)
+            if(!line.isEmpty())
+                qCInfo(lcMenuServer) << line;
+    }
+    if(proc == m_compProcess)
+    {
+        for(auto line : lines)
+            if(!line.isEmpty())
+                qCInfo(lcCompositor) << line;
+    }
+    if(proc == m_stageProcess)
+    {
+        for(auto line : lines)
+            if(!line.isEmpty())
+                qCInfo(lcStage) << line;
+    }
+    if(proc == m_desktopProcess)
+    {
+        for(auto line : lines)
+            if(!line.isEmpty())
+                qCInfo(lcDesktop) << line;
+    }
 }
 
 bool SMApplication::startMenuServer()
@@ -296,7 +364,7 @@ bool SMApplication::startMenuServer()
     {
         if(m_menuProcess->state() != QProcess::Running)
         {
-            qInfo() << QString("SMApplication::startMenuServer: reaping old MenuServer (pid %1)")
+            qCInfo(lcSession) << QString("SMApplication::startMenuServer: reaping old MenuServer (pid %1)")
                        .arg(m_menuProcess->processId());
             delete m_menuProcess;
         }
@@ -310,6 +378,8 @@ bool SMApplication::startMenuServer()
     m_menuProcess->setProgram(processPath);
     qputenv("LD_LIBRARY_PATH", applicationDirPath().toUtf8());
     qputenv("QT_WAYLAND_SHELL_INTEGRATION", "qt-shell");
+    //env.insert("QT_WAYLAND_SHELL_INTEGRATION", "hw-layer-shell");
+
 
     //m_desktopProcess->setProcessEnvironment(createDesktopEnvironment());
     connect(m_menuProcess, &QProcess::finished, this, &SMApplication::menuServerStopped);
@@ -320,7 +390,7 @@ bool SMApplication::startMenuServer()
     m_menuProcess->start();
     if(m_menuProcess->isOpen())
     {
-        qInfo() << QString("SessionManager: Started MenuServer (pid %1)").arg(m_menuProcess->processId());
+        qCInfo(lcSession) << QString("SessionManager: Started MenuServer (pid %1)").arg(m_menuProcess->processId());
         return true;
     }
     return false;
@@ -332,7 +402,7 @@ bool SMApplication::startElevator()
     {
         if(m_elevatorProcess->state() != QProcess::Running)
         {
-            qInfo() << QString("SMApplication::startMenuServer: reaping old Elevator (pid %1)")
+            qCInfo(lcSession) << QString("SMApplication::startMenuServer: reaping old Elevator (pid %1)")
                        .arg(m_elevatorProcess->processId());
             delete m_elevatorProcess;
         }
@@ -340,14 +410,19 @@ bool SMApplication::startElevator()
             return false;
     }
 
-    qputenv("QT_QPA_PLATFORM", "hollywood");
-    qputenv("QT_QPA_PLATFORMTHEME", "hollywood");
-    qputenv("QT_WAYLAND_SHELL_INTEGRATION", "qt-shell");
+    auto env = QProcessEnvironment::systemEnvironment();
+    env.insert("QT_QPA_PLATFORM", "hollywood");
+    env.insert("QT_QPA_PLATFORMTHEME", "hollywood");
+    env.insert("QT_WAYLAND_SHELL_INTEGRATION", "qt-shell");
+#ifdef QT_DEBUG
+    env.insert("LD_LIBRARY_PATH", applicationDirPath().toUtf8());
+#endif
+
     m_elevatorProcess = new QProcess(this);
     m_elevatorProcess->setObjectName("Elevator");
     const QString processPath = applicationDirPath() + "/elevator";
     m_elevatorProcess->setProgram(processPath);
-    qputenv("LD_LIBRARY_PATH", applicationDirPath().toUtf8());
+    m_elevatorProcess->setProcessEnvironment(env);
 
     connect(m_elevatorProcess, &QProcess::finished, this, &SMApplication::elevatorStopped);
     connect(m_elevatorProcess, &QProcess::errorOccurred, this, &SMApplication::elevatorStopped);
@@ -357,7 +432,7 @@ bool SMApplication::startElevator()
     m_elevatorProcess->start();
     if(m_elevatorProcess->isOpen())
     {
-        qInfo() << QString("SessionManager: Started Elevator (pid %1)").arg(m_elevatorProcess->processId());
+        qCInfo(lcSession) << QString("SessionManager: Started Elevator (pid %1)").arg(m_elevatorProcess->processId());
         return true;
     }
     return false;
@@ -409,7 +484,7 @@ bool SMApplication::startDesktop()
     {
         if(m_desktopProcess->state() != QProcess::Running)
         {
-            qInfo() << QString("SMApplication::startDesktop: reaping old desktop (pid %1)")
+            qCInfo(lcSession) << QString("SMApplication::startDesktop: reaping old desktop (pid %1)")
                        .arg(m_desktopProcess->processId());
             delete m_desktopProcess;
         }
@@ -419,8 +494,13 @@ bool SMApplication::startDesktop()
 
     m_desktopProcess = new QProcess(this);
     m_desktopProcess->setObjectName("Desktop");
+    auto env = QProcessEnvironment::systemEnvironment();
+    env.insert("QT_QPA_PLATFORM", "hollywood");
+    env.insert("QT_QPA_PLATFORMTHEME", "hollywood");
+    env.insert("QT_WAYLAND_SHELL_INTEGRATION", "qt-shell");
 #ifdef QT_DEBUG
     const QString processPath = applicationDirPath() + "/shellfm";
+    env.insert("LD_LIBRARY_PATH", applicationDirPath().toUtf8());
 #else
     const QString processPath = "/usr/bin/shellfm";
 #endif
@@ -429,11 +509,7 @@ bool SMApplication::startDesktop()
     args << "--desktop";
 
     m_desktopProcess->setArguments(args);
-    qputenv("QT_QPA_PLATFORM", "hollywood");
-    qputenv("QT_QPA_PLATFORMTHEME", "hollywood");
-    qputenv("QT_WAYLAND_SHELL_INTEGRATION", "xdg-shell");
-    qputenv("LD_LIBRARY_PATH", applicationDirPath().toUtf8());
-    //m_desktopProcess->setProcessEnvironment(createDesktopEnvironment());
+    m_desktopProcess->setProcessEnvironment(env);
     connect(m_desktopProcess, &QProcess::finished, this, &SMApplication::desktopStopped);
     connect(m_desktopProcess, &QProcess::errorOccurred, this, &SMApplication::desktopStopped);
     connect(m_desktopProcess, &QProcess::readyReadStandardError, this, &SMApplication::processStdError);
@@ -442,7 +518,7 @@ bool SMApplication::startDesktop()
     m_desktopProcess->start();
     if(m_desktopProcess->isOpen())
     {
-        qInfo() << QString("SessionManager: Started Desktop (pid %1)").arg(m_desktopProcess->processId());
+        qCInfo(lcSession) << QString("SessionManager: Started Desktop (pid %1)").arg(m_desktopProcess->processId());
         return true;
     }
     return false;
@@ -454,7 +530,7 @@ bool SMApplication::startStage()
     {
         if(m_stageProcess->state() != QProcess::Running)
         {
-            qInfo() << QString("SMApplication::startMenuServer: reaping old Stage (pid %1)")
+            qCInfo(lcSession) << QString("SMApplication::startMenuServer: reaping old Stage (pid %1)")
                        .arg(m_stageProcess->processId());
             delete m_stageProcess;
         }
@@ -462,16 +538,20 @@ bool SMApplication::startStage()
             return false;
     }
 
-    qputenv("QT_QPA_PLATFORM", "hollywood");
-    qputenv("QT_QPA_PLATFORMTHEME", "hollywood");
-    qputenv("QT_WAYLAND_SHELL_INTEGRATION", "hw-layer-shell");
     m_stageProcess = new QProcess(this);
     m_stageProcess->setObjectName("Stage");
     const QString processPath = applicationDirPath() + "/stage";
     m_stageProcess->setProgram(processPath);
-    qputenv("LD_LIBRARY_PATH", applicationDirPath().toUtf8());
-
-    //m_desktopProcess->setProcessEnvironment(createDesktopEnvironment());
+    auto env = QProcessEnvironment::systemEnvironment();
+    env.insert("QT_QPA_PLATFORM", "hollywood");
+    env.insert("QT_QPA_PLATFORMTHEME", "hollywood");
+    env.insert("QT_WAYLAND_SHELL_INTEGRATION", "hw-layer-shell");
+#ifdef QT_DEBUG
+    env.insert("LD_LIBRARY_PATH", applicationDirPath().toUtf8());
+#else
+    env.insert("LD_LIBRARY_PATH", "/usr/lib/qt6/plugins/wayland-shell-integration/");
+#endif
+    m_stageProcess->setProcessEnvironment(env);
     connect(m_stageProcess, &QProcess::finished, this, &SMApplication::menuServerStopped);
     connect(m_stageProcess, &QProcess::errorOccurred, this, &SMApplication::menuServerStopped);
     connect(m_stageProcess, &QProcess::readyReadStandardError, this, &SMApplication::processStdError);
@@ -480,21 +560,10 @@ bool SMApplication::startStage()
     m_stageProcess->start();
     if(m_stageProcess->isOpen())
     {
-        qInfo() << QString("SessionManager: Started Stage (pid %1)").arg(m_stageProcess->processId());
+        qCInfo(lcSession) << QString("SessionManager: Started Stage (pid %1)").arg(m_stageProcess->processId());
         return true;
     }
     return false;
-}
-
-QProcessEnvironment SMApplication::createDesktopEnvironment()
-{
-    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-    if(env.contains("QT_QPA_PLATFORM"))
-        env.remove("QT_QPA_PLATFORM");
-
-    env.insert("QT_QPA_PLATFORM", "hollywood");
-    env.insert("QT_QPA_PLATFORMTHEME", "hollywood");
-    return env;
 }
 
 bool SMApplication::verifyXdgRuntime()
@@ -519,7 +588,7 @@ bool SMApplication::verifyXdgRuntime()
             }
             else
             {
-                qCritical() << "Can not get or create a functional XDG_RUNTIME_DIR.  Can you write to /tmp? Bailing out.";
+                qCCritical(lcSession) << "Can not get or create a functional XDG_RUNTIME_DIR.  Can you write to /tmp? Bailing out.";
                 return false;
             }
         }
@@ -534,7 +603,7 @@ bool SMApplication::verifyXdgRuntime()
             m_xdg_runtime_dir = dir;
         else
         {
-            qCritical() << "Can not read & write to env XDG_RUNTIME_DIR" << dir << "Check permissions. Bailing out.";
+            qCCritical(lcSession) << "Can not read & write to env XDG_RUNTIME_DIR" << dir << "Check permissions. Bailing out.";
             return false;
         }
     }

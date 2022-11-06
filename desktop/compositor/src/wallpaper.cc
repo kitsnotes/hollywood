@@ -155,7 +155,7 @@ void WallpaperManager::wallpaperChanged()
     m_texture = new QOpenGLTexture(QOpenGLTexture::Target2D);
     m_texture->create();
     m_texture->setSize(bg.size().width(), bg.size().height());
-    m_texture->setFormat(QOpenGLTexture::RGBFormat);
+    //m_texture->setFormat(QOpenGLTexture::RGBFormat);
     m_texture->setMagnificationFilter(QOpenGLTexture::Nearest);
     m_texture->setMinificationFilter(QOpenGLTexture::Linear);
     m_texture->setWrapMode(QOpenGLTexture::ClampToEdge);
@@ -187,13 +187,15 @@ void WallpaperManager::renderWallpaper()
     }
 
     QOpenGLFunctions *functions = m_parent->context()->functions();
-    QMatrix4x4 tf = QOpenGLTextureBlitter::targetTransform(QRect(m_wpStartPoint, m_bgSize),
-                                                QRect(QPoint(0,0), m_parent->size()));
     m_parent->m_textureBlitter.bind();
     functions->glEnable(GL_BLEND);
     functions->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    m_texture->bind();
+    QMatrix4x4 tf = QOpenGLTextureBlitter::targetTransform(QRect(m_wpStartPoint, m_bgSize),
+                                                QRect(QPoint(0,0), m_parent->size()));
 
     m_parent->m_textureBlitter.blit(m_texture->textureId(), tf, QOpenGLTextureBlitter::OriginBottomLeft);
+    m_texture->release();
     functions->glDisable(GL_BLEND);
     m_parent->m_textureBlitter.release();
 }

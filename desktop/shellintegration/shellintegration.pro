@@ -6,7 +6,6 @@ TARGET = hw-layer-shell
 TEMPLATE = lib
 INCLUDEPATH += $$PWD/hollywood
 INCLUDEPATH += $$PWD/hollywood/private
-DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x051300
 
 QMAKE_USE+=wayland-client
 

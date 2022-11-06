@@ -29,7 +29,7 @@ public:
     QSize size;
 };
 
-static QMap<QWindow *, Window *> s_map;
+static QHash<QWindow *, Window *> s_map;
 
 Window::~Window()
 {

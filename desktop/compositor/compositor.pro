@@ -6,6 +6,7 @@ CONFIG -= wayland_compositor_quick
 
 TARGET = compositor
 INCLUDEPATH += include/
+INCLUDEPATH += ../libshell/include/
 INCLUDEPATH += $$PWD/../eglfs/platformheaders/
 WAYLANDSERVERSOURCES += protocols/originull-privateapi.xml
 WAYLANDSERVERSOURCES += protocols/appmenu.xml
@@ -49,7 +50,6 @@ SOURCES += \
     src/wallpaper.cc \
     src/xdgshell.cc
 
-
 QMAKE_SUBSTITUTES += org.originull.compositor.desktop.in
 desktop.path = $$PREFIX/share/applications
 desktop.files = org.originull.compositor.desktop
@@ -71,7 +71,7 @@ DISTFILES += \
     transition.fsh \
     transition.vsh
 
-LIBS += -lHollywoodEglfsPlatformSupport -L../eglfs/platformheaders
+LIBS += -lHollywoodEglfsPlatformSupport -L../eglfs/platformheaders  -L../output -lshell-$${HOLLYWOOD_APIVERSION}
 
 contains(QT_CONFIG, no-pkg-config) {
     LIBS += -lwayland-server

@@ -1,15 +1,16 @@
 include(../../../../../../include/global.pri)
-TARGET = qeglfs-kms-integration
+TARGET = eglfs-kms-integration
 
 PLUGIN_TYPE = hwegldeviceintegrations
 PLUGIN_CLASS_NAME = QEglFSKmsGbmIntegrationPlugin
 TEMPLATE=lib
 CONFIG += plugin link_pkgconfig
-QT += core-private gui-private eglfsdeviceintegration-private fb_support-private eglfs_kms_support-private kms_support-private dbus
+QT += core-private gui-private fb_support-private dbus opengl_private
 PKGCONFIG += hwudev-$${HOLLYWOOD_APIVERSION} hwlogind-$${HOLLYWOOD_APIVERSION}
 
 INCLUDEPATH += $$PWD/../../api $$PWD/../eglfs_kms_support
 INCLUDEPATH += $$PWD/../../api/hollywood/private
+INCLUDEPATH += $$PWD/../../api/hollywood
 INCLUDEPATH += $$PWD/../../../../../platformsupport/edid
 INCLUDEPATH += $$PWD/../../../../../platformheaders/
 INCLUDEPATH += $$PWD/../../../../../platformsupport/kmsconvenience
@@ -29,13 +30,21 @@ SOURCES += $$PWD/qeglfskmsgbmmain.cpp \
            $$PWD/qeglfskmsgbmcursor.cpp \
            $$PWD/qeglfskmsgbmwindow.cpp
 
-HEADERS += $$PWD/qeglfskmsgbmintegration.h \
-           $$PWD/qeglfskmsgbmdevice.h \
-           $$PWD/qeglfskmsgbmscreen.h \
-           $$PWD/qeglfskmsgbmcursor.h \
-           $$PWD/qeglfskmsgbmwindow.h
+HEADERS += $$PWD/qeglfskmsgbmintegration_p.h \
+           $$PWD/qeglfskmsgbmdevice_p.h \
+           $$PWD/qeglfskmsgbmscreen_p.h \
+           $$PWD/qeglfskmsgbmcursor_p.h \
+           $$PWD/qeglfskmsgbmwindow_p.h
 
 OTHER_FILES += $$PWD/eglfs_kms.json
+
+LIBS += -L$$OUT_PWD \
+    -L$$PWD/../eglfs_kms_support/ \
+    -L$$[QT_INSTALL_PLUGINS]/platforms/ \
+    -L$$PWD/../../ \
+    -L$$PWD/../../../../../platformsupport/kmsconvenience \
+    -L$$PWD/../../../../../platformsupport/edid \
+    -lHWEglFSDeviceIntegration -lQtEglFsKmsSupport -lHWKmsSupport -lHWInputSupport -lHWEdidSupport
 
 target.path = $$[QT_INSTALL_PLUGINS]/hwdeviceintegrations
 INSTALLS += target

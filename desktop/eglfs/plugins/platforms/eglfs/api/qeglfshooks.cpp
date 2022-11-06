@@ -40,8 +40,6 @@
 #include "qeglfshooks_p.h"
 #include <QLoggingCategory>
 
-QT_BEGIN_NAMESPACE
-
 Q_DECLARE_LOGGING_CATEGORY(qLcEglDevDebug)
 
 #ifdef EGLFS_PLATFORM_HOOKS
@@ -60,9 +58,9 @@ class DeviceIntegration
 public:
     DeviceIntegration();
     ~DeviceIntegration() { delete m_integration; }
-    QEglFSDeviceIntegration *integration() { return m_integration; }
+    HWEglFSDeviceIntegration *integration() { return m_integration; }
 private:
-    QEglFSDeviceIntegration *m_integration;
+    HWEglFSDeviceIntegration *m_integration;
 };
 }
 
@@ -71,7 +69,7 @@ Q_GLOBAL_STATIC(DeviceIntegration, deviceIntegration)
 DeviceIntegration::DeviceIntegration()
     : m_integration(nullptr)
 {
-    QStringList pluginKeys = QEglFSDeviceIntegrationFactory::keys();
+    QStringList pluginKeys = HWEglFSDeviceIntegrationFactory::keys();
     if (!pluginKeys.isEmpty()) {
         // Some built-in logic: Prioritize either X11 or KMS/DRM.
         if (qEnvironmentVariableIsSet("DISPLAY")) {
@@ -116,7 +114,7 @@ DeviceIntegration::DeviceIntegration()
             while (!m_integration && !pluginKeys.isEmpty()) {
                 QString key = pluginKeys.takeFirst();
                 qCDebug(qLcEglDevDebug) << "Trying to load device EGL integration" << key;
-                m_integration = QEglFSDeviceIntegrationFactory::create(key);
+                m_integration = HWEglFSDeviceIntegrationFactory::create(key);
             }
         }
     }
@@ -125,15 +123,13 @@ DeviceIntegration::DeviceIntegration()
         // Use a default, non-specialized device integration when no plugin is available.
         // For some systems this is sufficient.
         qCDebug(qLcEglDevDebug) << "Using base device integration";
-        m_integration = new QEglFSDeviceIntegration;
+        m_integration = new HWEglFSDeviceIntegration;
     }
 }
 
-QEglFSDeviceIntegration *qt_egl_device_integration()
+HWEglFSDeviceIntegration *qt_egl_device_integration()
 {
     return deviceIntegration()->integration();
 }
 
 #endif // EGLFS_PLATFORM_HOOKS
-
-QT_END_NAMESPACE

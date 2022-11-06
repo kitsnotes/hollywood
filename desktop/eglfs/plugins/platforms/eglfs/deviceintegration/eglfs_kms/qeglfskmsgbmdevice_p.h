@@ -42,20 +42,28 @@
 #ifndef QEGLFSKMSGBMDEVICE_H
 #define QEGLFSKMSGBMDEVICE_H
 
-#include <hollywood/qeglfskmsdevice.h>
+//
+//  W A R N I N G
+//  -------------
+//
+// This file is not part of the Qt API.  It exists purely as an
+// implementation detail.  This header file may change from version to
+// version without notice, or even be removed.
+//
+// We mean it.
+//
 
-#include "qeglfskmsgbmcursor.h"
+#include "qeglfskmsgbmcursor_p.h"
+#include <hollywood/qeglfskmsdevice.h>
 
 #include <gbm.h>
 
-QT_BEGIN_NAMESPACE
+class HWEglFSKmsScreen;
 
-class QEglFSKmsScreen;
-
-class QEglFSKmsGbmDevice: public QEglFSKmsDevice
+class Q_EGLFS_EXPORT HWEglFSKmsGbmDevice: public HWEglFSKmsDevice
 {
 public:
-    QEglFSKmsGbmDevice(QKmsScreenConfig *screenConfig, const QString &path);
+    HWEglFSKmsGbmDevice(HWKmsScreenConfig *screenConfig, const QString &path);
 
     bool open() override;
     void close() override;
@@ -65,21 +73,25 @@ public:
 
     QPlatformCursor *globalCursor() const;
     void destroyGlobalCursor();
+    void createGlobalCursor(HWEglFSKmsGbmScreen *screen);
 
-    QPlatformScreen *createScreen(const QKmsOutput &output) override;
+    QPlatformScreen *createScreen(const HWKmsOutput &output) override;
     QPlatformScreen *createHeadlessScreen() override;
     void registerScreenCloning(QPlatformScreen *screen,
                                QPlatformScreen *screenThisScreenClones,
-                               const QVector<QPlatformScreen *> &screensCloningThisScreen) override;
+                               const QList<QPlatformScreen *> &screensCloningThisScreen) override;
+    void registerScreen(QPlatformScreen *screen,
+                        bool isPrimary,
+                        const QPoint &virtualPos,
+                        const QList<QPlatformScreen *> &virtualSiblings) override;
 
 private:
-    Q_DISABLE_COPY(QEglFSKmsGbmDevice)
+    Q_DISABLE_COPY(HWEglFSKmsGbmDevice)
 
     gbm_device *m_gbm_device;
 
-    QEglFSKmsGbmCursor *m_globalCursor;
+    HWEglFSKmsGbmCursor *m_globalCursor;
 };
 
-QT_END_NAMESPACE
 
 #endif // QEGLFSKMSGBMDEVICE_H

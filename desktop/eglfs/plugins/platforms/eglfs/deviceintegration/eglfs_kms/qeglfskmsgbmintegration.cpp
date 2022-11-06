@@ -39,53 +39,41 @@
 **
 ****************************************************************************/
 
-#include "qeglfskmsgbmintegration.h"
-#include "qeglfskmsgbmdevice.h"
-#include "qeglfskmsgbmscreen.h"
-#include "qeglfskmsgbmcursor.h"
-#include "qeglfskmsgbmwindow.h"
+#include "qeglfskmsgbmintegration_p.h"
+#include "qeglfskmsgbmdevice_p.h"
+#include "qeglfskmsgbmscreen_p.h"
+#include "qeglfskmsgbmcursor_p.h"
+#include "qeglfskmsgbmwindow_p.h"
 #include "private/qeglfscursor_p.h"
 
 #include <QtCore/QLoggingCategory>
-#include <QtCore/QtMath>
-#include <QtGui/QScreen>
-#include <QtGui/QWindow>
-#include <qpa/qwindowsysteminterface.h>
-
 #include <hollywood/udev.h>
 #include <hollywood/udevenumerate.h>
-#include <hollywood/logind.h>
+#include <QtGui/QScreen>
+// #include <QtDeviceDiscoverySupport/private/qdevicediscovery_p.h>
 
 #include <gbm.h>
 
-using namespace Originull::Platform;
-
-QT_BEGIN_NAMESPACE
-
-QMutex QEglFSKmsGbmScreen::m_waitForFlipMutex;
-
-QEglFSKmsGbmIntegration::QEglFSKmsGbmIntegration()
+HWEglFSKmsGbmIntegration::HWEglFSKmsGbmIntegration()
 {
-    qCDebug(qLcEglfsKmsDebug, "New DRM/KMS via GBM integration created");
-
     m_udev = new QtUdev::Udev();
+    qCDebug(qLcEglfsKmsDebug, "New DRM/KMS via GBM integration created");
 }
 
-QEglFSKmsGbmIntegration::~QEglFSKmsGbmIntegration()
+HWEglFSKmsGbmIntegration::~HWEglFSKmsGbmIntegration()
 {
     delete m_udev;
 }
 
 #ifndef EGL_EXT_platform_base
 typedef EGLDisplay (EGLAPIENTRYP PFNEGLGETPLATFORMDISPLAYEXTPROC) (EGLenum platform, void *native_display, const EGLint *attrib_list);
-typedef EGLSurface (EGLAPIENTRYP PFNEGLCREATEPLATFORMWINDOWSURFACEEXTPROC) (EGLDisplay dpy, EGLConfig config, void *native_window, const EGLint *attrib_list);
 #endif
 
 #ifndef EGL_PLATFORM_GBM_KHR
 #define EGL_PLATFORM_GBM_KHR 0x31D7
 #endif
 
-EGLDisplay QEglFSKmsGbmIntegration::createDisplay(EGLNativeDisplayType nativeDisplay)
+EGLDisplay HWEglFSKmsGbmIntegration::createDisplay(EGLNativeDisplayType nativeDisplay)
 {
     qCDebug(qLcEglfsKmsDebug, "Querying EGLDisplay");
     EGLDisplay display;
@@ -107,29 +95,12 @@ EGLDisplay QEglFSKmsGbmIntegration::createDisplay(EGLNativeDisplayType nativeDis
     return display;
 }
 
-EGLNativeWindowType QEglFSKmsGbmIntegration::createNativeWindow(QPlatformWindow *platformWindow,
-                                                                const QSize &size,
-                                                                const QSurfaceFormat &format)
+EGLNativeWindowType HWEglFSKmsGbmIntegration::createNativeOffscreenWindow(const QSurfaceFormat &format)
 {
     Q_UNUSED(format);
     Q_ASSERT(device());
 
-    QEglFSKmsGbmScreen *screen = static_cast<QEglFSKmsGbmScreen *>(platformWindow->screen());
-
-    gbm_surface *surface =
-            gbm_surface_create(static_cast<QEglFSKmsGbmDevice *>(device())->gbmDevice(),
-                               size.width(), size.height(), screen->output().drm_format,
-                               GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING);
-
-    return reinterpret_cast<EGLNativeWindowType>(surface);
-}
-
-EGLNativeWindowType QEglFSKmsGbmIntegration::createNativeOffscreenWindow(const QSurfaceFormat &format)
-{
-    Q_UNUSED(format);
-    Q_ASSERT(device());
-
-    gbm_surface *surface = gbm_surface_create(static_cast<QEglFSKmsGbmDevice *>(device())->gbmDevice(),
+    gbm_surface *surface = gbm_surface_create(static_cast<HWEglFSKmsGbmDevice *>(device())->gbmDevice(),
                                               1, 1,
                                               GBM_FORMAT_XRGB8888,
                                               GBM_BO_USE_RENDERING);
@@ -137,13 +108,13 @@ EGLNativeWindowType QEglFSKmsGbmIntegration::createNativeOffscreenWindow(const Q
     return reinterpret_cast<EGLNativeWindowType>(surface);
 }
 
-void QEglFSKmsGbmIntegration::destroyNativeWindow(EGLNativeWindowType window)
+void HWEglFSKmsGbmIntegration::destroyNativeWindow(EGLNativeWindowType window)
 {
     gbm_surface *surface = reinterpret_cast<gbm_surface *>(window);
     gbm_surface_destroy(surface);
 }
 
-QPlatformCursor *QEglFSKmsGbmIntegration::createCursor(QPlatformScreen *screen) const
+QPlatformCursor *HWEglFSKmsGbmIntegration::createCursor(QPlatformScreen *screen) const
 {
 #if QT_CONFIG(opengl)
     if (!screenConfig()->hwCursor()) {
@@ -156,36 +127,14 @@ QPlatformCursor *QEglFSKmsGbmIntegration::createCursor(QPlatformScreen *screen) 
     return nullptr;
 }
 
-void QEglFSKmsGbmIntegration::presentBuffer(QPlatformSurface *surface)
+void HWEglFSKmsGbmIntegration::presentBuffer(QPlatformSurface *surface)
 {
-    if (!Originull::Logind::instance()->isSessionActive())
-        return;
-
     QWindow *window = static_cast<QWindow *>(surface->surface());
-    QEglFSKmsGbmScreen *screen = static_cast<QEglFSKmsGbmScreen *>(window->screen()->handle());
+    HWEglFSKmsGbmScreen *screen = static_cast<HWEglFSKmsGbmScreen *>(window->screen()->handle());
     screen->flip();
 }
 
-QEglFSWindow *QEglFSKmsGbmIntegration::createWindow(QWindow *window) const
-{
-    return new QEglFSKmsGbmWindow(window, this);
-}
-
-QFunctionPointer QEglFSKmsGbmIntegration::platformFunction(const QByteArray &function) const
-{
-    auto returnValue = QEglFSKmsIntegration::platformFunction(function);
-    if (returnValue)
-        return returnValue;
-
-    if (function == Originull::Platform::EglFSFunctions::testScreenChangesIdentifier())
-        return QFunctionPointer(testScreenChangesStatic);
-    else if (function == Originull::Platform::EglFSFunctions::applyScreenChangesIdentifier())
-        return QFunctionPointer(applyScreenChangesStatic);
-
-    return nullptr;
-}
-
-QKmsDevice *QEglFSKmsGbmIntegration::createDevice()
+HWKmsDevice *HWEglFSKmsGbmIntegration::createDevice()
 {
     QString path = screenConfig()->devicePath();
     if (!path.isEmpty()) {
@@ -204,53 +153,11 @@ QKmsDevice *QEglFSKmsGbmIntegration::createDevice()
         qCDebug(qLcEglfsKmsDebug) << "Using" << path;
     }
 
-    return new QEglFSKmsGbmDevice(screenConfig(), path);
+    return new HWEglFSKmsGbmDevice(screenConfig(), path);
 }
 
-bool QEglFSKmsGbmIntegration::testScreenChangesStatic(const QVector<Originull::Platform::ScreenChange> &changes)
+HWEglFSWindow *HWEglFSKmsGbmIntegration::createWindow(QWindow *window) const
 {
-    Q_UNUSED(changes)
-    return true;
+    return new HWEglFSKmsGbmWindow(window, this);
 }
 
-bool QEglFSKmsGbmIntegration::applyScreenChangesStatic(const QVector<Originull::Platform::ScreenChange> &changes)
-{
-    /*for (auto &change : qAsConst(changes)) {
-        if (!change.screen || !change.enabled)
-            continue;
-
-        auto *gbmScreen = static_cast<QEglFSKmsGbmScreen *>(change.screen->handle());
-        if (!gbmScreen)
-            continue;
-
-        qCDebug(qLcEglfsKmsDebug) << "Apply screen changes to" << gbmScreen->name();
-
-        gbmScreen->setModeChangeRequested(true);
-
-        bool modeChanged = gbmScreen->setMode(change.resolution, qCeil(change.refreshRate / 1000.0f));
-        if (!modeChanged) {
-            gbmScreen->setModeChangeRequested(false);
-            continue;
-        }
-
-        gbmScreen->setVirtualPosition(change.position);
-        gbmScreen->setScaleFactor(change.scale);
-
-        const auto windows = QGuiApplication::topLevelWindows();
-        for (auto *window : windows) {
-            if (window->screen() == change.screen) {
-                auto *gbmWindow = static_cast<QEglFSKmsGbmWindow *>(window->handle());
-                gbmWindow->resizeSurface(gbmScreen->rawGeometry().size());
-                gbmWindow->setGeometry(QRect());
-            }
-        }
-
-        QWindowSystemInterface::handleScreenGeometryChange(change.screen, gbmScreen->geometry(), gbmScreen->availableGeometry());
-
-        gbmScreen->setModeChangeRequested(false);
-    }
-
-    return true; */
-}
-
-QT_END_NAMESPACE

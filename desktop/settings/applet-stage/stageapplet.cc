@@ -1,4 +1,6 @@
 #include "stageapplet.h"
+#include <QSettings>
+#include <hollywood/hollywood.h>
 
 StageApplet::StageApplet(QObject *parent)
     : QObject(parent)
@@ -9,6 +11,58 @@ StageApplet::StageApplet(QObject *parent)
 bool StageApplet::init()
 {
     setupWidget();
+    loadSettings();
+    return true;
+}
+
+bool StageApplet::loadSettings()
+{
+    QSettings settings("originull","hollywood");
+    settings.beginGroup("Stage");
+    auto layout = settings.value("Layout", HOLLYWOOD_STAGE_LAYOUT).toUInt();
+    if(layout == 0)
+        m_northern->setChecked(true);
+    else
+        m_southern->setChecked(true);
+
+    layoutSelectionChanged();
+
+    auto size = settings.value("Size", HOLLYWOOD_STAGE_SIZE).toUInt();
+    if(size == 0)
+        m_small->setChecked(true);
+    else
+        m_large->setChecked(true);
+
+    m_selectedPosition = (Qt::Edge)settings.value("Position", HOLLYWOOD_STAGE_POSITION).toUInt();
+
+    updatePositionOptions();
+
+    auto show_clock = settings.value("ShowClock", HOLLYWOOD_STCLK_SHOW).toBool();
+    auto show_date = settings.value("ShowDateInClock", HOLLYWOOD_STCLK_USEDATE).toBool();
+    auto show_seconds = settings.value("ShowSecondsInClock", HOLLYWOOD_STCLK_USESECONDS).toBool();
+    auto clock_24hr = settings.value("Use24HourClock", HOLLYWOOD_STCLK_24HOUR).toBool();
+    auto clock_ampm = settings.value("ShowAMPMInClock", HOLLYWOOD_STCLK_USEAMPM).toBool();
+
+    m_showclock->setChecked(show_clock);
+    m_showdate->setChecked(show_date);
+    m_seconds->setChecked(show_seconds);
+    m_24hour->setChecked(clock_24hr);
+    showClockChecked();
+
+    return true;
+}
+
+bool StageApplet::saveSettings()
+{
+    qDebug() << "saveSettings";
+    QSettings settings("originull","hollywood");
+    settings.beginGroup("Stage");
+    settings.setValue("ShowClock", m_showclock->isChecked());
+    settings.setValue("ShowDateInClock", m_showdate->isChecked());
+    settings.setValue("ShowSecondsInClock", m_seconds->isChecked());
+    settings.setValue("Use24HourClock", m_24hour->isChecked());
+    //settings.setValue("ShowAMPMInClock", m_seconds->isChecked());
+
     return true;
 }
 
@@ -19,12 +73,12 @@ QString StageApplet::id() const
 
 QString StageApplet::name() const
 {
-    return tr("Stage");
+    return tr("Stage & Menu Bar");
 }
 
 QString StageApplet::description() const
 {
-    return tr("Configure stage settings.");
+    return tr("Configure stage and menu bar settings.");
 }
 
 QIcon StageApplet::icon() const
@@ -46,73 +100,222 @@ SettingsAppletInterface::Category StageApplet::category() const
     return Personal;
 }
 
+void StageApplet::layoutSelectionChanged()
+{
+    if(m_layout->checkedButton() == m_northern)
+    {
+        // We are northern (Redmond) style
+        m_layoutdesc->setText(tr("A desktop layout from Redmond, Washington."));
+    }
+    else
+    {
+        // we are southern (Cupertino) style
+        m_layoutdesc->setText(tr("A desktop layout from Cupertino, California."));
+    }
+    updatePositionOptions();
+}
+
+void StageApplet::stageSizeChanged()
+{
+
+}
+
+void StageApplet::showClockChecked()
+{
+    m_showdate->setEnabled(m_showclock->isChecked());
+    m_seconds->setEnabled(m_showclock->isChecked());
+    m_24hour->setEnabled(m_showclock->isChecked());
+}
+
+void StageApplet::updatePositionOptions()
+{
+    disconnect(m_position, &QComboBox::currentIndexChanged, this, &StageApplet::layoutIndexChanged);
+    m_position->clear();
+    if(m_southern->isChecked())
+    {
+        // if we are using cupertino style we
+        // can't dock the stage at the top
+        if(m_selectedPosition == Qt::TopEdge)
+            m_selectedPosition = Qt::BottomEdge;
+    }
+
+    if(m_northern->isChecked())
+        m_position->addItem(tr("Top"), Qt::TopEdge);
+
+    m_position->addItem(tr("Left"), Qt::LeftEdge);
+    m_position->addItem(tr("Right"), Qt::RightEdge);
+    m_position->addItem(tr("Bottom"), Qt::BottomEdge);
+
+    switch(m_selectedPosition)
+    {
+    case Qt::TopEdge:
+        m_position->setCurrentIndex(0);
+        break;
+    case Qt::LeftEdge:
+        if(m_northern->isChecked())
+            m_position->setCurrentIndex(1);
+        else
+            m_position->setCurrentIndex(0);
+    case Qt::RightEdge:
+        if(m_northern->isChecked())
+            m_position->setCurrentIndex(2);
+        else
+            m_position->setCurrentIndex(1);
+    case Qt::BottomEdge:
+    default:
+        if(m_northern->isChecked())
+            m_position->setCurrentIndex(3);
+        else
+            m_position->setCurrentIndex(2);
+        break;
+    }
+    connect(m_position, &QComboBox::currentIndexChanged, this, &StageApplet::layoutIndexChanged);
+}
+
+void StageApplet::layoutIndexChanged(int index)
+{
+    if(m_southern->isChecked())
+    {
+        switch(index)
+        {
+        case 0:
+            m_selectedPosition = Qt::LeftEdge;
+            break;
+        case 1:
+            m_selectedPosition = Qt::RightEdge;
+            break;
+        case 2:
+        default:
+            m_selectedPosition = Qt::BottomEdge;
+            break;
+        }
+    }
+    else
+    {
+        switch(index)
+        {
+        case 0:
+            m_selectedPosition = Qt::TopEdge;
+            break;
+        case 1:
+            m_selectedPosition = Qt::LeftEdge;
+            break;
+        case 2:
+            m_selectedPosition = Qt::RightEdge;
+            break;
+        case 3:
+        default:
+            m_selectedPosition = Qt::BottomEdge;
+            break;
+        }
+    }
+}
+
 void StageApplet::setupWidget()
 {
     m_host = new QWidget(0);
-    if (m_host->objectName().isEmpty())
-        m_host->setObjectName(QString::fromUtf8("DuckAppletHost"));
-    m_host->resize(625, 439);
+    mainLayout = new QHBoxLayout(m_host);
+    m_layout = new QButtonGroup(m_host);
+    m_stagesize = new QButtonGroup(m_host);
+    connect(m_layout, &QButtonGroup::buttonToggled, this, &StageApplet::layoutSelectionChanged);
+    auto ml_hs_left = new QSpacerItem(150, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
 
-    mainLayout = new QVBoxLayout(m_host);
-    mainLayout->setObjectName(QString::fromUtf8("verticalLayout_3"));
-    m_topLayout = new QHBoxLayout();
-    m_topLayout->setObjectName(QString::fromUtf8("m_topLayout"));
-    m_duckLabel = new QLabel(m_host);
-    m_duckLabel->setObjectName(QString::fromUtf8("m_duckLabel"));
-    m_duckLabel->setPixmap(QPixmap(QString::fromUtf8(":Duck/Mallard")));
-    m_duckLabel->setMinimumHeight(127);
-    m_duckLabel->setMinimumWidth(150);
-    m_duckLabel->setMaximumWidth(150);
-    m_duckLabel->setScaledContents(false);
+    mainLayout->addItem(ml_hs_left);
 
-    m_topLayout->addWidget(m_duckLabel);
+    auto fl_main = new QFormLayout();
+    fl_main->setObjectName(QString::fromUtf8("fl_main"));
+    fl_main->setSizeConstraint(QLayout::SetDefaultConstraint);
+    fl_main->setLabelAlignment(Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter);
+    lb_layoutdesc = new QLabel(m_host);
+    lb_layoutdesc->setObjectName(QString::fromUtf8("lb_layoutdesc"));
 
-    m_rightSideLayout = new QVBoxLayout();
-    m_rightSideLayout->setObjectName(QString::fromUtf8("m_rightSideLayout"));
-    m_welcome = new QLabel(m_host);
-    m_welcome->setObjectName(QString::fromUtf8("m_welcome"));
+    fl_main->setWidget(0, QFormLayout::LabelRole, lb_layoutdesc);
 
-    m_rightSideLayout->addWidget(m_welcome);
+    auto vl_ns = new QVBoxLayout();
+    auto hl_ns = new QHBoxLayout();
+    m_northern = new QRadioButton(m_host);
+    m_southern = new QRadioButton(m_host);
 
-    m_description = new QLabel(m_host);
-    m_description->setObjectName(QString::fromUtf8("m_description"));
-    m_description->setTextFormat(Qt::PlainText);
-    m_description->setWordWrap(true);
-    m_rightSideLayout->addWidget(m_description);
+    m_layout->addButton(m_northern);
+    m_layout->addButton(m_southern);
 
-    verticalSpacer = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
+    hl_ns->addWidget(m_northern);
+    hl_ns->addWidget(m_southern);
+    vl_ns->addLayout(hl_ns);
 
+    m_layoutdesc = new QLabel(m_host);
+    auto f = m_layoutdesc->font();
+    f.setPointSize(f.pointSize()-2);
+    m_layoutdesc->setFont(f);
+    vl_ns->addWidget(m_layoutdesc);
 
-    m_rightSideLayout->addItem(verticalSpacer);
-    m_topLayout->addLayout(m_rightSideLayout);
+    auto lb_stagesize = new QLabel(m_host);
+    auto hl_stage_size = new QHBoxLayout();
+    m_small = new QRadioButton(m_host);
+    m_large = new QRadioButton(m_host);
 
+    m_stagesize->addButton(m_small);
+    m_stagesize->addButton(m_large);
+    auto label = new QLabel(m_host);
+    m_position = new QComboBox(m_host);
 
-    mainLayout->addLayout(m_topLayout);
+    hl_stage_size->addWidget(m_small);
+    hl_stage_size->addWidget(m_large);
 
+    connect(m_position, &QComboBox::currentIndexChanged, this, &StageApplet::layoutIndexChanged);
 
-    m_optionLayout = new QVBoxLayout();
-    m_optionLayout->setObjectName(QString::fromUtf8("m_optionLayout"));
-    m_quackMidnight = new QCheckBox(m_host);
-    m_quackMidnight->setObjectName(QString::fromUtf8("m_quackMidnight"));
-    m_optionLayout->addWidget(m_quackMidnight);
-    m_quackHourly = new QCheckBox(m_host);
-    m_quackHourly->setObjectName(QString::fromUtf8("m_quackHourly"));
-    m_optionLayout->addWidget(m_quackHourly);
-    m_quackNow = new QPushButton(m_host);
-    m_quackNow->setObjectName(QString::fromUtf8("m_quackNow"));
-    m_optionLayout->addWidget(m_quackNow);
-    m_rightSideLayout->addLayout(m_optionLayout);
+    line = new QFrame(m_host);
+    line->setObjectName(QString::fromUtf8("line"));
+    line->setFrameShape(QFrame::HLine);
+    line->setFrameShadow(QFrame::Sunken);
 
-    verticalSpacer_2 = new QSpacerItem(20, 2, QSizePolicy::Minimum, QSizePolicy::MinimumExpanding);
-    mainLayout->addItem(verticalSpacer_2);
+    m_showclock = new QCheckBox(m_host);
 
-    m_host->setWindowTitle(tr("Duck"));
-    m_duckLabel->setText(QString());
-    m_welcome->setText(tr("This is Mr Duck."));
-    m_description->setText(tr("Mr. Duck shows us how to implement a Settings Applet in Arion."));
-    m_quackMidnight->setText(tr("Quack at midnight"));
-    m_quackHourly->setText(tr("Quack on the hour"));
-    m_quackNow->setText(tr("Quack Now"));
+    connect(m_showclock, &QCheckBox::toggled, this, &StageApplet::showClockChecked);
+    m_showdate = new QCheckBox(m_host);
+
+    fl_main->setLayout(0, QFormLayout::FieldRole, vl_ns);
+    fl_main->setWidget(1, QFormLayout::LabelRole, lb_stagesize);
+    fl_main->setLayout(1, QFormLayout::FieldRole, hl_stage_size);
+    fl_main->setWidget(2, QFormLayout::LabelRole, label);
+    fl_main->setWidget(2, QFormLayout::FieldRole, m_position);
+    fl_main->setWidget(3, QFormLayout::SpanningRole, line);
+    fl_main->setWidget(4, QFormLayout::FieldRole, m_showclock);
+    fl_main->setWidget(5, QFormLayout::FieldRole, m_showdate);
+
+    m_seconds = new QCheckBox(m_host);
+
+    fl_main->setWidget(6, QFormLayout::FieldRole, m_seconds);
+
+    m_24hour = new QCheckBox(m_host);
+    lbl_clock = new QLabel(m_host);
+
+    fl_main->setWidget(7, QFormLayout::FieldRole, m_24hour);
+    fl_main->setItem(8, QFormLayout::FieldRole, new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
+
+    fl_main->setWidget(4, QFormLayout::LabelRole, lbl_clock);
+
+    connect(m_showclock, &QCheckBox::toggled, this, &StageApplet::saveSettings);
+    connect(m_showdate, &QCheckBox::toggled, this, &StageApplet::saveSettings);
+    connect(m_seconds, &QCheckBox::toggled, this, &StageApplet::saveSettings);
+    connect(m_24hour, &QCheckBox::toggled, this, &StageApplet::saveSettings);
+
+    mainLayout->addLayout(fl_main);
+    mainLayout->addItem(new QSpacerItem(149, 20, QSizePolicy::Expanding, QSizePolicy::Minimum));
+
+    lbl_clock->setText(QCoreApplication::translate("StageSettings", "Clock Settings:", nullptr));
+    lb_layoutdesc->setText(QCoreApplication::translate("StageSettings", "Layout:", nullptr));
+    m_northern->setText(QCoreApplication::translate("StageSettings", "Northern", nullptr));
+    m_southern->setText(QCoreApplication::translate("StageSettings", "Southern", nullptr));
+    m_layoutdesc->setText(QCoreApplication::translate("StageSettings", "TextLabel", nullptr));
+    lb_stagesize->setText(QCoreApplication::translate("StageSettings", "Stage Size:", nullptr));
+    m_small->setText(QCoreApplication::translate("StageSettings", "Small", nullptr));
+    m_large->setText(QCoreApplication::translate("StageSettings", "Large", nullptr));
+    label->setText(QCoreApplication::translate("StageSettings", "Stage Position:", nullptr));
+    m_showclock->setText(QCoreApplication::translate("StageSettings", "Show clock in the stage.", nullptr));
+    m_showdate->setText(QCoreApplication::translate("StageSettings", "Show date in clock.", nullptr));
+    m_seconds->setText(QCoreApplication::translate("StageSettings", "Show time with seconds.", nullptr));
+    m_24hour->setText(QCoreApplication::translate("StageSettings", "Use a 24 hour clock.", nullptr));
 
     QMetaObject::connectSlotsByName(m_host);
 }

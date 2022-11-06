@@ -39,17 +39,17 @@
 **
 ****************************************************************************/
 
-#include "qeglfskmsgbmcursor.h"
-#include "qeglfskmsgbmscreen.h"
-#include "qeglfskmsgbmdevice.h"
+#include "qeglfskmsgbmcursor_p.h"
+#include "qeglfskmsgbmscreen_p.h"
+#include "qeglfskmsgbmdevice_p.h"
 
+#include <QtCore/QFile>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
 #include <QtCore/QJsonArray>
 #include <QtCore/QLoggingCategory>
 #include <QtGui/QPainter>
 #include <QtGui/private/qguiapplication_p.h>
-#include <QFile>
 
 #include <xf86drm.h>
 #include <xf86drmMode.h>
@@ -62,15 +62,13 @@
 #define DRM_CAP_CURSOR_HEIGHT 0x9
 #endif
 
-QT_BEGIN_NAMESPACE
-
 Q_DECLARE_LOGGING_CATEGORY(qLcEglfsKmsDebug)
 
-QEglFSKmsGbmCursor::QEglFSKmsGbmCursor(QEglFSKmsGbmScreen *screen)
+HWEglFSKmsGbmCursor::HWEglFSKmsGbmCursor(HWEglFSKmsGbmScreen *screen)
     : m_screen(screen)
     , m_cursorSize(64, 64) // 64x64 is the old standard size, we now try to query the real size below
     , m_bo(nullptr)
-    , m_cursorImage(0, 0, 0, 0, 0, 0)
+    , m_cursorImage(nullptr, nullptr, 0, 0, 0, 0)
     , m_state(CursorPendingVisible)
     , m_deviceListener(nullptr)
 {
@@ -87,15 +85,13 @@ QEglFSKmsGbmCursor::QEglFSKmsGbmCursor(QEglFSKmsGbmScreen *screen)
         m_cursorSize.setHeight(height);
     }
 
-    m_bo = gbm_bo_create(static_cast<QEglFSKmsGbmDevice *>(m_screen->device())->gbmDevice(), m_cursorSize.width(), m_cursorSize.height(),
+    m_bo = gbm_bo_create(static_cast<HWEglFSKmsGbmDevice *>(m_screen->device())->gbmDevice(), m_cursorSize.width(), m_cursorSize.height(),
                          GBM_FORMAT_ARGB8888, GBM_BO_USE_CURSOR_64X64 | GBM_BO_USE_WRITE);
     if (!m_bo) {
         qWarning("Could not create buffer for cursor!");
     } else {
-        // Load the default cursor
-        m_cursorTheme.loadTheme(QString(), 32);
-
-        // Always initialize the cursor atlas in case we need it
+        // TODO: define in hollywood.h ?
+        m_cursorTheme.loadTheme(QLatin1String("neutral"), 32);
         initCursorAtlas();
     }
 
@@ -107,17 +103,17 @@ QEglFSKmsGbmCursor::QEglFSKmsGbmCursor(QEglFSKmsGbmScreen *screen)
 
 #ifndef QT_NO_CURSOR
     QCursor cursor(Qt::ArrowCursor);
-    changeCursor(&cursor, 0);
+    changeCursor(&cursor, nullptr);
 #endif
     setPos(QPoint(0, 0));
 }
 
-QEglFSKmsGbmCursor::~QEglFSKmsGbmCursor()
+HWEglFSKmsGbmCursor::~HWEglFSKmsGbmCursor()
 {
     delete m_deviceListener;
 
-    Q_FOREACH (QPlatformScreen *screen, m_screen->virtualSiblings()) {
-        QEglFSKmsScreen *kmsScreen = static_cast<QEglFSKmsScreen *>(screen);
+    for (QPlatformScreen *screen : m_screen->virtualSiblings()) {
+        HWEglFSKmsScreen *kmsScreen = static_cast<HWEglFSKmsScreen *>(screen);
         drmModeSetCursor(kmsScreen->device()->fd(), kmsScreen->output().crtc_id, 0, 0, 0);
         drmModeMoveCursor(kmsScreen->device()->fd(), kmsScreen->output().crtc_id, 0, 0);
     }
@@ -128,7 +124,7 @@ QEglFSKmsGbmCursor::~QEglFSKmsGbmCursor()
     }
 }
 
-void QEglFSKmsGbmCursor::updateMouseStatus()
+void HWEglFSKmsGbmCursor::updateMouseStatus()
 {
     const bool wasVisible = m_state == CursorVisible;
     const bool visible = m_deviceListener->hasMouse();
@@ -142,7 +138,7 @@ void QEglFSKmsGbmCursor::updateMouseStatus()
 #endif
 }
 
-void QEglFSKmsGbmCursor::setCursorTheme(const QString &name, int size)
+void HWEglFSKmsGbmCursor::setCursorTheme(const QString &name, int size)
 {
     m_cursorTheme.loadTheme(name, size);
 }
@@ -158,13 +154,13 @@ void QEglFSKmsGbmCursorDeviceListener::onDeviceListChanged(QInputDeviceManager::
         m_cursor->updateMouseStatus();
 }
 
-void QEglFSKmsGbmCursor::pointerEvent(const QMouseEvent &event)
+void HWEglFSKmsGbmCursor::pointerEvent(const QMouseEvent &event)
 {
     setPos(event.globalPosition().toPoint());
 }
 
 #ifndef QT_NO_CURSOR
-void QEglFSKmsGbmCursor::changeCursor(QCursor *windowCursor, QWindow *window)
+void HWEglFSKmsGbmCursor::changeCursor(QCursor *windowCursor, QWindow *window)
 {
     Q_UNUSED(window);
 
@@ -173,8 +169,8 @@ void QEglFSKmsGbmCursor::changeCursor(QCursor *windowCursor, QWindow *window)
 
     if (m_state == CursorPendingHidden) {
         m_state = CursorHidden;
-        Q_FOREACH (QPlatformScreen *screen, m_screen->virtualSiblings()) {
-            QEglFSKmsScreen *kmsScreen = static_cast<QEglFSKmsScreen *>(screen);
+        for (QPlatformScreen *screen : m_screen->virtualSiblings()) {
+            HWEglFSKmsScreen *kmsScreen = static_cast<HWEglFSKmsScreen *>(screen);
             drmModeSetCursor(kmsScreen->device()->fd(), kmsScreen->output().crtc_id, 0, 0, 0);
         }
     }
@@ -221,20 +217,17 @@ void QEglFSKmsGbmCursor::changeCursor(QCursor *windowCursor, QWindow *window)
     painter.drawImage(0, 0, *m_cursorImage.image());
     painter.end();
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
     gbm_bo_write(m_bo, cursorImage.constBits(), cursorImage.sizeInBytes());
-#else
-    gbm_bo_write(m_bo, cursorImage.constBits(), cursorImage.byteCount());
-#endif
 
     uint32_t handle = gbm_bo_get_handle(m_bo).u32;
 
     if (m_state == CursorPendingVisible)
         m_state = CursorVisible;
 
-    Q_FOREACH (QPlatformScreen *screen, m_screen->virtualSiblings()) {
-        QEglFSKmsScreen *kmsScreen = static_cast<QEglFSKmsScreen *>(screen);
-
+    for (QPlatformScreen *screen : m_screen->virtualSiblings()) {
+        HWEglFSKmsScreen *kmsScreen = static_cast<HWEglFSKmsScreen *>(screen);
+        if (kmsScreen->isCursorOutOfRange())
+            continue;
         int status = drmModeSetCursor(kmsScreen->device()->fd(), kmsScreen->output().crtc_id, handle,
                                       m_cursorSize.width(), m_cursorSize.height());
         if (status != 0)
@@ -243,30 +236,49 @@ void QEglFSKmsGbmCursor::changeCursor(QCursor *windowCursor, QWindow *window)
 }
 #endif // QT_NO_CURSOR
 
-QPoint QEglFSKmsGbmCursor::pos() const
+QPoint HWEglFSKmsGbmCursor::pos() const
 {
     return m_pos;
 }
 
-void QEglFSKmsGbmCursor::setPos(const QPoint &pos)
+void HWEglFSKmsGbmCursor::setPos(const QPoint &pos)
 {
-    Q_FOREACH (QPlatformScreen *screen, m_screen->virtualSiblings()) {
-        QEglFSKmsScreen *kmsScreen = static_cast<QEglFSKmsScreen *>(screen);
-        QPoint origin = kmsScreen->geometry().topLeft();
-        QPoint localPos = pos - origin;
-        QPoint adjustedPos = localPos - m_cursorImage.hotspot();
+    for (QPlatformScreen *screen : m_screen->virtualSiblings()) {
+        HWEglFSKmsScreen *kmsScreen = static_cast<HWEglFSKmsScreen *>(screen);
+        const QRect screenGeom = kmsScreen->geometry();
+        const QPoint origin = screenGeom.topLeft();
+        const QPoint localPos = pos - origin;
+        const QPoint adjustedLocalPos = localPos - m_cursorImage.hotspot();
 
-        int ret = drmModeMoveCursor(kmsScreen->device()->fd(), kmsScreen->output().crtc_id, adjustedPos.x(), adjustedPos.y());
-        if (ret == 0)
-            m_pos = pos;
-        else
-            qWarning("Failed to move cursor on screen %s: %d", kmsScreen->name().toLatin1().constData(), ret);
+        if (localPos.x() < 0 || localPos.y() < 0
+            || localPos.x() >= screenGeom.width() || localPos.y() >= screenGeom.height())
+        {
+            if (!kmsScreen->isCursorOutOfRange()) {
+                kmsScreen->setCursorOutOfRange(true);
+                drmModeSetCursor(kmsScreen->device()->fd(), kmsScreen->output().crtc_id, 0, 0, 0);
+            }
+        } else {
+            int ret;
+            if (kmsScreen->isCursorOutOfRange() && m_bo) {
+                kmsScreen->setCursorOutOfRange(false);
+                uint32_t handle = gbm_bo_get_handle(m_bo).u32;
+                ret = drmModeSetCursor(kmsScreen->device()->fd(), kmsScreen->output().crtc_id,
+                                       handle, m_cursorSize.width(), m_cursorSize.height());
+            } else {
+                ret = drmModeMoveCursor(kmsScreen->device()->fd(), kmsScreen->output().crtc_id,
+                                        adjustedLocalPos.x(), adjustedLocalPos.y());
+            }
+            if (ret == 0)
+                m_pos = pos;
+            else
+                qWarning("Failed to move cursor on screen %s: %d", kmsScreen->name().toLatin1().constData(), ret);
 
-        kmsScreen->handleCursorMove(pos);
+            kmsScreen->handleCursorMove(pos);
+        }
     }
 }
 
-void QEglFSKmsGbmCursor::initCursorAtlas()
+void HWEglFSKmsGbmCursor::initCursorAtlas()
 {
     static QByteArray json = qgetenv("QT_QPA_EGLFS_CURSOR");
     if (json.isEmpty())
@@ -276,8 +288,8 @@ void QEglFSKmsGbmCursor::initCursorAtlas()
 
     QFile file(QString::fromUtf8(json));
     if (!file.open(QFile::ReadOnly)) {
-        Q_FOREACH (QPlatformScreen *screen, m_screen->virtualSiblings()) {
-            QEglFSKmsScreen *kmsScreen = static_cast<QEglFSKmsScreen *>(screen);
+        for (QPlatformScreen *screen : m_screen->virtualSiblings()) {
+            HWEglFSKmsScreen *kmsScreen = static_cast<HWEglFSKmsScreen *>(screen);
             drmModeSetCursor(kmsScreen->device()->fd(), kmsScreen->output().crtc_id, 0, 0, 0);
             drmModeMoveCursor(kmsScreen->device()->fd(), kmsScreen->output().crtc_id, 0, 0);
         }
@@ -307,7 +319,7 @@ void QEglFSKmsGbmCursor::initCursorAtlas()
     m_cursorAtlas.cursorHeight = image.height() / ((Qt::LastCursor + cursorsPerRow) / cursorsPerRow);
     m_cursorAtlas.width = image.width();
     m_cursorAtlas.height = image.height();
-    m_cursorAtlas.image = std::move(image);
+    m_cursorAtlas.image = image;
 }
 
 QT_END_NAMESPACE

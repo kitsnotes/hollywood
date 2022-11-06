@@ -58,7 +58,7 @@ private:
     bool m_initted = false;
     HollywoodPlatformTheme *m_platformTheme;
     static DBusMenuBar *s_globalMenuBar;
-    static QMap<QWindow *, DBusMenuBar *> s_menuBars;
+    static QHash<QWindow *, DBusMenuBar *> s_menuBars;
 
     DBusPlatformMenuItem *menuItemForMenu(QPlatformMenu *menu);
     static void updateMenuItem(DBusPlatformMenuItem *item, QPlatformMenu *menu);

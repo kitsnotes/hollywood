@@ -1,6 +1,6 @@
 /****************************************************************************
-** Hollywood Calculator
-** Copyright (C) 2022 The Cat and Contributors to Hollywood
+** Arion Calculator
+** Copyright (C) 2022 The Cat and Contributors to Arion
 ** Portions Copyright (C) 2016 The Qt Company Ltd.
 ** spdx-license-identifier: bsd-3-clause
 ****************************************************************************/

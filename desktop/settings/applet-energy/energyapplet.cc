@@ -50,70 +50,101 @@ void EnergyApplet::setupWidget()
 {
     m_host = new QWidget(0);
     if (m_host->objectName().isEmpty())
-        m_host->setObjectName(QString::fromUtf8("DuckAppletHost"));
-    m_host->resize(625, 439);
+        m_host->setObjectName(QString::fromUtf8("EnergyAppletHost"));
 
     mainLayout = new QVBoxLayout(m_host);
-    mainLayout->setObjectName(QString::fromUtf8("verticalLayout_3"));
-    m_topLayout = new QHBoxLayout();
-    m_topLayout->setObjectName(QString::fromUtf8("m_topLayout"));
-    m_duckLabel = new QLabel(m_host);
-    m_duckLabel->setObjectName(QString::fromUtf8("m_duckLabel"));
-    m_duckLabel->setPixmap(QPixmap(QString::fromUtf8(":Duck/Mallard")));
-    m_duckLabel->setMinimumHeight(127);
-    m_duckLabel->setMinimumWidth(150);
-    m_duckLabel->setMaximumWidth(150);
-    m_duckLabel->setScaledContents(false);
+    m_tabs = new QTabWidget(m_host);
+    m_tabs->setObjectName(QString::fromUtf8("m_tabs"));
+    m_mains = new QWidget();
+    m_mains->setObjectName(QString::fromUtf8("m_mains"));
+    formLayout = new QFormLayout(m_mains);
+    formLayout->setObjectName(QString::fromUtf8("formLayout"));
+    formLayout->setLabelAlignment(Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter);
+    formLayout->setFormAlignment(Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop);
+    lbl_mains_comp_sleep = new QLabel(m_mains);
+    lbl_mains_comp_sleep->setObjectName(QString::fromUtf8("lbl_mains_comp_sleep"));
 
-    m_topLayout->addWidget(m_duckLabel);
+    formLayout->setWidget(0, QFormLayout::LabelRole, lbl_mains_comp_sleep);
 
-    m_rightSideLayout = new QVBoxLayout();
-    m_rightSideLayout->setObjectName(QString::fromUtf8("m_rightSideLayout"));
-    m_welcome = new QLabel(m_host);
-    m_welcome->setObjectName(QString::fromUtf8("m_welcome"));
+    m_mains_comp_sleep = new QSlider(m_mains);
+    m_mains_comp_sleep->setObjectName(QString::fromUtf8("m_mains_comp_sleep"));
+    m_mains_comp_sleep->setOrientation(Qt::Horizontal);
 
-    m_rightSideLayout->addWidget(m_welcome);
+    formLayout->setWidget(0, QFormLayout::FieldRole, m_mains_comp_sleep);
 
-    m_description = new QLabel(m_host);
-    m_description->setObjectName(QString::fromUtf8("m_description"));
-    m_description->setTextFormat(Qt::PlainText);
-    m_description->setWordWrap(true);
-    m_rightSideLayout->addWidget(m_description);
+    lbl_mains_disp_sleep = new QLabel(m_mains);
+    lbl_mains_disp_sleep->setObjectName(QString::fromUtf8("lbl_mains_disp_sleep"));
 
-    verticalSpacer = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
+    formLayout->setWidget(1, QFormLayout::LabelRole, lbl_mains_disp_sleep);
+
+    m_mains_disp_sleep = new QSlider(m_mains);
+    m_mains_disp_sleep->setObjectName(QString::fromUtf8("m_mains_disp_sleep"));
+    m_mains_disp_sleep->setOrientation(Qt::Horizontal);
+
+    formLayout->setWidget(1, QFormLayout::FieldRole, m_mains_disp_sleep);
+
+    vs_mains = new QSpacerItem(518, 60, QSizePolicy::Minimum, QSizePolicy::Expanding);
+
+    formLayout->setItem(2, QFormLayout::FieldRole, vs_mains);
+
+    m_tabs->addTab(m_mains, QString());
+    m_battery = new QWidget();
+    m_battery->setObjectName(QString::fromUtf8("m_battery"));
+    formLayout_3 = new QFormLayout(m_battery);
+    formLayout_3->setObjectName(QString::fromUtf8("formLayout_3"));
+    formLayout_3->setLabelAlignment(Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter);
+    formLayout_3->setFormAlignment(Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop);
+    lbl_batt_comp_sleep = new QLabel(m_battery);
+    lbl_batt_comp_sleep->setObjectName(QString::fromUtf8("lbl_batt_comp_sleep"));
+
+    formLayout_3->setWidget(0, QFormLayout::LabelRole, lbl_batt_comp_sleep);
+
+    m_batt_comp_sleep = new QSlider(m_battery);
+    m_batt_comp_sleep->setObjectName(QString::fromUtf8("m_batt_comp_sleep"));
+    m_batt_comp_sleep->setOrientation(Qt::Horizontal);
+
+    formLayout_3->setWidget(0, QFormLayout::FieldRole, m_batt_comp_sleep);
+
+    lbl_batt_disp_sleep = new QLabel(m_battery);
+    lbl_batt_disp_sleep->setObjectName(QString::fromUtf8("lbl_batt_disp_sleep"));
+
+    formLayout_3->setWidget(1, QFormLayout::LabelRole, lbl_batt_disp_sleep);
+
+    m_batt_disp_sleep = new QSlider(m_battery);
+    m_batt_disp_sleep->setObjectName(QString::fromUtf8("m_batt_disp_sleep"));
+    m_batt_disp_sleep->setOrientation(Qt::Horizontal);
+
+    formLayout_3->setWidget(1, QFormLayout::FieldRole, m_batt_disp_sleep);
+
+    vs_batt = new QSpacerItem(518, 60, QSizePolicy::Minimum, QSizePolicy::Expanding);
+
+    formLayout_3->setItem(2, QFormLayout::FieldRole, vs_batt);
+
+    m_tabs->addTab(m_battery, QString());
+
+    mainLayout->addWidget(m_tabs);
+
+    hl_bottom = new QHBoxLayout();
+    m_showinmenu = new QCheckBox(m_host);
+    hl_bottom->addWidget(m_showinmenu);
+
+    hs_bottom = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+
+    hl_bottom->addItem(hs_bottom);
+
+    m_help = new QToolButton(m_host);
+
+    hl_bottom->addWidget(m_help);
 
 
-    m_rightSideLayout->addItem(verticalSpacer);
-    m_topLayout->addLayout(m_rightSideLayout);
+    mainLayout->addLayout(hl_bottom);
 
-
-    mainLayout->addLayout(m_topLayout);
-
-
-    m_optionLayout = new QVBoxLayout();
-    m_optionLayout->setObjectName(QString::fromUtf8("m_optionLayout"));
-    m_quackMidnight = new QCheckBox(m_host);
-    m_quackMidnight->setObjectName(QString::fromUtf8("m_quackMidnight"));
-    m_optionLayout->addWidget(m_quackMidnight);
-    m_quackHourly = new QCheckBox(m_host);
-    m_quackHourly->setObjectName(QString::fromUtf8("m_quackHourly"));
-    m_optionLayout->addWidget(m_quackHourly);
-    m_quackNow = new QPushButton(m_host);
-    m_quackNow->setObjectName(QString::fromUtf8("m_quackNow"));
-    m_optionLayout->addWidget(m_quackNow);
-    m_rightSideLayout->addLayout(m_optionLayout);
-
-    verticalSpacer_2 = new QSpacerItem(20, 2, QSizePolicy::Minimum, QSizePolicy::MinimumExpanding);
-    mainLayout->addItem(verticalSpacer_2);
-
-    m_host->setWindowTitle(tr("Duck"));
-    m_duckLabel->setText(QString());
-    m_welcome->setText(tr("This is Mr Duck."));
-    m_description->setText(tr("Mr. Duck shows us how to implement a Settings Applet in Arion."));
-    m_quackMidnight->setText(tr("Quack at midnight"));
-    m_quackHourly->setText(tr("Quack on the hour"));
-    m_quackNow->setText(tr("Quack Now"));
-
-    QMetaObject::connectSlotsByName(m_host);
+    lbl_mains_comp_sleep->setText(QCoreApplication::translate("Energy", "Computer sleep:", nullptr));
+    lbl_mains_disp_sleep->setText(QCoreApplication::translate("Energy", "Display sleep:", nullptr));
+    m_tabs->setTabText(m_tabs->indexOf(m_mains), QCoreApplication::translate("Energy", "Mains Power", nullptr));
+    lbl_batt_comp_sleep->setText(QCoreApplication::translate("Energy", "Computer sleep:", nullptr));
+    lbl_batt_disp_sleep->setText(QCoreApplication::translate("Energy", "Display sleep:", nullptr));
+    m_tabs->setTabText(m_tabs->indexOf(m_battery), QCoreApplication::translate("Energy", "Battery", nullptr));
+    m_showinmenu->setText(QCoreApplication::translate("Energy", "Show energy status in menu bar", nullptr));
 }
 

@@ -276,7 +276,7 @@ LSDesktopEntry *LSMimeApplications::findDesktopForExec(const QString &file)
         auto path = keys.join('/');
         // see if we have presence in PATH
         auto paths = qgetenv("PATH").split(':');
-        if(paths.contains(path))
+        if(paths.contains(path.toUtf8()))
             return findDesktopForExec(exe);
     }
     return nullptr;

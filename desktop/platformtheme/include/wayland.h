@@ -49,8 +49,9 @@ public:
     AppMenuManager()
         : QWaylandClientExtensionTemplate<AppMenuManager>(1)
     {
-        qDebug() <<"appMenuManager";
+#if QT_VERSION >= 0x060000
         initialize();
+#endif
 /*#else
         // QWaylandClientExtensionTemplate invokes this with a QueuedConnection
         QMetaObject::invokeMethod(this, "addRegistryListener");

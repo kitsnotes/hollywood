@@ -1,6 +1,8 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 The Qt Company Ltd.
+** Copyright (C) 2015 Pier Luigi Fiorini <pierluigi.fiorini@gmail.com>
+** Copyright (C) 2016 The Qt Company Ltd.
+** Copyright (C) 2016 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the plugins of the Qt Toolkit.
@@ -37,8 +39,8 @@
 **
 ****************************************************************************/
 
-#ifndef QEGLFSKMSHELPERS_H
-#define QEGLFSKMSHELPERS_H
+#ifndef QEGLFSKMSGBMWINDOW_H
+#define QEGLFSKMSGBMWINDOW_H
 
 //
 //  W A R N I N G
@@ -51,17 +53,27 @@
 // We mean it.
 //
 
-#include <QString>
+#include "private/qeglfswindow_p.h"
 
-inline QString q_fourccToString(uint code)
+class HWEglFSKmsGbmIntegration;
+
+class Q_EGLFS_EXPORT HWEglFSKmsGbmWindow : public HWEglFSWindow
 {
-    QString s;
-    s.reserve(4);
-    s.append(code & 0xff);
-    s.append((code >> 8) & 0xff);
-    s.append((code >> 16) & 0xff);
-    s.append((code >> 24) & 0xff);
-    return s;
-}
+public:
+    HWEglFSKmsGbmWindow(QWindow *w, const HWEglFSKmsGbmIntegration *integration)
+        : HWEglFSWindow(w),
+          m_integration(integration)
+    { }
 
-#endif // QEGLFSKMSHELPERS_H
+    ~HWEglFSKmsGbmWindow() { destroy(); }
+
+    void resetSurface() override;
+    void invalidateSurface() override;
+
+private:
+    const HWEglFSKmsGbmIntegration *m_integration;
+};
+
+QT_END_NAMESPACE
+
+#endif // QEGLFSKMSGBMWINDOW_H

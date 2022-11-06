@@ -1,34 +1,50 @@
-find_package(EGL REQUIRED)
+# Generated from eglfs_kms.pro.
 
-if(EGLFS_DRM_ATOMIC)
-    set(DEFINES EGLFS_ENABLE_DRM_ATOMIC)
-endif()
+#####################################################################
+## EglFsKmsGbmSupportPrivate Module:
+#####################################################################
 
-liri_add_plugin(eglfs-kms-integration
-    TYPE
-        liri/egldeviceintegrations
+qt_internal_add_module(EglFsKmsGbmSupportPrivate
+    CONFIG_MODULE_NAME eglfs_kms_gbm_support
+    INTERNAL_MODULE
     SOURCES
-        qeglfskmsgbmcursor.cpp
-        qeglfskmsgbmcursor.h
-        qeglfskmsgbmdevice.cpp
-        qeglfskmsgbmdevice.h
-        qeglfskmsgbmintegration.cpp
-        qeglfskmsgbmintegration.h
-        qeglfskmsgbmmain.cpp
-        qeglfskmsgbmscreen.cpp
-        qeglfskmsgbmscreen.h
-        qeglfskmsgbmwindow.cpp
-        qeglfskmsgbmwindow.h
+        qeglfskmsgbmcursor.cpp qeglfskmsgbmcursor_p.h
+        qeglfskmsgbmdevice.cpp qeglfskmsgbmdevice_p.h
+        qeglfskmsgbmintegration.cpp qeglfskmsgbmintegration_p.h
+        qeglfskmsgbmscreen.cpp qeglfskmsgbmscreen_p.h
+        qeglfskmsgbmwindow.cpp qeglfskmsgbmwindow_p.h
     DEFINES
-        ${DEFINES}
-    PUBLIC_DEFINES
+        QT_EGL_NO_X11
+    PUBLIC_LIBRARIES
+        Libdrm::Libdrm
+        Qt::CorePrivate
+        Qt::EglFSDeviceIntegrationPrivate
+        Qt::EglFsKmsSupportPrivate
+        Qt::GuiPrivate
+        Qt::KmsSupportPrivate
+        gbm::gbm
+)
+#####################################################################
+## QEglFSKmsGbmIntegrationPlugin Plugin:
+#####################################################################
+
+qt_internal_add_plugin(QEglFSKmsGbmIntegrationPlugin
+    OUTPUT_NAME qeglfs-kms-integration
+    PLUGIN_TYPE egldeviceintegrations
+    SOURCES
+        qeglfskmsgbmmain.cpp
+    DEFINES
         QT_EGL_NO_X11
     LIBRARIES
-        Liri::EglFSDeviceIntegration
-        Liri::EglFSDeviceIntegrationPrivate
-        Liri::EglFSKmsSupport
-        Liri::EglFSKmsSupportPrivate
-        EGL
+        Libdrm::Libdrm
+        Qt::CorePrivate
+        Qt::EglFSDeviceIntegrationPrivate
+        Qt::EglFsKmsGbmSupportPrivate
+        Qt::EglFsKmsSupportPrivate
+        Qt::GuiPrivate
+        Qt::KmsSupportPrivate
+        gbm::gbm
 )
 
-liri_finalize_plugin(eglfs-kms-integration)
+#### Keys ignored in scope 3:.:.:eglfs_kms-plugin.pro:<TRUE>:
+# OTHER_FILES = "$$PWD/eglfs_kms.json"

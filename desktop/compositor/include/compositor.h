@@ -85,6 +85,7 @@ public:
     PlasmaWindowManagement *windowManager() { return m_wndmgr; }
     WlrLayerShellV1 *layerShell() { return m_layerShell; }
     Output* outputAtPosition(const QPoint &pos);
+    Output* outputFor(QWaylandOutput *wloutput);
     void resetLayerShellLayer(Surface *s);
     QList<Surface*> backgroundLayerSurfaces() { return m_layer_bg; }
     QList<Surface*> bottomLayerSurfaces() { return m_layer_bottom; }
@@ -92,6 +93,8 @@ public:
     QList<Surface*> overlayLayerSurfaces() { return m_layer_overlay; }
 
     QString surfaceZOrderByUUID() const;
+    void generateDesktopInfoLabelImage();
+    QImage *desktopLabelImage();
 protected:
     void adjustCursorSurface(QWaylandSurface *surface, int hotspotX, int hotspotY);
     void recycleSurfaceObject(Surface *obj);
@@ -198,6 +201,8 @@ private:
     int m_resizeOldVal = 0;
 
     bool m_legacyExperience = false;
+
+    QImage *m_dtlabel = nullptr;
 };
 
 #endif // WINDOWCOMPOSITOR_H

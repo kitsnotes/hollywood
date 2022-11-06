@@ -55,10 +55,18 @@ AboutWindow::AboutWindow(QWidget *parent)
     populateKernel();
     populateApi();
     populateSMBIOS();
+
     populateCPUID();
     populateMemory();
     populateSysDisk();
     populateGPU();
+    populateDeviceTree();
+
+    if(m_proc->text().isEmpty())
+        m_proc->setText(tr("Unknown CPU"));
+
+    if(m_hardware->text().isEmpty())
+        m_hardware->setText(tr("Generic System"));
 }
 
 void AboutWindow::paintEvent(QPaintEvent *event)
@@ -278,9 +286,6 @@ void AboutWindow::populateCPUID()
                 .arg(QString(mn));
         m_proc->setText(cpu);
     }
-
-    if(m_proc->text().isEmpty())
-        m_proc->setText(tr("Unknown CPU"));
 }
 
 void AboutWindow::processCpuidBlock(QList<QByteArray> d)
@@ -417,6 +422,54 @@ void AboutWindow::populateSysDisk()
             .arg(sz, is_ssd ? tr("solid state disk") : tr("hard disk"),
                  si.fileSystemType(), free);
     m_systemdisk->setText(system);
+}
+
+void AboutWindow::populateDeviceTree()
+{
+    // for things like pi, etc this should be here
+    QFile f("/sys/firmware/devicetree/base/model");
+    if(f.open(QFile::ReadOnly))
+    {
+        auto data = f.readAll();
+        if(m_hardware->text().isEmpty())
+            m_hardware->setText(data);
+        f.close();
+        return;
+    }
+
+    // that doesn't exist lets see if we're in KVM/QEMU
+    QFile f2("/sys/firmware/devicetree/base/compatible");
+    if(f2.open(QFile::ReadOnly))
+    {
+        auto data = f2.readAll();
+        f2.close();
+        if(data.contains("dummy-virt"))
+        {
+        if(m_hardware->text().isEmpty())
+            m_hardware->setText(tr("QEMU Virtual Machine"));
+
+            if(m_proc->text().isEmpty())
+                m_proc->setText(tr("Virtual 64-Bit ARM"));
+            return;
+        }
+    }
+    // lets check for apple virtualization
+    // that doesn't exist lets see if we're in KVM/QEMU
+    QFile f3("/sys/firmware/devicetree/base/hypervisor/compatible");
+    if(f3.open(QFile::ReadOnly))
+    {
+        auto data = f3.readAll();
+        f3.close();
+        if(data.contains("apple,virt"))
+        {
+            if(m_hardware->text().isEmpty())
+                m_hardware->setText(tr("Apple Virtual Machine"));
+
+            if(m_proc->text().isEmpty())
+                m_proc->setText(tr("Apple Silicon (Virtual M1x/M2 CPU)"));
+            return;
+        }
+    }
 }
 
 void AboutWindow::populateGPU()

@@ -41,20 +41,26 @@
 #ifndef QEGLFSKMSDEVICE_H
 #define QEGLFSKMSDEVICE_H
 
-#include <hollywood/private/qeglfsintegration_p.h>
+
+#include "private/qeglfsglobal_p.h"
+#include "qeglfskmseventreader.h"
 #include <hollywood/private/qkmsdevice_p.h>
 
-QT_BEGIN_NAMESPACE
 
-class Q_EGLFS_EXPORT QEglFSKmsDevice : public QKmsDevice
+class Q_EGLFS_EXPORT HWEglFSKmsDevice : public HWKmsDevice
 {
 public:
-    QEglFSKmsDevice(QKmsScreenConfig *screenConfig, const QString &path);
+    HWEglFSKmsDevice(HWKmsScreenConfig *screenConfig, const QString &path);
 
     void registerScreen(QPlatformScreen *screen,
                         bool isPrimary,
                         const QPoint &virtualPos,
                         const QList<QPlatformScreen *> &virtualSiblings) override;
+
+    HWEglFSKmsEventReader *eventReader() { return &m_eventReader; }
+
+protected:
+    HWEglFSKmsEventReader m_eventReader;
 };
 
 QT_END_NAMESPACE

@@ -1,16 +1,15 @@
 include(../include/global.pri)
-
-QT += gui-private waylandclient waylandclient-private waylandcompositor waylandcompositor-private
-CONFIG += plugin wayland-scanner compile_libtool create_libtool create_pc create_prl no_install_prl
+TEMPLATE = lib
+QT += gui gui-private waylandclient waylandclient-private waylandcompositor waylandcompositor-private
+CONFIG += wayland-scanner link_pkgconfig compile_libtool create_libtool \
+    create_pc create_prl no_install_prl
 TARGET = compositor-$${HOLLYWOOD_APIVERSION}
+
 VERSION = $${HOLLYWOOD_APIVERSION}
 SEMVER_VERSION = $${HOLLYWOOD_MAJOR_VERSION}.$${HOLLYWOOD_MINOR_VERSION}.$${HOLLYWOOD_PATCH_VERSION}
 
-TEMPLATE = lib
-QMAKE_USE += wayland-client
 INCLUDEPATH += ./include
 
-TEMPLATE = lib
 DEFINES += LIBCOMPOSITOR_LIBRARY
 
 SOURCES += \
@@ -26,11 +25,10 @@ HEADERS += \
 
 
 WAYLANDCLIENTSOURCES += ../compositor/protocols/originull-privateapi.xml
-
-    WAYLANDSERVERSOURCES += \
-        ../compositor/protocols/originull-privateapi.xml \
-        protocols/wlr-layer-shell-unstable-v1.xml \
-        protocols/appmenu.xml
+WAYLANDSERVERSOURCES += \
+    ../compositor/protocols/originull-privateapi.xml \
+    ../compositor/protocols/wlr-layer-shell-unstable-v1.xml \
+    ../compositor/protocols/appmenu.xml
 
 !contains(QT_CONFIG, no-pkg-config) {
     PKGCONFIG += wayland-client

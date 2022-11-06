@@ -115,7 +115,9 @@ void PlasmaWindowControl::org_kde_plasma_window_bind_resource(Resource *resource
     qDebug() << "org_kde_plasma_window_bind_resource: client bind, send initial states." << uuid();
     send_initial_state(resource->handle);
     send_title_changed(resource->handle, m_title);
-    //send_pid_changed(resource->handle, m_parent->win
+    send_pid_changed(resource->handle, m_parent->surface()->client()->processId());
+    send_app_id_changed(resource->handle, m_parent->appId());
+    send_themed_icon_name_changed(resource->handle, m_parent->themedIcon());
 }
 
 QUuid PlasmaWindowControl::uuid() const
@@ -126,7 +128,6 @@ QUuid PlasmaWindowControl::uuid() const
 void PlasmaWindowControl::destroy()
 {
     unmap();
-
 }
 
 void PlasmaWindowControl::setActive(bool set)
@@ -162,10 +163,18 @@ void PlasmaWindowControl::setCloseable(bool set)
 void PlasmaWindowControl::setTitle(const QString &title)
 {
     m_title = title;
-    qDebug() << "PlasmaWindowControl: setTitle" << title;
     for (auto r : resourceMap())
         send_title_changed(r->handle, title);
     Q_EMIT titleChanged(title);
+}
+
+void PlasmaWindowControl::setThemedIcon(const QString &icon)
+{
+    m_themedicon = icon;
+    qDebug() << "PlasmaWindowControl: setThemedIcon" << icon;
+    for (auto r : resourceMap())
+        send_themed_icon_name_changed(r->handle, icon);
+    Q_EMIT themedIconChanged(icon);
 }
 
 void PlasmaWindowControl::setIcon(const QIcon &icon)
@@ -179,6 +188,42 @@ void PlasmaWindowControl::org_kde_plasma_window_set_state(Resource *resource, ui
 {
     Q_UNUSED(resource);
     Q_EMIT setStateRequest(flags, state);
+    if (flags & ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_ACTIVE) {
+        Q_EMIT activeRequested(state & ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_ACTIVE);
+    }
+    if (flags & ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_MINIMIZED) {
+        Q_EMIT minimizedRequested(state & ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_MINIMIZED);
+    }
+    if (flags & ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_MAXIMIZED) {
+        Q_EMIT maximizedRequested(state & ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_MAXIMIZED);
+    }
+    /*if (flags & ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_FULLSCREEN) {
+        Q_EMIT fullscreenRequested(state & ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_FULLSCREEN);
+    }
+    if (flags & ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_DEMANDS_ATTENTION) {
+        Q_EMIT demandsAttentionRequested(state & ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_DEMANDS_ATTENTION);
+    }
+    if (flags & ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_CLOSEABLE) {
+        Q_EMIT closeableRequested(state & ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_CLOSEABLE);
+    }
+    if (flags & ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_MINIMIZABLE) {
+        Q_EMIT minimizeableRequested(state & ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_MINIMIZABLE);
+    }
+    if (flags & ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_MAXIMIZABLE) {
+        Q_EMIT maximizeableRequested(state & ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_MAXIMIZABLE);
+    }
+    if (flags & ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_FULLSCREENABLE) {
+        Q_EMIT fullscreenableRequested(state & ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_FULLSCREENABLE);
+    }
+    if (flags & ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_SKIPTASKBAR) {
+        Q_EMIT skipTaskbarRequested(state & ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_SKIPTASKBAR);
+    }
+    if (flags & ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_MOVABLE) {
+        Q_EMIT movableRequested(state & ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_MOVABLE);
+    }
+    if (flags & ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_RESIZABLE) {
+        Q_EMIT resizableRequested(state & ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_RESIZABLE);
+    }*/
 }
 
 void PlasmaWindowControl::org_kde_plasma_window_set_virtual_desktop(Resource *resource, uint32_t number)

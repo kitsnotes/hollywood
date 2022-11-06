@@ -45,71 +45,60 @@
 #include <hollywood/private/qkmsdevice_p.h>
 
 #include <QtGui/qpa/qplatformwindow.h>
-#include <QtGui/qpa/qwindowsysteminterface.h>
 #include <QtGui/QScreen>
 
 #include <xf86drm.h>
 #include <xf86drmMode.h>
 
-#include <hollywood/eglfsfunctions.h>
-#include <hollywood/logind.h>
+Q_LOGGING_CATEGORY(qLcEglfsKmsDebug, "qt.qpa.eglfs.kms")
 
-QT_BEGIN_NAMESPACE
-
-Q_LOGGING_CATEGORY(qLcEglfsKmsDebug, "qt.qpa.eglfs.kms", QtInfoMsg)
-
-QEglFSKmsIntegration::QEglFSKmsIntegration()
-    : m_device(nullptr),
-      m_screenConfig(new QKmsScreenConfig)
+HWEglFSKmsIntegration::HWEglFSKmsIntegration()
+    : m_device(nullptr)
 {
 }
 
-QEglFSKmsIntegration::~QEglFSKmsIntegration()
+HWEglFSKmsIntegration::~HWEglFSKmsIntegration()
 {
-    delete m_screenConfig;
 }
 
-void QEglFSKmsIntegration::platformInit()
+void HWEglFSKmsIntegration::platformInit()
 {
+    qCDebug(qLcEglfsKmsDebug, "platformInit: Load Screen Config");
+    m_screenConfig = createScreenConfig();
+
     qCDebug(qLcEglfsKmsDebug, "platformInit: Opening DRM device");
     m_device = createDevice();
     if (Q_UNLIKELY(!m_device->open()))
         qFatal("Could not open DRM device");
-
-    // Redraw all toplevel windows as soon as the session is reactivated
-    QObject::connect(Originull::Logind::instance(), &Originull::Logind::sessionActiveChanged, [this](bool active) {
-        if (active) {
-            for (QWindow *window : qGuiApp->topLevelWindows())
-                QWindowSystemInterface::handleExposeEvent(window, QRegion(QRect(QPoint(0, 0), window->size())));
-        }
-    });
 }
 
-void QEglFSKmsIntegration::platformDestroy()
+void HWEglFSKmsIntegration::platformDestroy()
 {
     qCDebug(qLcEglfsKmsDebug, "platformDestroy: Closing DRM device");
     m_device->close();
     delete m_device;
     m_device = nullptr;
+    delete m_screenConfig;
+    m_screenConfig = nullptr;
 }
 
-EGLNativeDisplayType QEglFSKmsIntegration::platformDisplay() const
+EGLNativeDisplayType HWEglFSKmsIntegration::platformDisplay() const
 {
     Q_ASSERT(m_device);
     return (EGLNativeDisplayType) m_device->nativeDisplay();
 }
 
-bool QEglFSKmsIntegration::usesDefaultScreen()
+bool HWEglFSKmsIntegration::usesDefaultScreen()
 {
     return false;
 }
 
-void QEglFSKmsIntegration::screenInit()
+void HWEglFSKmsIntegration::screenInit()
 {
     m_device->createScreens();
 }
 
-QSurfaceFormat QEglFSKmsIntegration::surfaceFormatFor(const QSurfaceFormat &inputFormat) const
+QSurfaceFormat HWEglFSKmsIntegration::surfaceFormatFor(const QSurfaceFormat &inputFormat) const
 {
     QSurfaceFormat format(inputFormat);
     format.setRenderableType(QSurfaceFormat::OpenGLES);
@@ -120,7 +109,7 @@ QSurfaceFormat QEglFSKmsIntegration::surfaceFormatFor(const QSurfaceFormat &inpu
     return format;
 }
 
-bool QEglFSKmsIntegration::hasCapability(QPlatformIntegration::Capability cap) const
+bool HWEglFSKmsIntegration::hasCapability(QPlatformIntegration::Capability cap) const
 {
     switch (cap) {
     case QPlatformIntegration::ThreadedPixmaps:
@@ -132,34 +121,34 @@ bool QEglFSKmsIntegration::hasCapability(QPlatformIntegration::Capability cap) c
     }
 }
 
-void QEglFSKmsIntegration::waitForVSync(QPlatformSurface *surface) const
+void HWEglFSKmsIntegration::waitForVSync(QPlatformSurface *surface) const
 {
     QWindow *window = static_cast<QWindow *>(surface->surface());
-    QEglFSKmsScreen *screen = static_cast<QEglFSKmsScreen *>(window->screen()->handle());
+    HWEglFSKmsScreen *screen = static_cast<HWEglFSKmsScreen *>(window->screen()->handle());
 
     screen->waitForFlip();
 }
 
-bool QEglFSKmsIntegration::supportsPBuffers() const
+bool HWEglFSKmsIntegration::supportsPBuffers() const
 {
     return m_screenConfig->supportsPBuffers();
 }
 
-void *QEglFSKmsIntegration::nativeResourceForIntegration(const QByteArray &name)
+void *HWEglFSKmsIntegration::nativeResourceForIntegration(const QByteArray &name)
 {
     if (name == QByteArrayLiteral("dri_fd") && m_device)
         return (void *) (qintptr) m_device->fd();
 
-#ifdef EGLFS_ENABLE_DRM_ATOMIC
+#if QT_CONFIG(drm_atomic)
     if (name == QByteArrayLiteral("dri_atomic_request") && m_device)
-        return (void *) (qintptr) m_device->atomic_request();
+        return (void *) (qintptr) m_device->threadLocalAtomicRequest();
 #endif
     return nullptr;
 }
 
-void *QEglFSKmsIntegration::nativeResourceForScreen(const QByteArray &resource, QScreen *screen)
+void *HWEglFSKmsIntegration::nativeResourceForScreen(const QByteArray &resource, QScreen *screen)
 {
-    QEglFSKmsScreen *s = static_cast<QEglFSKmsScreen *>(screen->handle());
+    HWEglFSKmsScreen *s = static_cast<HWEglFSKmsScreen *>(screen->handle());
     if (s) {
         if (resource == QByteArrayLiteral("dri_crtcid"))
             return (void *) (qintptr) s->output().crtc_id;
@@ -169,14 +158,20 @@ void *QEglFSKmsIntegration::nativeResourceForScreen(const QByteArray &resource, 
     return nullptr;
 }
 
-QKmsDevice *QEglFSKmsIntegration::device() const
+HWKmsDevice *HWEglFSKmsIntegration::device() const
 {
     return m_device;
 }
 
-QKmsScreenConfig *QEglFSKmsIntegration::screenConfig() const
+HWKmsScreenConfig *HWEglFSKmsIntegration::screenConfig() const
 {
     return m_screenConfig;
 }
 
-QT_END_NAMESPACE
+HWKmsScreenConfig *HWEglFSKmsIntegration::createScreenConfig()
+{
+    HWKmsScreenConfig *screenConfig = new HWKmsScreenConfig;
+    //screenConfig->loadConfig();
+
+    return screenConfig;
+}

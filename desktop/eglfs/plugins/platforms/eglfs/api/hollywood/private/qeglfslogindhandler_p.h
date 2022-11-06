@@ -56,7 +56,6 @@
 
 #include "qeglfsglobal_p.h"
 
-QT_BEGIN_NAMESPACE
 
 class Q_EGLFS_EXPORT QEglFSLogindHandler : public QObject
 {
@@ -76,7 +75,5 @@ private Q_SLOTS:
 private:
     QEventLoop *m_loop;
 };
-
-QT_END_NAMESPACE
 
 #endif // QEGLFSLOGINDHANDLER_P_H

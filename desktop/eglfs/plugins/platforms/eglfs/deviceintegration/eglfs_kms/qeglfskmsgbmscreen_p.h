@@ -42,54 +42,54 @@
 #ifndef QEGLFSKMSGBMSCREEN_H
 #define QEGLFSKMSGBMSCREEN_H
 
-#include <QtCore/QMutex>
+//
+//  W A R N I N G
+//  -------------
+//
+// This file is not part of the Qt API.  It exists purely as an
+// implementation detail.  This header file may change from version to
+// version without notice, or even be removed.
+//
+// We mean it.
+//
 
 #include <hollywood/qeglfskmsscreen.h>
+#include <hollywood/qeglfskmsdevice.h>
+
+#include <QMutex>
+#include <QWaitCondition>
 
 #include <gbm.h>
 
-QT_BEGIN_NAMESPACE
+class HWEglFSKmsGbmCursor;
 
-class QEglFSKmsGbmCursor;
-
-class QEglFSKmsGbmScreen : public QEglFSKmsScreen
+class Q_EGLFS_EXPORT HWEglFSKmsGbmScreen : public HWEglFSKmsScreen
 {
 public:
-    QEglFSKmsGbmScreen(QKmsDevice *device, const QKmsOutput &output, bool headless);
-    ~QEglFSKmsGbmScreen();
+    HWEglFSKmsGbmScreen(HWEglFSKmsDevice *device, const HWKmsOutput &output, bool headless);
+    ~HWEglFSKmsGbmScreen();
 
     QPlatformCursor *cursor() const override;
 
-    gbm_surface *createGbmSurface(EGLConfig eglConfig, const QSize &size);
     gbm_surface *createSurface(EGLConfig eglConfig);
     void resetSurface();
-    void setSurface(gbm_surface *surface);
 
     void initCloning(QPlatformScreen *screenThisScreenClones,
-                     const QVector<QPlatformScreen *> &screensCloningThisScreen);
+                     const QList<QPlatformScreen *> &screensCloningThisScreen);
 
     void waitForFlip() override;
 
-    void flip();
+    virtual void flip();
 
     void setCursorTheme(const QString &name, int size);
-
-    void setModeChangeRequested(bool enabled);
+    virtual void updateFlipStatus();
 
     virtual uint32_t gbmFlags() { return GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING; }
 
-private:
+protected:
     void flipFinished();
     void ensureModeSet(uint32_t fb);
-    void cloneDestFlipFinished(QEglFSKmsGbmScreen *cloneDestScreen);
-    void updateFlipStatus();
-    void recordFrame(unsigned int tv_sec, unsigned int tv_usec);
-
-    static void pageFlipHandler(int fd,
-                                unsigned int sequence,
-                                unsigned int tv_sec,
-                                unsigned int tv_usec,
-                                void *user_data);
+    void cloneDestFlipFinished(HWEglFSKmsGbmScreen *cloneDestScreen);
 
     gbm_surface *m_gbm_surface;
 
@@ -97,7 +97,10 @@ private:
     gbm_bo *m_gbm_bo_next;
     bool m_flipPending;
 
-    QScopedPointer<QEglFSKmsGbmCursor> m_cursor;
+    QMutex m_flipMutex;
+    QWaitCondition m_flipCond;
+
+    QScopedPointer<HWEglFSKmsGbmCursor> m_cursor;
 
     struct FrameBuffer {
         uint32_t fb = 0;
@@ -105,16 +108,12 @@ private:
     static void bufferDestroyedHandler(gbm_bo *bo, void *data);
     FrameBuffer *framebufferForBufferObject(gbm_bo *bo);
 
-    QEglFSKmsGbmScreen *m_cloneSource;
+    HWEglFSKmsGbmScreen *m_cloneSource;
     struct CloneDestination {
-        QEglFSKmsGbmScreen *screen = nullptr;
+        HWEglFSKmsGbmScreen *screen = nullptr;
         bool cloneFlipPending = false;
     };
-    QVector<CloneDestination> m_cloneDests;
-
-    static QMutex m_waitForFlipMutex;
+    QList<CloneDestination> m_cloneDests;
 };
-
-QT_END_NAMESPACE
 
 #endif // QEGLFSKMSGBMSCREEN_H

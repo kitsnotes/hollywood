@@ -39,10 +39,10 @@
 **
 ****************************************************************************/
 
-#include "qeglfskmsgbmscreen.h"
-#include "qeglfskmsgbmdevice.h"
-#include "qeglfskmsgbmcursor.h"
-#include "qeglfsintegration_p.h"
+#include "qeglfskmsgbmscreen_p.h"
+#include "qeglfskmsgbmdevice_p.h"
+#include "qeglfskmsgbmcursor_p.h"
+#include <private/qeglfsintegration_p.h>
 
 #include <QtCore/QLoggingCategory>
 
@@ -50,11 +50,7 @@
 #include <QtGui/private/qtguiglobal_p.h>
 #include <QtFbSupport/private/qfbvthandler_p.h>
 
-#include <hollywood/logind.h>
-
 #include <errno.h>
-
-QT_BEGIN_NAMESPACE
 
 Q_DECLARE_LOGGING_CATEGORY(qLcEglfsKmsDebug)
 
@@ -70,7 +66,7 @@ static inline uint32_t gbmFormatToDrmFormat(uint32_t gbmFormat)
     return gbmFormat;
 }
 
-void QEglFSKmsGbmScreen::bufferDestroyedHandler(gbm_bo *bo, void *data)
+void HWEglFSKmsGbmScreen::bufferDestroyedHandler(gbm_bo *bo, void *data)
 {
     FrameBuffer *fb = static_cast<FrameBuffer *>(data);
 
@@ -82,7 +78,7 @@ void QEglFSKmsGbmScreen::bufferDestroyedHandler(gbm_bo *bo, void *data)
     delete fb;
 }
 
-QEglFSKmsGbmScreen::FrameBuffer *QEglFSKmsGbmScreen::framebufferForBufferObject(gbm_bo *bo)
+HWEglFSKmsGbmScreen::FrameBuffer *HWEglFSKmsGbmScreen::framebufferForBufferObject(gbm_bo *bo)
 {
     {
         FrameBuffer *fb = static_cast<FrameBuffer *>(gbm_bo_get_user_data(bo));
@@ -98,7 +94,8 @@ QEglFSKmsGbmScreen::FrameBuffer *QEglFSKmsGbmScreen::framebufferForBufferObject(
     uint32_t pixelFormat = gbmFormatToDrmFormat(gbm_bo_get_format(bo));
 
     QScopedPointer<FrameBuffer> fb(new FrameBuffer);
-    qCDebug(qLcEglfsKmsDebug, "Adding FB, size %ux%u, DRM format 0x%x", width, height, pixelFormat);
+    qCDebug(qLcEglfsKmsDebug, "Adding FB, size %ux%u, DRM format 0x%x, stride %u, handle %u",
+            width, height, pixelFormat, strides[0], handles[0]);
 
     int ret = drmModeAddFB2(device()->fd(), width, height, pixelFormat,
                             handles, strides, offsets, &fb->fb, 0);
@@ -112,8 +109,8 @@ QEglFSKmsGbmScreen::FrameBuffer *QEglFSKmsGbmScreen::framebufferForBufferObject(
     return fb.take();
 }
 
-QEglFSKmsGbmScreen::QEglFSKmsGbmScreen(QKmsDevice *device, const QKmsOutput &output, bool headless)
-    : QEglFSKmsScreen(device, output, headless)
+HWEglFSKmsGbmScreen::HWEglFSKmsGbmScreen(HWEglFSKmsDevice *device, const HWKmsOutput &output, bool headless)
+    : HWEglFSKmsScreen(device, output, headless)
     , m_gbm_surface(nullptr)
     , m_gbm_bo_current(nullptr)
     , m_gbm_bo_next(nullptr)
@@ -123,94 +120,84 @@ QEglFSKmsGbmScreen::QEglFSKmsGbmScreen(QKmsDevice *device, const QKmsOutput &out
 {
 }
 
-QEglFSKmsGbmScreen::~QEglFSKmsGbmScreen()
+HWEglFSKmsGbmScreen::~HWEglFSKmsGbmScreen()
 {
     const int remainingScreenCount = qGuiApp->screens().count();
     qCDebug(qLcEglfsKmsDebug, "Screen dtor. Remaining screens: %d", remainingScreenCount);
     if (!remainingScreenCount && !device()->screenConfig()->separateScreens())
-        static_cast<QEglFSKmsGbmDevice *>(device())->destroyGlobalCursor();
+        static_cast<HWEglFSKmsGbmDevice *>(device())->destroyGlobalCursor();
 }
 
-QPlatformCursor *QEglFSKmsGbmScreen::cursor() const
+QPlatformCursor *HWEglFSKmsGbmScreen::cursor() const
 {
-    QKmsScreenConfig *config = device()->screenConfig();
+    HWKmsScreenConfig *config = device()->screenConfig();
     if (config->headless())
         return nullptr;
     if (config->hwCursor()) {
         if (!config->separateScreens())
-            return static_cast<QEglFSKmsGbmDevice *>(device())->globalCursor();
+            return static_cast<HWEglFSKmsGbmDevice *>(device())->globalCursor();
 
         if (m_cursor.isNull()) {
-            QEglFSKmsGbmScreen *that = const_cast<QEglFSKmsGbmScreen *>(this);
-            that->m_cursor.reset(new QEglFSKmsGbmCursor(that));
+            HWEglFSKmsGbmScreen *that = const_cast<HWEglFSKmsGbmScreen *>(this);
+            that->m_cursor.reset(new HWEglFSKmsGbmCursor(that));
         }
 
         return m_cursor.data();
     } else {
-        return QEglFSScreen::cursor();
+        return HWEglFSScreen::cursor();
     }
 }
 
-gbm_surface *QEglFSKmsGbmScreen::createGbmSurface(EGLConfig eglConfig, const QSize &size)
+gbm_surface *HWEglFSKmsGbmScreen::createSurface(EGLConfig eglConfig)
 {
-    qCDebug(qLcEglfsKmsDebug, "Creating gbm_surface for screen %s", qPrintable(name()));
+    if (!m_gbm_surface) {
+        qCDebug(qLcEglfsKmsDebug, "Creating gbm_surface for screen %s", qPrintable(name()));
 
-    const auto gbmDevice = static_cast<QEglFSKmsGbmDevice *>(device())->gbmDevice();
-    EGLint native_format = -1;
-    EGLBoolean success = eglGetConfigAttrib(display(), eglConfig, EGL_NATIVE_VISUAL_ID, &native_format);
-    //qCDebug(qLcEglfsKmsDebug) << "Got native format" << hex << native_format << dec << "from eglGetConfigAttrib() with return code" << bool(success);
-    gbm_surface *gbmSurface = nullptr;
+        const auto gbmDevice = static_cast<HWEglFSKmsGbmDevice *>(device())->gbmDevice();
+        // If there was no format override given in the config file,
+        // query the native (here, gbm) format from the EGL config.
+        const bool queryFromEgl = !m_output.drm_format_requested_by_user;
+        if (queryFromEgl) {
+            EGLint native_format = -1;
+            EGLBoolean success = eglGetConfigAttrib(display(), eglConfig, EGL_NATIVE_VISUAL_ID, &native_format);
+            qCDebug(qLcEglfsKmsDebug) << "Got native format" << Qt::hex << native_format << Qt::dec
+                                      << "from eglGetConfigAttrib() with return code" << bool(success);
 
-    if (success)
-        gbmSurface = gbm_surface_create(gbmDevice,
-                                        size.width(),
-                                        size.height(),
-                                        native_format,
-                                        GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING);
+            if (success) {
+                m_gbm_surface = gbm_surface_create(gbmDevice,
+                                                   rawGeometry().width(),
+                                                   rawGeometry().height(),
+                                                   native_format,
+                                                   gbmFlags());
+                if (m_gbm_surface)
+                    m_output.drm_format = gbmFormatToDrmFormat(native_format);
+            }
+        }
 
-    if (!gbmSurface) { // fallback for older drivers
-        uint32_t gbmFormat = drmFormatToGbmFormat(m_output.drm_format);
-        qCDebug(qLcEglfsKmsDebug, "Could not create surface with EGL_NATIVE_VISUAL_ID, falling back to format %x", gbmFormat);
-        gbmSurface = gbm_surface_create(gbmDevice,
-                                        size.width(),
-                                        size.height(),
-                                        gbmFormat,
-                                        GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING);
+        // Fallback for older drivers, and when "format" is explicitly specified
+        // in the output config. (not guaranteed that the requested format works
+        // of course, but do what we are told to)
+        if (!m_gbm_surface) {
+            uint32_t gbmFormat = drmFormatToGbmFormat(m_output.drm_format);
+            if (queryFromEgl)
+                qCDebug(qLcEglfsKmsDebug, "Could not create surface with EGL_NATIVE_VISUAL_ID, falling back to format %x", gbmFormat);
+            m_gbm_surface = gbm_surface_create(gbmDevice,
+                                           rawGeometry().width(),
+                                           rawGeometry().height(),
+                                           gbmFormat,
+                                           gbmFlags());
+        }
     }
-
-    return gbmSurface; // not owned, gets destroyed by the caller
-}
-
-gbm_surface *QEglFSKmsGbmScreen::createSurface(EGLConfig eglConfig)
-{
-    if (!m_gbm_surface)
-        m_gbm_surface = createGbmSurface(eglConfig, rawGeometry().size());
     return m_gbm_surface; // not owned, gets destroyed in QEglFSKmsGbmIntegration::destroyNativeWindow() via QEglFSKmsGbmWindow::invalidateSurface()
 }
 
-void QEglFSKmsGbmScreen::resetSurface()
+void HWEglFSKmsGbmScreen::resetSurface()
 {
     m_gbm_surface = nullptr;
 }
 
-void QEglFSKmsGbmScreen::setSurface(gbm_surface *surface)
-{
-    if (m_gbm_bo_current) {
-        gbm_surface_release_buffer(m_gbm_surface,
-                                   m_gbm_bo_current);
-        m_gbm_bo_current = nullptr;
-    }
-    if (m_gbm_bo_next) {
-        gbm_surface_release_buffer(m_gbm_surface,
-                                   m_gbm_bo_next);
-        m_gbm_bo_next = nullptr;
-    }
-
-    m_gbm_surface = surface;
-}
-
-void QEglFSKmsGbmScreen::initCloning(QPlatformScreen *screenThisScreenClones,
-                                     const QVector<QPlatformScreen *> &screensCloningThisScreen)
+void HWEglFSKmsGbmScreen::initCloning(QPlatformScreen *screenThisScreenClones,
+                                     const QList<QPlatformScreen *> &screensCloningThisScreen)
 {
     // clone destinations need to know the clone source
     const bool clonesAnother = screenThisScreenClones != nullptr;
@@ -219,19 +206,19 @@ void QEglFSKmsGbmScreen::initCloning(QPlatformScreen *screenThisScreenClones,
         return;
     }
     if (clonesAnother)
-        m_cloneSource = static_cast<QEglFSKmsGbmScreen *>(screenThisScreenClones);
+        m_cloneSource = static_cast<HWEglFSKmsGbmScreen *>(screenThisScreenClones);
 
     // clone sources need to know their additional destinations
     for (QPlatformScreen *s : screensCloningThisScreen) {
         CloneDestination d;
-        d.screen = static_cast<QEglFSKmsGbmScreen *>(s);
+        d.screen = static_cast<HWEglFSKmsGbmScreen *>(s);
         m_cloneDests.append(d);
     }
 }
 
-void QEglFSKmsGbmScreen::ensureModeSet(uint32_t fb)
+void HWEglFSKmsGbmScreen::ensureModeSet(uint32_t fb)
 {
-    QKmsOutput &op(output());
+    HWKmsOutput &op(output());
     const int fd = device()->fd();
 
     if (!op.mode_set) {
@@ -239,23 +226,18 @@ void QEglFSKmsGbmScreen::ensureModeSet(uint32_t fb)
 
         bool doModeSet = true;
         drmModeCrtcPtr currentMode = drmModeGetCrtc(fd, op.crtc_id);
-        const bool alreadySet = currentMode && !memcmp(&currentMode->mode, &op.modes[op.mode], sizeof(drmModeModeInfo));
+        const bool alreadySet = currentMode && currentMode->buffer_id == fb && !memcmp(&currentMode->mode, &op.modes[op.mode], sizeof(drmModeModeInfo));
         if (currentMode)
             drmModeFreeCrtc(currentMode);
-        if (alreadySet) {
-            static bool alwaysDoSet = qEnvironmentVariableIntValue("QT_QPA_EGLFS_ALWAYS_SET_MODE");
-            if (!alwaysDoSet) {
-                qCDebug(qLcEglfsKmsDebug, "Mode already set, skipping modesetting for screen %s", qPrintable(name()));
-                doModeSet = false;
-            }
-        }
+        if (alreadySet)
+            doModeSet = false;
 
         if (doModeSet) {
             qCDebug(qLcEglfsKmsDebug, "Setting mode for screen %s", qPrintable(name()));
 
             if (device()->hasAtomicSupport()) {
-#ifdef EGLFS_ENABLE_DRM_ATOMIC
-                drmModeAtomicReq *request = device()->atomic_request();
+#if QT_CONFIG(drm_atomic)
+                drmModeAtomicReq *request = device()->threadLocalAtomicRequest();
                 if (request) {
                     drmModeAtomicAddProperty(request, op.connector_id, op.crtcIdPropertyId, op.crtc_id);
                     drmModeAtomicAddProperty(request, op.crtc_id, op.modeIdPropertyId, op.mode_blob_id);
@@ -279,36 +261,28 @@ void QEglFSKmsGbmScreen::ensureModeSet(uint32_t fb)
     }
 }
 
-void QEglFSKmsGbmScreen::waitForFlip()
+void HWEglFSKmsGbmScreen::waitForFlip()
 {
-    if (m_headless || m_cloneSource || modeChangeRequested())
-        return;
-
-    // Avoid permission denied error when session is not active
-    if (!Originull::Logind::instance()->isSessionActive())
+    if (m_headless || m_cloneSource)
         return;
 
     // Don't lock the mutex unless we actually need to
     if (!m_gbm_bo_next)
         return;
 
-    QMutexLocker lock(&m_waitForFlipMutex);
-    while (m_gbm_bo_next) {
-        drmEventContext drmEvent;
-        memset(&drmEvent, 0, sizeof(drmEvent));
-        drmEvent.version = 2;
-        drmEvent.vblank_handler = nullptr;
-        drmEvent.page_flip_handler = pageFlipHandler;
-        drmHandleEvent(device()->fd(), &drmEvent);
-    }
+    m_flipMutex.lock();
+    device()->eventReader()->startWaitFlip(this, &m_flipMutex, &m_flipCond);
+    m_flipCond.wait(&m_flipMutex);
+    m_flipMutex.unlock();
 
-#if EGLFS_ENABLE_DRM_ATOMIC
-    if (device()->hasAtomicSupport())
-        device()->atomicReset();
+    flipFinished();
+
+#if QT_CONFIG(drm_atomic)
+    device()->threadLocalAtomicReset();
 #endif
 }
 
-void QEglFSKmsGbmScreen::flip()
+void HWEglFSKmsGbmScreen::flip()
 {
     // For headless screen just return silently. It is not necessarily an error
     // to end up here, so show no warnings.
@@ -319,9 +293,6 @@ void QEglFSKmsGbmScreen::flip()
         qWarning("Screen %s clones another screen. swapBuffers() not allowed.", qPrintable(name()));
         return;
     }
-
-    if (modeChangeRequested())
-        return;
 
     if (!m_gbm_surface) {
         qWarning("Cannot sync before platform init!");
@@ -337,22 +308,22 @@ void QEglFSKmsGbmScreen::flip()
     FrameBuffer *fb = framebufferForBufferObject(m_gbm_bo_next);
     ensureModeSet(fb->fb);
 
-    QKmsOutput &op(output());
+    HWKmsOutput &op(output());
     const int fd = device()->fd();
     m_flipPending = true;
 
     if (device()->hasAtomicSupport()) {
-#ifdef EGLFS_ENABLE_DRM_ATOMIC
-        drmModeAtomicReq *request = device()->atomic_request();
+#if QT_CONFIG(drm_atomic)
+        drmModeAtomicReq *request = device()->threadLocalAtomicRequest();
         if (request) {
             drmModeAtomicAddProperty(request, op.eglfs_plane->id, op.eglfs_plane->framebufferPropertyId, fb->fb);
             drmModeAtomicAddProperty(request, op.eglfs_plane->id, op.eglfs_plane->crtcPropertyId, op.crtc_id);
             drmModeAtomicAddProperty(request, op.eglfs_plane->id, op.eglfs_plane->srcwidthPropertyId,
-                                     output().size.width() << 16);
+                                     op.size.width() << 16);
             drmModeAtomicAddProperty(request, op.eglfs_plane->id, op.eglfs_plane->srcXPropertyId, 0);
             drmModeAtomicAddProperty(request, op.eglfs_plane->id, op.eglfs_plane->srcYPropertyId, 0);
             drmModeAtomicAddProperty(request, op.eglfs_plane->id, op.eglfs_plane->srcheightPropertyId,
-                                     output().size.height() << 16);
+                                     op.size.height() << 16);
             drmModeAtomicAddProperty(request, op.eglfs_plane->id, op.eglfs_plane->crtcXPropertyId, 0);
             drmModeAtomicAddProperty(request, op.eglfs_plane->id, op.eglfs_plane->crtcYPropertyId, 0);
             drmModeAtomicAddProperty(request, op.eglfs_plane->id, op.eglfs_plane->crtcwidthPropertyId,
@@ -363,6 +334,9 @@ void QEglFSKmsGbmScreen::flip()
             static int zpos = qEnvironmentVariableIntValue("QT_QPA_EGLFS_KMS_ZPOS");
             if (zpos)
                 drmModeAtomicAddProperty(request, op.eglfs_plane->id, op.eglfs_plane->zposPropertyId, zpos);
+            static uint blendOp = uint(qEnvironmentVariableIntValue("QT_QPA_EGLFS_KMS_BLEND_OP"));
+            if (blendOp)
+                drmModeAtomicAddProperty(request, op.eglfs_plane->id, op.eglfs_plane->blendOpPropertyId, blendOp);
         }
 #endif
     } else {
@@ -386,8 +360,8 @@ void QEglFSKmsGbmScreen::flip()
             d.cloneFlipPending = true;
 
             if (device()->hasAtomicSupport()) {
-#ifdef EGLFS_ENABLE_DRM_ATOMIC
-                drmModeAtomicReq *request = device()->atomic_request();
+#if QT_CONFIG(drm_atomic)
+                drmModeAtomicReq *request = device()->threadLocalAtomicRequest();
                 if (request) {
                     drmModeAtomicAddProperty(request, d.screen->output().eglfs_plane->id,
                                                       d.screen->output().eglfs_plane->framebufferPropertyId, fb->fb);
@@ -409,37 +383,19 @@ void QEglFSKmsGbmScreen::flip()
         }
     }
 
-#ifdef EGLFS_ENABLE_DRM_ATOMIC
-    if (device()->hasAtomicSupport())
-         device()->atomicCommit(this);
+#if QT_CONFIG(drm_atomic)
+    device()->threadLocalAtomicCommit(this);
 #endif
 }
 
-void QEglFSKmsGbmScreen::setCursorTheme(const QString &name, int size)
+void HWEglFSKmsGbmScreen::setCursorTheme(const QString &name, int size)
 {
-    if (!m_cursor.isNull())
-        m_cursor->setCursorTheme(name, size);
+    qDebug() << "HWEglFSKmsGbmScreen::setCursorTheme" << name;
+    if(!m_cursor.isNull())
+        m_cursor->setCursorTheme(name,size);
 }
 
-void QEglFSKmsGbmScreen::setModeChangeRequested(bool enabled)
-{
-    QMutexLocker lock(&m_waitForFlipMutex);
-    m_modeChangeRequested = enabled;
-}
-
-void QEglFSKmsGbmScreen::pageFlipHandler(int fd, unsigned int sequence, unsigned int tv_sec, unsigned int tv_usec, void *user_data)
-{
-    Q_UNUSED(fd);
-    Q_UNUSED(sequence);
-    Q_UNUSED(tv_sec);
-    Q_UNUSED(tv_usec);
-
-    QEglFSKmsGbmScreen *screen = static_cast<QEglFSKmsGbmScreen *>(user_data);
-    screen->flipFinished();
-    screen->recordFrame(tv_sec, tv_usec);
-}
-
-void QEglFSKmsGbmScreen::flipFinished()
+void HWEglFSKmsGbmScreen::flipFinished()
 {
     if (m_cloneSource) {
         m_cloneSource->cloneDestFlipFinished(this);
@@ -450,7 +406,7 @@ void QEglFSKmsGbmScreen::flipFinished()
     updateFlipStatus();
 }
 
-void QEglFSKmsGbmScreen::cloneDestFlipFinished(QEglFSKmsGbmScreen *cloneDestScreen)
+void HWEglFSKmsGbmScreen::cloneDestFlipFinished(HWEglFSKmsGbmScreen *cloneDestScreen)
 {
     for (CloneDestination &d : m_cloneDests) {
         if (d.screen == cloneDestScreen) {
@@ -461,7 +417,7 @@ void QEglFSKmsGbmScreen::cloneDestFlipFinished(QEglFSKmsGbmScreen *cloneDestScre
     updateFlipStatus();
 }
 
-void QEglFSKmsGbmScreen::updateFlipStatus()
+void HWEglFSKmsGbmScreen::updateFlipStatus()
 {
     Q_ASSERT(!m_cloneSource);
 
@@ -480,40 +436,3 @@ void QEglFSKmsGbmScreen::updateFlipStatus()
     m_gbm_bo_current = m_gbm_bo_next;
     m_gbm_bo_next = nullptr;
 }
-
-void QEglFSKmsGbmScreen::recordFrame(unsigned int tv_sec, unsigned int tv_usec)
-{
-    if (!isRecordingEnabled())
-        return;
-
-    // We don't want to be called every flip
-    setRecordingEnabled(false);
-
-    auto *bo = m_gbm_bo_current;
-
-    auto *frameEvent = new Originull::Platform::ScreenCastFrameEvent();
-    frameEvent->screen = screen();
-    frameEvent->offset = rawGeometry().topLeft();
-    frameEvent->size = QSize(gbm_bo_get_width(bo), gbm_bo_get_height(bo));
-    frameEvent->drmFormat = gbmFormatToDrmFormat(gbm_bo_get_format(bo));
-    frameEvent->modifier = gbm_bo_get_modifier(bo);
-    frameEvent->numObjects = 1;
-    QCoreApplication::postEvent(QCoreApplication::instance(), frameEvent);
-
-    auto *objectEvent = new Originull::Platform::ScreenCastObjectEvent();
-    objectEvent->screen = screen();
-    objectEvent->index = 0;
-    objectEvent->fd = gbm_bo_get_fd(bo);
-    objectEvent->stride = gbm_bo_get_stride(bo);
-    objectEvent->size = gbm_bo_get_width(bo) * gbm_bo_get_height(bo) * objectEvent->stride;
-    objectEvent->planeIndex = 0;
-    QCoreApplication::postEvent(QCoreApplication::instance(), objectEvent);
-
-    auto *readyEvent = new Originull::Platform::ScreenCastReadyEvent();
-    readyEvent->screen = screen();
-    readyEvent->tv_sec = tv_sec;
-    readyEvent->tv_nsec = tv_usec * 1000;
-    QCoreApplication::postEvent(QCoreApplication::instance(), readyEvent);
-}
-
-QT_END_NAMESPACE

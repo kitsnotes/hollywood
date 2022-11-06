@@ -1,13 +1,13 @@
 /****************************************************************************
-** Hollywood Calculator
-** Copyright (C) 2022 The Cat and Contributors to Hollywood
+** Arion Calculator
+** Copyright (C) 2022 The Cat and Contributors to Arion
 ** spdx-license-identifier: bsd-3-clause
 ****************************************************************************/
 
 #ifndef CALCULATORWINDOW_H
 #define CALCULATORWINDOW_H
 
-#define HOLLYWOOD_CALCULATOR_VERSION  "1.0"
+#define ARION_CALCULATOR_VERSION  "1.0"
 
 #include <QMainWindow>
 #include <QPlainTextEdit>

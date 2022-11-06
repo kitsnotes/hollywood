@@ -40,42 +40,40 @@
 #ifndef QEGLFSKMSGBMCURSOR_H
 #define QEGLFSKMSGBMCURSOR_H
 
+
 #include <qpa/qplatformcursor.h>
 #include <QtCore/QList>
 #include <QtGui/QImage>
 #include <QtGui/private/qinputdevicemanager_p.h>
-
 #include <hollywood/private/xcursortheme_p.h>
 
 #include <gbm.h>
 
-QT_BEGIN_NAMESPACE
-
-class QEglFSKmsGbmScreen;
-class QEglFSKmsGbmCursor;
+class HWEglFSKmsGbmScreen;
+class HWEglFSKmsGbmCursor;
 
 class QEglFSKmsGbmCursorDeviceListener : public QObject
 {
     Q_OBJECT
 
 public:
-    QEglFSKmsGbmCursorDeviceListener(QEglFSKmsGbmCursor *cursor) : m_cursor(cursor) { }
+    QEglFSKmsGbmCursorDeviceListener(HWEglFSKmsGbmCursor *cursor) : m_cursor(cursor) { }
     bool hasMouse() const;
 
 public slots:
     void onDeviceListChanged(QInputDeviceManager::DeviceType type);
 
 private:
-    QEglFSKmsGbmCursor *m_cursor;
+    HWEglFSKmsGbmCursor *m_cursor;
 };
 
-class QEglFSKmsGbmCursor : public QPlatformCursor
+class HWEglFSKmsGbmCursor : public QPlatformCursor
 {
     Q_OBJECT
 
 public:
-    QEglFSKmsGbmCursor(QEglFSKmsGbmScreen *screen);
-    ~QEglFSKmsGbmCursor();
+    HWEglFSKmsGbmCursor(HWEglFSKmsGbmScreen *screen);
+    ~HWEglFSKmsGbmCursor();
 
     // input methods
     void pointerEvent(const QMouseEvent & event) override;
@@ -86,8 +84,8 @@ public:
     void setPos(const QPoint &pos) override;
 
     void updateMouseStatus();
-
     void setCursorTheme(const QString &name, int size);
+    void reevaluateVisibilityForScreens() { setPos(pos()); }
 
 private:
     void initCursorAtlas();
@@ -100,7 +98,7 @@ private:
         CursorVisible
     };
 
-    QEglFSKmsGbmScreen *m_screen;
+    HWEglFSKmsGbmScreen *m_screen;
     QSize m_cursorSize;
     gbm_bo *m_bo;
     QPoint m_pos;
@@ -119,7 +117,5 @@ private:
         QImage image;
     } m_cursorAtlas;
 };
-
-QT_END_NAMESPACE
 
 #endif // QEGLFSKMSGBMCURSOR_H

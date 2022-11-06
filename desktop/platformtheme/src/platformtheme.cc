@@ -35,7 +35,6 @@ static bool isDBusGlobalMenuAvailable()
 
 HollywoodPlatformTheme::HollywoodPlatformTheme()
 {
-    qDebug() << "AIPlatformTheme::AIPlatformTheme init platform theme";
     loadSettings();
     createPalettes();
 

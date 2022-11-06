@@ -200,6 +200,7 @@ private:
     QList<int> statesAsInts() const;
 };
 
+class WlrLayerSurfaceV1;
 class HWWaylandXdgPopup : public QObject
 {
     Q_OBJECT
@@ -221,6 +222,7 @@ class HWWaylandXdgPopup : public QObject
 public:
     HWWaylandXdgSurface *xdgSurface() const;
     HWWaylandXdgSurface *parentXdgSurface() const;
+    WlrLayerSurfaceV1 *parentLayerSurface() const;
     QRect configuredGeometry() const;
 
     // Positioner properties
@@ -238,6 +240,7 @@ public:
     Q_REVISION(1, 14) Q_INVOKABLE void sendPopupDone();
 
     static QWaylandSurfaceRole *role();
+    static HWWaylandXdgPopup *fromResource(struct ::wl_resource *resource);
 
 Q_SIGNALS:
     void configuredGeometryChanged();
@@ -246,6 +249,8 @@ private:
     explicit HWWaylandXdgPopup(HWWaylandXdgSurface *xdgSurface, HWWaylandXdgSurface *parentXdgSurface,
                               QWaylandXdgPositioner *positioner, QWaylandResource &resource);
     friend class HWWaylandXdgSurfacePrivate;
+private slots:
+    void handleRedraw();
 };
 
 QT_END_NAMESPACE

@@ -1,6 +1,6 @@
 TARGET = hweglfs
 TEMPLATE = lib
-QT += eglfsdeviceintegration-private core-private gui-private
+QT += core-private gui-private
 
 CONFIG += egl plugin
 
@@ -15,8 +15,10 @@ INCLUDEPATH += $$PWD/api
 INCLUDEPATH += $$PWD/../../../platformheaders
 
 PLUGIN_TYPE = platforms
-PLUGIN_CLASS_NAME = HollywoodEglFSIntegrationPlugin
+PLUGIN_CLASS_NAME = HWEglFSIntegrationPlugin
 DISTFILES += hollywood-eglfs.json
 
 target.path = $$[QT_INSTALL_PLUGINS]/platforms
 INSTALLS += target
+
+LIBS += -lHWEglFSDeviceIntegration -L$$OUT_PWD

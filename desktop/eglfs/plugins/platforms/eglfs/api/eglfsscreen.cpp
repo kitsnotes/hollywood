@@ -44,13 +44,11 @@
 #include <QtOpenGL/private/qopenglcompositor_p.h>
 
 #include "qeglfscursor_p.h"
-#include "qeglfsscreen_p.h"
+#include "eglfsscreen_p.h"
 #include "qeglfswindow_p.h"
 #include "qeglfshooks_p.h"
 
-QT_BEGIN_NAMESPACE
-
-QEglFSScreen::QEglFSScreen(EGLDisplay dpy)
+HWEglFSScreen::HWEglFSScreen(EGLDisplay dpy)
     : m_dpy(dpy),
       m_surface(EGL_NO_SURFACE),
       m_cursor(0)
@@ -58,12 +56,12 @@ QEglFSScreen::QEglFSScreen(EGLDisplay dpy)
     m_cursor = qt_egl_device_integration()->createCursor(this);
 }
 
-QEglFSScreen::~QEglFSScreen()
+HWEglFSScreen::~HWEglFSScreen()
 {
     delete m_cursor;
 }
 
-QRect QEglFSScreen::geometry() const
+QRect HWEglFSScreen::geometry() const
 {
     QRect r = rawGeometry();
 
@@ -88,62 +86,62 @@ QRect QEglFSScreen::geometry() const
     return r;
 }
 
-QRect QEglFSScreen::rawGeometry() const
+QRect HWEglFSScreen::rawGeometry() const
 {
     return QRect(QPoint(0, 0), qt_egl_device_integration()->screenSize());
 }
 
-int QEglFSScreen::depth() const
+int HWEglFSScreen::depth() const
 {
     return qt_egl_device_integration()->screenDepth();
 }
 
-QImage::Format QEglFSScreen::format() const
+QImage::Format HWEglFSScreen::format() const
 {
     return qt_egl_device_integration()->screenFormat();
 }
 
-QSizeF QEglFSScreen::physicalSize() const
+QSizeF HWEglFSScreen::physicalSize() const
 {
     return qt_egl_device_integration()->physicalScreenSize();
 }
 
-QDpi QEglFSScreen::logicalDpi() const
+QDpi HWEglFSScreen::logicalDpi() const
 {
     return qt_egl_device_integration()->logicalDpi();
 }
 
-QDpi QEglFSScreen::logicalBaseDpi() const
+QDpi HWEglFSScreen::logicalBaseDpi() const
 {
     return qt_egl_device_integration()->logicalBaseDpi();
 }
 
-Qt::ScreenOrientation QEglFSScreen::nativeOrientation() const
+Qt::ScreenOrientation HWEglFSScreen::nativeOrientation() const
 {
     return qt_egl_device_integration()->nativeOrientation();
 }
 
-Qt::ScreenOrientation QEglFSScreen::orientation() const
+Qt::ScreenOrientation HWEglFSScreen::orientation() const
 {
     return qt_egl_device_integration()->orientation();
 }
 
-QPlatformCursor *QEglFSScreen::cursor() const
+QPlatformCursor *HWEglFSScreen::cursor() const
 {
-    return m_cursor;
+   return m_cursor;
 }
 
-qreal QEglFSScreen::refreshRate() const
+qreal HWEglFSScreen::refreshRate() const
 {
     return qt_egl_device_integration()->refreshRate();
 }
 
-void QEglFSScreen::setPrimarySurface(EGLSurface surface)
+void HWEglFSScreen::setPrimarySurface(EGLSurface surface)
 {
     m_surface = surface;
 }
 
-void QEglFSScreen::handleCursorMove(const QPoint &pos)
+void HWEglFSScreen::handleCursorMove(const QPoint &pos)
 {
 #ifndef QT_NO_OPENGL
     const QOpenGLCompositor *compositor = QOpenGLCompositor::instance();
@@ -184,14 +182,15 @@ void QEglFSScreen::handleCursorMove(const QPoint &pos)
 #endif
 }
 
-void QEglFSScreen::setCursorTheme(const QString &name, int size)
+void HWEglFSScreen::setCursorTheme(const QString &name, int size)
 {
+    qDebug() << "HWEglFSScreen::setCursorTheme";
     auto *cursor = static_cast<QEglFSCursor *>(m_cursor);
     if (cursor)
         cursor->setCursorTheme(name, size);
 }
 
-QPixmap QEglFSScreen::grabWindow(WId wid, int x, int y, int width, int height) const
+QPixmap HWEglFSScreen::grabWindow(WId wid, int x, int y, int width, int height) const
 {
 #ifndef QT_NO_OPENGL
     QOpenGLCompositor *compositor = QOpenGLCompositor::instance();
@@ -200,7 +199,7 @@ QPixmap QEglFSScreen::grabWindow(WId wid, int x, int y, int width, int height) c
 
     QImage img;
 
-    if (static_cast<QEglFSWindow *>(windows.first()->sourceWindow()->handle())->isRaster()) {
+    if (static_cast<HWEglFSWindow *>(windows.first()->sourceWindow()->handle())->isRaster()) {
         // Request the compositor to render everything into an FBO and read it back. This
         // is of course slow, but it's safe and reliable. It will not include the mouse
         // cursor, which is a plus.
@@ -245,5 +244,3 @@ QPixmap QEglFSScreen::grabWindow(WId wid, int x, int y, int width, int height) c
 #endif
     return QPixmap();
 }
-
-QT_END_NAMESPACE

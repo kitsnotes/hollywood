@@ -28,4 +28,4 @@ public:
     explicit DefaultLogind(QObject *parent = nullptr);
 };
 
-} // namespace Liri
+} // namespace Originull

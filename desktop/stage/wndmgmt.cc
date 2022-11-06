@@ -27,6 +27,11 @@ QStringList PlasmaWindowManagement::stackingOrder()
     return m_stackorder;
 }
 
+void PlasmaWindowManagement::removeWindow(PlasmaWindow *w)
+{
+    m_windows.removeOne(w);
+}
+
 void PlasmaWindowManagement::org_kde_plasma_window_management_window_with_uuid(uint32_t id, const QString &uuid)
 {
     Q_UNUSED(id);
@@ -36,6 +41,7 @@ void PlasmaWindowManagement::org_kde_plasma_window_management_window_with_uuid(u
     m_windows.append(pm);
     Q_EMIT windowCreated(pm);
 }
+
 
 void PlasmaWindowManagement::org_kde_plasma_window_management_stacking_order_uuid_changed(const QString &uuids)
 {
@@ -72,7 +78,21 @@ QString PlasmaWindow::windowTitle() const
 
 void PlasmaWindow::toggleMinimize()
 {
+    if(m_minimized)
+        set_state(ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_MINIMIZED, 0);
+    else
+        set_state(ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_MINIMIZED, 1);
+}
 
+void PlasmaWindow::activate()
+{
+    if(!m_active)
+        set_state(ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_ACTIVE, 1);
+}
+
+bool PlasmaWindow::minimized() const
+{
+    return m_minimized;
 }
 
 void PlasmaWindow::org_kde_plasma_window_title_changed(const QString &title)
@@ -83,10 +103,18 @@ void PlasmaWindow::org_kde_plasma_window_title_changed(const QString &title)
 
 void PlasmaWindow::org_kde_plasma_window_state_changed(uint32_t flags)
 {
+    m_state = flags;
     if(flags & ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_MINIMIZED)
     {
+        if(!m_minimized)
+            emit minimizedChanged();
         m_minimized = true;
-        emit minimizedChanged();
+    }
+    else
+    {
+        if(m_minimized)
+            emit minimizedChanged();
+        m_minimized = false;
     }
 }
 
@@ -149,8 +177,17 @@ void PlasmaWindow::org_kde_plasma_window_icon_changed()
     watcher->setFuture(QtConcurrent::run(readIcon));
 }
 
+void PlasmaWindow::org_kde_plasma_window_themed_icon_name_changed(const QString &name)
+{
+    m_themedicon = name;
+    qDebug() << "themeIconChnged" << name;
+    emit themeIconChanged(name);
+}
+
 void PlasmaWindow::org_kde_plasma_window_unmapped()
 {
+    qDebug() << "unmapped";
+    m_parent->removeWindow(this);
     Q_EMIT windowClosed();
 }
 

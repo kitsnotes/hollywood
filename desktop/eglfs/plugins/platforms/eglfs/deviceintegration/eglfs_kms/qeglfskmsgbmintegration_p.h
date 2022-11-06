@@ -42,54 +42,46 @@
 #ifndef QEGLFSKMSGBMINTEGRATION_H
 #define QEGLFSKMSGBMINTEGRATION_H
 
-#include <QtCore/QMap>
-#include <QtCore/QVariant>
+//
+//  W A R N I N G
+//  -------------
+//
+// This file is not part of the Qt API.  It exists purely as an
+// implementation detail.  This header file may change from version to
+// version without notice, or even be removed.
+//
+// We mean it.
+//
 
 #include <hollywood/qeglfskmsintegration.h>
+#include <QtCore/QMap>
+#include <QtCore/QVariant>
 
 namespace QtUdev {
 class Udev;
 }
 
-namespace Originull {
-namespace Platform {
-class ScreenChange;
-}
-}
+class HWEglFSKmsDevice;
 
-QT_BEGIN_NAMESPACE
-
-class QEglFSKmsDevice;
-
-class QEglFSKmsGbmIntegration : public QEglFSKmsIntegration
+class Q_EGLFS_EXPORT HWEglFSKmsGbmIntegration : public HWEglFSKmsIntegration
 {
 public:
-    QEglFSKmsGbmIntegration();
-    ~QEglFSKmsGbmIntegration();
+    HWEglFSKmsGbmIntegration();
+    ~HWEglFSKmsGbmIntegration();
 
     EGLDisplay createDisplay(EGLNativeDisplayType nativeDisplay) override;
-    EGLNativeWindowType createNativeWindow(QPlatformWindow *platformWindow,
-                                           const QSize &size,
-                                           const QSurfaceFormat &format) override;
     EGLNativeWindowType createNativeOffscreenWindow(const QSurfaceFormat &format) override;
     void destroyNativeWindow(EGLNativeWindowType window) override;
 
     QPlatformCursor *createCursor(QPlatformScreen *screen) const override;
     void presentBuffer(QPlatformSurface *surface) override;
-    QEglFSWindow *createWindow(QWindow *window) const override;
-
-    QFunctionPointer platformFunction(const QByteArray &function) const override;
+    HWEglFSWindow *createWindow(QWindow *window) const override;
 
 protected:
-    QKmsDevice *createDevice() override;
+    HWKmsDevice *createDevice() override;
 
 private:
     QtUdev::Udev *m_udev;
-
-    static bool testScreenChangesStatic(const QVector<Originull::Platform::ScreenChange> &changes);
-    static bool applyScreenChangesStatic(const QVector<Originull::Platform::ScreenChange> &changes);
 };
-
-QT_END_NAMESPACE
 
 #endif // QEGLFSKMSGBMINTEGRATION_H

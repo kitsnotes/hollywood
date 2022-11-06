@@ -40,34 +40,20 @@
 #ifndef QEGLFSWINDOW_H
 #define QEGLFSWINDOW_H
 
-//
-//  W A R N I N G
-//  -------------
-//
-// This file is not part of the Qt API.  It exists purely as an
-// implementation detail.  This header file may change from version to
-// version without notice, or even be removed.
-//
-// We mean it.
-//
-
 #include "qeglfsglobal_p.h"
 #include "qeglfsintegration_p.h"
-#include "qeglfsscreen_p.h"
+#include "eglfsscreen_p.h"
 
 #include <qpa/qplatformwindow.h>
 #include <QtOpenGL/private/qopenglcompositor_p.h>
 
-
-QT_BEGIN_NAMESPACE
-
 class QOpenGLCompositorBackingStore;
 class QPlatformTextureList;
-class Q_EGLFS_EXPORT QEglFSWindow : public QPlatformWindow, public QOpenGLCompositorWindow
+class Q_EGLFS_EXPORT HWEglFSWindow : public QPlatformWindow, public QOpenGLCompositorWindow
 {
 public:
-    QEglFSWindow(QWindow *w);
-    ~QEglFSWindow();
+    HWEglFSWindow(QWindow *w);
+    ~HWEglFSWindow();
 
     void create();
     void destroy();
@@ -90,7 +76,7 @@ public:
 
     EGLNativeWindowType eglWindow() const;
     EGLSurface surface() const;
-    QEglFSScreen *screen() const override;
+    HWEglFSScreen *screen() const override;
 
     bool hasNativeWindow() const { return m_flags.testFlag(HasNativeWindow); }
 
@@ -124,7 +110,5 @@ protected:
     Q_DECLARE_FLAGS(Flags, Flag)
     Flags m_flags;
 };
-
-QT_END_NAMESPACE
 
 #endif // QEGLFSWINDOW_H

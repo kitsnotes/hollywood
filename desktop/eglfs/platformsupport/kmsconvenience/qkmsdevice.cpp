@@ -51,21 +51,21 @@
 
 #define ARRAY_LENGTH(a) (sizeof (a) / sizeof (a)[0])
 
-QT_BEGIN_NAMESPACE
-
 Q_LOGGING_CATEGORY(qLcKmsDebug, "originull.qpa.eglfs.kms")
 
 enum OutputConfiguration {
     OutputConfigOff,
-    OutputConfigDisabled,
     OutputConfigPreferred,
     OutputConfigCurrent,
+    OutputConfigSkip,
     OutputConfigMode,
     OutputConfigModeline
 };
 
-int QKmsDevice::crtcForConnector(drmModeResPtr resources, drmModeConnectorPtr connector)
+int HWKmsDevice::crtcForConnector(drmModeResPtr resources, drmModeConnectorPtr connector)
 {
+    int candidate = -1;
+
     for (int i = 0; i < connector->count_encoders; i++) {
         drmModeEncoderPtr encoder = drmModeGetEncoder(m_dri_fd, connector->encoders[i]);
         if (!encoder) {
@@ -73,19 +73,30 @@ int QKmsDevice::crtcForConnector(drmModeResPtr resources, drmModeConnectorPtr co
             continue;
         }
 
+        quint32 encoderId = encoder->encoder_id;
+        quint32 crtcId = encoder->crtc_id;
         quint32 possibleCrtcs = encoder->possible_crtcs;
         drmModeFreeEncoder(encoder);
 
         for (int j = 0; j < resources->count_crtcs; j++) {
             bool isPossible = possibleCrtcs & (1 << j);
             bool isAvailable = !(m_crtc_allocator & (1 << j));
+            // Preserve the existing CRTC -> encoder -> connector routing if
+            // any. It makes the initialization faster, and may be better
+            // since we have a very dumb picking algorithm.
+            bool isBestChoice = (!connector->encoder_id ||
+                                 (connector->encoder_id == encoderId &&
+                                  resources->crtcs[j] == crtcId));
 
-            if (isPossible && isAvailable)
+            if (isPossible && isAvailable && isBestChoice) {
                 return j;
+            } else if (isPossible && isAvailable) {
+                candidate = j;
+            }
         }
     }
 
-    return -1;
+    return candidate;
 }
 
 static const char * const connector_type_names[] = { // must match DRM_MODE_CONNECTOR_*
@@ -132,7 +143,7 @@ static bool parseModeline(const QByteArray &text, drmModeModeInfoPtr mode)
     mode->vrefresh = 0;
     mode->flags = 0;
 
-    if (sscanf(text.constData(), "%f %hu %hu %hu %hu %hu %hu %hu %hu %15s %15s",
+    if (sscanf(text.constData(), "%f %hd %hd %hd %hd %hd %hd %hd %hd %15s %15s",
                &fclock,
                &mode->hdisplay,
                &mode->hsync_start,
@@ -163,7 +174,16 @@ static bool parseModeline(const QByteArray &text, drmModeModeInfoPtr mode)
     return true;
 }
 
-QPlatformScreen *QKmsDevice::createScreenForConnector(drmModeResPtr resources,
+static inline void assignPlane(HWKmsOutput *output, HWKmsPlane *plane)
+{
+    if (output->eglfs_plane)
+        output->eglfs_plane->activeCrtcId = 0;
+
+    plane->activeCrtcId = output->crtc_id;
+    output->eglfs_plane = plane;
+}
+
+QPlatformScreen *HWKmsDevice::createScreenForConnector(drmModeResPtr resources,
                                                       drmModeConnectorPtr connector,
                                                       ScreenInfo *vinfo)
 {
@@ -188,12 +208,12 @@ QPlatformScreen *QKmsDevice::createScreenForConnector(drmModeResPtr resources,
         .toByteArray().toLower();
     if (mode == "off") {
         configuration = OutputConfigOff;
-    } else if (mode == "disabled") {
-        configuration = OutputConfigDisabled;
     } else if (mode == "preferred") {
         configuration = OutputConfigPreferred;
     } else if (mode == "current") {
         configuration = OutputConfigCurrent;
+    } else if (mode == "skip") {
+        configuration = OutputConfigSkip;
     } else if (sscanf(mode.constData(), "%dx%d@%d", &configurationSize.rwidth(), &configurationSize.rheight(),
                       &configurationRefresh) == 3)
     {
@@ -232,16 +252,15 @@ QPlatformScreen *QKmsDevice::createScreenForConnector(drmModeResPtr resources,
         return nullptr;
     }
 
-    // Power off disabled output but create a screen for it
-    if (configuration == OutputConfigDisabled) {
-        qCDebug(qLcKmsDebug) << "Disabling output output" << connectorName;
-        drmModeSetCrtc(m_dri_fd, crtc_id, 0, 0, 0, 0, 0, nullptr);
+    if (configuration == OutputConfigSkip) {
+        qCDebug(qLcKmsDebug) << "Skipping output" << connectorName;
+        return nullptr;
     }
 
     // Get the current mode on the current crtc
     drmModeModeInfo crtc_mode;
     memset(&crtc_mode, 0, sizeof crtc_mode);
-    if (drmModeEncoderPtr encoder = drmModeGetEncoder(m_dri_fd, connector->connector_id)) {
+    if (drmModeEncoderPtr encoder = drmModeGetEncoder(m_dri_fd, connector->encoder_id)) {
         drmModeCrtcPtr crtc = drmModeGetCrtc(m_dri_fd, encoder->crtc_id);
         drmModeFreeEncoder(encoder);
 
@@ -269,7 +288,6 @@ QPlatformScreen *QKmsDevice::createScreenForConnector(drmModeResPtr resources,
     int current = -1;
     int configured = -1;
     int best = -1;
-    int autoSelected = -1;
 
     for (int i = modes.size() - 1; i >= 0; i--) {
         const drmModeModeInfo &m = modes.at(i);
@@ -315,46 +333,15 @@ QPlatformScreen *QKmsDevice::createScreenForConnector(drmModeResPtr resources,
     else if (best >= 0)
         selected_mode = best;
 
-    // Pick a mode that is at least 1920x1080
-    {
-        const int minimalArea = 1920 * 1080;
-
-        for (int i = modes.size() - 1; i >= 0; i--) {
-            int width = modes[i].hdisplay;
-            int height = modes[i].vdisplay;
-
-            if (width * height >= minimalArea) {
-                autoSelected = i;
-                break;
-            }
-        }
-    }
-
-    // Make sure we select a mode that is at least 1920x1080
-    if (autoSelected >= 0) {
-        int width = modes[selected_mode].hdisplay;
-        int height = modes[selected_mode].vdisplay;
-        int refresh = modes[selected_mode].vrefresh;
-
-        int autoWidth = modes[autoSelected].hdisplay;
-        int autoHeight = modes[autoSelected].vdisplay;
-
-        if (autoWidth * autoHeight > width * height) {
-            qCDebug(qLcKmsDebug) << "Selected mode was" << selected_mode << ":" << width << "x" << height
-                                 << '@' << refresh << "hz for output" << connectorName;
-            selected_mode = autoSelected;
-        }
-    }
-
-    if (Q_UNLIKELY(selected_mode < 0)) {
-        qCWarning(qLcKmsDebug) << "No modes available for output" << connectorName;
+    if (selected_mode < 0) {
+        qWarning() << "No modes available for output" << connectorName;
         return nullptr;
     } else {
         int width = modes[selected_mode].hdisplay;
         int height = modes[selected_mode].vdisplay;
         int refresh = modes[selected_mode].vrefresh;
         qCDebug(qLcKmsDebug) << "Selected mode" << selected_mode << ":" << width << "x" << height
-                             << '@' << refresh << "hz for output" << connectorName;
+                                  << '@' << refresh << "hz for output" << connectorName;
     }
 
     // physical size from connector < config values < env vars
@@ -375,10 +362,14 @@ QPlatformScreen *QKmsDevice::createScreenForConnector(drmModeResPtr resources,
     }
     qCDebug(qLcKmsDebug) << "Physical size is" << physSize << "mm" << "for output" << connectorName;
 
-    const QByteArray formatStr = userConnectorConfig.value(QStringLiteral("format"), QStringLiteral("xrgb8888"))
+    const QByteArray formatStr = userConnectorConfig.value(QStringLiteral("format"), QString())
             .toByteArray().toLower();
     uint32_t drmFormat;
-    if (formatStr == "xrgb8888") {
+    bool drmFormatExplicit = true;
+    if (formatStr.isEmpty()) {
+        drmFormat = DRM_FORMAT_XRGB8888;
+        drmFormatExplicit = false;
+    } else if (formatStr == "xrgb8888") {
         drmFormat = DRM_FORMAT_XRGB8888;
     } else if (formatStr == "xbgr8888") {
         drmFormat = DRM_FORMAT_XBGR8888;
@@ -401,32 +392,38 @@ QPlatformScreen *QKmsDevice::createScreenForConnector(drmModeResPtr resources,
     } else {
         qWarning("Invalid pixel format \"%s\" for output %s", formatStr.constData(), connectorName.constData());
         drmFormat = DRM_FORMAT_XRGB8888;
+        drmFormatExplicit = false;
     }
+    qCDebug(qLcKmsDebug) << "Format is" << Qt::hex << drmFormat << Qt::dec << "requested_by_user =" << drmFormatExplicit
+                         << "for output" << connectorName;
 
     const QString cloneSource = userConnectorConfig.value(QStringLiteral("clones")).toString();
     if (!cloneSource.isEmpty())
         qCDebug(qLcKmsDebug) << "Output" << connectorName << " clones output " << cloneSource;
 
-    const QByteArray fbsize = userConnectorConfig.value(QStringLiteral("size")).toByteArray().toLower();
     QSize framebufferSize;
-    framebufferSize.setWidth(modes[selected_mode].hdisplay);
-    framebufferSize.setHeight(modes[selected_mode].vdisplay);
-
-#ifdef EGLFS_ENABLE_DRM_ATOMIC
-    if (hasAtomicSupport()) {
-        if (sscanf(fbsize.constData(), "%dx%d", &framebufferSize.rwidth(), &framebufferSize.rheight()) != 2) {
-            qWarning("Framebuffer size format is invalid.");
-        }
-    } else {
-        qWarning("Setting framebuffer size is only available with DRM atomic API");
-    }
-#else
-    if (fbsize.size())
-        qWarning("Setting framebuffer size is only available with DRM atomic API");
+    bool framebufferSizeSet = false;
+    const QByteArray fbsize = userConnectorConfig.value(QStringLiteral("size")).toByteArray().toLower();
+    if (!fbsize.isEmpty()) {
+        if (sscanf(fbsize.constData(), "%dx%d", &framebufferSize.rwidth(), &framebufferSize.rheight()) == 2) {
+#if QT_CONFIG(drm_atomic)
+            if (hasAtomicSupport())
+                framebufferSizeSet = true;
 #endif
+            if (!framebufferSizeSet)
+                qWarning("Setting framebuffer size is only available with DRM atomic API");
+        } else {
+            qWarning("Invalid framebuffer size '%s'", fbsize.constData());
+        }
+    }
+    if (!framebufferSizeSet) {
+        framebufferSize.setWidth(modes[selected_mode].hdisplay);
+        framebufferSize.setHeight(modes[selected_mode].vdisplay);
+    }
+
     qCDebug(qLcKmsDebug) << "Output" << connectorName << "framebuffer size is " << framebufferSize;
 
-    QKmsOutput output;
+    HWKmsOutput output;
     output.name = QString::fromUtf8(connectorName);
     output.connector_id = connector->connector_id;
     output.crtc_index = crtc;
@@ -444,10 +441,11 @@ QPlatformScreen *QKmsDevice::createScreenForConnector(drmModeResPtr resources,
     output.forced_plane_id = 0;
     output.forced_plane_set = false;
     output.drm_format = drmFormat;
+    output.drm_format_requested_by_user = drmFormatExplicit;
     output.clone_source = cloneSource;
     output.size = framebufferSize;
 
-#ifdef EGLFS_ENABLE_DRM_ATOMIC
+#if QT_CONFIG(drm_atomic)
     if (drmModeCreatePropertyBlob(m_dri_fd, &modes[selected_mode], sizeof(drmModeModeInfo),
                                   &output.mode_blob_id) != 0) {
         qCDebug(qLcKmsDebug) << "Failed to create mode blob for mode" << selected_mode;
@@ -458,17 +456,20 @@ QPlatformScreen *QKmsDevice::createScreenForConnector(drmModeResPtr resources,
 #endif
 
     QString planeListStr;
-    for (const QKmsPlane &plane : qAsConst(m_planes)) {
+    for (HWKmsPlane &plane : m_planes) {
         if (plane.possibleCrtcs & (1 << output.crtc_index)) {
             output.available_planes.append(plane);
             planeListStr.append(QString::number(plane.id));
             planeListStr.append(QLatin1Char(' '));
-            if (plane.type == QKmsPlane::PrimaryPlane)
-                output.eglfs_plane = (QKmsPlane*)&plane;
+
+            // Choose the first primary plane that is not already assigned to
+            // another screen's associated crtc.
+            if (!output.eglfs_plane && plane.type == HWKmsPlane::PrimaryPlane && !plane.activeCrtcId)
+                assignPlane(&output, &plane);
         }
     }
     qCDebug(qLcKmsDebug, "Output %s can use %d planes: %s",
-            connectorName.constData(), output.available_planes.count(), qPrintable(planeListStr));
+            connectorName.constData(), int(output.available_planes.count()), qPrintable(planeListStr));
 
     // This is for the EGLDevice/EGLStream backend. On some of those devices one
     // may want to target a pre-configured plane. It is probably useless for
@@ -486,9 +487,11 @@ QPlatformScreen *QKmsDevice::createScreenForConnector(drmModeResPtr resources,
                     qCDebug(qLcKmsDebug, "Forcing plane index %d, plane id %u (belongs to crtc id %u)",
                             idx, plane->plane_id, plane->crtc_id);
 
-                    for (const QKmsPlane &kmsplane : qAsConst(m_planes)) {
-                        if (kmsplane.id == output.forced_plane_id)
-                            output.eglfs_plane = (QKmsPlane*)&kmsplane;
+                    for (HWKmsPlane &kmsplane : m_planes) {
+                        if (kmsplane.id == output.forced_plane_id) {
+                            assignPlane(&output, &kmsplane);
+                            break;
+                        }
                     }
 
                     drmModeFreePlane(plane);
@@ -499,8 +502,37 @@ QPlatformScreen *QKmsDevice::createScreenForConnector(drmModeResPtr resources,
         }
     }
 
-    if (output.eglfs_plane)
-        qCDebug(qLcKmsDebug, "Output eglfs plane is: %d", output.eglfs_plane->id);
+    // A more useful version: allows specifying "crtc_id,plane_id:crtc_id,plane_id:..."
+    // in order to allow overriding the plane used for a given crtc.
+    if (qEnvironmentVariableIsSet("QT_QPA_EGLFS_KMS_PLANES_FOR_CRTCS")) {
+        const QString val = qEnvironmentVariable("QT_QPA_EGLFS_KMS_PLANES_FOR_CRTCS");
+        qCDebug(qLcKmsDebug, "crtc_id:plane_id override list: %s", qPrintable(val));
+        const QStringList crtcPlanePairs = val.split(QLatin1Char(':'));
+        for (const QString &crtcPlanePair : crtcPlanePairs) {
+            const QStringList values = crtcPlanePair.split(QLatin1Char(','));
+            if (values.count() == 2 && uint(values[0].toInt()) == output.crtc_id) {
+                uint planeId = values[1].toInt();
+                for (HWKmsPlane &kmsplane : m_planes) {
+                    if (kmsplane.id == planeId) {
+                        assignPlane(&output, &kmsplane);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    if (output.eglfs_plane) {
+        qCDebug(qLcKmsDebug, "Chose plane %u for output %s (crtc id %u) (may not be applicable)",
+                output.eglfs_plane->id, connectorName.constData(), output.crtc_id);
+    }
+
+#if QT_CONFIG(drm_atomic)
+    if (hasAtomicSupport() && !output.eglfs_plane) {
+        qCDebug(qLcKmsDebug, "No plane associated with output %s (crtc id %u) and atomic modesetting is enabled. This is bad.",
+                connectorName.constData(), output.crtc_id);
+    }
+#endif
 
     m_crtc_allocator |= (1 << output.crtc_index);
 
@@ -509,7 +541,7 @@ QPlatformScreen *QKmsDevice::createScreenForConnector(drmModeResPtr resources,
     return createScreen(output);
 }
 
-drmModePropertyPtr QKmsDevice::connectorProperty(drmModeConnectorPtr connector, const QByteArray &name)
+drmModePropertyPtr HWKmsDevice::connectorProperty(drmModeConnectorPtr connector, const QByteArray &name)
 {
     drmModePropertyPtr prop;
 
@@ -525,7 +557,7 @@ drmModePropertyPtr QKmsDevice::connectorProperty(drmModeConnectorPtr connector, 
     return nullptr;
 }
 
-drmModePropertyBlobPtr QKmsDevice::connectorPropertyBlob(drmModeConnectorPtr connector, const QByteArray &name)
+drmModePropertyBlobPtr HWKmsDevice::connectorPropertyBlob(drmModeConnectorPtr connector, const QByteArray &name)
 {
     drmModePropertyPtr prop;
     drmModePropertyBlobPtr blob = nullptr;
@@ -542,15 +574,11 @@ drmModePropertyBlobPtr QKmsDevice::connectorPropertyBlob(drmModeConnectorPtr con
     return blob;
 }
 
-QKmsDevice::QKmsDevice(QKmsScreenConfig *screenConfig, const QString &path)
+HWKmsDevice::HWKmsDevice(HWKmsScreenConfig *screenConfig, const QString &path)
     : m_screenConfig(screenConfig)
     , m_path(path)
     , m_dri_fd(-1)
     , m_has_atomic_support(false)
-#ifdef EGLFS_ENABLE_DRM_ATOMIC
-    , m_atomic_request(nullptr)
-    , m_previous_request(nullptr)
-#endif
     , m_crtc_allocator(0)
 {
     if (m_path.isEmpty()) {
@@ -563,20 +591,20 @@ QKmsDevice::QKmsDevice(QKmsScreenConfig *screenConfig, const QString &path)
     }
 }
 
-QKmsDevice::~QKmsDevice()
+HWKmsDevice::~HWKmsDevice()
 {
-#ifdef EGLFS_ENABLE_DRM_ATOMIC
-    atomicReset();
+#if QT_CONFIG(drm_atomic)
+    threadLocalAtomicReset();
 #endif
 }
 
 struct OrderedScreen
 {
     OrderedScreen() : screen(nullptr) { }
-    OrderedScreen(QPlatformScreen *screen, const QKmsDevice::ScreenInfo &vinfo)
+    OrderedScreen(QPlatformScreen *screen, const HWKmsDevice::ScreenInfo &vinfo)
         : screen(screen), vinfo(vinfo) { }
     QPlatformScreen *screen;
-    QKmsDevice::ScreenInfo vinfo;
+    HWKmsDevice::ScreenInfo vinfo;
 };
 
 QDebug operator<<(QDebug dbg, const OrderedScreen &s)
@@ -595,7 +623,7 @@ static bool orderedScreenLessThan(const OrderedScreen &a, const OrderedScreen &b
     return a.vinfo.virtualIndex < b.vinfo.virtualIndex;
 }
 
-void QKmsDevice::createScreens()
+void HWKmsDevice::createScreens()
 {
     // Headless mode using a render node: cannot do any output related DRM
     // stuff. Skip it all and register a dummy screen.
@@ -606,18 +634,24 @@ void QKmsDevice::createScreens()
             registerScreen(screen, true, QPoint(0, 0), QList<QPlatformScreen *>());
             return;
         } else {
-            qWarning("QKmsDevice: Requested headless mode without support in the backend. Request is ignored.");
+            qWarning("HWKmsDevice: Requested headless mode without support in the backend. Request is ignored.");
         }
     }
 
     drmSetClientCap(m_dri_fd, DRM_CLIENT_CAP_UNIVERSAL_PLANES, 1);
 
-#ifdef EGLFS_ENABLE_DRM_ATOMIC
+#if QT_CONFIG(drm_atomic)
     // check atomic support
-    m_has_atomic_support = !drmSetClientCap(m_dri_fd, DRM_CLIENT_CAP_ATOMIC, 1)
-                           && qEnvironmentVariableIntValue("QT_QPA_EGLFS_KMS_ATOMIC");
-    if (m_has_atomic_support)
-        qCDebug(qLcKmsDebug) << "Atomic Support found";
+    m_has_atomic_support = !drmSetClientCap(m_dri_fd, DRM_CLIENT_CAP_ATOMIC, 1);
+    if (m_has_atomic_support) {
+        qCDebug(qLcKmsDebug, "Atomic reported as supported");
+        if (qEnvironmentVariableIntValue("QT_QPA_EGLFS_KMS_ATOMIC")) {
+            qCDebug(qLcKmsDebug, "Atomic enabled");
+        } else {
+            qCDebug(qLcKmsDebug, "Atomic disabled");
+            m_has_atomic_support = false;
+        }
+    }
 #endif
 
     drmModeResPtr resources = drmModeGetResources(m_dri_fd);
@@ -628,7 +662,7 @@ void QKmsDevice::createScreens()
 
     discoverPlanes();
 
-    QVector<OrderedScreen> screens;
+    QList<OrderedScreen> screens;
 
     int wantedConnectorIndex = -1;
     bool ok;
@@ -666,7 +700,7 @@ void QKmsDevice::createScreens()
     // The final list of screens is available, so do the second phase setup.
     // Hook up clone sources and targets.
     for (const OrderedScreen &orderedScreen : screens) {
-        QVector<QPlatformScreen *> screensCloningThisScreen;
+        QList<QPlatformScreen *> screensCloningThisScreen;
         for (const OrderedScreen &s : screens) {
             if (s.vinfo.output.clone_source == orderedScreen.vinfo.output.name)
                 screensCloningThisScreen.append(s.screen);
@@ -691,7 +725,7 @@ void QKmsDevice::createScreens()
     // Figure out the virtual desktop and register the screens to QPA/QGuiApplication.
     QPoint pos(0, 0);
     QList<QPlatformScreen *> siblings;
-    QVector<QPoint> virtualPositions;
+    QList<QPoint> virtualPositions;
     int primarySiblingIdx = -1;
 
     for (const OrderedScreen &orderedScreen : screens) {
@@ -700,13 +734,16 @@ void QKmsDevice::createScreens()
         // set up a horizontal or vertical virtual desktop
         if (orderedScreen.vinfo.virtualPos.isNull()) {
             virtualPos = pos;
-            if (m_screenConfig->virtualDesktopLayout() == QKmsScreenConfig::VirtualDesktopLayoutVertical)
+            if (m_screenConfig->virtualDesktopLayout() == HWKmsScreenConfig::VirtualDesktopLayoutVertical)
                 pos.ry() += s->geometry().height();
             else
                 pos.rx() += s->geometry().width();
         } else {
             virtualPos = orderedScreen.vinfo.virtualPos;
         }
+        qCDebug(qLcKmsDebug) << "Adding QPlatformScreen" << s << "(" << s->name() << ")"
+                             << "to QPA with geometry" << s->geometry()
+                             << "and isPrimary=" << orderedScreen.vinfo.isPrimary;
         // The order in qguiapp's screens list will match the order set by
         // virtualIndex. This is not only handy but also required since for instance
         // evdevtouch relies on it when performing touch device - screen mapping.
@@ -727,16 +764,16 @@ void QKmsDevice::createScreens()
     }
 }
 
-QPlatformScreen *QKmsDevice::createHeadlessScreen()
+QPlatformScreen *HWKmsDevice::createHeadlessScreen()
 {
     // headless mode not supported by default
     return nullptr;
 }
 
 // not all subclasses support screen cloning
-void QKmsDevice::registerScreenCloning(QPlatformScreen *screen,
+void HWKmsDevice::registerScreenCloning(QPlatformScreen *screen,
                                        QPlatformScreen *screenThisScreenClones,
-                                       const QVector<QPlatformScreen *> &screensCloningThisScreen)
+                                       const QList<QPlatformScreen *> &screensCloningThisScreen)
 {
     Q_UNUSED(screen);
     Q_UNUSED(screenThisScreenClones);
@@ -751,7 +788,7 @@ static inline bool propTypeIs(drmModePropertyPtr prop, uint32_t type)
     return prop->flags & type;
 }
 
-void QKmsDevice::enumerateProperties(drmModeObjectPropertiesPtr objProps, PropCallback callback)
+void HWKmsDevice::enumerateProperties(drmModeObjectPropertiesPtr objProps, PropCallback callback)
 {
     for (uint32_t propIdx = 0; propIdx < objProps->count_props; ++propIdx) {
         drmModePropertyPtr prop = drmModeGetProperty(m_dri_fd, objProps->props[propIdx]);
@@ -789,7 +826,7 @@ void QKmsDevice::enumerateProperties(drmModeObjectPropertiesPtr objProps, PropCa
     }
 }
 
-void QKmsDevice::discoverPlanes()
+void HWKmsDevice::discoverPlanes()
 {
     m_planes.clear();
 
@@ -806,7 +843,7 @@ void QKmsDevice::discoverPlanes()
             continue;
         }
 
-        QKmsPlane plane;
+        HWKmsPlane plane;
         plane.id = drmplane->plane_id;
         plane.possibleCrtcs = drmplane->possible_crtcs;
 
@@ -831,13 +868,13 @@ void QKmsDevice::discoverPlanes()
 
         enumerateProperties(objProps, [&plane](drmModePropertyPtr prop, quint64 value) {
             if (!strcmp(prop->name, "type")) {
-                plane.type = QKmsPlane::Type(value);
+                plane.type = HWKmsPlane::Type(value);
             } else if (!strcmp(prop->name, "rotation")) {
-                plane.initialRotation = QKmsPlane::Rotations(int(value));
-                plane.availableRotations.fromInt(0);
+                plane.initialRotation = HWKmsPlane::Rotations(int(value));
+                plane.availableRotations = { };
                 if (propTypeIs(prop, DRM_MODE_PROP_BITMASK)) {
                     for (int i = 0; i < prop->count_enums; ++i)
-                        plane.availableRotations |= QKmsPlane::Rotation(1 << prop->enums[i].value);
+                        plane.availableRotations |= HWKmsPlane::Rotation(1 << prop->enums[i].value);
                 }
                 plane.rotationPropertyId = prop->prop_id;
             } else if (!strcasecmp(prop->name, "crtc_id")) {
@@ -862,6 +899,8 @@ void QKmsDevice::discoverPlanes()
                 plane.crtcYPropertyId = prop->prop_id;
             } else if (!strcasecmp(prop->name, "zpos")) {
                 plane.zposPropertyId = prop->prop_id;
+            } else if (!strcasecmp(prop->name, "blend_op")) {
+                plane.blendOpPropertyId = prop->prop_id;
             }
         });
 
@@ -873,66 +912,78 @@ void QKmsDevice::discoverPlanes()
     drmModeFreePlaneResources(planeResources);
 }
 
-int QKmsDevice::fd() const
+int HWKmsDevice::fd() const
 {
     return m_dri_fd;
 }
 
-QString QKmsDevice::devicePath() const
+QString HWKmsDevice::devicePath() const
 {
     return m_path;
 }
 
-void QKmsDevice::setFd(int fd)
+void HWKmsDevice::setFd(int fd)
 {
     m_dri_fd = fd;
 }
 
 
-bool QKmsDevice::hasAtomicSupport()
+bool HWKmsDevice::hasAtomicSupport()
 {
     return m_has_atomic_support;
 }
 
-#ifdef EGLFS_ENABLE_DRM_ATOMIC
-drmModeAtomicReq * QKmsDevice::atomic_request()
+#if QT_CONFIG(drm_atomic)
+drmModeAtomicReq *HWKmsDevice::threadLocalAtomicRequest()
 {
-    if (!m_atomic_request && m_has_atomic_support)
-        m_atomic_request = drmModeAtomicAlloc();
+    if (!m_has_atomic_support)
+        return nullptr;
 
-    return m_atomic_request;
+    AtomicReqs &a(m_atomicReqs.localData());
+    if (!a.request)
+        a.request = drmModeAtomicAlloc();
+
+    return a.request;
 }
 
-bool QKmsDevice::atomicCommit(void *user_data)
+bool HWKmsDevice::threadLocalAtomicCommit(void *user_data)
 {
-    if (m_atomic_request) {
-        int ret = drmModeAtomicCommit(m_dri_fd, m_atomic_request,
-                          DRM_MODE_ATOMIC_NONBLOCK | DRM_MODE_PAGE_FLIP_EVENT | DRM_MODE_ATOMIC_ALLOW_MODESET, user_data);
+    if (!m_has_atomic_support)
+        return false;
 
-        if (ret) {
-           qWarning("Failed to commit atomic request (code=%d)", ret);
-           return false;
-        }
+    AtomicReqs &a(m_atomicReqs.localData());
+    if (!a.request)
+        return false;
 
-        m_previous_request = m_atomic_request;
-        m_atomic_request = nullptr;
+    int ret = drmModeAtomicCommit(m_dri_fd, a.request,
+                                  DRM_MODE_ATOMIC_NONBLOCK | DRM_MODE_PAGE_FLIP_EVENT | DRM_MODE_ATOMIC_ALLOW_MODESET,
+                                  user_data);
 
-        return true;
+    if (ret) {
+        qWarning("Failed to commit atomic request (code=%d)", ret);
+        return false;
     }
 
-    return false;
+    a.previous_request = a.request;
+    a.request = nullptr;
+
+    return true;
 }
 
-void QKmsDevice::atomicReset()
+void HWKmsDevice::threadLocalAtomicReset()
 {
-    if (m_previous_request) {
-        drmModeAtomicFree(m_previous_request);
-        m_previous_request = nullptr;
+    if (!m_has_atomic_support)
+        return;
+
+    AtomicReqs &a(m_atomicReqs.localData());
+    if (a.previous_request) {
+        drmModeAtomicFree(a.previous_request);
+        a.previous_request = nullptr;
     }
 }
 #endif
 
-void QKmsDevice::parseConnectorProperties(uint32_t connectorId, QKmsOutput *output)
+void HWKmsDevice::parseConnectorProperties(uint32_t connectorId, HWKmsOutput *output)
 {
     drmModeObjectPropertiesPtr objProps = drmModeObjectGetProperties(m_dri_fd, connectorId, DRM_MODE_OBJECT_CONNECTOR);
     if (!objProps) {
@@ -949,7 +1000,7 @@ void QKmsDevice::parseConnectorProperties(uint32_t connectorId, QKmsOutput *outp
     drmModeFreeObjectProperties(objProps);
 }
 
-void QKmsDevice::parseCrtcProperties(uint32_t crtcId, QKmsOutput *output)
+void HWKmsDevice::parseCrtcProperties(uint32_t crtcId, HWKmsOutput *output)
 {
     drmModeObjectPropertiesPtr objProps = drmModeObjectGetProperties(m_dri_fd, crtcId, DRM_MODE_OBJECT_CRTC);
     if (!objProps) {
@@ -958,7 +1009,7 @@ void QKmsDevice::parseCrtcProperties(uint32_t crtcId, QKmsOutput *output)
     }
 
     enumerateProperties(objProps, [output](drmModePropertyPtr prop, quint64 value) {
-        Q_UNUSED(value)
+        Q_UNUSED(value);
         if (!strcasecmp(prop->name, "mode_id"))
             output->modeIdPropertyId = prop->prop_id;
         else if (!strcasecmp(prop->name, "active"))
@@ -968,22 +1019,21 @@ void QKmsDevice::parseCrtcProperties(uint32_t crtcId, QKmsOutput *output)
     drmModeFreeObjectProperties(objProps);
 }
 
-QKmsScreenConfig *QKmsDevice::screenConfig() const
+HWKmsScreenConfig *HWKmsDevice::screenConfig() const
 {
     return m_screenConfig;
 }
 
-QKmsScreenConfig::QKmsScreenConfig()
+HWKmsScreenConfig::HWKmsScreenConfig()
     : m_headless(false)
     , m_hwCursor(true)
     , m_separateScreens(false)
     , m_pbuffers(false)
     , m_virtualDesktopLayout(VirtualDesktopLayoutHorizontal)
 {
-    loadConfig();
 }
 
-void QKmsScreenConfig::loadConfig()
+void HWKmsScreenConfig::loadConfig()
 {
     QByteArray json = qgetenv("QT_QPA_EGLFS_KMS_CONFIG");
     if (json.isEmpty()) {
@@ -1059,7 +1109,7 @@ void QKmsScreenConfig::loadConfig()
                          << "\toutputs:" << m_outputSettings;
 }
 
-void QKmsOutput::restoreMode(QKmsDevice *device)
+void HWKmsOutput::restoreMode(HWKmsDevice *device)
 {
     if (mode_set && saved_crtc) {
         drmModeSetCrtc(device->fd(),
@@ -1072,7 +1122,7 @@ void QKmsOutput::restoreMode(QKmsDevice *device)
     }
 }
 
-void QKmsOutput::cleanup(QKmsDevice *device)
+void HWKmsOutput::cleanup(HWKmsDevice *device)
 {
     if (dpms_prop) {
         drmModeFreeProperty(dpms_prop);
@@ -1092,7 +1142,7 @@ void QKmsOutput::cleanup(QKmsDevice *device)
     }
 }
 
-QPlatformScreen::SubpixelAntialiasingType QKmsOutput::subpixelAntialiasingTypeHint() const
+QPlatformScreen::SubpixelAntialiasingType HWKmsOutput::subpixelAntialiasingTypeHint() const
 {
     switch (subpixel) {
     default:
@@ -1110,11 +1160,9 @@ QPlatformScreen::SubpixelAntialiasingType QKmsOutput::subpixelAntialiasingTypeHi
     }
 }
 
-void QKmsOutput::setPowerState(QKmsDevice *device, QPlatformScreen::PowerState state)
+void HWKmsOutput::setPowerState(HWKmsDevice *device, QPlatformScreen::PowerState state)
 {
     if (dpms_prop)
         drmModeConnectorSetProperty(device->fd(), connector_id,
                                     dpms_prop->prop_id, (int) state);
 }
-
-QT_END_NAMESPACE

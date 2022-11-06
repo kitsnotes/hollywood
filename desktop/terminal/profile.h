@@ -42,7 +42,7 @@ public:
         IBeam = 2
     };
     enum ANSIColors {
-        Black,
+        Black = 2,
         Red,
         Green,
         Yellow,
@@ -50,7 +50,7 @@ public:
         Magenta,
         Cyan,
         White,
-        BrightBlack,
+        BrightBlack = 12,
         BrightRed,
         BrightGreen,
         BrightYellow,

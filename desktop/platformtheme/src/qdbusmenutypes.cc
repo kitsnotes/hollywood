@@ -9,6 +9,7 @@
 #include <QDebug>
 #include <QtEndian>
 #include <QBuffer>
+#include <QKeySequence>
 #include <private/qkeysequence_p.h>
 #include <qpa/qplatformmenu.h>
 #include "qdbusplatformmenu_p.h"
@@ -194,13 +195,16 @@ QString DBusMenuItem::convertMnemonic(const QString &label)
     return ret;
 }
 
-#ifndef QT_NO_SHORTCUT
 DBusMenuShortcut DBusMenuItem::convertKeySequence(const QKeySequence &sequence)
 {
     DBusMenuShortcut shortcut;
     for (int i = 0; i < sequence.count(); ++i) {
         QStringList tokens;
+#if QT_VERSION >= 0x060000
         int key = sequence[i].toCombined();
+#else
+        int key = sequence[i];
+#endif
         if (key & Qt::MetaModifier)
             tokens << QStringLiteral("Super");
         if (key & Qt::ControlModifier)
@@ -223,7 +227,6 @@ DBusMenuShortcut DBusMenuItem::convertKeySequence(const QKeySequence &sequence)
     }
     return shortcut;
 }
-#endif
 
 const QDBusArgument &operator<<(QDBusArgument &arg, const DBusMenuEvent &ev)
 {

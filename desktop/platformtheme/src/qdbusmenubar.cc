@@ -187,7 +187,7 @@ void DBusMenuBar::registerMenuBarX11(QWindow *window, const QString &objectPath)
 }
 
 DBusMenuBar *DBusMenuBar::s_globalMenuBar = nullptr;
-QMap<QWindow *, DBusMenuBar *> DBusMenuBar::s_menuBars;
+QHash<QWindow *, DBusMenuBar *> DBusMenuBar::s_menuBars;
 
 void DBusMenuBar::unregisterMenuBarX11(QWindow *window)
 {

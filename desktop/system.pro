@@ -9,6 +9,8 @@ SUBDIRS = \
     libcmctl \
     libcommdlg \
     libcompositor \
+    libhwlogind \
+    libhwudev \
     platformtheme \
     platformplugin \
     editor \
@@ -31,11 +33,13 @@ SUBDIRS = \
     settings/applet-mouse \
     settings/applet-wallpaper \
     settings/applet-region \
+    settings/applet-stage \
+    settings/applet-energy \
     sysmon \
+    shellintegration \
     sysmon/helper-sysmon \
     terminal \
     calculator \
-    shellintegration \
     stage
 
 lessThan(QT_MAJOR_VERSION, 6) {
@@ -61,12 +65,11 @@ lessThan(QT_MAJOR_VERSION, 6) {
     settings/applet-region \
     sysmon \
     sysmon/helper-sysmon \
+    shellintegration \
     terminal \
     calculator \
     stage
 }
-
-eglfs.depends = libhwudev libhwlogind
 libshell.depends = libcompositor
 compositor.depends = libcompositor
 shellfm.depends = libshell libcompositor libcommdlg

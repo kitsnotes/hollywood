@@ -6,6 +6,8 @@
 #include "surfaceobject.h"
 #include "hwc.h"
 
+#include <QOpenGLTexture>
+
 #ifndef GL_TEXTURE_EXTERNAL_OES
 #define GL_TEXTURE_EXTERNAL_OES 0x8D65
 #endif

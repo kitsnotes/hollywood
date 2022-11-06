@@ -39,7 +39,7 @@
 
 #include "qeglfscursor_p.h"
 #include "qeglfsintegration_p.h"
-#include "qeglfsscreen_p.h"
+#include "eglfsscreen_p.h"
 #include "qeglfscontext_p.h"
 
 #include <qpa/qwindowsysteminterface.h>
@@ -59,11 +59,11 @@
 QT_BEGIN_NAMESPACE
 
 QEglFSCursor::QEglFSCursor(QPlatformScreen *screen)
-  : m_screen(static_cast<QEglFSScreen *>(screen)),
-    m_visible(true),
+  : m_screen(static_cast<HWEglFSScreen *>(screen)),
     m_activeScreen(nullptr),
     m_deviceListener(0),
-    m_updateRequested(false)
+    m_updateRequested(false),
+    m_visible(true)
 {
     QByteArray hideCursorVal = qgetenv("QT_QPA_EGLFS_HIDECURSOR");
     if (!hideCursorVal.isEmpty())
@@ -107,6 +107,7 @@ void QEglFSCursor::updateMouseStatus()
 
 void QEglFSCursor::setCursorTheme(const QString &name, int size)
 {
+    qDebug() << "loading cursor theme" << name << size;
     m_cursorTheme.loadTheme(name, size);
 }
 
@@ -333,7 +334,7 @@ void QEglFSCursor::setPos(const QPoint &pos)
     m_cursor.pos = pos;
     update(oldCursorRect | cursorRect(), false);
     for (QPlatformScreen *screen : m_screen->virtualSiblings())
-        static_cast<QEglFSScreen *>(screen)->handleCursorMove(m_cursor.pos);
+        static_cast<HWEglFSScreen *>(screen)->handleCursorMove(m_cursor.pos);
 }
 
 void QEglFSCursor::pointerEvent(const QMouseEvent &event)
@@ -341,10 +342,10 @@ void QEglFSCursor::pointerEvent(const QMouseEvent &event)
     if (event.type() != QEvent::MouseMove)
         return;
     const QRect oldCursorRect = cursorRect();
-    m_cursor.pos = event.screenPos().toPoint();
+    m_cursor.pos = event.globalPosition().toPoint();
     update(oldCursorRect | cursorRect(), false);
     for (QPlatformScreen *screen : m_screen->virtualSiblings())
-        static_cast<QEglFSScreen *>(screen)->handleCursorMove(m_cursor.pos);
+        static_cast<HWEglFSScreen *>(screen)->handleCursorMove(m_cursor.pos);
 }
 
 void QEglFSCursor::paintOnScreen()

@@ -1,8 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2015 Pier Luigi Fiorini <pierluigi.fiorini@gmail.com>
-** Copyright (C) 2016 The Qt Company Ltd.
-** Copyright (C) 2016 Pelagicore AG
+** Copyright (C) 2019 The Qt Company Ltd.
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the plugins of the Qt Toolkit.
@@ -39,29 +37,59 @@
 **
 ****************************************************************************/
 
-#ifndef QEGLFSKMSGBMWINDOW_H
-#define QEGLFSKMSGBMWINDOW_H
+#ifndef QEGLFSKKMSEVENTREADER_H
+#define QEGLFSKKMSEVENTREADER_H
 
-#include "private/qeglfswindow_p.h"
+#include "private/qeglfsglobal_p.h"
+#include <QObject>
+#include <QThread>
+#include <QMutex>
+#include <QWaitCondition>
 
-QT_BEGIN_NAMESPACE
+class HWEglFSKmsDevice;
 
-class QEglFSKmsGbmIntegration;
-
-class QEglFSKmsGbmWindow : public QEglFSWindow
+struct HWEglFSKmsEventHost : public QObject
 {
-public:
-    QEglFSKmsGbmWindow(QWindow *w, const QEglFSKmsGbmIntegration *integration)
-        : QEglFSWindow(w),
-          m_integration(integration)
-    { }
-    void resetSurface() override;
-    void invalidateSurface() override;
+    struct PendingFlipWait {
+        void *key;
+        QMutex *mutex;
+        QWaitCondition *cond;
+    };
 
-private:
-    const QEglFSKmsGbmIntegration *m_integration;
+    static const int MAX_FLIPS = 32;
+    void *completedFlips[MAX_FLIPS] = {};
+    HWEglFSKmsEventHost::PendingFlipWait pendingFlipWaits[MAX_FLIPS] = {};
+
+    bool event(QEvent *event) override;
+    void updateStatus();
+    void handlePageFlipCompleted(void *key);
 };
 
-QT_END_NAMESPACE
+class HWEglFSKmsEventReaderThread : public QThread
+{
+public:
+    HWEglFSKmsEventReaderThread(int fd) : m_fd(fd) { }
+    void run() override;
+    HWEglFSKmsEventHost *eventHost() { return &m_ev; }
 
-#endif // QEGLFSKMSGBMWINDOW_H
+private:
+    int m_fd;
+    HWEglFSKmsEventHost m_ev;
+};
+
+class Q_EGLFS_EXPORT HWEglFSKmsEventReader
+{
+public:
+    ~HWEglFSKmsEventReader();
+
+    void create(HWEglFSKmsDevice *device);
+    void destroy();
+
+    void startWaitFlip(void *key, QMutex *mutex, QWaitCondition *cond);
+
+private:
+    HWEglFSKmsDevice *m_device = nullptr;
+    HWEglFSKmsEventReaderThread *m_thread = nullptr;
+};
+
+#endif // QEGLFSKKMSEVENTREADER_H

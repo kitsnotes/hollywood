@@ -19,6 +19,8 @@ void QtShell::zqt_shell_v1_surface_create(Resource *res, wl_resource *sr, uint32
     if (!qtsurface)
         qtsurface = new QtSurface(this, surface, qtSurfaceResource);
 
+    surface->setRole(QtSurface::role(), res->handle, 0);
+
     emit surfaceCreated(qtsurface);
 }
 
@@ -56,6 +58,11 @@ QtSurface *QtSurface::fromResource(wl_resource *wlres)
     if (res)
         return static_cast<QtSurface *>(res->zqt_shell_surface_v1_object);
     return nullptr;
+}
+
+QWaylandSurfaceRole *QtSurface::role()
+{
+    return &s_role;
 }
 
 void QtSurface::zqt_shell_surface_v1_reposition(Resource *resource, int32_t x, int32_t y)
@@ -135,3 +142,5 @@ void QtSurface::zqt_shell_surface_v1_ack_configure(Resource *resource, uint32_t 
 {
 
 }
+
+QWaylandSurfaceRole QtSurface::s_role("zqt_shell_surface_v1");

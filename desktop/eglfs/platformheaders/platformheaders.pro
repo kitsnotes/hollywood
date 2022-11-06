@@ -2,7 +2,7 @@ TARGET = HollywoodEglfsPlatformSupport
 TEMPLATE=lib
 
 QT = core-private gui core5compat
-CONFIG += static
+CONFIG += lib
 INCLUDEPATH += hollywood/
 
 DEFINES += QT_NO_CAST_FROM_ASCII
@@ -15,4 +15,5 @@ HEADERS += \
 SOURCES += \
     eglfsfunctions.cpp
 
-
+target.path = /usr/lib
+INSTALLS += target

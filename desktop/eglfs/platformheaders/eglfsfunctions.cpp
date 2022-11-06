@@ -31,7 +31,7 @@ namespace Platform {
 
 QByteArray EglFSFunctions::setCursorThemeIdentifier()
 {
-    return QByteArrayLiteral("LiriEglFSSetCursorTheme");
+    return QByteArrayLiteral("HollywoodEglFSSetCursorTheme");
 }
 
 void EglFSFunctions::setCursorTheme(const QString &name, int size)
@@ -43,7 +43,7 @@ void EglFSFunctions::setCursorTheme(const QString &name, int size)
 
 QByteArray EglFSFunctions::getPowerStateIdentifier()
 {
-    return QByteArrayLiteral("LiriEglFSGetPowerState");
+    return QByteArrayLiteral("HollywoodEglFSGetPowerState");
 }
 
 EglFSFunctions::PowerState EglFSFunctions::getPowerState(QScreen *screen)
@@ -56,7 +56,7 @@ EglFSFunctions::PowerState EglFSFunctions::getPowerState(QScreen *screen)
 
 QByteArray EglFSFunctions::setPowerStateIdentifier()
 {
-    return QByteArrayLiteral("LiriEglFSSetPowerState");
+    return QByteArrayLiteral("HollywoodEglFSSetPowerState");
 }
 
 void EglFSFunctions::setPowerState(QScreen *screen, PowerState state)
@@ -175,4 +175,4 @@ QEvent::Type ScreenCastReadyEvent::registeredType()
 
 } // namespace Platform
 
-} // namespace Liri
+} // namespace Originull

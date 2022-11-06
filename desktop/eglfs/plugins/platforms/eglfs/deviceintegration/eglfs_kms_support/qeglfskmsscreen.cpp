@@ -1,7 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (C) 2017 The Qt Company Ltd.
-** Copyright (C) 2018 Pier Luigi Fiorini <pierluigi.fiorini@gmail.com>
+** Copyright (C) 2017 Pier Luigi Fiorini <pierluigi.fiorini@gmail.com>
 ** Copyright (C) 2016 Pelagicore AG
 ** Contact: https://www.qt.io/licensing/
 **
@@ -40,25 +40,24 @@
 ****************************************************************************/
 
 #include "qeglfskmsscreen.h"
-#include "hollywood/private/qeglfsintegration_p.h"
-#include "hollywood/vthandler.h"
+#include "qeglfskmsdevice.h"
+#include <private/qeglfsintegration_p.h>
 
 #include <QtCore/QLoggingCategory>
 
 #include <QtGui/private/qguiapplication_p.h>
-#include <QtFbSupport/private/qfbvthandler_p.h>
-
-QT_BEGIN_NAMESPACE
+#include <hollywood/private/vthandler_p.h>
 
 Q_DECLARE_LOGGING_CATEGORY(qLcEglfsKmsDebug)
 
-class QEglFSKmsInterruptHandler : public QObject
+class HWEglFSKmsInterruptHandler : public QObject
 {
 public:
-    QEglFSKmsInterruptHandler(QEglFSKmsScreen *screen) : m_screen(screen) {
-        m_vtHandler = static_cast<QEglFSIntegration *>(QGuiApplicationPrivate::platformIntegration())->vtHandler();
-        connect(m_vtHandler, &Originull::Platform::VtHandler::interrupted, this, &QEglFSKmsInterruptHandler::restoreVideoMode);
-        connect(m_vtHandler, &Originull::Platform::VtHandler::aboutToSuspend, this, &QEglFSKmsInterruptHandler::restoreVideoMode);
+    HWEglFSKmsInterruptHandler(HWEglFSKmsScreen *screen) : m_screen(screen) {
+        // TODO: fix
+        m_vtHandler = static_cast<HWEglFSIntegration *>(QGuiApplicationPrivate::platformIntegration())->vtHandler();
+        //connect(m_vtHandler, &Originull::Platform::VtHandler::interrupted, this, &HWEglFSKmsInterruptHandler::restoreVideoMode);
+        //connect(m_vtHandler, &Originull::Platform::VtHandler::aboutToSuspend, this, &HWEglFSKmsInterruptHandler::restoreVideoMode);
     }
 
 public slots:
@@ -66,15 +65,16 @@ public slots:
 
 private:
     Originull::Platform::VtHandler *m_vtHandler;
-    QEglFSKmsScreen *m_screen;
+    HWEglFSKmsScreen *m_screen;
 };
 
-QEglFSKmsScreen::QEglFSKmsScreen(QKmsDevice *device, const QKmsOutput &output, bool headless)
-    : QEglFSScreen(static_cast<QEglFSIntegration *>(QGuiApplicationPrivate::platformIntegration())->display())
+HWEglFSKmsScreen::HWEglFSKmsScreen(HWEglFSKmsDevice *device, const HWKmsOutput &output, bool headless)
+    : HWEglFSScreen(static_cast<HWEglFSIntegration *>(QGuiApplicationPrivate::platformIntegration())->display())
     , m_device(device)
     , m_output(output)
+    , m_cursorOutOfRange(false)
     , m_powerState(PowerStateOn)
-    , m_interruptHandler(new QEglFSKmsInterruptHandler(this))
+    , m_interruptHandler(new HWEglFSKmsInterruptHandler(this))
     , m_headless(headless)
 {
     m_siblings << this; // gets overridden later
@@ -96,20 +96,20 @@ QEglFSKmsScreen::QEglFSKmsScreen(QKmsDevice *device, const QKmsOutput &output, b
     }
 }
 
-QEglFSKmsScreen::~QEglFSKmsScreen()
+HWEglFSKmsScreen::~HWEglFSKmsScreen()
 {
     m_output.cleanup(m_device);
     delete m_interruptHandler;
 }
 
-void QEglFSKmsScreen::setVirtualPosition(const QPoint &pos)
+void HWEglFSKmsScreen::setVirtualPosition(const QPoint &pos)
 {
     m_pos = pos;
 }
 
 // Reimplement rawGeometry(), not geometry(). The base class implementation of
 // geometry() calls rawGeometry() and may apply additional transforms.
-QRect QEglFSKmsScreen::rawGeometry() const
+QRect HWEglFSKmsScreen::rawGeometry() const
 {
     if (m_headless)
         return QRect(QPoint(0, 0), m_device->screenConfig()->headlessSize());
@@ -119,12 +119,12 @@ QRect QEglFSKmsScreen::rawGeometry() const
                  m_output.size.height());
 }
 
-int QEglFSKmsScreen::depth() const
+int HWEglFSKmsScreen::depth() const
 {
     return format() == QImage::Format_RGB16 ? 16 : 32;
 }
 
-QImage::Format QEglFSKmsScreen::format() const
+QImage::Format HWEglFSKmsScreen::format() const
 {
     // the result can be slightly incorrect, it won't matter in practice
     switch (m_output.drm_format) {
@@ -147,7 +147,7 @@ QImage::Format QEglFSKmsScreen::format() const
     }
 }
 
-QSizeF QEglFSKmsScreen::physicalSize() const
+QSizeF HWEglFSKmsScreen::physicalSize() const
 {
     if (!m_output.physical_size.isEmpty()) {
         return m_output.physical_size;
@@ -157,63 +157,56 @@ QSizeF QEglFSKmsScreen::physicalSize() const
     }
 }
 
-QDpi QEglFSKmsScreen::logicalDpi() const
+QDpi HWEglFSKmsScreen::logicalDpi() const
 {
-    const QSizeF ps = physicalSize();
-    const QSize s = geometry().size();
-
-    if (!ps.isEmpty() && !s.isEmpty())
-        return QDpi(25.4 * s.width() / ps.width(),
-                    25.4 * s.height() / ps.height());
-    else
-        return QDpi(100, 100);
+    return logicalBaseDpi();
 }
 
-QDpi QEglFSKmsScreen::logicalBaseDpi() const
+QDpi HWEglFSKmsScreen::logicalBaseDpi() const
 {
     return QDpi(100, 100);
 }
 
-Qt::ScreenOrientation QEglFSKmsScreen::nativeOrientation() const
+Qt::ScreenOrientation HWEglFSKmsScreen::nativeOrientation() const
 {
     return Qt::PrimaryOrientation;
 }
 
-Qt::ScreenOrientation QEglFSKmsScreen::orientation() const
+Qt::ScreenOrientation HWEglFSKmsScreen::orientation() const
 {
     return Qt::PrimaryOrientation;
 }
 
-QString QEglFSKmsScreen::name() const
+QString HWEglFSKmsScreen::name() const
 {
     return !m_headless ? m_output.name : QStringLiteral("qt_Headless");
 }
 
-QString QEglFSKmsScreen::manufacturer() const
+QString HWEglFSKmsScreen::manufacturer() const
 {
     return m_edid.manufacturer;
 }
 
-QString QEglFSKmsScreen::model() const
+QString HWEglFSKmsScreen::model() const
 {
     return m_edid.model.isEmpty() ? m_edid.identifier : m_edid.model;
 }
 
-QString QEglFSKmsScreen::serialNumber() const
+QString HWEglFSKmsScreen::serialNumber() const
 {
     return m_edid.serialNumber;
 }
 
-void QEglFSKmsScreen::waitForFlip()
+void HWEglFSKmsScreen::waitForFlip()
 {
 }
 
-void QEglFSKmsScreen::restoreMode()
+void HWEglFSKmsScreen::restoreMode()
 {
     m_output.restoreMode(m_device);
 }
 
-qreal QEglFSKmsScreen::refreshRate() const
+qreal HWEglFSKmsScreen::refreshRate() const
 {
     if (m_headless)
         return 60;
@@ -222,9 +215,9 @@ qreal QEglFSKmsScreen::refreshRate() const
     return refresh > 0 ? refresh : 60;
 }
 
-QVector<QPlatformScreen::Mode> QEglFSKmsScreen::modes() const
+QList<QPlatformScreen::Mode> HWEglFSKmsScreen::modes() const
 {
-    QVector<QPlatformScreen::Mode> list;
+    QList<QPlatformScreen::Mode> list;
     list.reserve(m_output.modes.size());
 
     for (const drmModeModeInfo &info : qAsConst(m_output.modes))
@@ -234,76 +227,39 @@ QVector<QPlatformScreen::Mode> QEglFSKmsScreen::modes() const
     return list;
 }
 
-int QEglFSKmsScreen::currentMode() const
+int HWEglFSKmsScreen::currentMode() const
 {
     return m_output.mode;
 }
 
-int QEglFSKmsScreen::preferredMode() const
+int HWEglFSKmsScreen::preferredMode() const
 {
     return m_output.preferred_mode;
 }
 
-QPlatformScreen::SubpixelAntialiasingType QEglFSKmsScreen::subpixelAntialiasingTypeHint() const
+QPlatformScreen::SubpixelAntialiasingType HWEglFSKmsScreen::subpixelAntialiasingTypeHint() const
 {
     return m_output.subpixelAntialiasingTypeHint();
 }
 
-QPlatformScreen::PowerState QEglFSKmsScreen::powerState() const
+QPlatformScreen::PowerState HWEglFSKmsScreen::powerState() const
 {
     return m_powerState;
 }
 
-void QEglFSKmsScreen::setPowerState(QPlatformScreen::PowerState state)
+void HWEglFSKmsScreen::setPowerState(QPlatformScreen::PowerState state)
 {
     m_output.setPowerState(m_device, state);
     m_powerState = state;
 }
 
-qreal QEglFSKmsScreen::scaleFactor() const
+/* Informs exact page flip timing which can be used rendering optimization.
+   Consider this is from drm event reader thread. */
+void HWEglFSKmsScreen::pageFlipped(unsigned int sequence, unsigned int tv_sec, unsigned int tv_usec)
 {
-    return m_scaleFactor;
-}
-
-void QEglFSKmsScreen::setScaleFactor(qreal value)
-{
-    m_scaleFactor = value;
-}
-
-bool QEglFSKmsScreen::setMode(const QSize &size, qreal refreshRate)
-{
-    int modeIndex = m_output.mode;
-
-    int i = 0;
-    for (const drmModeModeInfo &mode : qAsConst(m_output.modes)) {
-        if (size.width() == mode.hdisplay && size.height() == mode.vdisplay) {
-            // Ignore interlaced modes
-            if (mode.flags & DRM_MODE_FLAG_INTERLACE)
-                continue;
-
-            // Verify refresh rate
-            if (mode.vrefresh != refreshRate)
-                continue;
-
-            modeIndex = i;
-            break;
-        }
-        i++;
-    }
-
-    if (m_output.mode == modeIndex) {
-        qCDebug(qLcEglfsKmsDebug, "Won't change mode because it's already set to %ux%u at %.2f Hz", size.width(), size.height(), refreshRate);
-        return false;
-    }
-
-    qCInfo(qLcEglfsKmsDebug, "Changing mode to %ux%u at %.2f Hz", size.width(), size.height(), refreshRate);
-
-    // Mode will be changed next flip
-    m_output.mode = modeIndex;
-    m_output.size = size;
-    m_output.mode_set = false;
-
-    return true;
+    Q_UNUSED(sequence);
+    Q_UNUSED(tv_sec);
+    Q_UNUSED(tv_usec);
 }
 
 QT_END_NAMESPACE

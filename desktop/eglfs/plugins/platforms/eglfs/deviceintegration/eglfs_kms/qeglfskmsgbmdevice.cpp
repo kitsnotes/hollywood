@@ -39,50 +39,33 @@
 **
 ****************************************************************************/
 
-#include "qeglfskmsgbmdevice.h"
-#include "qeglfskmsgbmscreen.h"
+#include "qeglfskmsgbmdevice_p.h"
+#include "qeglfskmsgbmscreen_p.h"
 
-#include "private/qeglfsintegration_p.h"
+#include <private/qeglfsintegration_p.h>
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/private/qcore_unix_p.h>
 
-#include <hollywood/logind.h>
-
 #define ARRAY_LENGTH(a) (sizeof (a) / sizeof (a)[0])
-
-using namespace Originull;
 
 QT_BEGIN_NAMESPACE
 
 Q_DECLARE_LOGGING_CATEGORY(qLcEglfsKmsDebug)
 
-QEglFSKmsGbmDevice::QEglFSKmsGbmDevice(QKmsScreenConfig *screenConfig, const QString &path)
-    : QEglFSKmsDevice(screenConfig, path)
+HWEglFSKmsGbmDevice::HWEglFSKmsGbmDevice(HWKmsScreenConfig *screenConfig, const QString &path)
+    : HWEglFSKmsDevice(screenConfig, path)
     , m_gbm_device(nullptr)
     , m_globalCursor(nullptr)
 {
 }
 
-bool QEglFSKmsGbmDevice::open()
+bool HWEglFSKmsGbmDevice::open()
 {
     Q_ASSERT(fd() == -1);
     Q_ASSERT(m_gbm_device == nullptr);
 
-    Logind *logind = Logind::instance();
-
-    if (!logind->isConnected()) {
-        qCWarning(qLcEglfsKmsDebug, "Cannot open DRM device %s: logind connection was not established",
-                  qPrintable(devicePath()));
-        return false;
-    }
-    if (!logind->hasSessionControl()) {
-        qCWarning(qLcEglfsKmsDebug, "Cannot open DRM device %s: session control not acquired",
-                  qPrintable(devicePath()));
-        return false;
-    }
-
-    int fd = logind->takeDevice(devicePath());
+    int fd = qt_safe_open(devicePath().toLocal8Bit().constData(), O_RDWR | O_CLOEXEC);
     if (fd == -1) {
         qErrnoWarning("Could not open DRM device %s", qPrintable(devicePath()));
         return false;
@@ -93,19 +76,23 @@ bool QEglFSKmsGbmDevice::open()
     m_gbm_device = gbm_create_device(fd);
     if (!m_gbm_device) {
         qErrnoWarning("Could not create GBM device");
-        logind->releaseDevice(fd);
+        qt_safe_close(fd);
         fd = -1;
         return false;
     }
 
     setFd(fd);
 
+    m_eventReader.create(this);
+
     return true;
 }
 
-void QEglFSKmsGbmDevice::close()
+void HWEglFSKmsGbmDevice::close()
 {
     // Note: screens are gone at this stage.
+
+    m_eventReader.destroy();
 
     if (m_gbm_device) {
         gbm_device_destroy(m_gbm_device);
@@ -113,29 +100,29 @@ void QEglFSKmsGbmDevice::close()
     }
 
     if (fd() != -1) {
-        Logind::instance()->releaseDevice(fd());
+        qt_safe_close(fd());
         setFd(-1);
     }
 }
 
-void *QEglFSKmsGbmDevice::nativeDisplay() const
+void *HWEglFSKmsGbmDevice::nativeDisplay() const
 {
     return m_gbm_device;
 }
 
-gbm_device * QEglFSKmsGbmDevice::gbmDevice() const
+gbm_device * HWEglFSKmsGbmDevice::gbmDevice() const
 {
     return m_gbm_device;
 }
 
-QPlatformCursor *QEglFSKmsGbmDevice::globalCursor() const
+QPlatformCursor *HWEglFSKmsGbmDevice::globalCursor() const
 {
     return m_globalCursor;
 }
 
 // Cannot do this from close(), it may be too late.
 // Call this from the last screen dtor instead.
-void QEglFSKmsGbmDevice::destroyGlobalCursor()
+void HWEglFSKmsGbmDevice::destroyGlobalCursor()
 {
     if (m_globalCursor) {
         qCDebug(qLcEglfsKmsDebug, "Destroying global GBM mouse cursor");
@@ -144,32 +131,47 @@ void QEglFSKmsGbmDevice::destroyGlobalCursor()
     }
 }
 
-QPlatformScreen *QEglFSKmsGbmDevice::createScreen(const QKmsOutput &output)
+void HWEglFSKmsGbmDevice::createGlobalCursor(HWEglFSKmsGbmScreen *screen)
 {
-    QEglFSKmsGbmScreen *screen = new QEglFSKmsGbmScreen(this, output, false);
-
     if (!m_globalCursor && screenConfig()->hwCursor()) {
         qCDebug(qLcEglfsKmsDebug, "Creating new global GBM mouse cursor");
-        m_globalCursor = new QEglFSKmsGbmCursor(screen);
+        m_globalCursor = new HWEglFSKmsGbmCursor(screen);
     }
+}
+
+QPlatformScreen *HWEglFSKmsGbmDevice::createScreen(const HWKmsOutput &output)
+{
+    HWEglFSKmsGbmScreen *screen = new HWEglFSKmsGbmScreen(this, output, false);
+
+    createGlobalCursor(screen);
 
     return screen;
 }
 
-QPlatformScreen *QEglFSKmsGbmDevice::createHeadlessScreen()
+QPlatformScreen *HWEglFSKmsGbmDevice::createHeadlessScreen()
 {
-    return new QEglFSKmsGbmScreen(this, QKmsOutput(), true);
+    return new HWEglFSKmsGbmScreen(this, HWKmsOutput(), true);
 }
 
-void QEglFSKmsGbmDevice::registerScreenCloning(QPlatformScreen *screen,
+void HWEglFSKmsGbmDevice::registerScreenCloning(QPlatformScreen *screen,
                                                QPlatformScreen *screenThisScreenClones,
-                                               const QVector<QPlatformScreen *> &screensCloningThisScreen)
+                                               const QList<QPlatformScreen *> &screensCloningThisScreen)
 {
     if (!screenThisScreenClones && screensCloningThisScreen.isEmpty())
         return;
 
-    QEglFSKmsGbmScreen *gbmScreen = static_cast<QEglFSKmsGbmScreen *>(screen);
+    HWEglFSKmsGbmScreen *gbmScreen = static_cast<HWEglFSKmsGbmScreen *>(screen);
     gbmScreen->initCloning(screenThisScreenClones, screensCloningThisScreen);
+}
+
+void HWEglFSKmsGbmDevice::registerScreen(QPlatformScreen *screen,
+                                        bool isPrimary,
+                                        const QPoint &virtualPos,
+                                        const QList<QPlatformScreen *> &virtualSiblings)
+{
+    HWEglFSKmsDevice::registerScreen(screen, isPrimary, virtualPos, virtualSiblings);
+    if (screenConfig()->hwCursor() && m_globalCursor)
+        m_globalCursor->reevaluateVisibilityForScreens();
 }
 
 QT_END_NAMESPACE

@@ -40,22 +40,9 @@
 #ifndef QEGLFSGLOBAL_H
 #define QEGLFSGLOBAL_H
 
-//
-//  W A R N I N G
-//  -------------
-//
-// This file is not part of the Qt API.  It exists purely as an
-// implementation detail.  This header file may change from version to
-// version without notice, or even be removed.
-//
-// We mean it.
-//
-
 #include <QtCore/qglobal.h>
 
 #include <QtGui/private/qeglplatformcontext_p.h>
-
-QT_BEGIN_NAMESPACE
 
 #ifdef QT_BUILD_EGL_DEVICE_LIB
 #define Q_EGLFS_EXPORT Q_DECL_EXPORT
@@ -74,7 +61,5 @@ QT_BEGIN_NAMESPACE
 #undef FontChange
 #undef Expose
 #undef Unsorted
-
-QT_END_NAMESPACE
 
 #endif

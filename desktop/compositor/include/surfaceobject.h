@@ -66,8 +66,12 @@ public:
     QList<Surface*> childSurfaceObjects() const;
     QList<Surface*> childXdgSurfaceObjects() const;
 
+    QString appId() const { return m_appid; }
+    QString themedIcon() const { return m_icontheme; }
+
     bool serverDecorated() const;
     QPointF position() const;
+    QPointF parentBasedPosition() const;
     void setPosition(const QPointF &pos);
     QSize windowSize() const;
     QRectF windowRect() const;
@@ -77,7 +81,6 @@ public:
     QRectF minimizeButtonRect() const;
     QRectF titleBarRect() const;
     QSize size() const;
-    QPoint offset() const;
     QUuid uuid() const;
     uint id() const;
     bool isCursor() const;
@@ -120,11 +123,17 @@ public:
     void endResize();
     void endMove();
     QImage* decorationImage();
-
+    Surface *topLevelSurface() const { return m_parentTopLevelSurface; }
+    QIcon icon() const { return m_icon; }
+public slots:
+    void activate();
+    void deactivate();
+    void toggleMinimize();
+    void toggleMaximize();
+    void toggleActive();
 protected:
     // only callable by Compostior
     void setParentSurfaceObject(Surface *parent);
-    void createPlasmaWindowControl();
     void createWlShellSurface(QWaylandWlShellSurface *surface);
     void createXdgShellSurface(HWWaylandXdgSurface *surface);
     void createXdgTopLevelSurface(HWWaylandXdgToplevel *topLevel);
@@ -138,22 +147,28 @@ protected:
     void adjustPostionX(float x);
     void adjustPostionY(float y);
     void renderDecoration();
-
+    void updatePlasmaStateFlags() const;
+    void setLayerShellParent(Surface *surface);
+    void handleLayerShellPopupPositioning();
 private slots:
+    void onSurfaceSourceGeometryChanged();
     void onXdgStartResize(QWaylandSeat *seat, Qt::Edges edges);
     void onXdgSetMaximized();
     void onXdgUnsetMaximized();
     void onXdgSetMinimized();
+    void unsetMinimized();
     void onXdgSetFullscreen(QWaylandOutput *output);
     void onXdgUnsetFullscreen();
     void onXdgTitleChanged();
     void onXdgParentTopLevelChanged();
+    void onXdgAppIdChanged();
     void windowGeometryChanged();
     void surfaceDestroyed();
     void viewSurfaceDestroyed();
     void reconfigureLayerSurface();
     void onLayerChanged();
     void onLayerShellSizeChanged();
+    void onLayerShellXdgPopupParentChanged(HWWaylandXdgPopup *popup);
     void onAnchorsChanged();
     void onExclusiveZoneChanged();
     void recalculateAnchorPosition();
@@ -164,23 +179,29 @@ private slots:
     void onQtShellReposition(const QPoint &pos);
     void onQtShellSetSize(const QSize &size);
     void onQtWindowFlagsChanged(const Qt::WindowFlags &f);
+
 signals:
     void primaryViewChanged();
     void geometryChanged();
 private:
     friend class Compositor;
     friend class SurfaceView;
+    friend class OutputWindow;
     SurfaceView* createViewForOutput(Output *o);
     void setAppMenu(AppMenu *m);
-
+    void createPlasmaWindowControl();
     QUuid m_uuid;
     uint m_id;
+
+    bool m_active = false;
 
     bool m_cursor = false;
     bool m_menuServer = false;
 
     bool m_canMaximize = true;
     bool m_canMinimize = true;
+
+    bool m_showMinMaxBtn = true;
     bool m_canClose = true;
 
     bool m_minimized = false;
@@ -191,6 +212,8 @@ private:
 
     bool m_moving = false;
     SurfaceType m_surfaceType;
+
+    QRectF m_viewport;
 
     QSize m_ls_size;
 
@@ -203,6 +226,9 @@ private:
 
     QPointF m_position;
     QPointF m_priorNormalPos; // used for restoring window
+
+    QString m_appid;
+    QString m_icontheme;
 
     QWaylandSurface *m_surface = nullptr;
     Surface *m_parentSurface = nullptr;
@@ -224,6 +250,10 @@ private:
     QtSurface *m_qt = nullptr;
 
     QImage *m_ssdimg = nullptr;
+
+    Output *m_ls_output = nullptr;
+
+    QIcon m_icon = QIcon();
 };
 
 #endif // SURFACEOBJECT_H

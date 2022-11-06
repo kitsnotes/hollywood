@@ -56,8 +56,6 @@
 #include <QtGui/private/qeglplatformcontext_p.h>
 #include <QtCore/QVariant>
 
-QT_BEGIN_NAMESPACE
-
 class Q_EGLFS_EXPORT QEglFSContext : public QEGLPlatformContext
 {
 public:
@@ -75,6 +73,5 @@ private:
     EGLNativeWindowType m_tempWindow;
 };
 
-QT_END_NAMESPACE
 
 #endif // QEGLFSCONTEXT_H

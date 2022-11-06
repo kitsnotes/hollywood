@@ -157,7 +157,9 @@ public:
     static QWaylandSurfaceRole s_role;
 
 private:
+    friend class WlrLayerSurfaceV1;
     uint sendConfigure(const QRect &geometry);
+    void setParentLayerSurface(WlrLayerSurfaceV1 *surface);
 
 protected:
     void xdg_popup_destroy(Resource *resource) override;

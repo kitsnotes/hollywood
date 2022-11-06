@@ -225,7 +225,6 @@ void LSFSItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
         shadowIcon = m_shadowHidden;
     }
 
-    qDebug() << "checking for symlink";
     bool isSymlink = file && file->isSymLink();
 
     // TODO: fix this

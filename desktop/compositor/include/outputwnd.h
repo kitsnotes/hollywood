@@ -53,7 +53,7 @@ private:
     void drawTextureForObject(Surface *obj, bool useShadow = false);
     void drawPopupsForObject(Surface *obj, bool useShadow = false);
     void drawShadowForObject(uint shadowOffset, Surface *obj);
-    void drawDesktopInfoString(QPainter *p);
+    void drawDesktopInfoString();
     void drawServerSideDecoration(const QSize buf, uint shadowOffset, Surface *obj);
 private:
     friend class WallpaperManager;

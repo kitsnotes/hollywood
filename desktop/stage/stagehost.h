@@ -9,6 +9,7 @@
 #include "wndmgmt.h"
 #include <hollywood/layershellwindow.h>
 
+class StageClock;
 class TaskButton;
 class StageHost : public QWidget
 {
@@ -31,7 +32,9 @@ public slots:
 protected:
     void resizeEvent(QResizeEvent *event) override;
 protected slots:
+    void buttonClicked();
     void windowClosed();
+    void minimizedChanged();
 private:
     bool m_ready = false;
     LayerShellQt::Window *m_lswnd;
@@ -41,11 +44,13 @@ private:
     QHBoxLayout *m_hbox = nullptr;
     QSpacerItem *m_spacer = nullptr;
     QToolButton *m_menu = nullptr;
-    QToolButton *m_pm = nullptr;
+    QToolButton *m_shutdown = nullptr;
     QMenu *m_context = nullptr;
 
     QList<TaskButton*> m_windows;
     QButtonGroup *m_group = nullptr;
+
+    StageClock *m_clock = nullptr;
 };
 
 #endif // STAGEHOST_H

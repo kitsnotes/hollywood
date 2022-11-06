@@ -949,3 +949,4 @@ void Logind::switchTo(quint32 vt)
 }
 
 } // namespace Originull
+#include "moc_logind.cpp"

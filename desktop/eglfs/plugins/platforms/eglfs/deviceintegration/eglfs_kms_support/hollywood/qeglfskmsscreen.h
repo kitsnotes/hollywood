@@ -42,22 +42,22 @@
 #ifndef QEGLFSKMSSCREEN_H
 #define QEGLFSKMSSCREEN_H
 
-#include "qeglfsscreen_p.h"
+#include "hollywood/private/eglfsscreen_p.h"
 #include <QtCore/QList>
 #include <QtCore/QMutex>
-
-#include <hollywood/private/qkmsdevice_p.h>
-#include <hollywood/private/qedidparser_p.h>
+#include "hollywood/private/qkmsdevice_p.h"
+#include <QtGui/private/qedidparser_p.h>
 
 QT_BEGIN_NAMESPACE
 
-class QEglFSKmsInterruptHandler;
+class HWEglFSKmsDevice;
+class HWEglFSKmsInterruptHandler;
 
-class Q_EGLFS_EXPORT QEglFSKmsScreen : public QEglFSScreen
+class Q_EGLFS_EXPORT HWEglFSKmsScreen : public HWEglFSScreen
 {
 public:
-    QEglFSKmsScreen(QKmsDevice *device, const QKmsOutput &output, bool headless = false);
-    ~QEglFSKmsScreen();
+    HWEglFSKmsScreen(HWEglFSKmsDevice *device, const HWKmsOutput &output, bool headless = false);
+    ~HWEglFSKmsScreen();
 
     void setVirtualPosition(const QPoint &pos);
 
@@ -83,16 +83,16 @@ public:
     QList<QPlatformScreen *> virtualSiblings() const override { return m_siblings; }
     void setVirtualSiblings(QList<QPlatformScreen *> sl) { m_siblings = sl; }
 
-    QVector<QPlatformScreen::Mode> modes() const override;
+    QList<QPlatformScreen::Mode> modes() const override;
 
     int currentMode() const override;
     int preferredMode() const override;
 
-    QKmsDevice *device() const { return m_device; }
+    HWEglFSKmsDevice *device() const { return m_device; }
 
     virtual void waitForFlip();
 
-    QKmsOutput &output() { return m_output; }
+    HWKmsOutput &output() { return m_output; }
     void restoreMode();
 
     SubpixelAntialiasingType subpixelAntialiasingTypeHint() const override;
@@ -100,27 +100,25 @@ public:
     QPlatformScreen::PowerState powerState() const override;
     void setPowerState(QPlatformScreen::PowerState state) override;
 
-    bool setMode(const QSize &size, qreal refreshRate);
+    bool isCursorOutOfRange() const { return m_cursorOutOfRange; }
+    void setCursorOutOfRange(bool b) { m_cursorOutOfRange = b; }
 
-    qreal scaleFactor() const;
-    void setScaleFactor(qreal value);
-
+    virtual void pageFlipped(unsigned int sequence, unsigned int tv_sec, unsigned int tv_usec);
 protected:
-    QKmsDevice *m_device;
+    HWEglFSKmsDevice *m_device;
 
-    QKmsOutput m_output;
+    HWKmsOutput m_output;
     QEdidParser m_edid;
     QPoint m_pos;
-    qreal m_scaleFactor = -1;
+    bool m_cursorOutOfRange;
 
     QList<QPlatformScreen *> m_siblings;
 
     PowerState m_powerState;
 
-    QEglFSKmsInterruptHandler *m_interruptHandler;
+    HWEglFSKmsInterruptHandler *m_interruptHandler;
 
     bool m_headless;
-
 };
 
 QT_END_NAMESPACE

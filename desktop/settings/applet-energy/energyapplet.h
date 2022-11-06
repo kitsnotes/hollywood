@@ -1,14 +1,17 @@
 #ifndef ENERGYAPPLET_H
 #define ENERGYAPPLET_H
 
-#include <appletinterface.h>
+#include <hollywood/appletinterface.h>
 #include <QtCore/QVariant>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QCheckBox>
+#include <QtWidgets/QFormLayout>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QLabel>
-#include <QtWidgets/QPushButton>
+#include <QtWidgets/QSlider>
 #include <QtWidgets/QSpacerItem>
+#include <QtWidgets/QTabWidget>
+#include <QtWidgets/QToolButton>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
 
@@ -35,19 +38,26 @@ private:
     void setupWidget();
     QWidget* m_host = nullptr;
     QVBoxLayout *mainLayout = nullptr;
-    QHBoxLayout *m_topLayout = nullptr;
-    QLabel *m_duckLabel = nullptr;
-    QVBoxLayout *m_rightSideLayout = nullptr;
-    QLabel *m_welcome = nullptr;
-    QLabel *m_description = nullptr;
-    QSpacerItem *verticalSpacer = nullptr;
-    QHBoxLayout *m_bottomLayaout = nullptr;
-    QVBoxLayout *m_optionLayout = nullptr;
-    QCheckBox *m_quackMidnight = nullptr;
-    QCheckBox *m_quackHourly = nullptr;
-    QPushButton *m_quackNow = nullptr;
-    QSpacerItem *horizontalSpacer = nullptr;
-    QSpacerItem *verticalSpacer_2 = nullptr;
+    QTabWidget *m_tabs;
+    QWidget *m_mains;
+    QFormLayout *formLayout;
+    QLabel *lbl_mains_comp_sleep;
+    QSlider *m_mains_comp_sleep;
+    QLabel *lbl_mains_disp_sleep;
+    QSlider *m_mains_disp_sleep;
+    QSpacerItem *vs_mains;
+    QWidget *m_battery;
+    QFormLayout *formLayout_3;
+    QLabel *lbl_batt_comp_sleep;
+    QSlider *m_batt_comp_sleep;
+    QLabel *lbl_batt_disp_sleep;
+    QSlider *m_batt_disp_sleep;
+    QSpacerItem *vs_batt;
+    QHBoxLayout *hl_bottom;
+    QCheckBox *m_showinmenu;
+    QSpacerItem *hs_bottom;
+    QToolButton *m_help;
+
 };
 
 #endif // ENERGYAPPLET_H

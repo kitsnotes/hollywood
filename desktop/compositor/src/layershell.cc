@@ -1,6 +1,7 @@
 #include "layershell.h"
 #include "application.h"
 #include "compositor.h"
+#include "xdgshell_p.h"
 
 #define LAYERSHELL_VERSION 4
 
@@ -316,7 +317,14 @@ void WlrLayerSurfaceV1::zwlr_layer_surface_v1_set_keyboard_interactivity(Resourc
 void WlrLayerSurfaceV1::zwlr_layer_surface_v1_get_popup(Resource *resource, wl_resource *popup)
 {
     Q_UNUSED(resource);
-    Q_UNUSED(popup);
+
+    HWWaylandXdgPopup *xdgPopup = HWWaylandXdgPopup::fromResource(popup);
+    if (xdgPopup) {
+        qDebug() << "xdgPopup succeeded";
+        auto *xdgPopupPrivate = HWWaylandXdgPopupPrivate::get(xdgPopup);
+        xdgPopupPrivate->setParentLayerSurface(this);
+        emit xdgPopupParentChanged(xdgPopup);
+    }
 }
 
 void WlrLayerSurfaceV1::zwlr_layer_surface_v1_ack_configure(Resource *resource, uint32_t serial)

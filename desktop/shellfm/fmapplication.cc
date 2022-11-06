@@ -119,5 +119,6 @@ int main(int argc, char *argv[])
     else
         a.newFileWindow();
 
+    qputenv("QT_WAYLAND_SHELL_INTEGRATION", "xdg-shell");
     return a.exec();
 }

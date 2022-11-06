@@ -61,11 +61,9 @@
 
 #include "xcursortheme_p.h"
 
-QT_BEGIN_NAMESPACE
-
 class QOpenGLShaderProgram;
 class QEglFSCursor;
-class QEglFSScreen;
+class HWEglFSScreen;
 
 class QEglFSCursorDeviceListener : public QObject
 {
@@ -152,7 +150,7 @@ private:
     } m_cursorAtlas;
 
     QMatrix4x4 m_rotationMatrix;
-    QEglFSScreen *m_screen;
+    HWEglFSScreen *m_screen;
     QPlatformScreen *m_activeScreen;
     QEglFSCursorDeviceListener *m_deviceListener;
     Originull::Platform::XcursorTheme m_cursorTheme;
@@ -172,7 +170,5 @@ private:
     QHash<QOpenGLContext *, GraphicsContextData> m_gfx;
 };
 #endif // QT_CONFIG(opengl)
-
-QT_END_NAMESPACE
 
 #endif // QEGLFSCURSOR_H

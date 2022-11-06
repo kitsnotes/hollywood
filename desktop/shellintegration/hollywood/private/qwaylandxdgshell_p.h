@@ -109,6 +109,7 @@ private:
         void xdg_popup_popup_done() override;
 
         QWaylandXdgSurface *m_xdgSurface = nullptr;
+        LayerShellQt::QWaylandLayerSurface *m_layerSurface = nullptr;
         QWaylandXdgSurface *m_parent = nullptr;
         bool m_grabbing = false;
     };

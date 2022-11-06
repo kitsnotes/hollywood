@@ -52,10 +52,19 @@ public slots:
     void setCloseable(bool set);
     void setTitle(const QString &title);
     void setIcon(const QIcon &icon);
+    void setThemedIcon(const QString &title);
 signals:
     void setStateRequest(uint flags, uint state);
     void getIconRequest(int fd);
     void titleChanged(const QString &title);
+    void themedIconChanged(const QString &icon);
+    void closeRequested();
+    void moveRequested();
+    void resizeRequested();
+    void activeRequested(bool set);
+    void minimizedRequested(bool set);
+    void maximizedRequested(bool set);
+    void fullscreenRequested(bool set);
 protected:
     friend class PlasmaWindowManagement;
     friend class Surface;
@@ -74,6 +83,7 @@ private:
     Surface *m_parent = nullptr;
     QUuid m_uuid;
     QIcon m_icon;
+    QString m_themedicon;
     QString m_title;
     quint32 m_state = 0;
     bool m_mapped = true;

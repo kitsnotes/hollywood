@@ -1,7 +1,7 @@
-TARGET = QtEdidSupport
+TARGET = HWEdidSupport
 TEMPLATE = lib
 QT = core-private
-CONFIG += static
+CONFIG += internal_module
 
 INCLUDEPATH += $$PWD/hollywood
 
@@ -11,3 +11,5 @@ HEADERS += hollywood/private/qedidparser_p.h \
             hollywood/private/qedidvendortable_p.h
 SOURCES += qedidparser.cpp
 
+target.path = /usr/lib
+INSTALLS += target

@@ -66,18 +66,17 @@ class VtHandler;
 }
 }
 
-QT_BEGIN_NAMESPACE
-
-class QEglFSWindow;
+class HWEglFSWindow;
 class QEglFSContext;
 class QEglFSLogindHandler;
 class QFbVtHandler;
 class QEvdevKeyboardManager;
 
-class Q_EGLFS_EXPORT QEglFSIntegration : public QPlatformIntegration, public QPlatformNativeInterface
+class Q_EGLFS_EXPORT HWEglFSIntegration : public QPlatformIntegration, public QPlatformNativeInterface
 {
 public:
-    QEglFSIntegration();
+    HWEglFSIntegration();
+
 
     void initialize() override;
     void destroy() override;
@@ -138,7 +137,5 @@ private:
     QEglFSLogindHandler *m_logindHandler;
     bool m_disableInputHandlers;
 };
-
-QT_END_NAMESPACE
 
 #endif // QEGLFSINTEGRATION_H

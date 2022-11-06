@@ -57,6 +57,7 @@
 #include <qpa/qplatformscreen.h>
 #include <QtCore/QMap>
 #include <QtCore/QVariant>
+#include <QtCore/QThreadStorage>
 
 #include <xf86drm.h>
 #include <xf86drmMode.h>
@@ -97,11 +98,9 @@
 #define DRM_MODE_PROP_SIGNED_RANGE DRM_MODE_PROP_TYPE(2)
 #endif
 
-QT_BEGIN_NAMESPACE
+class HWKmsDevice;
 
-class QKmsDevice;
-
-class QKmsScreenConfig
+class HWKmsScreenConfig
 {
 public:
     enum VirtualDesktopLayout {
@@ -109,7 +108,8 @@ public:
         VirtualDesktopLayoutVertical
     };
 
-    QKmsScreenConfig();
+    HWKmsScreenConfig();
+    virtual ~HWKmsScreenConfig() {}
 
     QString devicePath() const { return m_devicePath; }
 
@@ -121,25 +121,24 @@ public:
     VirtualDesktopLayout virtualDesktopLayout() const { return m_virtualDesktopLayout; }
 
     QMap<QString, QVariantMap> outputSettings() const { return m_outputSettings; }
+    virtual void loadConfig();
 
-private:
-    void loadConfig();
-
-    QMap<QString, QVariantMap> m_outputSettings;
+protected:
     QString m_devicePath;
-    QSize m_headlessSize;
-    VirtualDesktopLayout m_virtualDesktopLayout;
     bool m_headless;
+    QSize m_headlessSize;
     bool m_hwCursor;
     bool m_separateScreens;
     bool m_pbuffers;
+    VirtualDesktopLayout m_virtualDesktopLayout;
+    QMap<QString, QVariantMap> m_outputSettings;
 };
 
 // NB! QKmsPlane does not store the current state and offers no functions to
 // change object properties. Any such functionality belongs to subclasses since
 // in some cases atomic operations will be desired where a mere
 // drmModeObjectSetProperty would not be acceptable.
-struct QKmsPlane
+struct HWKmsPlane
 {
     enum Type {
         OverlayPlane = DRM_PLANE_TYPE_OVERLAY,
@@ -162,7 +161,7 @@ struct QKmsPlane
 
     int possibleCrtcs = 0;
 
-    QVector<uint32_t> supportedFormats;
+    QList<uint32_t> supportedFormats;
 
     Rotations initialRotation = Rotation0;
     Rotations availableRotations = Rotation0;
@@ -178,11 +177,14 @@ struct QKmsPlane
     uint32_t crtcwidthPropertyId = 0;
     uint32_t crtcheightPropertyId = 0;
     uint32_t zposPropertyId = 0;
+    uint32_t blendOpPropertyId = 0;
+
+    uint32_t activeCrtcId = 0;
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(QKmsPlane::Rotations)
+Q_DECLARE_OPERATORS_FOR_FLAGS(HWKmsPlane::Rotations)
 
-struct QKmsOutput
+struct HWKmsOutput
 {
     QString name;
     uint32_t connector_id = 0;
@@ -201,9 +203,10 @@ struct QKmsOutput
     uint32_t forced_plane_id = 0;
     bool forced_plane_set = false;
     uint32_t drm_format = DRM_FORMAT_XRGB8888;
+    bool drm_format_requested_by_user = false;
     QString clone_source;
-    QVector<QKmsPlane> available_planes;
-    struct QKmsPlane *eglfs_plane = nullptr;
+    QList<HWKmsPlane> available_planes;
+    struct HWKmsPlane *eglfs_plane = nullptr;
     QSize size;
     uint32_t crtcIdPropertyId = 0;
     uint32_t modeIdPropertyId = 0;
@@ -211,24 +214,24 @@ struct QKmsOutput
 
     uint32_t mode_blob_id = 0;
 
-    void restoreMode(QKmsDevice *device);
-    void cleanup(QKmsDevice *device);
+    void restoreMode(HWKmsDevice *device);
+    void cleanup(HWKmsDevice *device);
     QPlatformScreen::SubpixelAntialiasingType subpixelAntialiasingTypeHint() const;
-    void setPowerState(QKmsDevice *device, QPlatformScreen::PowerState state);
+    void setPowerState(HWKmsDevice *device, QPlatformScreen::PowerState state);
 };
 
-class QKmsDevice
+class HWKmsDevice
 {
 public:
     struct ScreenInfo {
         int virtualIndex = 0;
         QPoint virtualPos;
         bool isPrimary = false;
-        QKmsOutput output;
+        HWKmsOutput output;
     };
 
-    QKmsDevice(QKmsScreenConfig *screenConfig, const QString &path = QString());
-    virtual ~QKmsDevice();
+    HWKmsDevice(HWKmsScreenConfig *screenConfig, const QString &path = QString());
+    virtual ~HWKmsDevice();
 
     virtual bool open() = 0;
     virtual void close() = 0;
@@ -236,25 +239,24 @@ public:
 
     bool hasAtomicSupport();
 
-#ifdef EGLFS_ENABLE_DRM_ATOMIC
-    bool atomicCommit(void *user_data);
-    void atomicReset();
-
-    drmModeAtomicReq *atomic_request();
+#if QT_CONFIG(drm_atomic)
+    drmModeAtomicReq *threadLocalAtomicRequest();
+    bool threadLocalAtomicCommit(void *user_data);
+    void threadLocalAtomicReset();
 #endif
     void createScreens();
 
     int fd() const;
     QString devicePath() const;
 
-    QKmsScreenConfig *screenConfig() const;
+    HWKmsScreenConfig *screenConfig() const;
 
 protected:
-    virtual QPlatformScreen *createScreen(const QKmsOutput &output) = 0;
+    virtual QPlatformScreen *createScreen(const HWKmsOutput &output) = 0;
     virtual QPlatformScreen *createHeadlessScreen();
     virtual void registerScreenCloning(QPlatformScreen *screen,
                                        QPlatformScreen *screenThisScreenClones,
-                                       const QVector<QPlatformScreen *> &screensCloningThisScreen);
+                                       const QList<QPlatformScreen *> &screensCloningThisScreen);
     virtual void registerScreen(QPlatformScreen *screen,
                                 bool isPrimary,
                                 const QPoint &virtualPos,
@@ -270,27 +272,29 @@ protected:
     typedef std::function<void(drmModePropertyPtr, quint64)> PropCallback;
     void enumerateProperties(drmModeObjectPropertiesPtr objProps, PropCallback callback);
     void discoverPlanes();
-    void parseConnectorProperties(uint32_t connectorId, QKmsOutput *output);
-    void parseCrtcProperties(uint32_t crtcId, QKmsOutput *output);
+    void parseConnectorProperties(uint32_t connectorId, HWKmsOutput *output);
+    void parseCrtcProperties(uint32_t crtcId, HWKmsOutput *output);
 
-    QKmsScreenConfig *m_screenConfig;
+    HWKmsScreenConfig *m_screenConfig;
     QString m_path;
     int m_dri_fd;
 
     bool m_has_atomic_support;
 
-#ifdef EGLFS_ENABLE_DRM_ATOMIC
-    drmModeAtomicReq *m_atomic_request;
-    drmModeAtomicReq *m_previous_request;
+#if QT_CONFIG(drm_atomic)
+    struct AtomicReqs {
+        drmModeAtomicReq *request = nullptr;
+        drmModeAtomicReq *previous_request = nullptr;
+    };
+    QThreadStorage<AtomicReqs> m_atomicReqs;
 #endif
     quint32 m_crtc_allocator;
 
-    QVector<QKmsPlane> m_planes;
+    QList<HWKmsPlane> m_planes;
 
 private:
-    Q_DISABLE_COPY(QKmsDevice)
+    Q_DISABLE_COPY(HWKmsDevice)
 };
 
-QT_END_NAMESPACE
 
 #endif

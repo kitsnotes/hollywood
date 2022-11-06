@@ -4,8 +4,9 @@ INCLUDEPATH += $$PWD/../../../../../libhwlogind/
 INCLUDEPATH += $$PWD/hollywood/ $$PWD/hollywood/private/
 
 SOURCES +=  $$PWD/qeglfswindow.cpp \
+            $$PWD/eglfsscreen.cpp \
             $$PWD/libinputmanager.cpp \
-            $$PWD/qeglfsscreen.cpp \
+            $$PWD/qeglfslogindhandler.cpp \
             $$PWD/qeglfshooks.cpp \
             $$PWD/qeglfsdeviceintegration.cpp \
             $$PWD/qeglfsintegration.cpp \
@@ -15,8 +16,9 @@ SOURCES +=  $$PWD/qeglfswindow.cpp \
             $$PWD/xcursortheme.cpp
 
 HEADERS +=  $$PWD/hollywood/private/qeglfswindow_p.h \
+            $$PWD/hollywood/private/eglfsscreen_p.h \
             $$PWD/hollywood/private/libinputmanager_p.h \
-            $$PWD/hollywood/private/qeglfsscreen_p.h \
+            $$PWD/hollywood/private/qeglfslogindhandler_p.h \
             $$PWD/hollywood/private/qeglfshooks_p.h \
             $$PWD/hollywood/private/qeglfsdeviceintegration_p.h \
             $$PWD/hollywood/private/qeglfsintegration_p.h \

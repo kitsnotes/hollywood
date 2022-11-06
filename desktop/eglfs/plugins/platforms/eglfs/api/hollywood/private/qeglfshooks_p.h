@@ -40,31 +40,16 @@
 #ifndef QEGLFSHOOKS_H
 #define QEGLFSHOOKS_H
 
-//
-//  W A R N I N G
-//  -------------
-//
-// This file is not part of the Qt API.  It exists purely as an
-// implementation detail.  This header file may change from version to
-// version without notice, or even be removed.
-//
-// We mean it.
-//
-
 #include "qeglfsglobal_p.h"
 #include "qeglfsdeviceintegration_p.h"
 #include <QtCore/QLoggingCategory>
 
-QT_BEGIN_NAMESPACE
-
 Q_EGLFS_EXPORT Q_DECLARE_LOGGING_CATEGORY(qLcEglDevDebug)
 
-class QEglFSHooks : public QEglFSDeviceIntegration
+class QEglFSHooks : public HWEglFSDeviceIntegration
 {
 };
 
-Q_EGLFS_EXPORT QEglFSDeviceIntegration *qt_egl_device_integration();
-
-QT_END_NAMESPACE
+Q_EGLFS_EXPORT HWEglFSDeviceIntegration *qt_egl_device_integration();
 
 #endif // QEGLFSHOOKS_H

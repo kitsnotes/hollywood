@@ -56,16 +56,14 @@
 
 #include <qpa/qplatformscreen.h>
 
-QT_BEGIN_NAMESPACE
-
-class QEglFSWindow;
+class HWEglFSWindow;
 class QOpenGLContext;
 
-class Q_EGLFS_EXPORT QEglFSScreen : public QPlatformScreen
+class Q_EGLFS_EXPORT HWEglFSScreen : public QPlatformScreen
 {
 public:
-    QEglFSScreen(EGLDisplay display);
-    ~QEglFSScreen();
+    HWEglFSScreen(EGLDisplay display);
+    ~HWEglFSScreen();
 
     QRect geometry() const override;
     virtual QRect rawGeometry() const;
@@ -110,9 +108,7 @@ private:
     QPlatformCursor *m_cursor;
     bool m_recordingEnabled = false;
 
-    friend class QEglFSWindow;
+    friend class HWEglFSWindow;
 };
-
-QT_END_NAMESPACE
 
 #endif // QEGLFSSCREEN_H

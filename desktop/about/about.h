@@ -49,6 +49,7 @@ private:
     void populateMemory();
     void populateSysDisk();
     void populateGPU();
+    void populateDeviceTree();
 private:
     QPixmap *m_lightBg;
     QPixmap *m_darkBg;

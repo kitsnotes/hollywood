@@ -20,7 +20,10 @@
 #include "surfaceobject.h"
 
 #include <QSettings>
+#include <QPainter>
+#include <QTextOption>
 #include <hollywood/hollywood.h>
+#include <sys/utsname.h>
 
 Compositor::Compositor()
     : m_wlShell(new QWaylandWlShell(this)),
@@ -58,6 +61,8 @@ Compositor::Compositor()
     connect(m_layerShell, &WlrLayerShellV1::layerSurfaceCreated, this, &Compositor::onLayerSurfaceCreated);
     connect(m_gtk, &GtkShell::surfaceCreated, this, &Compositor::onGtkSurfaceCreated);
     connect(m_qt, &QtShell::surfaceCreated, this, &Compositor::onQtSurfaceCreated);
+
+    generateDesktopInfoLabelImage();
 }
 
 Compositor::~Compositor()
@@ -73,6 +78,7 @@ void Compositor::create()
     connect(this, &QWaylandCompositor::subsurfaceChanged, this, &Compositor::onSubsurfaceChanged);
     connect(defaultSeat(), &QWaylandSeat::cursorSurfaceRequest, this, &Compositor::adjustCursorSurface);
     connect(defaultSeat()->drag(), &QWaylandDrag::dragStarted, this, &Compositor::startDrag);
+
 }
 
 bool Compositor::hasMenuServer()
@@ -91,6 +97,17 @@ Output *Compositor::outputAtPosition(const QPoint &pos)
     for(auto out : m_outputs)
     {
         if(out->wlOutput()->geometry().contains(pos))
+            return out;
+    }
+
+    return nullptr;
+}
+
+Output *Compositor::outputFor(QWaylandOutput *wloutput)
+{
+    for(auto out : m_outputs)
+    {
+        if(out->wlOutput() == wloutput)
             return out;
     }
 
@@ -131,11 +148,80 @@ QString Compositor::surfaceZOrderByUUID() const
     QStringList uuids;
     for(auto *obj : m_zorder)
     {
+        if(obj->isSpecialShellObject())
+            continue;
         if(obj->plasmaControl())
             uuids.append(obj->plasmaControl()->uuid().toString(QUuid::WithoutBraces));
     }
 
     return uuids.join(" ");
+}
+
+void Compositor::generateDesktopInfoLabelImage()
+{
+    QStringList lines;
+    auto kernel = QString();
+    struct utsname unb;
+    if(uname(&unb) != 0)
+        kernel = QLatin1String("Unknown");
+    else
+        kernel = QLatin1String(unb.release);
+
+    lines << QString("Hollywood %1 (API %2, Kernel %3)")
+        .arg(QLatin1String(HOLLYWOOD_OS_VERSION))
+        .arg(QLatin1String(QT_VERSION_STR))
+        .arg(kernel);
+
+    QFont font(HOLLYWOOD_DEF_STDFONT, 9);
+    QFontMetrics m = QFontMetrics(font);
+    int textHeight = m.height();
+    QTextOption to;
+
+    auto env = qgetenv("HOLLYWOOD_GENUINE");
+    if(!env.isEmpty())
+        lines << QLatin1String("This copy of Linux is not genuine.");
+    to.setAlignment(Qt::AlignRight);
+
+    int max_height = lines.count()*textHeight;
+    int max_width = 0;
+    for(int i = 0; i < lines.count(); i++)
+    {
+        auto text = lines.at(i);
+        auto rect = m.boundingRect(text, to);
+        if(rect.width() > max_width)
+            max_width = rect.width();
+    }
+    max_width = max_width+5;
+
+    QRect bounds(QPoint(0,0),QSize(max_width,max_height));
+    m_dtlabel = new QImage(bounds.size(),
+                          QImage::Format_RGBA8888);
+    QPainter px(m_dtlabel);
+    px.setCompositionMode(QPainter::CompositionMode_Clear);
+    px.fillRect(QRect(QPoint(0,0), bounds.size()), QColor(255,255,255,0));
+
+    px.setCompositionMode(QPainter::CompositionMode_SourceOver);
+    px.setRenderHint(QPainter::TextAntialiasing);
+    px.setPen(Qt::white);
+    px.setFont(font);
+
+    for(int i = 0; i < lines.count(); i++)
+    {
+        auto text = lines.at(i);
+        auto rect = m.boundingRect(text, to);
+        int y = bounds.size().height() - (textHeight * lines.count()) +
+                (textHeight * (i+1)) - 5;
+        int x = bounds.size().width() - rect.width() - 5;
+        px.drawText(QPoint(x,y), text);
+    }
+    px.end();
+}
+
+QImage *Compositor::desktopLabelImage()
+{
+    if(m_dtlabel == nullptr)
+        generateDesktopInfoLabelImage();
+    return m_dtlabel;
 }
 
 QList<SurfaceView*> Compositor::views() const
@@ -184,13 +270,15 @@ void Compositor::surfaceHasContentChanged()
 {
     QWaylandSurface *surface = qobject_cast<QWaylandSurface *>(sender());
     if (surface->hasContent()) {
+        // TODO: if we support more compositor protocols we need to add roles here
         if (surface->role() == QWaylandWlShellSurface::role()
-                || surface->role() == QWaylandXdgToplevel::role()
-                || surface->role() == QWaylandXdgPopup::role()) {
+                || surface->role() == HWWaylandXdgToplevel::role()
+                || surface->role() == HWWaylandXdgPopup::role()) {
             defaultSeat()->setKeyboardFocus(surface);
         }
     }
     // TODO: avoid this if surface is minimized?
+
     triggerRender();
 }
 
@@ -234,22 +322,23 @@ void Compositor::onMenuServerRequest(QWaylandSurface *surface)
 
 void Compositor::onDesktopRequest(QWaylandSurface *surface)
 {
-    qDebug() << "onDesktopRequest";
     auto *acSurface = findSurfaceObject(surface);
     Q_ASSERT(acSurface);
+    qDebug() << "onDesktopRequest" << acSurface->uuid();
 
     if(m_zorder.contains(acSurface))
         m_zorder.removeOne(acSurface);
 
+    acSurface->m_surfaceType = Surface::Desktop;
+
     if(acSurface->m_wndctl != nullptr)
     {
         m_wndmgr->m_windows.removeOne(acSurface->m_wndctl);
-        acSurface->m_wndctl->destroy();
         delete acSurface->m_wndctl;
         acSurface->m_wndctl = nullptr;
+        qDebug() << "removing wndmgr";
     }
 
-    acSurface->m_surfaceType = Surface::Desktop;
     if(m_menuServer)
        acSurface->setPosition(QPointF(0,m_menuServer->size().height()));
     else
@@ -376,11 +465,6 @@ void Compositor::onXdgTopLevelCreated(HWWaylandXdgToplevel *topLevel, HWWaylandX
 
     auto scrsize  =m_outputs.first()->size();
     auto surfsize = surface->surface()->destinationSize();
-
-    qDebug() << "screen size:" << scrsize << "surface size:" << surfsize;
-
-    //auto startx = (scrsize.width() - surfsize.width())/2;
-    //auto starty = (scrsize.height() - surfsize.height())/2;
 
     mySurface->setPosition(QPointF(40,50));
 }
@@ -572,10 +656,13 @@ void Compositor::handleMouseEvent(QWaylandView *target, QMouseEvent *me)
         case QEvent::MouseButtonPress:
             seat->sendMousePressEvent(me->button());
             if (surface != seat->keyboardFocus()) {
+                // TODO: if we add more protocols we need to add kbd focus
+                // things here
                 if (surface == nullptr
                         || surface->role() == QWaylandWlShellSurface::role()
-                        || surface->role() == QWaylandXdgToplevel::role()
-                        || surface->role() == QWaylandXdgPopup::role()) {
+                        || surface->role() == HWWaylandXdgToplevel::role()
+                        || surface->role() == QtSurface::role()
+                        || surface->role() == HWWaylandXdgPopup::role()) {
                     seat->setKeyboardFocus(surface);
                 }
             }
@@ -613,7 +700,7 @@ void Compositor::handleResize(SurfaceView *target, const QSize &initialSize, con
     if (xdgSurface)
     {
         HWWaylandXdgToplevel *topLevel = target->surfaceObject()->xdgTopLevel();
-        if(topLevel)
+        if(topLevel && !topLevel->maximized())
         {
             auto qedge = static_cast<Qt::Edge>(edge);
 
@@ -670,9 +757,9 @@ QWaylandClient *Compositor::popupClient() const
 
 void Compositor::raise(Surface *obj)
 {
-    //qDebug() << "ACCompositor::raise on " << obj->m_uuid;
-    if(obj->m_xdgPopup != nullptr)
-        return;
+    qDebug() << "Compositor::raise on " << obj->m_uuid;
+    /*if(obj->m_xdgPopup != nullptr)
+        return;*/
     if(obj->isSpecialShellObject())
     {
         qDebug() << "special shell object";
@@ -693,6 +780,7 @@ void Compositor::raise(Surface *obj)
     m_zorder.removeOne(obj);
     m_zorder.push_back(obj);
 
+    obj->activate();
     if(m_wndmgr)
     {
         if(m_wndmgr->isInitialized())

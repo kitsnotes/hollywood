@@ -31,6 +31,7 @@ protected:
     void zqt_shell_v1_surface_create(Resource *resource, struct ::wl_resource *surface, uint32_t id);
 };
 
+class QWaylandSurfaceRole;
 class QtSurface : public QObject
                  , public QtWaylandServer::zqt_shell_surface_v1
 {
@@ -48,6 +49,7 @@ public:
     QtShell *shell() const;
 
     static QtSurface *fromResource(wl_resource *res);
+    static QWaylandSurfaceRole *role();
 protected:
     void zqt_shell_surface_v1_reposition(Resource *resource, int32_t x, int32_t y) override;
     void zqt_shell_surface_v1_request_activate(Resource *resource) override;
@@ -75,6 +77,7 @@ signals:
 private:
     QtShell *m_shell;
     QWaylandSurface *m_surface;
+    static QWaylandSurfaceRole s_role;
 
 };
 

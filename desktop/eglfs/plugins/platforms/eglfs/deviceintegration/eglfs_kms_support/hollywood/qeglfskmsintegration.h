@@ -47,18 +47,16 @@
 #include <QtCore/QVariant>
 #include <QtCore/QLoggingCategory>
 
-QT_BEGIN_NAMESPACE
-
-class QKmsDevice;
-class QKmsScreenConfig;
+class HWKmsDevice;
+class HWKmsScreenConfig;
 
 Q_EGLFS_EXPORT Q_DECLARE_LOGGING_CATEGORY(qLcEglfsKmsDebug)
 
-class Q_EGLFS_EXPORT QEglFSKmsIntegration : public QEglFSDeviceIntegration
+class Q_EGLFS_EXPORT HWEglFSKmsIntegration : public HWEglFSDeviceIntegration
 {
 public:
-    QEglFSKmsIntegration();
-    ~QEglFSKmsIntegration();
+    HWEglFSKmsIntegration();
+    ~HWEglFSKmsIntegration();
 
     void platformInit() override;
     void platformDestroy() override;
@@ -72,14 +70,15 @@ public:
     void *nativeResourceForIntegration(const QByteArray &name) override;
     void *nativeResourceForScreen(const QByteArray &resource, QScreen *screen) override;
 
-    QKmsDevice *device() const;
-    QKmsScreenConfig *screenConfig() const;
+    HWKmsDevice *device() const;
+    HWKmsScreenConfig *screenConfig() const;
 
 protected:
-    virtual QKmsDevice *createDevice() = 0;
+    virtual HWKmsDevice *createDevice() = 0;
+    virtual HWKmsScreenConfig *createScreenConfig();
 
-    QKmsDevice *m_device;
-    QKmsScreenConfig *m_screenConfig;
+    HWKmsDevice *m_device;
+    HWKmsScreenConfig *m_screenConfig = nullptr;
 };
 
 QT_END_NAMESPACE

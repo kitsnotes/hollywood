@@ -54,7 +54,7 @@ QPlatformIntegration* HollywoodEglFSIntegrationPlugin::create(const QString& sys
 {
     Q_UNUSED(paramList);
     if (!system.compare(QLatin1String("hollywood-eglfs"), Qt::CaseInsensitive))
-        return new QEglFSIntegration;
+        return new HWEglFSIntegration;
 
     return 0;
 }

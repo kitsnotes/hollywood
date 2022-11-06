@@ -1,11 +1,12 @@
 TARGET = QtEglFsKmsSupport
 CONFIG += static
 TEMPLATE=lib link_pkgconfig
-QT += core-private gui-private fb_support-private eglfsdeviceintegration-private kms_support-private dbus
+QT += core-private gui-private fb_support-private dbus
 
 INCLUDEPATH += $$PWD/hollywood
 INCLUDEPATH += $$PWD/../../api/hollywood/private
 INCLUDEPATH += $$PWD/../../api/
+INCLUDEPATH += $$PWD/../../api/hollywood
 INCLUDEPATH += $$PWD/../../../../../platformheaders/
 INCLUDEPATH += $$PWD/../../../../../platformsupport/edid
 INCLUDEPATH += $$PWD/../../../../../platformsupport/kmsconvenience
@@ -18,9 +19,11 @@ CONFIG += egl
 
 SOURCES += $$PWD/qeglfskmsintegration.cpp \
            $$PWD/qeglfskmsdevice.cpp \
-           $$PWD/qeglfskmsscreen.cpp
+           $$PWD/qeglfskmsscreen.cpp \
+           qeglfskmseventreader.cpp
 
 HEADERS += $$PWD/hollywood/qeglfskmsintegration.h \
            $$PWD/hollywood/qeglfskmsdevice.h \
            $$PWD/hollywood/qeglfskmsscreen.h \
-           $$PWD/hollywood/qeglfskmshelpers.h
+           $$PWD/hollywood/qeglfskmshelpers.h \
+           hollywood/qeglfskmseventreader.h

@@ -54,9 +54,7 @@
 #include "qeglfshooks_p.h"
 #include "qeglfsdeviceintegration_p.h"
 
-QT_BEGIN_NAMESPACE
-
-QEglFSWindow::QEglFSWindow(QWindow *w)
+HWEglFSWindow::HWEglFSWindow(QWindow *w)
     : QPlatformWindow(w),
 #ifndef QT_NO_OPENGL
       m_backingStore(0),
@@ -68,7 +66,7 @@ QEglFSWindow::QEglFSWindow(QWindow *w)
 {
 }
 
-QEglFSWindow::~QEglFSWindow()
+HWEglFSWindow::~HWEglFSWindow()
 {
     destroy();
 }
@@ -83,7 +81,7 @@ static WId newWId()
     return ++id;
 }
 
-void QEglFSWindow::create()
+void HWEglFSWindow::create()
 {
     if (m_flags.testFlag(Created))
         return;
@@ -109,7 +107,7 @@ void QEglFSWindow::create()
     // Stop if there is already a window backed by a native window and surface. Additional
     // raster windows will not have their own native window, surface and context. Instead,
     // they will be composited onto the root window's surface.
-    QEglFSScreen *screen = this->screen();
+    HWEglFSScreen *screen = this->screen();
 #ifndef QT_NO_OPENGL
     QOpenGLCompositor *compositor = QOpenGLCompositor::instance();
     if (screen->primarySurface() != EGL_NO_SURFACE) {
@@ -161,13 +159,13 @@ void QEglFSWindow::create()
 #endif // QT_NO_OPENGL
 }
 
-void QEglFSWindow::destroy()
+void HWEglFSWindow::destroy()
 {
 #ifndef QT_NO_OPENGL
     QOpenGLCompositor::instance()->removeWindow(this);
 #endif
 
-    QEglFSScreen *screen = this->screen();
+    HWEglFSScreen *screen = this->screen();
     if (m_flags.testFlag(HasNativeWindow)) {
 #ifndef QT_NO_OPENGL
         QEglFSCursor *cursor = qobject_cast<QEglFSCursor *>(screen->cursor());
@@ -188,7 +186,7 @@ void QEglFSWindow::destroy()
     m_flags = { };
 }
 
-void QEglFSWindow::invalidateSurface()
+void HWEglFSWindow::invalidateSurface()
 {
     if (m_surface != EGL_NO_SURFACE) {
         eglDestroySurface(screen()->display(), m_surface);
@@ -198,19 +196,19 @@ void QEglFSWindow::invalidateSurface()
     m_window = 0;
 }
 
-void QEglFSWindow::resetSurface()
+void HWEglFSWindow::resetSurface()
 {
     EGLDisplay display = screen()->display();
     QSurfaceFormat platformFormat = qt_egl_device_integration()->surfaceFormatFor(window()->requestedFormat());
 
-    m_config = QEglFSDeviceIntegration::chooseConfig(display, platformFormat);
+    m_config = HWEglFSDeviceIntegration::chooseConfig(display, platformFormat);
     m_format = q_glFormatFromConfig(display, m_config, platformFormat);
     const QSize surfaceSize = screen()->rawGeometry().size();
     m_window = qt_egl_device_integration()->createNativeWindow(this, surfaceSize, m_format);
     m_surface = eglCreateWindowSurface(display, m_config, m_window, NULL);
 }
 
-bool QEglFSWindow::resizeSurface(const QSize &size)
+bool HWEglFSWindow::resizeSurface(const QSize &size)
 {
     EGLDisplay display = screen()->display();
     EGLNativeWindowType window = qt_egl_device_integration()->createNativeWindow(this, size, m_format);
@@ -239,7 +237,7 @@ bool QEglFSWindow::resizeSurface(const QSize &size)
     return true;
 }
 
-void QEglFSWindow::setVisible(bool visible)
+void HWEglFSWindow::setVisible(bool visible)
 {
 #ifndef QT_NO_OPENGL
     QOpenGLCompositor *compositor = QOpenGLCompositor::instance();
@@ -265,7 +263,7 @@ void QEglFSWindow::setVisible(bool visible)
         QWindowSystemInterface::flushWindowSystemEvents(QEventLoop::ExcludeUserInputEvents);
 }
 
-void QEglFSWindow::setGeometry(const QRect &r)
+void HWEglFSWindow::setGeometry(const QRect &r)
 {
     QRect rect = r;
     if (m_flags.testFlag(HasNativeWindow))
@@ -280,7 +278,7 @@ void QEglFSWindow::setGeometry(const QRect &r)
         QWindowSystemInterface::handleExposeEvent(window(), QRect(QPoint(0, 0), rect.size()));
 }
 
-QRect QEglFSWindow::geometry() const
+QRect HWEglFSWindow::geometry() const
 {
     // For yet-to-become-fullscreen windows report the geometry covering the entire
     // screen. This is particularly important for Quick where the root object may get
@@ -291,7 +289,7 @@ QRect QEglFSWindow::geometry() const
     return QPlatformWindow::geometry();
 }
 
-void QEglFSWindow::requestActivateWindow()
+void HWEglFSWindow::requestActivateWindow()
 {
 #ifndef QT_NO_OPENGL
     if (window()->type() != Qt::Desktop)
@@ -302,7 +300,7 @@ void QEglFSWindow::requestActivateWindow()
     QWindowSystemInterface::handleExposeEvent(wnd, QRect(QPoint(0, 0), wnd->geometry().size()));
 }
 
-void QEglFSWindow::raise()
+void HWEglFSWindow::raise()
 {
     QWindow *wnd = window();
     if (wnd->type() != Qt::Desktop) {
@@ -313,7 +311,7 @@ void QEglFSWindow::raise()
     }
 }
 
-void QEglFSWindow::lower()
+void HWEglFSWindow::lower()
 {
 #ifndef QT_NO_OPENGL
     QOpenGLCompositor *compositor = QOpenGLCompositor::instance();
@@ -329,38 +327,38 @@ void QEglFSWindow::lower()
 #endif
 }
 
-EGLSurface QEglFSWindow::surface() const
+EGLSurface HWEglFSWindow::surface() const
 {
     return m_surface != EGL_NO_SURFACE ? m_surface : screen()->primarySurface();
 }
 
-QSurfaceFormat QEglFSWindow::format() const
+QSurfaceFormat HWEglFSWindow::format() const
 {
     return m_format;
 }
 
-EGLNativeWindowType QEglFSWindow::eglWindow() const
+EGLNativeWindowType HWEglFSWindow::eglWindow() const
 {
     return m_window;
 }
 
-QEglFSScreen *QEglFSWindow::screen() const
+HWEglFSScreen *HWEglFSWindow::screen() const
 {
-    return static_cast<QEglFSScreen *>(QPlatformWindow::screen());
+    return static_cast<HWEglFSScreen *>(QPlatformWindow::screen());
 }
 
-bool QEglFSWindow::isRaster() const
+bool HWEglFSWindow::isRaster() const
 {
     return m_raster || window()->surfaceType() == QSurface::RasterGLSurface;
 }
 
 #ifndef QT_NO_OPENGL
-QWindow *QEglFSWindow::sourceWindow() const
+QWindow *HWEglFSWindow::sourceWindow() const
 {
     return window();
 }
 
-const QPlatformTextureList *QEglFSWindow::textures() const
+const QPlatformTextureList *HWEglFSWindow::textures() const
 {
     if (m_backingStore)
         return m_backingStore->textures();
@@ -368,24 +366,22 @@ const QPlatformTextureList *QEglFSWindow::textures() const
     return 0;
 }
 
-void QEglFSWindow::endCompositing()
+void HWEglFSWindow::endCompositing()
 {
     if (m_backingStore)
         m_backingStore->notifyComposited();
 }
 #endif
 
-WId QEglFSWindow::winId() const
+WId HWEglFSWindow::winId() const
 {
     return m_winId;
 }
 
-void QEglFSWindow::setOpacity(qreal)
+void HWEglFSWindow::setOpacity(qreal)
 {
     if (!isRaster())
         qWarning("QEglFSWindow: Cannot set opacity for non-raster windows");
 
     // Nothing to do here. The opacity is stored in the QWindow.
 }
-
-QT_END_NAMESPACE

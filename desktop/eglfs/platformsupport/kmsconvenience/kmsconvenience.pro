@@ -1,10 +1,11 @@
-TARGET = QtKmsSupport
+TARGET = HWKmsSupport
 TEMPLATE=lib
 
+QT = core-private gui-private core5compat dbus
+CONFIG += internal_module
 INCLUDEPATH += /usr/include/libdrm $$PWD/hollywood
 
 QT = core-private gui-private
-CONFIG += static 
 
 DEFINES += QT_NO_CAST_FROM_ASCII
 
@@ -15,3 +16,6 @@ SOURCES += \
     qkmsdevice.cpp
 
 QMAKE_USE += drm
+
+target.path = /usr/lib
+INSTALLS += target

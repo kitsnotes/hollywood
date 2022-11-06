@@ -22,6 +22,8 @@
 
 #include <hollywood/hollywood.h>
 
+#include "../libshell/include/desktopentry.h"
+
 Surface::Surface(QWaylandSurface *surface)
     : QObject(nullptr)
     ,  m_surfaceType(Unknown)
@@ -31,16 +33,21 @@ Surface::Surface(QWaylandSurface *surface)
     m_id = hwComp->nextId();
     connect(m_surface, &QWaylandSurface::surfaceDestroyed, this, &Surface::surfaceDestroyed);
     connect(m_surface, &QWaylandSurface::hasContentChanged, hwComp, &Compositor::surfaceHasContentChanged);
-    connect(m_surface, &QWaylandSurface::redraw, hwComp, &Compositor::triggerRender);
+    connect(m_surface, &QWaylandSurface::redraw, hwComp, &Compositor::triggerRender);    
     connect(m_surface, &QWaylandSurface::subsurfacePositionChanged, hwComp, &Compositor::onSubsurfacePositionChanged);
-    // TODO: multi-monitor suppot
 
+    connect(m_surface, &QWaylandSurface::sourceGeometryChanged, this, &Surface::onSurfaceSourceGeometryChanged);
+
+    // TODO: multi-monitor suppot
 }
 
 Surface::~Surface()
 {
     if(m_parentSurface)
         m_parentSurface->recycleChildSurfaceObject(this);
+
+    if(m_ls_output)
+        m_ls_output->removeLayerShellReservation(this);
 
     delete m_wndctl;
     //delete m_view;
@@ -133,11 +140,15 @@ void Surface::setMinimized()
 
 bool Surface::activated() const
 {
+    qDebug() << "surface::activated";
+    if(m_minimized)
+        return false;
+
     if(m_xdgTopLevel)
         return m_xdgTopLevel->activated();
 
     /*if(m_qt)
-        return m_qt->activated();*/
+        return m_qt->h();*/
 
     return false;
 }
@@ -176,6 +187,11 @@ SurfaceView *Surface::primaryView() const
 }
 
 Surface::SurfaceType Surface::surfaceType() const { return m_surfaceType; }
+
+WlrLayerSurfaceV1::Anchors Surface::anchors()
+{
+    return m_layerSurface->anchors();
+}
 
 bool Surface::isSpecialShellObject() const
 {
@@ -360,6 +376,7 @@ SurfaceView* Surface::createViewForOutput(Output *o)
     if(view)
     {
         connect(view, &QWaylandView::surfaceDestroyed, this, &Surface::viewSurfaceDestroyed);
+
         //connect(m_surface, &QWaylandSurface::offsetForNextFrame, view, &ACView::onOffsetForNextFrame);
 
         view->setOutput(o->wlOutput());
@@ -404,22 +421,23 @@ bool Surface::serverDecorated() const
     if(m_xdgTopLevel)
         return m_ssd;
 
-    // for qt shell we decorate based on window flags
     if(m_qt)
-    {
-        return true;
-        if(m_qt_wndflags & Qt::Popup)
-            return false;
+        return m_ssd;
 
-        if(m_qt_wndflags & Qt::WindowTitleHint)
-            return true;
-    }
     return false;
 }
 
 QPointF Surface::position() const
 {
     return m_position;
+}
+
+QPointF Surface::parentBasedPosition() const
+{
+    if(m_parentSurface == nullptr)
+        return m_position;
+
+    return m_parentSurface->position()+m_position;
 }
 
 void Surface::setParentSurfaceObject(Surface *parent)
@@ -433,8 +451,22 @@ void Surface::setParentSurfaceObject(Surface *parent)
     m_surfaceType = Surface::Popup;
 }
 
+void Surface::createPlasmaWindowControl()
+{
+    m_wndctl = hwComp->m_wndmgr->createWindowControl(this);
+    m_wndctl->setCloseable(true);
+    m_wndctl->setMinimizable(true);
+    m_wndctl->setMaximizable(true);
+    connect(m_wndctl, &PlasmaWindowControl::minimizedRequested, this, &Surface::toggleMinimize);
+    connect(m_wndctl, &PlasmaWindowControl::maximizedRequested, this, &Surface::toggleMaximize);
+    connect(m_wndctl, &PlasmaWindowControl::activeRequested, this, &Surface::toggleActive);
+    QIcon icon = QIcon::fromTheme(QLatin1String("process-working"));
+    m_wndctl->setIcon(icon);
+}
+
 void Surface::addChildSurfaceObject(Surface *child)
 {
+     qDebug() << m_uuid.toString() << "add child" << child->uuid().toString();
     m_children.append(child);
 }
 
@@ -445,6 +477,7 @@ void Surface::addXdgChildSurfaceObject(Surface *child)
 
 void Surface::recycleChildSurfaceObject(Surface *child)
 {
+    qDebug() << m_uuid.toString() << "recycling child" << child->uuid().toString();
     m_children.removeOne(child);
 }
 
@@ -466,7 +499,6 @@ void Surface::renderDecoration()
     if(!m_ssd)
         return;
 
-    qDebug() << "renderDecoration with size:" << decoratedRect().size().toSize();
     m_ssdimg = new QImage(decoratedRect().size().toSize(),
                           QImage::Format_RGBA8888);
     QPainter p(m_ssdimg);
@@ -524,6 +556,8 @@ void Surface::renderDecoration()
 
     // Window icon
     QIcon icon = QIcon::fromTheme("wayland");
+    if(!m_icon.isNull())
+        icon = m_icon;
     QRectF iconRect(wg.left(), wg.top(), btnsz, btnsz);
     iconRect.adjust(bs + btnsp, 4,
                     bs + btnsp, 4);
@@ -574,47 +608,84 @@ void Surface::renderDecoration()
     p.restore();
 
     // Maximize button
-    p.save();
     // maximize/restore
     int max_left = close_left - btnsp - btnsz;
-    if(isMaximized())
+    if(m_showMinMaxBtn)
     {
-        auto icopath = hwComp->darkMode() == 1 ? ":/Icons/Dark/window-restore"
-                                                     : ":/Icons/Light/window-restore";
-        QIcon ico = QIcon(icopath);
-        if (!ico.isNull())
+        p.save();
+        if(isMaximized())
         {
-            QRect iconRect(max_left, wg.top()+4, btnsz, btnsz);
-            ico.paint(&p, iconRect);
+            auto icopath = hwComp->darkMode() == 1 ? ":/Icons/Dark/window-restore"
+                                                         : ":/Icons/Light/window-restore";
+            QIcon ico = QIcon(icopath);
+            if (!ico.isNull())
+            {
+                QRect iconRect(max_left, wg.top()+4, btnsz, btnsz);
+                ico.paint(&p, iconRect);
+            }
         }
-    }
-    else
-    {
-        auto icopath = hwComp->darkMode() == 1 ? ":/Icons/Dark/window-maximize"
-                                                     : ":/Icons/Light/window-maximize";
-        QIcon ico = QIcon(icopath);
-        if (!ico.isNull())
+        else
         {
-            QRect iconRect(max_left, wg.top()+4, btnsz, btnsz);
-            ico.paint(&p, iconRect);
+            auto icopath = hwComp->darkMode() == 1 ? ":/Icons/Dark/window-maximize"
+                                                         : ":/Icons/Light/window-maximize";
+            QIcon ico = QIcon(icopath);
+            if (!ico.isNull())
+            {
+                QRect iconRect(max_left, wg.top()+4, btnsz, btnsz);
+                ico.paint(&p, iconRect);
+            }
         }
-    }
-    p.restore();
+        p.restore();
 
-    p.save();
-    int min_left = max_left - btnsp - btnsz;
-    if(canMinimize())
-    {
-        auto icopath = hwComp->darkMode() == 1 ? ":/Icons/Dark/window-minimize"
-                                                     : ":/Icons/Light/window-minimize";
-        QIcon ico = QIcon(icopath);
-        if (!ico.isNull())
+        p.save();
+        int min_left = max_left - btnsp - btnsz;
+        if(canMinimize())
         {
-            QRect iconRect(min_left, wg.top()+4, btnsz, btnsz);
-            ico.paint(&p, iconRect);
+            auto icopath = hwComp->darkMode() == 1 ? ":/Icons/Dark/window-minimize"
+                                                         : ":/Icons/Light/window-minimize";
+            QIcon ico = QIcon(icopath);
+            if (!ico.isNull())
+            {
+                QRect iconRect(min_left, wg.top()+4, btnsz, btnsz);
+                ico.paint(&p, iconRect);
+            }
         }
+        p.restore();
     }
-    p.restore();
+    hwComp->triggerRender();
+}
+
+void Surface::setLayerShellParent(Surface *surface)
+{
+    m_parentSurface = surface;
+}
+
+void Surface::handleLayerShellPopupPositioning()
+{
+    qDebug() << "Surface::handleLayerShellPopupPositioning";
+    auto popup = m_xdgPopup;
+    auto parent = m_parentSurface->m_layerSurface;
+    qDebug() << popup->positionerSize();
+    qDebug() << popup->gravityEdges();
+    qDebug() << popup->anchorRect();
+
+    if (parent->anchors() & WlrLayerSurfaceV1::BottomAnchor)
+    {
+        float xPos = popup->anchorRect().x();
+        int height = popup->positionerSize().height();
+        height = height - height - height;
+        qDebug() << height << xPos;
+        setPosition(QPointF(xPos,height));
+        return;
+    }
+
+    return;
+}
+
+void Surface::onSurfaceSourceGeometryChanged()
+{
+    qDebug() << "Surface::onSurfaceSourceGeometryChanged" << surface()->sourceGeometry();
+    m_viewport = surface()->sourceGeometry();
 }
 
 void Surface::onXdgStartResize(QWaylandSeat *seat, Qt::Edges edges)
@@ -642,11 +713,11 @@ void Surface::startResize()
 
 void Surface::endResize()
 {
-    // = false;
     if(m_qt != nullptr)
         m_qt->send_configure(m_qt_sizeserial);
     m_qt_sizeserial = 0;
-    renderDecoration();
+    if(m_ssd)
+        renderDecoration();
 }
 
 void Surface::endMove()
@@ -671,44 +742,129 @@ void Surface::decorationModeChanged()
 void Surface::onQtWindowTitleChanged(const QString &title)
 {
     m_windowTitle = title;
+    if(m_wndctl)
+        m_wndctl->setTitle(m_windowTitle);
+    if(m_ssd)
+        renderDecoration();
+    hwComp->triggerRender();
 }
 
 void Surface::onQtShellActivationRequest()
 {
-
+    hwComp->raise(this);
+    hwComp->triggerRender();
 }
 
 void Surface::onQtShellReposition(const QPoint &pos)
 {
-    qDebug() << "pos changed" << pos;
     m_position = pos;
+    if(m_ssd)
+        renderDecoration();
     hwComp->triggerRender();
 }
 
 void Surface::onQtShellSetSize(const QSize &size)
 {
-    qDebug() << "size changed" << size;
     m_qt_size = size;
-    renderDecoration();
+    if(m_ssd)
+        renderDecoration();
     emit geometryChanged();
+    hwComp->triggerRender();
 }
 
 void Surface::onQtWindowFlagsChanged(const Qt::WindowFlags &f)
 {
-    qDebug() << "window flags changed" << f;
     m_qt_wndflags = f;
 
-    if(f & Qt::Popup)
+    if(f.testFlag(Qt::Window) && !f.testFlag(Qt::Popup))
+    {
+        m_ssd = true;
+        createPlasmaWindowControl();
+        m_wndctl->setTitle(m_windowTitle);
+        renderDecoration();
+        auto bs = hwComp->borderSize();
+        auto ds = hwComp->decorationSize();
+        m_qt->send_set_frame_margins(bs,bs,ds,bs);
+        m_surfaceType = TopLevel;
+    }
+
+    if(f.testFlag(Qt::Dialog) && !f.testFlag(Qt::Popup))
+    {
+        qDebug() << "Creating SSD for Dialog";
+        m_ssd = true;
+        renderDecoration();
+        auto bs = hwComp->borderSize();
+        auto ds = hwComp->decorationSize();
+        m_qt->send_set_frame_margins(bs,bs,ds,bs);
+        m_surfaceType = TopLevel;
+    }
+
+    if(f.testFlag(Qt::Tool))
+    {
+        m_ssd = true;
+        renderDecoration();
+        auto bs = hwComp->borderSize();
+        auto ds = hwComp->decorationSize();
+        m_qt->send_set_frame_margins(bs,bs,ds,bs);
+        m_surfaceType = TopLevelTool;
+    }
+
+    if(f.testFlag(Qt::Popup) && !!f.testFlag(Qt::Tool))
         m_surfaceType = Popup;
 
-    if(f & Qt::Tool)
-        m_surfaceType = TopLevelTool;
+    if(!f.testFlag(Qt::WindowMinMaxButtonsHint))
+        m_showMinMaxBtn = false;
 
+    if(!f.testFlag(Qt::WindowCloseButtonHint))
+    {
+        m_canClose = false;
+    }
+
+    hwComp->triggerRender();
 }
 
 QImage* Surface::decorationImage()
 {
     return m_ssdimg;
+}
+
+void Surface::activate()
+{
+    if(m_xdgTopLevel)
+    {
+        QList<HWWaylandXdgToplevel::State> states = m_xdgTopLevel->states();
+        states.append(HWWaylandXdgToplevel::ActivatedState);
+        m_xdgTopLevel->sendConfigure(windowSize(), states);
+    }
+}
+
+void Surface::deactivate()
+{
+    if(m_xdgTopLevel)
+    {
+        QList<HWWaylandXdgToplevel::State> states = m_xdgTopLevel->states();
+        states.removeOne(HWWaylandXdgToplevel::ActivatedState);
+        m_xdgTopLevel->sendConfigure(windowSize(), states);
+    }
+}
+
+void Surface::toggleMinimize()
+{
+    qDebug() << "Surface::toggleMinimize" << m_uuid.toString();
+    if(m_minimized)
+        unsetMinimized();
+    else
+        setMinimized();
+}
+
+void Surface::toggleMaximize()
+{
+
+}
+
+void Surface::toggleActive()
+{
+    hwComp->raise(this);
 }
 
 void Surface::createWlShellSurface(QWaylandWlShellSurface *surface)
@@ -735,14 +891,8 @@ void Surface::createXdgTopLevelSurface(HWWaylandXdgToplevel *topLevel)
 {
     m_xdgTopLevel = topLevel;
     m_surfaceType = TopLevel;
-    qDebug() << "new xdg top level";
 
-    m_wndctl = hwComp->m_wndmgr->createWindowControl(this);
-    m_wndctl->setCloseable(true);
-    m_wndctl->setMinimizable(true);
-    m_wndctl->setMaximizable(true);
-    QIcon icon = QIcon::fromTheme(QLatin1String("process-working"));
-    m_wndctl->setIcon(icon);
+    createPlasmaWindowControl();
     m_wndctl->setTitle(topLevel->title());
     connect(m_xdgTopLevel, &HWWaylandXdgToplevel::decorationModeChanged, this, &Surface::decorationModeChanged);
     connect(m_xdgTopLevel, &HWWaylandXdgToplevel::startMove, hwComp, &Compositor::onStartMove);
@@ -754,26 +904,32 @@ void Surface::createXdgTopLevelSurface(HWWaylandXdgToplevel *topLevel)
     connect(m_xdgTopLevel, &HWWaylandXdgToplevel::unsetFullscreen, this, &Surface::onXdgUnsetFullscreen);
     connect(m_xdgTopLevel, &HWWaylandXdgToplevel::parentToplevelChanged, this, &Surface::onXdgParentTopLevelChanged);
     connect(m_xdgTopLevel, &HWWaylandXdgToplevel::titleChanged, this, &Surface::onXdgTitleChanged);
+    connect(m_xdgTopLevel, &HWWaylandXdgToplevel::appIdChanged, this, &Surface::onXdgAppIdChanged);
+
+
     renderDecoration();
 }
 
 void Surface::createXdgPopupSurface(HWWaylandXdgPopup *popup)
 {
+    qDebug() << "surface::createXdgPopupSurface" << this->uuid().toString();
     m_xdgPopup = popup;
     m_surfaceType = Popup;
     Surface *parentSurface = nullptr;
 
     if(popup->parentXdgSurface() != nullptr)
-            parentSurface = hwComp->findSurfaceObject(popup->parentXdgSurface()->surface());
+        parentSurface = hwComp->findSurfaceObject(popup->parentXdgSurface()->surface());
+
     if(parentSurface != nullptr)
-        setParentSurfaceObject(hwComp->findSurfaceObject(popup->parentXdgSurface()->surface()));
+        setParentSurfaceObject(parentSurface);
+
+    if(popup->parentXdgSurface() == nullptr)
+        return;
 
     bool decorated = false;
     if(parentSurface != nullptr)
         decorated = parentSurface->serverDecorated();
 
-    if(parentSurface == nullptr)
-        setPosition(QPointF(35,35));
 
     qDebug() << popup->positionerSize();
     qDebug() << popup->gravityEdges();
@@ -851,8 +1007,13 @@ void Surface::onXdgSetMaximized()
     m_minimized = false;
     m_maximized = true;
     m_priorNormalPos = m_position;
-    // TODO: update for multiple monitors
-    m_xdgTopLevel->sendMaximized(primaryView()->output()->geometry().size());
+    auto size = primaryView()->output()->availableGeometry();
+    if(this->serverDecorated())
+    {
+        size.setHeight(size.height() - hwComp->decorationSize() - hwComp->borderSize());
+        size.setWidth(size.width() - hwComp->borderSize()*2);
+    }
+    m_xdgTopLevel->sendMaximized(size.size());
     if(m_wndctl)
         m_wndctl->setMaximized(true);
     // An improvement here, would have been to wait for the commit after the ack_configure for the
@@ -879,6 +1040,14 @@ void Surface::onXdgSetMinimized()
     hwComp->triggerRender();
     if(m_wndctl)
         m_wndctl->setMinimized(true);
+}
+
+void Surface::unsetMinimized()
+{
+    m_minimized = false;
+    if(m_wndctl)
+        m_wndctl->setMinimized(false);
+    hwComp->triggerRender();
 }
 
 void Surface::onXdgSetFullscreen(QWaylandOutput* clientPreferredOutput)
@@ -909,22 +1078,40 @@ void Surface::onXdgTitleChanged()
     m_windowTitle = m_xdgTopLevel->title();
     if(m_wndctl)
         m_wndctl->setTitle(m_windowTitle);
+    renderDecoration();
 }
 
 void Surface::onXdgParentTopLevelChanged()
 {
-    qDebug() << "xdgTopLevelParent changed";
     m_parentTopLevelSurface =
             hwComp->findSurfaceObject(m_xdgTopLevel->parentToplevel()->xdgSurface()->surface());
     m_parentTopLevelSurface->addXdgChildSurfaceObject(this);
 }
 
-void Surface::windowGeometryChanged()
+void Surface::onXdgAppIdChanged()
 {
-    qDebug() << "windowGeometryChanged" << m_xdgSurface->windowGeometry();
-    renderDecoration();
+    m_appid = m_xdgTopLevel->appId();
+    auto de = LSDesktopEntry::findDesktopFile(m_appid+".desktop");
+    if(!de.isEmpty())
+    {
+        LSDesktopEntry e;
+        if(e.load(de))
+        {
+            m_icontheme = e.value("Icon").toString();
+            m_icon = e.icon();
+            if(m_wndctl)
+            {
+                if(!m_icontheme.isEmpty())
+                    m_wndctl->setThemedIcon(m_icontheme);
+            }
+        }
+    }
 }
 
+void Surface::windowGeometryChanged()
+{
+    renderDecoration();
+}
 
 // Layer Shell Functions
 
@@ -936,6 +1123,7 @@ void Surface::createLayerShellSurface(WlrLayerSurfaceV1 *surface)
     connect(m_layerSurface, &WlrLayerSurfaceV1::exclusiveZoneChanged, this, &Surface::onExclusiveZoneChanged);
     connect(m_layerSurface, &WlrLayerSurfaceV1::anchorsChanged, this, &Surface::onAnchorsChanged);
     connect(m_layerSurface, &WlrLayerSurfaceV1::sizeChanged, this, &Surface::onLayerShellSizeChanged);
+    connect(m_layerSurface, &WlrLayerSurfaceV1::xdgPopupParentChanged, this, &Surface::onLayerShellXdgPopupParentChanged);
 
     m_surfaceType = LayerShell;
     hwComp->resetLayerShellLayer(this);
@@ -948,7 +1136,19 @@ void Surface::onAnchorsChanged()
 
 void Surface::onExclusiveZoneChanged()
 {
-    qDebug() << "ACSurfaceObject::onExclusiveZoneChanged on " << m_uuid;
+    qDebug() << "Surface::onExclusiveZoneChanged on " << m_uuid;
+    if(m_layerSurface->exclusiveZone() > 0)
+    {
+        auto output = hwComp->outputFor(primaryView()->output());
+        m_ls_output = output;
+        output->reserveLayerShellRegion(this);
+    }
+    else
+    {
+        auto output = hwComp->outputFor(primaryView()->output());
+        output->removeLayerShellReservation(this);
+        m_ls_output = nullptr;
+    }
 }
 
 void Surface::reconfigureLayerSurface()
@@ -970,20 +1170,28 @@ void Surface::onLayerShellSizeChanged()
     reconfigureLayerSurface();
 }
 
+void Surface::onLayerShellXdgPopupParentChanged(HWWaylandXdgPopup *popup)
+{
+    qDebug() << m_uuid.toString() << "onLayerShellXdgPopupParentChanged";
+
+    auto popupSurface = popup->xdgSurface()->surface();
+    hwComp->findSurfaceObject(popupSurface)->setLayerShellParent(this);
+    hwComp->findSurfaceObject(popupSurface)->handleLayerShellPopupPositioning();
+    hwComp->m_zorder.removeOne(hwComp->findSurfaceObject(popupSurface));
+    addChildSurfaceObject(hwComp->findSurfaceObject(popupSurface));
+
+}
+
 void Surface::recalculateAnchorPosition()
 {
     if(!m_ls_size.isValid())
         return;
 
     auto anchors = m_layerSurface->anchors();
-    qDebug() << anchors;
-
     if(anchors & WlrLayerSurfaceV1::TopAnchor || anchors & WlrLayerSurfaceV1::BottomAnchor)
     {
         if(m_ls_size.width() == 0)
             m_ls_size.setWidth(primaryView()->output()->geometry().width());
-
-        qDebug() << m_ls_size;
     }
 
     if(anchors & WlrLayerSurfaceV1::LeftAnchor || anchors & WlrLayerSurfaceV1::RightAnchor)

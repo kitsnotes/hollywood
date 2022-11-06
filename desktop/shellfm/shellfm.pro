@@ -1,22 +1,17 @@
 include(../include/global.pri)
 
 QT       += core gui widgets waylandclient
-CONFIG   += c++11 wayland-scanner
+CONFIG   += c++11 wayland-scanner link_pkgconfig
 
 INCLUDEPATH += ../libshell/include
 INCLUDEPATH += include/
 INCLUDEPATH += ../libcommdlg/include
 INCLUDEPATH += ../libcompositor/include
-versionAtLeast(QT_VERSION, 6.0.0) {
-    LIBS += -L../libshell -L../output -lshell-$${HOLLYWOOD_APIVERSION}
-    LIBS += -I../libcompositor/include -L../output -lcompositor -lcommdlg-$${HOLLYWOOD_APIVERSION}
-} else {
-    LIBS += -L../libshell -L../output -lshell5-$${HOLLYWOOD_APIVERSION}
-    LIBS += -I../libcompositor/include -L../output -lcompositor5 -lcommdlg5-$${HOLLYWOOD_APIVERSION}
-}
 
+LIBS += -L../libshell -L../output -lshell-$${HOLLYWOOD_APIVERSION}
+LIBS += -I../libcompositor/include -L../output -lcompositor-$${HOLLYWOOD_APIVERSION} -lcommdlg-$${HOLLYWOOD_APIVERSION}
 WAYLANDCLIENTSOURCES += ../compositor/protocols/originull-privateapi.xml
-
+# PKGCONFIG += hwcompositor
 SOURCES += \
     clipboardwindow.cc \
     desktop.cc \

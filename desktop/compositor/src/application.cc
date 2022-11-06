@@ -24,8 +24,9 @@ CompositorApp::CompositorApp(int &argc, char **argv)
     setApplicationVersion(HOLLYWOOD_OS_VERSION);
     setOrganizationDomain(HOLLYWOOD_OS_DOMAIN);
     setOrganizationName(HOLLYWOOD_OS_ORGNAME);
+    Originull::Platform::EglFSFunctions::setCursorTheme(QLatin1String("neutral"), 32);
+
     m_compositor->create();
-    Originull::Platform::EglFSFunctions::setCursorTheme(QLatin1String("neutral"), 64);
 }
 
 Compositor* CompositorApp::compositor()
@@ -47,7 +48,8 @@ void CompositorApp::doInit()
                               tr("Currently Hollywood does not support using a nested compositor.  Now Exiting."));
         exit(0);
     }
-    if(platformName() == QLatin1String("eglfs"))
+    if(platformName() == QLatin1String("eglfs") ||
+       platformName() == QLatin1String("hollywood-eglfs"))
         createForDisplays();
     else
         createDummyDebugWindow();

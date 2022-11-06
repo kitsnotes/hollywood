@@ -54,8 +54,6 @@
 #include "qeglfsglobal_p.h"
 #include <qpa/qplatformoffscreensurface.h>
 
-QT_BEGIN_NAMESPACE
-
 class Q_EGLFS_EXPORT QEglFSOffscreenWindow : public QPlatformOffscreenSurface
 {
 public:
@@ -71,7 +69,5 @@ private:
     EGLSurface m_surface;
     EGLNativeWindowType m_window;
 };
-
-QT_END_NAMESPACE
 
 #endif // QEGLFSOFFSCREENWINDOW_H

@@ -16,6 +16,7 @@
 #include <QtCore/QObject>
 
 #include <algorithm>
+#include <type_traits>
 
 QT_BEGIN_NAMESPACE
 
@@ -340,18 +341,6 @@ void HWWaylandXdgSurfacePrivate::xdg_surface_get_popup(QtWaylandServer::xdg_surf
         return;
     }
 
-    HWWaylandXdgSurface *parent = HWWaylandXdgSurface::fromResource(parentResource);
-    WlrLayerSurfaceV1 *ls_parent  = nullptr;
-    if(!parent)
-    {
-        ls_parent = WlrLayerShellV1::fromResource(parentResource);
-        if (!ls_parent) {
-            //wl_resource_post_error(resource->handle, XDG_WM_BASE_ERROR_INVALID_POPUP_PARENT,
-            //                       "xdg_surface.get_popup 2 with invalid popup parent");
-            //return;
-        }
-    }
-
     QWaylandXdgPositioner *positioner = QWaylandXdgPositioner::fromResource(positionerResource);
     if (!positioner) {
         wl_resource_post_error(resource->handle, XDG_WM_BASE_ERROR_INVALID_POSITIONER,
@@ -367,12 +356,10 @@ void HWWaylandXdgSurfacePrivate::xdg_surface_get_popup(QtWaylandServer::xdg_surf
         return;
     }
 
-    QSize parentSize;
+    HWWaylandXdgSurface *parent = HWWaylandXdgSurface::fromResource(parentResource);
     if(parent)
     {
-        parentSize = parent->windowGeometry().size();
-
-        QRect anchorBounds(QPoint(0, 0), parentSize);
+        QRect anchorBounds(QPoint(0, 0), parent->windowGeometry().size());
         if (!anchorBounds.contains(positioner->m_data.anchorRect)) {
             // TODO: this is a protocol error and should ideally be handled like this:
             //wl_resource_post_error(resource->handle, XDG_WM_BASE_ERROR_INVALID_POSITIONER,
@@ -1553,6 +1540,22 @@ HWWaylandXdgPopup::HWWaylandXdgPopup(HWWaylandXdgSurface *xdgSurface, HWWaylandX
                                    QWaylandXdgPositioner *positioner, QWaylandResource &resource)
     : QObject(*new HWWaylandXdgPopupPrivate(xdgSurface, parentXdgSurface, positioner, resource))
 {
+        connect(xdgSurface->surface(), &QWaylandSurface::redraw, this, &HWWaylandXdgPopup::handleRedraw);
+}
+
+void HWWaylandXdgPopup::handleRedraw()
+{
+    Q_D(HWWaylandXdgPopup);
+
+    if (!d->m_layerParent) {
+        auto *resource = HWWaylandXdgSurfacePrivate::get(d->m_xdgSurface)->resource();
+        // TODO: fix this? it breaks xdg-shell
+        //wl_resource_post_error(resource->handle, XDG_WM_BASE_ERROR_INVALID_POPUP_PARENT,
+        //                       "xdg_surface.get_popup with invalid popup parent");
+        return;
+    }
+
+    disconnect(d->m_xdgSurface->surface(), &QWaylandSurface::redraw, this, &HWWaylandXdgPopup::handleRedraw);
 }
 
 /*!
@@ -1588,6 +1591,12 @@ HWWaylandXdgSurface *HWWaylandXdgPopup::parentXdgSurface() const
 {
     Q_D(const HWWaylandXdgPopup);
     return d->m_parentXdgSurface;
+}
+
+WlrLayerSurfaceV1 *HWWaylandXdgPopup::parentLayerSurface() const
+{
+    Q_D(const HWWaylandXdgPopup);
+    return d->m_layerParent;
 }
 
 /*!
@@ -1875,6 +1884,13 @@ QWaylandSurfaceRole *HWWaylandXdgPopup::role()
     return &HWWaylandXdgPopupPrivate::s_role;
 }
 
+HWWaylandXdgPopup* HWWaylandXdgPopup::fromResource(wl_resource *resource)
+{
+    if (auto p = QtWayland::fromResource<HWWaylandXdgPopupPrivate *>(resource))
+        return p->q_func();
+    return nullptr;
+}
+
 HWWaylandXdgPopupPrivate::HWWaylandXdgPopupPrivate(HWWaylandXdgSurface *xdgSurface, HWWaylandXdgSurface *parentXdgSurface,
                                                  QWaylandXdgPositioner *positioner, const QWaylandResource &resource)
     : m_xdgSurface(xdgSurface)
@@ -1921,6 +1937,12 @@ uint HWWaylandXdgPopupPrivate::sendConfigure(const QRect &geometry)
     send_configure(geometry.x(), geometry.y(), geometry.width(), geometry.height());
     HWWaylandXdgSurfacePrivate::get(m_xdgSurface)->send_configure(serial);
     return serial;
+}
+
+void HWWaylandXdgPopupPrivate::setParentLayerSurface(WlrLayerSurfaceV1 *surface)
+{
+    m_parentXdgSurface = nullptr;
+    m_layerParent = surface;
 }
 
 void HWWaylandXdgPopupPrivate::xdg_popup_destroy(QtWaylandServer::xdg_popup::Resource *resource)

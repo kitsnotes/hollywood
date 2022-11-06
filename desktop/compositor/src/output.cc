@@ -6,6 +6,8 @@
 #include "outputwnd.h"
 #include "application.h"
 #include "compositor.h"
+#include "surfaceobject.h"
+#include "layershell.h"
 
 Output::Output(QObject *parent)
     : QObject(parent)
@@ -18,6 +20,59 @@ Output::Output(QObject *parent)
 QSize Output::size() const
 {
     return m_window->size();
+}
+
+bool Output::reserveLayerShellRegion(Surface *surface)
+{
+    if(surface->layerSurface() == nullptr)
+        return false;
+
+    m_reserved.append(surface);
+    connect(surface->layerSurface(), &WlrLayerSurfaceV1::exclusiveZoneChanged, this, &Output::reservedRegionsChanged);
+    connect(surface->layerSurface(), &WlrLayerSurfaceV1::exclusiveZoneChanged, this, &Output::reservedRegionsChanged);
+    updateUsableGeometry();
+    Q_EMIT reservedRegionsChanged();
+    return true;
+}
+
+bool Output::removeLayerShellReservation(Surface *surface)
+{
+    if(!m_reserved.contains(surface))
+        return false;
+
+    m_reserved.removeOne(surface);
+    disconnect(surface->layerSurface(), &WlrLayerSurfaceV1::exclusiveZoneChanged, this, &Output::reservedRegionsChanged);
+    disconnect(surface->layerSurface(), &WlrLayerSurfaceV1::exclusiveZoneChanged, this, &Output::reservedRegionsChanged);
+
+    updateUsableGeometry();
+    Q_EMIT reservedRegionsChanged();
+    return true;
+}
+
+void Output::updateUsableGeometry()
+{
+    QRect rect = m_wlOutput->geometry();
+    QMargins margins(0,0,0,0);
+    for(auto r : m_reserved)
+    {
+        if(r->layerSurface()->layer() != WlrLayerShellV1::TopLayer)
+            continue;
+
+        auto reserved = r->layerSurface()->exclusiveZone();
+        auto anchors = r->anchors();
+        if(anchors == WlrLayerSurfaceV1::TopAnchor)
+            margins.setTop(margins.top()+reserved);
+        if(anchors == WlrLayerSurfaceV1::LeftAnchor)
+            margins.setLeft(margins.left()+reserved);
+        if(anchors == WlrLayerSurfaceV1::RightAnchor)
+            margins.setRight(margins.right()+reserved);
+        if(anchors == WlrLayerSurfaceV1::BottomAnchor)
+            margins.setBottom(margins.bottom()+reserved);
+
+        // TODO: scope out multiple anchors based on height/width?
+    }
+    qDebug() << "Output::updateUsableGeometry()" << rect.marginsRemoved(margins);
+    m_wlOutput->setAvailableGeometry(rect.marginsRemoved(margins));
 }
 
 void Output::configureForScreen(QScreen *s, bool defaultScreen)
