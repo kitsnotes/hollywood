@@ -2,12 +2,12 @@
 # Contributor: Bart Ribbers <bribbers@disroot.org>
 # Maintainer: Bart Ribbers <bribbers@disroot.org>
 pkgname=qt5-qtwebengine
-pkgver=5.15.3_git20220601
+pkgver=5.15.11
 pkgrel=0
 # latest commit of 5.15 branch at pkgver date
-_commit="400355fa5170244ceea571f50ec61b29426ebd0a"
+_commit="c107eb20a25157836fcf3be91566d8ea38490f40"
 # latest commit of 87-based branch of qtwebengine-chromium
-_chromium_commit="ecc2bb74f1f7140fc52650042299be18e826b27b"
+_chromium_commit="9d42f3a5802d427c0e9358b2a0469f18285558c0"
 # commit of catapult version with python3 support
 _catapult_commit="5eedfe23148a234211ba477f76fc2ea2e8529189"
 pkgdesc="Qt5 - QtWebEngine components"
@@ -77,35 +77,35 @@ source="$pkgname-$pkgver.tar.gz::https://invent.kde.org/qt/qt/qtwebengine/-/arch
 	qtwebengine-chromium-$_chromium_commit.tar.gz::https://invent.kde.org/qt/qt/qtwebengine-chromium/-/archive/$_chromium_commit.tar.gz
 	qtwebengine-catapult-$_catapult_commit.tar.gz::https://dev.alpinelinux.org/archive/qt5-qtwebengine/catapult-$_catapult_commit.tar.gz
 	0001-pretend-to-stay-at-5.15.3.patch
-	0010-chromium-musl-Match-syscalls-to-match-musl.patch
-	musl-hacks.patch
-	musl-sandbox.patch
 	nasm.patch
 	support-python3.patch
 	qt-chromium-python3.patch
-	qt-musl-crashpad.patch
-	qt-musl-dispatch_to_musl.patch
-	qt-musl-elf-arm.patch
-	qt-musl-execinfo.patch
-	qt-musl-mallinfo.patch
-	qt-musl-off_t.patch
-	qt-musl-pread-pwrite.patch
-	qt-musl-pvalloc.patch
-	qt-musl-resolve.patch
-	qt-musl-siginfo_t.patch
-	qt-musl-stackstart.patch
-	qt-musl-sysreg-for__WORDSIZE.patch
-	qt-musl-thread-stacksize.patch
-	qt-musl-tid-caching.patch
-	remove-glibc-check.patch
-	fix-chromium-build.patch
 	default-pthread-stacksize.patch
 	sndio.patch
 	ffmpeg5.patch
+	qt5-webengine-gcc12.patch
 	"
 builddir="$srcdir/qtwebengine-$_commit"
 
 # secfixes:
+#   5.15.11-r0:
+#     - CVE-2022-2610
+#   5.15.3_git20220601-r2:
+#     - CVE-2022-2477
+#     - CVE-2022-27404
+#     - CVE-2022-27405
+#     - CVE-2022-27406
+#   5.15.3_git20220601-r1:
+#     - CVE-2022-1854
+#     - CVE-2022-1855
+#     - CVE-2022-1857
+#     - CVE-2022-2008
+#     - CVE-2022-2010
+#     - CVE-2022-2158
+#     - CVE-2022-2160
+#     - CVE-2022-2162
+#     - CVE-2022-2294
+#     - CVE-2022-2295
 #   5.15.3_git20220601-r0:
 #     - CVE-2022-0796
 #   5.15.3_git20220505-r0:
@@ -347,33 +347,15 @@ package() {
 }
 
 sha512sums="
-6542d7194467afa041f875da028c1d46348cd6c350e138c1a84d3561200d85bb37d916c0142a75219bbfcfaa01cbc396c7f5101c50cf1f4246d5fcf276876e08  qt5-qtwebengine-5.15.3_git20220601.tar.gz
-6cce72305706bdb85e5bae3f6f78cef3226e171b3f66e8fcf0b90967db5bc95cffeef23d2c0a7f666cdf8f2384a5f528da7bf6db72d6e15a65da527dabf3e13d  qtwebengine-chromium-ecc2bb74f1f7140fc52650042299be18e826b27b.tar.gz
+67baeca89db95f852cf64cb747ba778672d812c1159531b6b0ab9f361ba08d40cd5b44bc938917289b0e60eb988bc952760b72f620e8e8fbb2317e2c58e190a6  qt5-qtwebengine-5.15.11.tar.gz
+673e94fdaa736386094ca90e97fb89a618144caddf90a662a59979d5e86d6cad73dc2cc112380ec0f64955f8defddba3939612ab46df9b9eab3b1d37cca39e07  qtwebengine-chromium-9d42f3a5802d427c0e9358b2a0469f18285558c0.tar.gz
 dae82398defd89bb664d73849cb2e3bfa17f309dabb8187efeb324c83fe657eb51dee034b7733cdc80cbd28e9fe600e3befa4c6b18572175dcc17621a56c119f  qtwebengine-catapult-5eedfe23148a234211ba477f76fc2ea2e8529189.tar.gz
-f06358455850907f975fd79ebd63c6795e7fbe95c90a3777282469b6b93cd1a789583e2f661746979a87d6ce9311f2445ee06842a1277792e9a708fd3adfd064  0001-pretend-to-stay-at-5.15.3.patch
-2438ac56b1c819d1f6634814b148919e15d7d4e41a64fedab38358d794e8286a1eebaaa8579661e8e75fbc321f4d16c47b1838219cb0aadc307c4c8dd97e91b1  0010-chromium-musl-Match-syscalls-to-match-musl.patch
-555ad1df44f2317e335d23c47626b788ec91b43b05ff694f4281331bc9cc7dd5255aeddd7d7bb277c51d69b9ff6668362ec3ea5d5ff873ee64a9af32fe665a4a  musl-hacks.patch
-f7380e97018a93c786a95650646d135ceb326ecdb615ffdcb1ed004f1c2ca2e1da1a5b0729969b7f2fed60c8fa048b36db055df4cca4bdedc8a7060c65ac5bd7  musl-sandbox.patch
+e2597ea2c249a3bed2b40b1ee7b9913dab12827a4bbc143c335b1d4099859605cc039cf755c8f64826ab3d9ffa3107b2ab3f5edb09c037bc7f4c358c6971b027  0001-pretend-to-stay-at-5.15.3.patch
 7d94e588e72926fc79ead8d34fb65016144df66808f8629ae91fddb1fda2208b7c2bb8c0fdf5a0e35234dbb9c5b4868f9f7a494fc4f6f2b4363dbb1bd7e07e43  nasm.patch
 e26f909a2eda5422990770caa2d83d861dc161852415a605c421ff31e5651f04e550ab71a95d8f434cb9fb2fb274063e81462a0bae5088f275d6f82618330d76  support-python3.patch
 050ec8ccfbc133da7e241e1bc9980484a3b2f2fbb1b7c5b9fbe5fb2307c7ff53424ad04b78d1dde7a60405156ef07b660e285cbe9d968cf39d869e21aa37a89b  qt-chromium-python3.patch
-173c401e1a0daa7a1471880807e4fb0a74fc338a0f306dc067147878c29e7bb94cae43c37fe2bf21dd7a7ffd2d739697fd21d10c059ce647df01d8236612cc68  qt-musl-crashpad.patch
-a0560953cc5de1c94df10d13b328d6cb32a80ee3236171faf6f2d893f91838373b3489f18082368b399403ba066b561c157be3c41f3e6d5214f4946353650023  qt-musl-dispatch_to_musl.patch
-126bee2e7040ca96fe0df1c80b14009d514ee4fcc5af22b9d2c654b1472a1653de036a0e7a3661881479f033156b78b51a1a5c34d8e778496b6993f22b1c94b1  qt-musl-elf-arm.patch
-e8a0c15c4b17a0a64f760eeb2d2e90859a5704f88a57d348b38a5c36522d4ad9ba97b21895d95aa53554f83c40d3e3e238a0e25a1e2ad4720b5e669766f2dce0  qt-musl-execinfo.patch
-b021664599128cd614daaf39f7592ea98b3d1d5815a9768ff11515fad28b723f678df78d5fe3122ea7d0c043dc997f1e53e528359663960d44805e3b2d8e4ee3  qt-musl-mallinfo.patch
-15592d64777ed835bb472bcd212fcfa2e941f0a607767f0754693dc43ddc2d6d6ebb86e3a44d3938cc0356638bb14e20dd74a522239b01afb0a6a93a944d5f68  qt-musl-off_t.patch
-23dfe11a5eab795f8cea8da8d900f6be4b6515d73a48cdfba9a92c4ffe2243275345d9e64b624165a1fb4a74cb82848ca77fdc06686efa6e865d2d660df5bb2c  qt-musl-pread-pwrite.patch
-ac563e0c444a6d3214ff7465cad2c701692cfa90408c57243d3ae9459937c36e88acd57335bb90da85157e03865faaf17d61a767483b00ed8f3580ebf8a2fbb5  qt-musl-pvalloc.patch
-6e915b0eb6cddf27100bdd80ed3a90ca64257f0a3be2c0f9a9c9baf30d9baaf0466b0cf4f310a4aaf7ff8195afe733d129b7f356b7a957f578f39927cce9308a  qt-musl-resolve.patch
-0a7518e4e4866e9bf5aa90ab92fef0e0d2fd76f3a3800965c689b86c7ba42f31233849b41a0a268afeca5ea44a818fa0aa61d0087f17188a06a6a6734b8e44ef  qt-musl-siginfo_t.patch
-b5e117f94811c4c65cfd99885b0f23e82cabf25529b2a867f8dec5efdbcef98441d32b5b89e96c9681fed6fb99ccf3850b2a32dd618be957ef9bdcd5f2b6a7e4  qt-musl-stackstart.patch
-1b9abcd43238491cca641f4dca36ca27b97f4dba9b54ba0f25e7e5c777d590717838ae6cab4cd8fcce35e994215432c456d376f9239836cff3f9df38d6994a76  qt-musl-sysreg-for__WORDSIZE.patch
-f565a31b007db408ef96db3f7d003f465d1db765fb84b50a1f82b449d49949dd4fafa2b374889621a5c431c1d6e758797dfce76e34199282aa2fbe03bbf5aa38  qt-musl-thread-stacksize.patch
-d1e66f6330fcdd1204b365b865330bc563440a69974034f4b04631b19df9d09179442638b7d71c40d4151f418ae80cdccada2a98c5180021ec018991b5fc2edf  qt-musl-tid-caching.patch
-0ef2adce746a0ee121f04aab8ad9e2e338f996286d045a2bffb20e57c37e9432f22cd0b574fbe06f19b928749c35f3d51d9b3a49967b51e89c3440240f110c35  remove-glibc-check.patch
-f40f42a33e8d8c9a4129a2e40f3177d1ffc4d1fc28ceda7b8ffab9c8d14cdcca8d0e804c55257a2932e772f89fcf6e7401fe3398a70a045835add6d9c1ba7bb3  fix-chromium-build.patch
 f4cb20796922b6e26433a18ab2ba5dd8750e8bbfb479e9416a362073c9e6a3ac12ee9e9868f6c9335b374b9d8ca8bed2e322e5ac3fe694a6ec6ddce8bd9b801b  default-pthread-stacksize.patch
 9b14eee2854dc5040895ee2d53660a399f5f3f1defcd6d8586f889764356513a4d5596e36349b1a89674ecbd39f2f98e3985e322d1cf9b59a8fdc9a16da78893  sndio.patch
 01d31c13f15af6b40e0595c7ebe6c13905dd7ae3fd3b564a2e13b538451f14d44081332c9279ece7c9b01a40802e1381e197442f94946cf713ea8cb3326e502f  ffmpeg5.patch
+ee8949ab92da29293c72396e061b4c12da380711d262fd87fc1bd9e35c2bcc1a64f14234111c6dbcf38dc94702e2693328f41511254714fb49393ec3ae84d51d  qt5-webengine-gcc12.patch
 "

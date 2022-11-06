@@ -13,6 +13,7 @@ makedepends="
 	eudev-dev
 	libx11-dev
 	libxext-dev
+	libunwind-dev
 	libxi-dev
 	libxkbcommon-dev
 	libxrandr-dev
@@ -71,7 +72,7 @@ build() {
 		-DSDL_ESD=OFF \
 		-DSDL_NAS=OFF \
 		-DSDL_RPATH=OFF \
-		-DSDL_X11=ON \
+		-DSDL_X11=OFF \
 		-DSDL_DIRECTFB=OFF \
 		-DSDL_WAYLAND=ON \
 		-DSDL_STATIC=ON \

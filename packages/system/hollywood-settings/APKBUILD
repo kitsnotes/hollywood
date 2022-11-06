@@ -2,7 +2,7 @@
 # Maintainer: The Cat <cat@originull.org>
 pkgname=hollywood-settings
 pkgver=1.0
-pkgrel=21
+pkgrel=29
 pkgdesc="Hollywood System Settings"
 url="https://originull.org"
 arch="all"
@@ -18,12 +18,32 @@ build() {
 	/usr/lib/qt6/bin/qmake
 	make
 
+        cd $builddir/settings/helper-datetime
+        /usr/lib/qt6/bin/qmake
+        make
+
         cd $builddir/settings/applet-datetime
+        /usr/lib/qt6/bin/qmake
+        make
+
+	cd $builddir/settings/applet-displays
+        /usr/lib/qt6/bin/qmake
+        make
+
+	cd $builddir/settings/applet-energy
         /usr/lib/qt6/bin/qmake
         make
 
 	cd $builddir/settings/applet-apk
         /usr/lib/qt6/bin/qmake INCLUDEPATH+=/usr/include/ApkQt/
+        make
+
+        cd $builddir/settings/applet-stage
+        /usr/lib/qt6/bin/qmake
+        make
+
+        cd $builddir/settings/applet-network
+        /usr/lib/qt6/bin/qmake
         make
 
 	cd $builddir/settings/applet-region
@@ -55,12 +75,26 @@ package() {
 	cd $builddir/settings
 	make INSTALL_ROOT="$pkgdir" install
 
+	cd $builddir/settings/helper-datetime
+        make INSTALL_ROOT="$pkgdir" install
+
         cd $builddir/settings/applet-datetime
         make INSTALL_ROOT="$pkgdir" install
 	cd $builddir/settings/applet-apk
         make INSTALL_ROOT="$pkgdir" install
 	cd $builddir/settings/applet-region
         make INSTALL_ROOT="$pkgdir" install
+
+        cd $builddir/settings/applet-displays
+        make INSTALL_ROOT="$pkgdir" install
+        cd $builddir/settings/applet-energy
+        make INSTALL_ROOT="$pkgdir" install
+
+        cd $builddir/settings/applet-stage
+        make INSTALL_ROOT="$pkgdir" install
+        cd $builddir/settings/applet-network
+        make INSTALL_ROOT="$pkgdir" install
+
 #	cd $builddir/settings/applet-efiboot
 #        make INSTALL_ROOT="$pkgdir" install
         cd $builddir/settings/applet-general
@@ -74,5 +108,5 @@ package() {
 }
 
 sha512sums="
-29e6fc401e0a58f968436f484e9d6acb48d896e9a7093c942c38dbdefa70e4974220d404d194804487ff19746f86d344c86fa4478328fefed82c4de3057f2420  hollywood-desktop-1.0.tar.gz
+6cd768248ffe0a8d7ba37929df674b83aab6900286f21edde11e48f42f1f39467acd78009f1803dd0a4c91c25dca08ed119e059e32f4ad8e1060cb0802173ee8  hollywood-desktop-1.0.tar.gz
 "

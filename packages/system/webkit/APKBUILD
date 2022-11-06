@@ -1,6 +1,6 @@
 # Maintainer: Originull Software <packages@originull.org>
 pkgname=webkit
-pkgver=2.37.1
+pkgver=2.38.1
 pkgrel=0
 pkgdesc="WebKit port optimized for embedded devices"
 url="https://wpewebkit.org"
@@ -36,9 +36,9 @@ makedepends="
 	woff2-dev
 	xdg-dbus-proxy
 	"
-subpackages="$pkgname-dev $pkgname-doc"
+subpackages="$pkgname-dev"
+builddir="$srcdir/wpewebkit-$pkgver"
 source="https://wpewebkit.org/releases/wpewebkit-$pkgver.tar.xz
-	patch-gettext.patch
 	"
 
 build() {
@@ -52,7 +52,9 @@ build() {
 		-DCMAKE_BUILD_TYPE=None \
 		-DPORT=WPE \
 		-DENABLE_MINIBROWSER=On \
+		-DENABLE_WPE_QT_API=On \
 		-DENABLE_GTKDOC=Off \
+		-DENABLE_INTROSPECTION=Off \
 		-DUSE_SOUP2=On \
 		-DUSE_SYSTEMD=Off \
 		-DENABLE_WPE_QT=ON \
@@ -66,6 +68,5 @@ package() {
 }
 
 sha512sums="
-4bee70a61612e085304fea5b2da834d7adc0b1dc8ab658ae3249615c9171a6e63fa28f33dc82777198180ef85bc1b9af24c13ad67ab12c2cb23dea0546ccab77  wpewebkit-2.37.1.tar.xz
-4316330f0c42fcfe800210bdbeabbb6bdcf532b71e2761550b8a753499d801fd0405cc961a516dfddfc28c3a6cf0c17b6db461ff51158238b8d874bf75b799f2  patch-gettext.patch
+ad04afb38c1f395b7d7a14cb160f18b4e44bf98eeaebb1ca5d923f69eb7f961b08a01269e850a17eb005b22fe0aeeb8990d85ef2f71aa8f0aeb423cb5b2032bb  wpewebkit-2.38.1.tar.xz
 "

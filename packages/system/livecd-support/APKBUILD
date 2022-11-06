@@ -2,7 +2,7 @@
 # Maintainer: Originull Software <packages@originull.org>
 pkgname=livecd-support
 pkgver=1.0
-pkgrel=7
+pkgrel=8
 pkgdesc="Support files for booting Hollywood live media"
 url="https://www.originull.org/"
 arch="noarch"
@@ -23,13 +23,13 @@ package() {
 	mkdir -p $pkgdir/etc/skel/Desktop/
 	mkdir -p $pkgdir/etc/xdg/originull/
 	mkdir -p $pkgdir/etc/skel/.config/originull
-	touch "$pkgdir"/etc/skel/.config/originull/hollywood.conf
-	ln -s /usr/share/applications $pkgdir/etc/skel/Desktop/applications
-	ln -s /usr/share/applications/org.originull.about.desktop $pkgdir/etc/skel/Desktop/About\ Hollywood.desktop
-	ln -s /usr/share/applications/org.originull.terminull.desktop $pkgdir/etc/skel/Desktop/Terminull.desktop
+	#touch "$pkgdir"/etc/skel/.config/originull/hollywood.conf
+	#ln -s /usr/share/applications $pkgdir/etc/skel/Desktop/applications
+	#ln -s /usr/share/applications/org.originull.about.desktop $pkgdir/etc/skel/Desktop/About\ Hollywood.desktop
+	#ln -s /usr/share/applications/org.originull.terminull.desktop $pkgdir/etc/skel/Desktop/Terminull.desktop
 	install -D -m644 "$srcdir"/sddm.conf "$pkgdir"/etc/sddm.conf.d/autologin.conf
 	install -D -m644 "$srcdir"/doas.conf "$pkgdir"/etc/doas.d/livecd.conf
-	install -D -m644 "$srcdir"/hollywood.conf "$pkgdir"/etc/xdg/originull/hollywood.conf
+	#install -D -m644 "$srcdir"/hollywood.conf "$pkgdir"/etc/xdg/originull/hollywood.conf
 }
 
 horizon() {

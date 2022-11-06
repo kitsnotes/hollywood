@@ -2,7 +2,7 @@
 # Maintainer: The Cat <cat@originull.org>
 pkgname=qt6-qtermwidget
 pkgver=1.0.9
-pkgrel=0
+pkgrel=1
 pkgdesc="Terminal Widget for Qt6"
 url="https://github.com/kitsnotes/qtermwidget-qt6"
 arch="all"
@@ -12,7 +12,7 @@ makedepends="lxqt-build-tools qt6-qtbase-dev qt6-qttranslations qt6-qttools-dev 
 options="!check" # no test suite
 install=""
 subpackages="$pkgname-dev"
-source="http://depot.originull.org/qtermwidget-qt6.tar.gz
+source="https://depot.originull.org/upstream/qtermwidget-qt6.tar.gz
 	disable-translation.patch"
 builddir="$srcdir/qtermwidget-qt6"
 
@@ -29,6 +29,6 @@ package() {
 }
 
 sha512sums="
-65d4a7381dfa0942a60e6a4816ab4cd7a3966cb7bdb375b987e231a837f99abe3c5db269df72b3424590cd3abdb4598672fc2cd094edfb9919b3de7f6ac09367  qtermwidget-qt6.tar.gz
+2d7c7db0730552e4ae4f3ffa83638d82ec7c55f1ebde9846808f2d1cd7fff47e77c04a22533ed50f6b9d86c14d0e9f67748aeaec2e704acafdfd02938d76e28c  qtermwidget-qt6.tar.gz
 380174d1ef9c6f1ccc84e39968840e8d5104986a5aeba65ea9c2ecf60ec8479040ffa8135b4c4476c0f7eae7bf94a2ffe83a96506b34c6a28d76ea51f36bc7c8  disable-translation.patch
 "

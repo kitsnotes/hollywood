@@ -2,7 +2,7 @@
 # Maintainer: The Cat <cat@originull.org>
 pkgname=qt5-qtermwidget
 pkgver=1.0.9
-pkgrel=0
+pkgrel=1
 pkgdesc="Terminal Widget for Qt5"
 url="https://github.com/kitsnotes/qtermwidget-qt6"
 arch="all"
@@ -12,7 +12,7 @@ makedepends="lxqt-build-tools qt5-qtbase-dev qt5-qttranslations qt5-qttools-dev"
 options="!check" # no test suite
 install=""
 subpackages="$pkgname-dev"
-source="http://depot.originull.org/qtermwidget-qt6.tar.gz"
+source="https://depot.originull.org/upstream/qtermwidget-qt6.tar.gz"
 builddir="$srcdir/qtermwidget-qt6"
 
 build() {

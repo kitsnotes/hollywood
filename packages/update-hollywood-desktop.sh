@@ -10,6 +10,7 @@ declare -a updatepkgs=("hollywood-compositor"
 			"hollywood-settings"
 			"hollywood-shell"
 			"hollywood-sysmon"
+			"hollywood-eglfs"
 			"terminull"
 			)
 

@@ -1,7 +1,7 @@
 # Maintainer: Originull Software <packages@originull.org>
 pkgname=wine
-pkgver=7.16
-pkgrel=0
+pkgver=7.10
+pkgrel=1
 pkgdesc="A compatibility layer for running Windows programs"
 url="https://www.winehq.org"
 arch="all"
@@ -22,30 +22,19 @@ makedepends="
 	gnutls-dev
 	gstreamer-dev
 	gst-plugins-base-dev
-	libgphoto2-dev
 	libpcap-dev
 	libusb-dev
-	libxcomposite-dev
-	libxcursor-dev
-	libxdamage-dev
-	libxi-dev
-	libxinerama-dev
-	libxrandr-dev
-	libxrender-dev
 	libglvnd-dev
 	wayland-dev
 	wayland-protocols
 	ncurses-dev
 	sdl2-dev
-	udisks2-dev
-	v4l-utils-dev
-	vkd3d-dev
 	vulkan-loader-dev
 	"
 checkdepends="xvfb-run"
-source="https://dl.winehq.org/wine/source/7.x/wine-$pkgver.tar.xz
+source="https://depot.originull.org/upstream/wine-wl.tar.gz
 	"
-
+builddir="$srcdir/wine-wl"
 prepare() {
 	default_prepare
 	# fix opencl header detection
@@ -67,8 +56,8 @@ build() {
 		--localstatedir=/var \
 		--with-dbus \
 		--without-ldap \
-		--with-mingw \
-		--with-x \
+		--without-x \
+		--with-wayland \
 		--with-vulkan \
 		$_win64
 	make LDFLAGS="$LDFLAGS $_no_pie" \
@@ -119,6 +108,5 @@ doc() {
 }
 
 sha512sums="
-5085c7c1b0e762c508f33775f7f0aa41e94cb75805bb649093addad25f90f7f57d5101ba96227f58a6f18b3ae228bd004df11ec1c033692ad130e9b5279ea19e  wine-7.16.tar.xz
-d42a367d30b93fe36b8d6418d53f3c931debef2e9b77bc73e22fff04f5f0d7b9e6622beb78592c814beb32ca214fb7e9c019c652fb2612c61358ba162a520b9d  rpath.patch
+1d50c001b5eb2e772461c215fe31ba87fed483f0b0e6fa312bde995447026c62330344d2dd09862f21276a857ecef5281cfba9b3456cebda4727ff343fc43966  wine-wl.tar.gz
 "

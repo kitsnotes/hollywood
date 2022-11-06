@@ -1,48 +1,43 @@
 # Contributor: David Demelier <markand@malikania.fr>
 # Maintainer: David Demelier <markand@malikania.fr>
 pkgname=cog
-pkgver=0.13.90
+pkgver=0.16.1
 pkgrel=0
 pkgdesc="simple browser for WebKit WPE"
 url="https://github.com/Igalia/cog"
-arch="all !x86 !riscv64" # x86: wpewebkit not available.
+# riscv64: wpewebkit not available.
+arch="all !riscv64"
 license="MIT"
 makedepends="cairo-dev
 	cmake
 	eudev-dev
 	libinput-dev
-	libsoup-dev
+	libsoup3-dev
 	libwpebackend-fdo-dev
+	meson
 	mesa-dev
+	samurai
 	wayland-dev
 	wayland-protocols
-	wpewebkit-dev
+	webkit-dev
 	"
-source="https://wpewebkit.org/releases/cog-$pkgver.tar.xz"
+source="https://github.com/Igalia/cog/releases/download/$pkgver/cog-$pkgver.tar.xz"
 subpackages="$pkgname-dev $pkgname-doc"
 
 build() {
-	if [ "$CBUILD" != "$CHOST" ]; then
-		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
-	fi
-	cmake -B build \
-		-DCMAKE_INSTALL_PREFIX=/usr \
-		-DCMAKE_INSTALL_LIBDIR=lib \
-		-DBUILD_SHARED_LIBS=True \
-		-DCMAKE_BUILD_TYPE=None \
-		$CMAKE_CROSSOPTS .
-	cmake --build build
+	abuild-meson \
+                . output
+        meson compile ${JOBS:+-j ${JOBS}} -C output
 }
 
 check() {
-	cd build
-	CTEST_OUTPUT_ON_FAILURE=TRUE ctest
+        meson test -v -C output
 }
 
 package() {
-	DESTDIR="$pkgdir" cmake --install build
+        DESTDIR="$pkgdir" meson install --no-rebuild -C output
 }
 
 sha512sums="
-cfd31bdc2b401b67a70b1ca73fe26e0a97bdb35bb810c8973d2da1efce9667e364e3d9554d109fa0b92838a810687250801af328295fff97fdf4fd685e16b2e2  cog-0.13.90.tar.xz
+c52e339629d32ae76feccdbff6f1507b992da8bd2cd8708e586c1aee6b434f1012844c61f4962e96049b3b8e55d201fbbb8747ad8712220b95d92860d4b021a0  cog-0.16.1.tar.xz
 "

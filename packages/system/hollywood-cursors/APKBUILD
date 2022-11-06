@@ -1,0 +1,32 @@
+# Contributor:
+# Maintainer:
+pkgname=hollywood-cursors
+pkgver=1.0
+pkgrel=3
+pkgdesc="Hollywood Cursor Theme (Neutral)"
+url="https://originull.org/hollywood"
+arch="all"
+license="CC0/GPL"
+depends=""
+makedepends=""
+checkdepends=""
+install=""
+source="https://depot.originull.org/upstream/$pkgname-$pkgver.tar.gz"
+builddir="$srcdir/neutral"
+options="!check" # no test suite
+
+build() {
+	return 0
+}
+
+
+package() {
+	mkdir -p "$pkgdir"/usr/share/icons/neutral/
+	cp -ra "$builddir"/* "$pkgdir"/usr/share/icons/neutral/
+	find "$pkgdir" -type d -exec chmod 755 {} \;
+	find "$pkgdir" -type f -exec chmod 644 {} \;
+}
+
+sha512sums="
+78080aeae223925b7a3315d7861d529ee205cc59424c9adc910cdb3fd9b112370fba01615c755937cdcbe73b5efc41497568a3cd22344865b933cc86a2b56263  hollywood-cursors-1.0.tar.gz
+"

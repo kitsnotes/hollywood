@@ -7,6 +7,8 @@ cat << _EOF_ >/etc/doas.d/doas.conf
 # This file is actually located at /etc/doas.d/doas.conf, and reflects
 # the system doas configuration.  It may have been migrated from its
 # previous location, /etc/doas.conf, automatically.
+permit persist :wheel
+
 _EOF_
 
 if [ -f /etc/doas.conf ]; then

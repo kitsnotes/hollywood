@@ -7,7 +7,7 @@ case $pkgver in
 	*.*.*)	_kernver=${pkgver%.*};;
 	*.*) _kernver=$pkgver-rc3;;
 esac
-pkgrel=0
+pkgrel=1
 pkgdesc="Linux mainline kernel"
 url="https://www.kernel.org"
 depends="initramfs-generator"
@@ -279,6 +279,6 @@ _dev() {
 
 sha512sums="
 ebeb6c084054daae126e0b0f3b117f263ea11440467e8decccbc3e0411573527232df8260266a2e70376c882a0054de6184532de14a2339afc4ef2ff54b4c3da  linux-6.0-rc3.tar.gz
-ad383fa41931b3df3a4bfc5ed112cd1b26cefce99be5e357bb67d416739e4fb96d7306dbe2c86af26083475de30a8710dd3b482a57b648fd095c345d9d61de54  mainline.aarch64.config
+2855e0eab0398beb06f76a358087ae3d8e59982924f27f4d4d6a49da2607fe90c3c58a888deacb9da9c1b31d4e1189664c4b306214910a025bd3caf4d5d3b3e6  mainline.aarch64.config
 955cecde83724b30ebc48e3aabb255e031fe46bac64f41fafe840de6b7a58cf4e63dd00f4734dd891fad0cc1cc0ff7621e105a961413838eb4ea61964c0682e8  mainline.x86_64.config
 "

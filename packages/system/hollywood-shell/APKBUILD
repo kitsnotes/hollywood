@@ -2,7 +2,7 @@
 # Maintainer: The Cat <cat@originull.org>
 pkgname=hollywood-shell
 pkgver=1.0
-pkgrel=23
+pkgrel=30
 pkgdesc="Hollywood Desktop Shell"
 url="https://originull.org"
 arch="all"
@@ -31,7 +31,7 @@ build() {
         /usr/lib/qt6/bin/qmake
         make
 
-	cd $builddir/coreshell
+	cd $builddir/stage
         /usr/lib/qt6/bin/qmake
         make
 
@@ -56,7 +56,7 @@ package() {
 	mkdir -p "$pkgdir"/usr/bin/
 	ln -s /usr/libexec/hollywood/session "$pkgdir"/usr/bin/hollywood
 
-	cd $builddir/coreshell
+	cd $builddir/stage
         make INSTALL_ROOT="$pkgdir" install
 
         cd $builddir/shellfm
@@ -64,5 +64,5 @@ package() {
 }
 
 sha512sums="
-29e6fc401e0a58f968436f484e9d6acb48d896e9a7093c942c38dbdefa70e4974220d404d194804487ff19746f86d344c86fa4478328fefed82c4de3057f2420  hollywood-desktop-1.0.tar.gz
+6cd768248ffe0a8d7ba37929df674b83aab6900286f21edde11e48f42f1f39467acd78009f1803dd0a4c91c25dca08ed119e059e32f4ad8e1060cb0802173ee8  hollywood-desktop-1.0.tar.gz
 "
