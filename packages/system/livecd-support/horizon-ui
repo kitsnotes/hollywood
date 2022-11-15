@@ -1,4 +1,0 @@
-#!/bin/sh
-
-horizon-qt5
-if [ $? -eq 0 ]; then horizon-run-qt5; fi

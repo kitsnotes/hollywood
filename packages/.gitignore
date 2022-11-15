@@ -1,5 +1,0 @@
-system/*/pkg
-system/*/src
-*.o
-
-*.iso
