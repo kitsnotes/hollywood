@@ -124,6 +124,19 @@ public:
     bool execute() const override;
 };
 
+class Autologin : public StringKey {
+private:
+private:
+    const std::string _username;
+    Autologin(const Script *_s, const ScriptLocation &_p,
+                   const std::string &username) : StringKey(_s, _p, username), _username(username) {}
+public:
+    static Key *parseFromData(const std::string &, const ScriptLocation &,
+                              int*, int*, const Script *);
+    bool validate() const override;
+    bool execute() const override;
+};
+
 }
 }
 

@@ -40,7 +40,7 @@ firmware.</p>
 
 <h3>Which option should I choose?</h3>
 
-<p>Adélie Linux allows you the freedom to choose whether or not you wish to
+<p>Hollywood allows you the freedom to choose whether or not you wish to
 install proprietary firmware on your computer.</p>
 
 <p>If you have an elevated threat profile, you should always choose No.</p>

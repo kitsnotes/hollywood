@@ -67,6 +67,8 @@ struct Script::ScriptPrivate {
     std::unique_ptr<Bootloader> boot;
     /*! The desired bootloader configuration. */
     std::unique_ptr<Kernel> kernel;
+    /*! The desired autologin user. */
+    std::unique_ptr<Autologin> autologin;
 
     /*! Network addressing configuration */
     std::vector< std::unique_ptr<NetAddress> > addresses;
@@ -317,6 +319,17 @@ struct Script::ScriptPrivate {
         }
         std::unique_ptr<Kernel> k(dynamic_cast<Kernel *>(obj));
         kernel = std::move(k);
+        return true;
+    }
+
+    bool store_autologin(Key *obj, const ScriptLocation &pos, int *errors,
+                          int *, const ScriptOptions &) {
+        if(autologin) {
+            DUPLICATE_ERROR(autologin, "autologin", autologin->value())
+            return false;
+        }
+        std::unique_ptr<Autologin> b(dynamic_cast<Autologin *>(obj));
+        autologin = std::move(b);
         return true;
     }
 

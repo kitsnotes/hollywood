@@ -1,7 +1,7 @@
-<h2>Welcome to Adélie Linux!</h2>
+<h2>Welcome to Hollywood!</h2>
 
-<p>This is <b>Adélie Linux System Installation</b>, which will guide you
-through the process of installing the Adélie Linux operating environment on to
+<p>This is <b>Hollywood Setup Assistant</b>, which will guide you
+through the process of installing the Hollywood operating environment on to
 your computer.</p>
 
 <p>Each step of the installation system has a help screen just like this one,
@@ -16,7 +16,7 @@ pressing the Page Up and Page Down keys.</p>
 
 <h2>Using System Installation</h2>
 
-<p>Adélie Linux System Installation is divided in a series of <i>pages</i>,
+<p>Hollywood System Installation is divided in a series of <i>pages</i>,
 similar in nature to a paper form.</p>
 
 <p>When you are finishing filling in the information on one page, you may
@@ -38,24 +38,24 @@ time, you may stop at any time by choosing Exit or pressing the F3 key.</p>
 <h2>Preparing for the installation</h2>
 
 <p>Please back up all of your data before beginning installation. While every
-effort is made to ensure that the Adélie Linux installation routines are safe
+effort is made to ensure that the Hollywood installation routines are safe
 and error-free, we cannot guarantee that your data will be preserved once you
 start the installation.  If you intend on dual-booting your computer with
-another operating system, such as Mac OS X or Windows, ensure there is
-adequate disk space available to install Adélie Linux. You will need up to
+another operating system, such as macOS or Windows, ensure there is
+adequate disk space available to install Hollywood. You will need up to
 3 GB for a standard desktop installation, or at least 300 MB for a server
 installation.</p>
 
-<p>If you plan on connecting to the Internet directly from your Adélie Linux
+<p>If you plan on connecting to the Internet directly from your Hollywood
 computer without using a router (not common), ensure you have your Internet
 access credentials (typically a username and password) available before
-starting installation.  Adélie Linux supports connecting to most ADSL and
+starting installation.  Hollywood supports connecting to most ADSL and
 dial-up Internet providers using PPP; and cable, T1, and fibre providers using
 Ethernet.  If you use a static IP address (not common), make sure you have
 your IP address, subnet, and default gateway and nameserver settings before
 starting installation.</p>
 
 <p>If your computer came with recovery media, we recommend that you have it
-available in the very unlikely event you have an issue with Adélie Linux, or
+available in the very unlikely event you have an issue with Hollywood, or
 your hardware has an incompatibility.  This way, you will be able to quickly
 restore your computer to normal operation.</p>

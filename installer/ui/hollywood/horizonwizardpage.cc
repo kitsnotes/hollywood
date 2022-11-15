@@ -79,11 +79,8 @@ void HorizonWizardPage::loadWatermark(string page)
     pages << QPair<QString,QString>("intro", tr("Welcome"));
     pages << QPair<QString,QString>("keyboard", tr("Keyboard"));
     pages << QPair<QString,QString>("disk", tr("Disk"));
-    pages << QPair<QString,QString>("network", tr("Network"));
     pages << QPair<QString,QString>("datetime", tr("Date & Time"));
-    pages << QPair<QString,QString>("hostname", tr("Hostname"));
-    pages << QPair<QString,QString>("software", tr("Select Software"));
-    pages << QPair<QString,QString>("acct", tr("User Accounts"));
+    pages << QPair<QString,QString>("acct", tr("User Account"));
     pages << QPair<QString,QString>("commit", tr("Install"));
 
     QIcon completed(":/wizard_pixmaps/resources/status-success-high.svg");

@@ -145,10 +145,8 @@ bool write_etc_issue_to(fs::path target) {
     }
 
     issue << "Welcome to Hollywood!" << std::endl
-          << "You may log in as 'root' to install, or 'live' to play around."
-          << std::endl
-          << "The default root password is 'live' (without quotes)."
-          << std::endl << std::endl << "Have fun." << std::endl;
+          << "You may log in as 'hollywood' to install or explore."
+          << std::endl;
 
     if(issue.fail() || issue.bad()) {
         output_error("CD backend", "failed to write issue file");
@@ -423,9 +421,13 @@ public:
 
         /* REQ: ISO.26 */
         output_info("CD backend", "creating ISO");
+        std::string arch = "AMD64";
+        if(my_arch == "aarch64")
+            arch = "ARM64";
+
         std::vector<std::string> iso_args = {"-as", "mkisofs", "-o", out_path,
                                              "-joliet", "-rational-rock", "-V",
-                                             "Hollywood-"+my_arch};
+                                             "HW"+arch};
         std::vector<std::string> arch_args;
         std::string raw_arch;
         {

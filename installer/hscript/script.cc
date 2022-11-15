@@ -66,6 +66,7 @@ const std::map<std::string, key_parse_fn> valid_keys = {
     {"userpw", &UserPassphrase::parseFromData},
     {"usericon", &UserIcon::parseFromData},
     {"usergroups", &UserGroups::parseFromData},
+    {"autologin", &Autologin::parseFromData},
 
     {"diskid", &DiskId::parseFromData},
     {"disklabel", &DiskLabel::parseFromData},
@@ -134,6 +135,8 @@ bool Script::ScriptPrivate::store_key(const std::string &key_name, Key *obj,
         return store_bootloader(obj, pos, errors, warnings, opts);
     } else if(key_name == "kernel") {
         return store_kernel(obj, pos, errors, warnings, opts);
+    } else if(key_name == "autologin") {
+       return store_autologin(obj, pos, errors, warnings, opts);
     } else if(key_name == "username") {
         return store_username(obj, pos, errors, warnings, opts);
     } else if(key_name == "useralias") {
@@ -345,9 +348,6 @@ Script *Script::load(std::istream &sstream, const ScriptOptions &opts,
         if(!the_script->internal->hostname) {
             MISSING_ERROR("hostname")
         }
-        if(!the_script->internal->rootpw) {
-            MISSING_ERROR("rootpw")
-        }
         if(!the_script->internal->kernel) {
             MISSING_ERROR("kernel")
         }
@@ -402,6 +402,8 @@ const Keys::Key *Script::getOneValue(std::string name) const {
         return this->internal->version.get();
     } else if(name == "bootloader") {
         return this->internal->boot.get();
+    } else if(name == "autologin") {
+        return this->internal->autologin.get();
     } else if(name == "kernel") {
         return this->internal->kernel.get();
     } else if(name == "firmware") {

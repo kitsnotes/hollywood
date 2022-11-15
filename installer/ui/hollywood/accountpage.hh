@@ -25,7 +25,7 @@ public:
 #ifdef HAS_INSTALL_ENV
     bool validatePage() override;
 #endif
-    std::array<UserAccountWidget *, 4> accountWidgets;
+    std::array<UserAccountWidget *, 1> accountWidgets;
 };
 
 #endif  /* !ACCOUNTPAGE_HH */

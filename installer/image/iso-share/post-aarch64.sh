@@ -3,21 +3,21 @@
 mkdir -p cdroot/boot
 
 cat >early.cfg <<'EARLYCFG'
-search.fs_label "HWAMD64" root
+search.fs_label "HWARM64" root
 set prefix=($root)/boot
 EARLYCFG
 
 cat >cdroot/boot/grub.cfg <<'GRUBCFG'
 set timeout=0
-menuentry "Hollywood (AMD/Intel 64-bit)" --class linux --id hollywood-live {
+menuentry "Hollywood (ARM 64-bit)" --class linux --id hollywood-live-cd {
         insmod iso9660
         insmod linux
-        search --label "HWAMD64" --no-floppy --set
-        linux ($root)/kernel-x86_64 root=live:LABEL=HWAMD64 rd.live.dir=/ rd.live.squashimg=x86_64.squashfs quiet splash
-        initrd ($root)/initrd-x86_64
+        search --label "HWARM64" --no-floppy --set
+        linux ($root)/kernel-aarch64 root=live:LABEL=HWARM64 rd.live.dir=/ rd.live.squashimg=aarch64.squashfs quiet splash
+        initrd ($root)/initrd-aarch64
 }
 
-GRUB_DEFAULT=hollywood-live
+GRUB_DEFAULT=hollywood-live-cd
 GRUB_DISABLE_OS_PROBER=true
 GRUB_TIMEOUT=0
 GRUB_DISTRIBUTOR="Hollywood"
@@ -28,7 +28,7 @@ if ! type grub-mkimage>/dev/null; then
 	exit 1
 else
 	printf '\033[01;32m * \033[37mInstalling GRUB...\033[00;39m\n'
-        grub-mkimage -d target/usr/lib/grub/x86_64-efi -c early.cfg -p boot -o efi64.exe -O x86_64-efi boot fat btrfs datetime disk ext2 gfxmenu help iso9660 ls luks lvm memdisk nilfs2 normal part_gpt part_msdos png scsi search linux reboot gfxterm gfxterm_background gfxterm_menu all_video
+        grub-mkimage -d target/usr/lib/grub/arm64-efi -c early.cfg -p boot -o efi64.exe -O arm64-efi boot btrfs datetime disk ext2 gfxmenu help iso9660 ls luks lvm memdisk nilfs2 normal part_gpt part_msdos png scsi search fat linux reboot gfxterm gfxterm_background gfxterm_menu all_video
 fi
 
 rm early.cfg
@@ -45,7 +45,7 @@ else
 	mkfs.fat efi64.img
 	mmd A:/EFI
 	mmd A:/EFI/BOOT
-	mcopy efi64.exe A:/EFI/BOOT/bootx64.efi
+	mcopy efi64.exe A:/EFI/BOOT/bootaa64.efi
 	rm efi64.exe mtoolsrc
 	mv efi64.img cdroot/efi.img
 fi

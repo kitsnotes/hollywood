@@ -23,9 +23,9 @@ UserAccountWidget::UserAccountWidget(QWidget *parent)
     QHBoxLayout *nameLayout = new QHBoxLayout;
 
     personalName = new QLineEdit;
-    QFont personalFont = personalName->font();
-    personalFont.setPointSize(personalFont.pointSize() + 2);
-    personalName->setFont(personalFont);
+    //QFont personalFont = personalName->font();
+    //personalFont.setPointSize(personalFont.pointSize() + 2);
+    //personalName->setFont(personalFont);
     personalName->setPlaceholderText(tr("Personal Name"));
     personalName->setToolTip(tr("Used to address this user"));
     personalName->setWhatsThis(tr("This name will be used to address this user.  It may be their real name, or a nickname."));
@@ -72,9 +72,17 @@ UserAccountWidget::UserAccountWidget(QWidget *parent)
     });
     passAdminLayout->addWidget(adminTick);
 
+
+    adminTick->setVisible(false);
+
+    autoLoginTick = new QCheckBox(tr("Automatically log in at startup"));
+    autoLoginTick->setToolTip(tr("Automatically log in without password at startup time."));
+    autoLoginTick->setWhatsThis(tr("If ticked, this user will automatically log in without prompt for password at boot time.."));
+
     QVBoxLayout *detailLayout = new QVBoxLayout;
     detailLayout->addLayout(nameLayout);
     detailLayout->addLayout(passAdminLayout);
+    detailLayout->addWidget(autoLoginTick);
 
     QHBoxLayout *overallLayout = new QHBoxLayout;
     aviButton = new QPushButton;
@@ -132,6 +140,12 @@ UserAccountWidget::UserAccountWidget(QWidget *parent)
     });
     connect(passphrase, &QLineEdit::textEdited,
             [=]{ emit validityChanged(); });
+
+    setTabOrder(personalName, accountName);
+    setTabOrder(accountName, passphrase);
+    setTabOrder(passphrase, aviButton);
+    setTabOrder(passphrase, autoLoginTick);
+
 }
 
 QString UserAccountWidget::accountText(void) const {
@@ -162,6 +176,10 @@ void UserAccountWidget::setPersonalText(QString personal) {
 
 bool UserAccountWidget::isAdmin(void) const {
     return adminTick->isChecked();
+}
+
+bool UserAccountWidget::isAutoLogin(void) const {
+    return autoLoginTick->isChecked();
 }
 
 void UserAccountWidget::setAdmin(bool ticked) {

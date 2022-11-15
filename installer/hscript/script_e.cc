@@ -590,6 +590,8 @@ bool Script::execute() const {
         std::cout << "apk --root " << targetDirectory() << " --keys-dir "
                   << "etc/apk/keys" << " update" << std::endl;
         std::cout << "apk --root " << targetDirectory() << " --keys-dir "
+                  << "etc/apk/keys" << " add hollywood-base" << std::endl;
+        std::cout << "apk --root " << targetDirectory() << " --keys-dir "
                   << "etc/apk/keys" << " add hollywood" << std::endl;
         std::cout << "apk --root " << targetDirectory() << " --keys-dir "
                   << "etc/apk/keys" << " add " << pkg_list.str() << std::endl;
@@ -666,7 +668,16 @@ bool Script::execute() const {
 #endif  // HAS_INSTALL_ENV
     }*/
 
-    EXECUTE_OR_FAIL("rootpw", internal->rootpw)
+    if(!internal->rootpw)
+    {
+        if(run_command("chroot", {targetDirectory(), "usermod",
+                                  "-L", "root"}) != 0) {
+            EXECUTE_FAILURE("rootpw");
+            return false;
+        }
+    }
+    else
+        EXECUTE_OR_FAIL("rootpw", internal->rootpw)
 
     if(internal->lang) {
         EXECUTE_OR_FAIL("language", internal->lang)
@@ -700,6 +711,9 @@ bool Script::execute() const {
     }
 
     EXECUTE_OR_FAIL("timezone", internal->tzone)
+
+    if(internal->autologin)
+        EXECUTE_OR_FAIL("autologin", internal->autologin)
 
     for(const auto &svc : internal->svcs_enable) {
         EXECUTE_OR_FAIL("svcenable", svc)

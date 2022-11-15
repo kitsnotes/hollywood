@@ -16,6 +16,6 @@ of your interface, use the mouse to hover over each interface.  Each interface
 has its MAC address in its tool-tip.</p>
 
 <p>If you see multiple interfaces of the same type, and you aren't expecting
-this, your hardware may have been incorrectly detected by Adélie Linux.  You
-can contact our community for help at <a href="https://help.adelielinux.org/">
-https://help.adelielinux.org/</a>.</p>
+this, your hardware may have been incorrectly detected by Hollywood.  You
+can more help resources at <a href="https://originull.org/hollywood/help">
+https://originull.org/hollywood/help</a>.</p>

@@ -19,6 +19,7 @@
 #include <QProcess>
 #include <QTimer>
 #include <QVBoxLayout>
+#include <QApplication>
 
 ExecutePage::ExecutePage(QWidget *parent) : HorizonWizardPage(parent) {
     setTitle(tr("Installing Hollywood..."));
@@ -44,7 +45,10 @@ ExecutePage::ExecutePage(QWidget *parent) : HorizonWizardPage(parent) {
     finishTimer->setInterval(5000);
     finishTimer->setSingleShot(true);
     connect(finishTimer, &QTimer::timeout, [=]{
-        wizard()->next();
+        if(failed)
+            wizard()->next();
+        else
+            QApplication::exit(0);
     });
 
     log.setFileName("/var/log/hollywood-install.log");

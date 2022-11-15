@@ -214,7 +214,7 @@ bool Username::execute() const {
     output_info(pos, "username: creating account " + _value);
 
     if(script->options().test(Simulate)) {
-        std::cout << "useradd -c \"Hollywood User\" -m -R "
+        std::cout << "useradd -s /bin/zsh -c \"Hollywood User\" -m -R "
                   << script->targetDirectory() << " -U " << _value
                   << std::endl;
         return true;
@@ -222,7 +222,7 @@ bool Username::execute() const {
 
 #ifdef HAS_INSTALL_ENV
     if(run_command("chroot", {script->targetDirectory(), "useradd",
-                              "-c", "Hollywood User", "-m",
+                              "-s" "/bin/zsh", "-c", "Hollywood User", "-m",
                               "-U", _value}) != 0)
     {
         output_error(pos, "username: failed to create user account", _value);
@@ -469,4 +469,57 @@ bool UserGroups::execute() const {
     }
 #endif  /* HAS_INSTALL_ENV */
     return true;  /* LCOV_EXCL_LINE */
+}
+
+Key *Autologin::parseFromData(const std::string &data,
+                                 const ScriptLocation &pos,
+                                 int *errors, int *, const Script *script)
+{
+    if(!is_valid_name(data.c_str())) {
+        if(errors) *errors += 1;
+        output_error(pos, "autologin: invalid username specified");
+        return nullptr;
+    }
+
+    /* REQ: Runner.Validate.username.System */
+    if(system_names.find(data) != system_names.end()) {
+        if(errors) *errors += 1;
+        output_error(pos, "autologin: reserved system username", data);
+        return nullptr;
+    }
+
+    return new Autologin(script, pos, data);
+}
+
+bool Autologin::validate() const
+{
+    // if it parses its valid
+    return true;
+}
+
+bool Autologin::execute() const
+{
+    output_info(pos, "autologin: configuring display manager for automatic login");
+
+    if(script->options().test(Simulate)) {
+        std::cout << "placing in /etc/sddm.conf.d/20-autologin.conf" << std::endl
+                  << "[Autologin]" << std::endl << "User=" << _username << std::endl
+                  << "Session=hollywood" << std::endl;
+        return true;
+    }
+
+#ifdef HAS_INSTALL_ENV
+    /* This was tested on gwyn during development. */
+    std::ofstream sddm_autologin(script->targetDirectory() + "/etc/sddm.conf.d/20-autologin.conf",
+                                 std::ios_base::trunc);
+    if(!sddm_autologin) {
+        output_error(pos, "autologin: cannot open sddm configuration file");
+        return false;
+    }
+
+    sddm_autologin << "[Autologin]" << std::endl;
+    sddm_autologin << "User=" << _username << std::endl;
+    sddm_autologin << "Session=hollywood";
+#endif
+    return true;
 }

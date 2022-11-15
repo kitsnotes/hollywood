@@ -81,7 +81,7 @@ MountDialog::MountDialog(QStringList skipParts, QStringList skipMounts,
     pathInput->setWhatsThis(tr("Select where the partition will be mounted."));
     pathInput->addItems(pathCandidates);
 
-    QStringList fsCandidates = {"ext4", "xfs", "jfs", "hfs+", "vfat", "ext3"};
+    QStringList fsCandidates = {"btrfs", "ext4", "vfat"};
     formatChoice = new QCheckBox(tr("Format"));
     formatChoice->setWhatsThis(tr("Erase and format this device with a new file system."));
 

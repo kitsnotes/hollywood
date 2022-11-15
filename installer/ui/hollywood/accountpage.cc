@@ -23,8 +23,8 @@ AccountPage::AccountPage(QWidget *parent) : HorizonWizardPage(parent) {
     setTitle(tr("User Accounts"));
     loadWatermark("acct");
     QLabel *descLabel = new QLabel(tr(
-        "Enter the details of up to four people who will use this computer.  "
-        "You can add more later with the User Manager.  "
+        "Enter the details for the initial person who will use this computer. "
+        "This account will be an admiistrator account. You can add more later with the User Manager.  "
         "For more information, consult the User's Handbook."));
     descLabel->setWordWrap(true);
 
@@ -33,16 +33,13 @@ AccountPage::AccountPage(QWidget *parent) : HorizonWizardPage(parent) {
 
     accountWidgets[0] = new UserAccountWidget;
     accountWidgets[0]->setAdmin(true);
-    accountWidgets[1] = new UserAccountWidget;
-    accountWidgets[2] = new UserAccountWidget;
-    accountWidgets[3] = new UserAccountWidget;
 
     for(auto &widget : accountWidgets) {
         connect(widget, &UserAccountWidget::validityChanged,
                 this, &AccountPage::completeChanged);
-        layout->addStretch();
         layout->addWidget(widget);
     }
+    layout->addStretch();
 
     setLayout(layout);
 }

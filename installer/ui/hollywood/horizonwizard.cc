@@ -79,16 +79,8 @@ static std::map<int, std::string> help_id_map = {
     {HorizonWizard::Page_PartitionChoose, "partition-manipulation"},
     {HorizonWizard::Page_PartitionManual, "partition-manual"},
     {HorizonWizard::Page_PartitionMount, "partition-mountpoints"},
-    {HorizonWizard::Page_Network, "network-start"},
-    {HorizonWizard::Page_Network_Iface, "network-iface"},
-    {HorizonWizard::Page_Network_Wireless, "network-wifi"},
-    {HorizonWizard::Page_Network_CustomAP, "network-wifi-ap"},
-    {HorizonWizard::Page_Network_DHCP, "network-dhcp"},
-    {HorizonWizard::Page_Network_Portal, "network-portal"},
-    {HorizonWizard::Page_Network_Manual, "network-manual"},
     {HorizonWizard::Page_DateTime, "datetime"},
     {HorizonWizard::Page_Hostname, "hostname"},
-    {HorizonWizard::Page_Boot, "startup"},
     {HorizonWizard::Page_Accounts, "accounts"},
 #ifndef HAS_INSTALL_ENV
     {HorizonWizard::Page_Write, "writeout"},
@@ -197,7 +189,7 @@ HorizonWizard::HorizonWizard(QWidget *parent) : QWizard(parent) {
      */
     grub = true;
     refind = false;
-    kernel = "mainline";
+    kernel = "stable";
     ipv4.use = false;
     ipv6.use = false;
 
@@ -222,14 +214,7 @@ HorizonWizard::HorizonWizard(QWidget *parent) : QWizard(parent) {
     setPage(Page_PartitionChoose, new PartitionChoicePage);
     setPage(Page_PartitionManual, new PartitionManualPage);
     setPage(Page_PartitionMount, new PartitionMountPage);
-    setPage(Page_Network, new NetworkingPage);
-    setPage(Page_Network_Iface, new NetworkIfacePage);
-    setPage(Page_Network_Wireless, new NetworkSimpleWirelessPage);
-    setPage(Page_Network_DHCP, new NetDHCPPage);
-    setPage(Page_Network_Manual, new NetManualPage);
     setPage(Page_DateTime, new DateTimePage);
-    setPage(Page_Hostname, new HostnamePage);
-    setPage(Page_Boot, new BootPage);
     setPage(Page_Accounts, new AccountPage);
 #ifndef HAS_INSTALL_ENV
     setPage(Page_Write, new WriteoutPage);
@@ -359,7 +344,7 @@ QStringList eraseDiskForArch(const std::string &raw_disk,
         return {QString{"disklabel %1 gpt"}.arg(disk)};
     case HorizonWizard::UnknownCPU: /* safe enough as a fallback */
     default:
-        return {QString{"disklabel %1 mbr"}.arg(disk)};
+        return {QString{"disklabel %1 gpt"}.arg(disk)};
     }
 }
 
@@ -372,17 +357,12 @@ QStringList bootForArch(const std::string &raw_disk, HorizonWizard::Arch arch,
     switch(arch) {
     case HorizonWizard::x86_64: /* 64-bit Intel: support only UEFI  */
     case HorizonWizard::aarch64:/* 64-bit ARM: assume UEFI */
-        return {
-            QString{"partition %1 %2 256M esp"}.arg(disk).arg(*start),
-            QString{"fs %1 vfat"}.arg(nameForPartitionOnDisk(raw_disk, *start)),
-            QString{"mount %1 /boot/efi"}.arg(nameForPartitionOnDisk(raw_disk, (*start)++))
-        };     
     case HorizonWizard::UnknownCPU: /* safe enough as a fallback */
     default:
         return {
-            QString{"partition %1 %2 256M boot"}.arg(disk).arg(*start),
-            QString{"fs %1 ext2"}.arg(nameForPartitionOnDisk(raw_disk, *start)),
-            QString{"mount %1 /boot"}.arg(nameForPartitionOnDisk(raw_disk, (*start)++))
+            QString{"partition %1 %2 512M esp"}.arg(disk).arg(*start),
+            QString{"fs %1 vfat"}.arg(nameForPartitionOnDisk(raw_disk, *start)),
+            QString{"mount %1 /boot/efi"}.arg(nameForPartitionOnDisk(raw_disk, (*start)++))
         };
     }
 }
@@ -390,7 +370,7 @@ QStringList bootForArch(const std::string &raw_disk, HorizonWizard::Arch arch,
 QString HorizonWizard::toHScript() {
     QStringList lines;
 
-    if(this->network) {
+    /*if(this->network) {
         lines << "network true";
         if(this->net_dhcp) {
             lines << QString::fromStdString("netaddress " +
@@ -421,9 +401,22 @@ QString HorizonWizard::toHScript() {
         }
     } else {
         lines << "network false";
+    }*/
+
+    lines << "network false";
+
+    QString hostname("Hollywood");
+
+    // TODO: better auto gen than 'banana'
+    if(interfaces.empty()) {
+        hostname += "-Banana";
+    } else {
+        QString mac = interfaces.begin()->second.mac;
+        QStringList macparts = mac.split(":");
+        hostname += "-" + macparts[3] + macparts[4] + macparts[5];
     }
 
-    lines << ("hostname " + field("hostname").toString());
+    lines << ("hostname " + hostname);
 
     switch(arch) {
     case aarch64:
@@ -467,9 +460,7 @@ QString HorizonWizard::toHScript() {
 #endif  /* HAS_INSTALL_ENV */
         }
 
-        if(this->grub || this->refind) {
-            lines << bootForArch(chosen_disk, arch, subarch, &start);
-        }
+        lines << bootForArch(chosen_disk, arch, subarch, &start);
 
         /* Create the root partition */
         lines << QString{"partition %1 %2 fill"}
@@ -479,49 +470,21 @@ QString HorizonWizard::toHScript() {
         lines << QString{"mount %1 /"}.arg(root_part);
     }
 
-    lines << QString::fromStdString("version " + version);
-
-    switch(this->pkgtype) {
-    case Default:
-        lines << "pkginstall hollywood";
+    lines << QString::fromStdString("version " + version);    
+    lines << ("kernel " + QString::fromStdString(this->kernel));
+    switch(arch) {
+    case aarch64:
+        lines << "bootloader grub-efi";
         break;
-    case Custom:
-        lines << "pkginstall hollywood-base";
-        if(!packages.empty()) lines << ("pkginstall " + packages.join(" "));
+    case x86_64:
+        lines << "bootloader refind";
+        break;
+    case UnknownCPU:
+        /* no arch line.  hopefully it's run on the target. */
+        lines << "bootloader grub-efi";
         break;
     }
 
-    if(this->grub) {
-        lines << ("bootloader " + QString::fromStdString(chosen_disk));
-        lines << "pkginstall dracut grub-efi";
-    }
-
-    /* if(this->refind) {
-        lines << ("bootloader " + QString::fromStdString(chosen_disk));
-        lines << "pkginstall dracut refind";
-    } */
-
-    // lines << "svcenable defaults";
-    lines << "svcenable acpid sysinit";
-    lines << "svcenable udev boot";
-    lines << "svcenable udev-trigger boot";
-    lines << "svcenable dbus boot";
-    lines << "svcenable connman boot";
-    lines << "svcenable openntpd boot";
-    lines << "svcenable cronie boot";
-    lines << "svcenable elogind boot";
-    lines << "svcenable agetty.tty1 boot";
-    lines << "svcenable sddm boot";
-
-
-    lines << ("pkginstall linux-" + QString::fromStdString(this->kernel));
-
-    char *root = encrypt_pw(field("rootpw").toString().toStdString().c_str());
-    Q_ASSERT(root != nullptr);
-    lines << QString("rootpw ") + root;
-    delete[] root;
-
-    /* handwavy-future: When we have language support, set it here */
     lines << "language en_US.UTF-8";
 
     auto iterator = valid_keymaps.begin();
@@ -540,6 +503,26 @@ QString HorizonWizard::toHScript() {
 
     lines << ("timezone " +
               dynamic_cast<DateTimePage *>(page(Page_DateTime))->selectedTimeZone());
+
+    // lines << "svcenable defaults";
+    lines << "svcenable acpid sysinit";
+    lines << "svcenable sysklogd sysinit";
+    lines << "svcenable udev sysinit";
+    lines << "svcenable udev-trigger boot";
+    lines << "svcenable dbus boot";
+    lines << "svcenable connman boot";
+    lines << "svcenable openntpd boot";
+    lines << "svcenable cronie boot";
+    lines << "svcenable elogind boot";
+    lines << "svcenable agetty.tty1 boot";
+    lines << "svcenable polkit boot";
+
+    /* char *root = encrypt_pw(field("rootpw").toString().toStdString().c_str());
+    Q_ASSERT(root != nullptr);
+    lines << QString("rootpw ") + root;
+    delete[] root; */
+
+    bool did_autologin = false;
 
     for(auto &acctWidget : dynamic_cast<AccountPage *>(page(Page_Accounts))->accountWidgets) {
         if(acctWidget->accountText().isEmpty()) break;
@@ -562,6 +545,13 @@ QString HorizonWizard::toHScript() {
         if(!acctWidget->avatarPath().isEmpty()) {
             lines << ("usericon " + acctWidget->accountText() + " " +
                       acctWidget->avatarPath());
+        }
+        if(acctWidget->isAutoLogin() && !did_autologin)
+        {
+            lines << ("autologin " + acctWidget->accountText());
+            lines << "svcenable sddm boot";
+
+            did_autologin = true;
         }
     }
 

@@ -42,6 +42,8 @@ public:
     /*! Changes whether the Admin tickbox is ticked or not. */
     void setAdmin(bool);
 
+    bool isAutoLogin(void) const;
+
     /*! Returns whether the widget defines a valid account. */
     bool isValid(void) const;
 signals:
@@ -53,6 +55,7 @@ private:
     QPushButton *aviButton;
     QCheckBox *adminTick;
     QString aviPath;
+    QCheckBox *autoLoginTick;
     /*! When set, auto-update of accountName from personalName is prevented. */
     bool acctEverTouched;
 };

@@ -159,7 +159,7 @@ int PartitionChoicePage::nextId() const {
     } else if(buttons->checkedButton() == useExistingButton) {
         return HorizonWizard::Page_PartitionMount;
     } else {
-        return HorizonWizard::Page_Network;
+        return HorizonWizard::Page_DateTime;
     }
 }
 

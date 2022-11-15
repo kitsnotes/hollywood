@@ -14,7 +14,7 @@ before selecting this option.</strong>  You will not be able to recover any
 data from the disk after installation is completed.</p>
 </li>
 <li>
-<p><strong>Use Free Space</strong>: This option will install Adélie Linux in to
+<p><strong>Use Free Space</strong>: This option will install Hollywood in to
 the free space present on the selected disk.  No existing data will be erased.
 </p>
 </li>
@@ -25,7 +25,7 @@ may select to erase the partition, or install to a partition that is already
 formatted.</p>
 <p>Note: If an existing Linux or Unix system is already present on the selected
 partition, it may be damaged.  Always ensure that you select a partition that
-can be used exclusively by Adélie Linux.</p>
+can be used exclusively by Hollywood.</p>
 </li>
 <li>
 <p><strong>Manual</strong>: This option will open a partition editor for you to

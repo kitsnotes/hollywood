@@ -43,7 +43,7 @@ IntroPage::IntroPage(QWidget *parent) : HorizonWizardPage(parent) {
     toolMenu = new QMenu("&Tools", toolButton);
     connect(toolMenu->addAction("&Terminal"), &QAction::triggered, [=](void) {
         QProcess p;
-        p.execute("terminull", {"-fa", "Liberation Mono", "-fs", "12"});
+        p.execute("terminull", QStringList());
     });
     connect(toolMenu->addAction("&Partition Editor"), &QAction::triggered, [=](void) {
         QProcess p;
@@ -54,6 +54,8 @@ IntroPage::IntroPage(QWidget *parent) : HorizonWizardPage(parent) {
         p.execute("netsurf-gtk", QStringList());
     });*/
     toolButton->setMenu(toolMenu);
+
+    toolButton->setVisible(false);
 
     descLabel = new QLabel(
                 tr("This utility will help install Hollywood on your computer. Installation will take about 15-30 minutes.\n\n"

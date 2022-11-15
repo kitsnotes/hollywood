@@ -13,6 +13,7 @@ set(UI_SOURCES
     mountdialog.cc
     useraccountwidget.cc
     avatardialog.cc
+    advancedoptionsdialog.cc
     crypt_sha512.c
 
     intropage.cc

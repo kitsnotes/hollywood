@@ -1091,7 +1091,7 @@ updateboot:
 }
 
 static std::set<std::string> valid_kernels = {
-    "lts", "mainline", "none"
+    "lts", "stable", "mainline", "none"
 };
 
 Key *Kernel::parseFromData(const std::string &data, const ScriptLocation &pos, int *errors, int *warnings, const Script *script)

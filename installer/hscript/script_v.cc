@@ -267,9 +267,6 @@ bool Horizon::Script::validate() const {
     /* REQ: Runner.Validate.hostname */
     if(!internal->hostname->validate()) failures++;
 
-    /* REQ: Runner.Validate.rootpw */
-    if(!internal->rootpw->validate()) failures++;
-
     /* REQ: Runner.Validate.arch */
     if(internal->arch && !internal->arch->validate()) failures++;
 

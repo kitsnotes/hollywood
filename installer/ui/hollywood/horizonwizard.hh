@@ -141,6 +141,8 @@ public:
     /*! The disks present on this computer. */
     std::vector<Horizon::DiskMan::Disk> disks;
 #endif
+    /*! The system hostname */
+    std::string hostname;
     /*! Whether to automatically partition the disk. */
     bool auto_part;
     /*! Whether to erase the disk when automatically partitioning. */

@@ -5,7 +5,7 @@
 <h3>What is a bootloader?</h3>
 
 <p>A <i>bootloader</i> is the program that runs when you power on your
-computer.  The bootloader is responsible for locating Adélie Linux and/or
+computer.  The bootloader is responsible for locating Hollywood and/or
 other operating environments on your computer, and then loading them in to
 memory.</p>
 

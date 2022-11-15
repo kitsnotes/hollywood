@@ -22,7 +22,7 @@
 
 CommitPage::CommitPage(QWidget *parent) : HorizonWizardPage(parent) {
     setTitle(tr("Begin Installation"));
-    loadWatermark("install");
+    loadWatermark("commit");
 
     QLabel *descLabel = new QLabel(tr(
         "We have gathered all the information needed to begin installing Hollywood to your computer.  "
@@ -80,11 +80,9 @@ void CommitPage::initializePage() {
             "<p><b>Keyboard Layout</b>: %2</p>\n"
             "<p><b>Networking</b>: %3</p>\n"
             "<p><b>Time Zone</b>: %4</p>\n"
-            "<p><b>Hostname</b>: %5</p>\n"
             "<br>")
             .arg(diskString)
             .arg(QString::fromStdString(*iterator))
             .arg(netString)
-            .arg(zoneString)
-            .arg(field("hostname").toString()));
+            .arg(zoneString));
 }
