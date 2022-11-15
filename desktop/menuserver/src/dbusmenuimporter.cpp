@@ -522,7 +522,10 @@ QMenu *DBusMenuImporterPrivate::menuForId(int id) const
     return QMenu::menuInAction(action);
 }
 
-void DBusMenuImporterPrivate::slotItemsPropertiesUpdated(const DBusMenuItemList &updatedList, const DBusMenuItemKeysList &removedList);
+/*void DBusMenuImporterPrivate::slotItemsPropertiesUpdated(const DBusMenuItemList &updatedList, const DBusMenuItemKeysList &removedList)
+{
+
+}*/
 
 void DBusMenuImporterPrivate::sendEvent(int id, const QString &eventId)
 {

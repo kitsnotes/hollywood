@@ -201,6 +201,11 @@ void WPChooserWidget::setupUi()
     m_help->setIcon(QIcon::fromTheme("help-contextual"));
     m_help->setIconSize(QSize(22,22));
 
+    // TODO: implement and remove these
+    m_help->setEnabled(false);
+    m_add_folder->setEnabled(false);
+    m_rotate->setEnabled(false);
+
     // setup our bottom layout of options
     hl_bottom->addWidget(m_add_folder);
     hl_bottom->addWidget(m_remove_folder);

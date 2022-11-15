@@ -85,6 +85,7 @@ private:
     QPalette *m_palette_dark = nullptr;
 
     FontSize m_fontSize;
+    QString m_def_font, m_fixed_sys;
 
     QString m_iconTheme;
     QColor m_accentColor;

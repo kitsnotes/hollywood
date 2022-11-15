@@ -1,7 +1,7 @@
 #include "fsnode.h"
 #include "fileinfo.h"
 #include "desktopentry.h"
-
+#include "hwfileiconprovider.h"
 #include <QDateTime>
 
 LSFSNode::LSFSNode(const QString &filename, LSFSNode *p)
@@ -119,7 +119,11 @@ QIcon LSFSNode::icon() const
         }
     }
     if (info)
-        return info.data()->icon;
+    {
+        auto fi = info.data()->fileInfo();
+        HWFileIconProvider p;
+        return p.icon(fi);
+    }
 
     return QIcon();
 }

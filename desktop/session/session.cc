@@ -8,8 +8,17 @@
 #include <signal.h>
 #include <QDBusConnection>
 #include <QLoggingCategory>
+#include <QDBusInterface>
+#include <QApplication>
+
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "dbus.h"
+
+#define LOGIND_SERVICE    "org.freedesktop.login1"
+#define LOGIND_PATH       "/org/freedesktop/login1"
+#define LOGIND_INTERFACE  "org.freedesktop.login1.Manager"
 
 QLoggingCategory lcSession("hollywood.session");
 QLoggingCategory lcCompositor("hollywood.compositor");
@@ -35,6 +44,21 @@ SMApplication::SMApplication(int &argc, char **argv)
     qputenv("XDG_CURRENT_DESKTOP", "Hollywood");
     qputenv("XDG_SESSION_TYPE", "wayland");
     qputenv("XDG_MENU_PREFIX", "hollywood-");
+
+    // see if we are started by a display manager
+
+    auto ppid = getppid();
+
+    QFile f(QLatin1String("/proc/%1/cmdline").arg(QString::number(ppid)));
+    if(f.exists())
+    {
+        struct stat statbuf;
+        if(stat(f.fileName().toUtf8().data(), &statbuf) != -1)
+        {
+            if(statbuf.st_uid == 0)
+                m_startedDisplayManager = true;
+        }
+    }
 }
 
 bool SMApplication::startSession()
@@ -78,7 +102,13 @@ bool SMApplication::startSession()
     m_socket->removeServer(xdg_runtime_sock);
     m_socket->listen(xdg_runtime_sock);
 
-    qDebug() << "XDG Runtime DIR: " << m_xdg_runtime_dir;
+    if(m_useDBus && !startDBusSession())
+    {
+        qCWarning(lcSession) << "Unable to launch dbus-daemon process. The desktop experience may be degraded.";
+        if(m_dbusSessionProcess->isOpen())
+            m_dbusSessionProcess->kill();
+    }
+
     if(!startCompositor())
     {
         qCCritical(lcSession) << "Unable to launch compositor process";
@@ -86,15 +116,35 @@ bool SMApplication::startSession()
     }
     else
     {
+        // TODO: proper detection of wayland display
+        qputenv("WAYLAND_DISPLAY", "wayland-0");
+        qputenv("DISPLAY", ":0");
+
         qputenv("QT_QPA_PLATFORM", "hollywood");
         qputenv("QT_QPA_PLATFORMTHEME", "hollywood");
-        if(!startElevator())
+        if(m_useElevator && !startElevator())
         {
             qCCritical(lcSession) << "Unable to launch elevator process";
             if(m_compProcess->isOpen())
                 m_compProcess->kill();
 
             return false;
+        }
+
+        if(m_useDBus)
+        {
+            int count = 0;
+            for(;;)
+            {
+                QApplication::processEvents();
+                if(!m_dbusSessionVar.isNull())
+                    break;
+                sleep(1);
+                count++;
+
+                if(count > 10)
+                    break;
+            }
         }
 
         /*if(!startMenuServer())
@@ -157,26 +207,29 @@ void SMApplication::logout()
 
 void SMApplication::shutdown()
 {
-    stopSession();
-    int ret = 0;
-    qApp->exit(ret);
+    disconnectProcessWatchers();
+    callLogindDbus("PowerOff");
 }
 
 void SMApplication::reboot()
 {
-    stopSession();
-    int ret = 0;
-    qApp->exit(ret);
+    disconnectProcessWatchers();
+    callLogindDbus("Reboot");
 }
 
 bool SMApplication::canShutdown()
 {
-    return false;
+    return callLogindDbus("CanShutdown");
 }
 
 bool SMApplication::canReboot()
 {
-    return false;
+    return callLogindDbus("CanReboot");
+}
+
+bool SMApplication::haveSDDMAutoStart()
+{
+
 }
 
 bool SMApplication::startCompositor()
@@ -265,6 +318,50 @@ bool SMApplication::verifyCompositorSocketAvailable()
     return false;
 }
 
+bool SMApplication::startDBusSession()
+{
+    if(!qgetenv("DBUS_SESSION_BUS_ADDRESS").isEmpty())
+    {
+        qCInfo(lcSession) << QString("Not starting a user DBUS session as one already exists.");
+        return true;
+    }
+
+    if(m_dbusSessionProcess)
+    {
+        if(m_dbusSessionProcess->state() != QProcess::Running)
+        {
+            qCInfo(lcSession) << QString("SMApplication::startDBusSession: reaping old dbus-session (pid %1)")
+                       .arg(m_dbusSessionProcess->processId());
+            delete m_dbusSessionProcess;
+        }
+        else
+            return false;
+    }
+
+    auto env = QProcessEnvironment::systemEnvironment();
+    m_dbusSessionProcess = new QProcess(this);
+    m_dbusSessionProcess->setObjectName("DBus-Session");
+    const QString processPath = "/usr/bin/dbus-daemon";
+    m_dbusSessionProcess->setProgram(processPath);
+    m_dbusSessionProcess->setProcessEnvironment(env);
+
+    auto args = QStringList() << "--session" << "--print-address";
+    m_dbusSessionProcess->setArguments(args);
+
+    connect(m_dbusSessionProcess, &QProcess::finished, this, &SMApplication::dbusProcessStopped);
+    connect(m_dbusSessionProcess, &QProcess::errorOccurred, this, &SMApplication::dbusProcessStopped);
+    connect(m_dbusSessionProcess, &QProcess::readyReadStandardError, this, &SMApplication::dbusStdOut);
+    connect(m_dbusSessionProcess, &QProcess::readyReadStandardOutput, this, &SMApplication::dbusStdOut);
+
+    m_dbusSessionProcess->start();
+    if(m_dbusSessionProcess->isOpen())
+    {
+        qCInfo(lcSession) << QString("SessionManager: Started dbus-launch (pid %1)").arg(m_dbusSessionProcess->processId());
+        return true;
+    }
+    return false;
+}
+
 void SMApplication::compositorStopped()
 {
 #ifdef QT_DEBUG
@@ -316,6 +413,23 @@ void SMApplication::processStdError()
         for(auto line : lines)
             if(!line.isEmpty())
                 qCWarning(lcDesktop) << line;
+    }
+}
+
+void SMApplication::dbusStdOut()
+{
+    auto proc = qobject_cast<QProcess*>(sender());
+    auto lines = proc->readAllStandardOutput().split('\n');
+
+    for(auto &l : lines)
+    {
+        if(l.startsWith("unix:"))
+        {
+            // we have our dbus id
+            qCInfo(lcSession) << "setting DBUS_SESSION_BUS_ADDRESS" << l;
+            qputenv("DBUS_SESSION_BUS_ADDRESS", l);
+            m_dbusSessionVar = l;
+        }
     }
 }
 
@@ -474,6 +588,18 @@ void SMApplication::stageStopped()
     startStage();
 }
 
+void SMApplication::dbusProcessStopped()
+{
+    if(m_dbusSessionProcess->exitStatus() == QProcess::NormalExit)
+        return;     // Standard system shutdown, so don't restart
+
+    qWarning() << QString("SessionManager: dbus-launch process (pid %1) stopped (return %2). Restarting...")
+                  .arg(m_dbusSessionProcess->processId())
+                  .arg(m_dbusSessionProcess->exitCode());
+
+    startDBusSession();
+}
+
 // ===========================================================
 // ======            DESKTOP HOST FUNCTIONS             ======
 // ===========================================================
@@ -552,8 +678,8 @@ bool SMApplication::startStage()
     env.insert("LD_LIBRARY_PATH", "/usr/lib/qt6/plugins/wayland-shell-integration/");
 #endif
     m_stageProcess->setProcessEnvironment(env);
-    connect(m_stageProcess, &QProcess::finished, this, &SMApplication::menuServerStopped);
-    connect(m_stageProcess, &QProcess::errorOccurred, this, &SMApplication::menuServerStopped);
+    connect(m_stageProcess, &QProcess::finished, this, &SMApplication::stageStopped);
+    connect(m_stageProcess, &QProcess::errorOccurred, this, &SMApplication::stageStopped);
     connect(m_stageProcess, &QProcess::readyReadStandardError, this, &SMApplication::processStdError);
     connect(m_stageProcess, &QProcess::readyReadStandardOutput, this, &SMApplication::processStdOut);
 
@@ -673,8 +799,52 @@ bool SMApplication::stopSession()
         qDebug() << "terminated compositor";
     }
 
+
+    m_dbusSessionProcess->kill();
+
     m_socket->close();
     return true;
+}
+
+bool SMApplication::callLogindDbus(const QString &command)
+{
+    QDBusInterface ldb(QLatin1String(LOGIND_SERVICE), QLatin1String(LOGIND_PATH), QLatin1String(LOGIND_INTERFACE), QDBusConnection::systemBus());
+    if(!ldb.isValid())
+    {
+        qCCritical(lcSession) << QString("Could not call elogind DBUS interface. Command: %1")
+                   .arg(command);
+        return false;
+    }
+
+    QDBusMessage msg = ldb.call(command, QVariant(false));
+    qDebug() << msg.arguments().constFirst().toString();
+
+    if(msg.arguments().isEmpty() || msg.arguments().constFirst().isNull())
+        return true;
+
+    auto response = msg.arguments().constFirst().toString();
+
+    if(response == "yes")
+        return true;
+
+    return false;
+
+}
+
+void SMApplication::disconnectProcessWatchers()
+{
+    disconnect(m_elevatorProcess, &QProcess::finished, this, &SMApplication::elevatorStopped);
+    disconnect(m_elevatorProcess, &QProcess::errorOccurred, this, &SMApplication::elevatorStopped);
+
+    disconnect(m_desktopProcess, &QProcess::finished, this, &SMApplication::desktopStopped);
+    disconnect(m_desktopProcess, &QProcess::errorOccurred, this, &SMApplication::desktopStopped);
+
+    disconnect(m_stageProcess, &QProcess::finished, this, &SMApplication::stageStopped);
+    disconnect(m_stageProcess, &QProcess::errorOccurred, this, &SMApplication::stageStopped);
+
+    disconnect(m_compProcess, &QProcess::finished, this, &SMApplication::compositorStopped);
+    disconnect(m_compProcess, &QProcess::errorOccurred, this, &SMApplication::compositorStopped);
+
 }
 
 void SMApplication::desktopStopped()
@@ -697,13 +867,23 @@ int main(int argc, char *argv[])
     p.addHelpOption();
     p.addVersionOption();
 
+    /*{{"E", "no-elevator"},
+        QCoreApplication::translate("main", "Do not launch the elevator (PolicyKit Agent) with this session.")}, */
+
     p.addOptions({
-     {{"E", "no-elevator"},
+     {"no-elevator",
          QCoreApplication::translate("main", "Do not launch the elevator (PolicyKit Agent) with this session.")},
-     {{"A", "no-notifications"},
+     {"no-notifications",
          QCoreApplication::translate("main", "Do not launch the notification daemon with this session.")},
+     {"no-dbus",
+         QCoreApplication::translate("main", "Do not launch a dbus-daemon for session bus with this session.")},
     });
     p.process(a);
+
+    if(p.isSet("no-elevator"))
+        a.setUseElevator(false);
+    if(p.isSet("no-dbus"))
+        a.setUseDBus(false);
 
     if(!a.startSession())
         return 1;

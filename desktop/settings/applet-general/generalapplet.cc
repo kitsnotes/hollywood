@@ -64,6 +64,21 @@ bool ASGeneralApplet::loadSettings()
     else
         qDebug() << "GeneralApplet: unknown accent color";
 
+    uint fontsize = settings.value(QLatin1String("FontSize"), 1).toUInt();
+    if(fontsize < 0 || fontsize > 3)
+        fontsize = 1;   // default to normal font sizes
+
+    m_fontSize->setValue(fontsize);
+
+    auto fontstr = settings.value("DefaultFont").toString();
+    auto monostr = settings.value("MonospaceFont").toString();
+    QFont font(fontstr);
+    if(font.family() == fontstr)
+        m_def_font->setFont(font);
+
+    QFont mono(monostr);
+    if(mono.family() == monostr)
+        m_def_font->setFont(mono);
 
     return true;
 }
@@ -111,6 +126,10 @@ bool ASGeneralApplet::saveSettings()
                           QLatin1String(HOLLYWOOD_ACCENT_GRAY));
     else
         qDebug() << "GeneralApplet: saveSettings: no selected accent color";
+
+    settings.setValue("FontSize", m_fontSize->value());
+    settings.setValue("DefaultFont", m_def_font->font().family());
+    settings.setValue("MonospaceFont", m_def_fixedsys->font().family());
 
     settings.endGroup();
     return true;
@@ -196,11 +215,12 @@ void ASGeneralApplet::setupWidget()
     auto hs_font = new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum);
     auto m_fontPreview = new QLabel(m_host);
     auto lbl_browser = new QLabel(m_host);
-    m_browser = new QComboBox(m_host);
+    m_def_font = new QFontComboBox(m_host);
+    m_def_font->setFontFilters(QFontComboBox::ScalableFonts);
     auto lbl_email = new QLabel(m_host);
-    m_email = new QComboBox(m_host);
+    m_def_fixedsys = new QFontComboBox(m_host);
+    m_def_fixedsys->setFontFilters(QFontComboBox::MonospacedFonts);
     auto vs_main = new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
-    auto line_2 = new QFrame(m_host);
 
     bg_apperance->addButton(m_light);
     bg_apperance->addButton(m_dark);
@@ -272,8 +292,6 @@ void ASGeneralApplet::setupWidget()
 
     line->setFrameShape(QFrame::HLine);
     line->setFrameShadow(QFrame::Sunken);
-    line_2->setFrameShape(QFrame::HLine);
-    line_2->setFrameShadow(QFrame::Sunken);
 
     m_fontSize->setOrientation(Qt::Horizontal);
     hl_fontsize->addWidget(l_smfonticon);
@@ -292,16 +310,16 @@ void ASGeneralApplet::setupWidget()
 
     mainLayout->setWidget(4, QFormLayout::LabelRole, fontsize);
     mainLayout->setLayout(4, QFormLayout::FieldRole, hl_fontsize);
-    mainLayout->setWidget(5, QFormLayout::FieldRole, m_fontPreview);
-    mainLayout->setWidget(6, QFormLayout::SpanningRole, line_2);
 
-    mainLayout->setWidget(7, QFormLayout::LabelRole, lbl_browser);
-    mainLayout->setWidget(7, QFormLayout::FieldRole, m_browser);
-    mainLayout->setWidget(8, QFormLayout::LabelRole, lbl_email);
-    mainLayout->setWidget(8, QFormLayout::FieldRole, m_email);
+    mainLayout->setWidget(5, QFormLayout::LabelRole, lbl_browser);
+    mainLayout->setWidget(5, QFormLayout::FieldRole, m_def_font);
+    mainLayout->setWidget(6, QFormLayout::LabelRole, lbl_email);
+    mainLayout->setWidget(6, QFormLayout::FieldRole, m_def_fixedsys);
+
+    mainLayout->setWidget(7, QFormLayout::FieldRole, m_fontPreview);
 
     // KEEP THIS LAST in the layout!
-    mainLayout->setItem(9, QFormLayout::SpanningRole, vs_main);
+    mainLayout->setItem(8, QFormLayout::SpanningRole, vs_main);
 
     apperance->setText(tr("Apperance:"));
     m_light->setText(tr("Light"));
@@ -314,13 +332,16 @@ void ASGeneralApplet::setupWidget()
     l_lgfonticon->setText(QString());
     m_fontPreview->setText(tr("Font Preview"));
     m_fontPreview->setVisible(false);
-    lbl_browser->setText(tr("Default web browser:"));
-    lbl_email->setText(tr("Default e-mail client:"));
+    lbl_browser->setText(tr("Default font:"));
+    lbl_email->setText(tr("Default monospace font:"));
 
     m_fontSize->setTickInterval(1);
     m_fontSize->setRange(1,4);
     m_fontSize->setValue(2);
     m_fontSize->setMaximumWidth(180);
+
+    m_def_font->setEditable(false);
+    m_def_fixedsys->setEditable(false);
 
     for(auto btn : bg_apperance->buttons())
         connect(btn, &QAbstractButton::toggled, this, &ASGeneralApplet::widgetUpdate);

@@ -26,6 +26,9 @@ public:
     QStandardItemModel* model();
     void executeDesktop(const QString &desktop);
     PlasmaWindowManagement* windowManager() { return m_wndmgr; }
+    bool callSessionDBus(const QString &exec);
+    bool displayManagerStart() { return m_started_dm; }
+    QMenu* systemMenu() { return m_context; }
 public slots:
     void launchSysmon();
     void launchSettings();
@@ -34,6 +37,8 @@ public slots:
     void run();
     void logoffSession();
     void showProgramManager();
+    void restartSystem();
+    void shutdownSystem();
 private slots:
     void privateProtocolReady();
     void windowMinimized();
@@ -54,6 +59,10 @@ private:
     QStandardItemModel *m_model = nullptr;
     ProgramManager *m_pm = nullptr;
     QString m_configfile;
+    QMenu *m_context = nullptr;
+
+
+    bool m_started_dm = false;
 };
 
 #endif // CSAPPLICATION_H

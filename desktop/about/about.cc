@@ -445,11 +445,12 @@ void AboutWindow::populateDeviceTree()
         f2.close();
         if(data.contains("dummy-virt"))
         {
-        if(m_hardware->text().isEmpty())
-            m_hardware->setText(tr("QEMU Virtual Machine"));
+            if(m_hardware->text().isEmpty())
+                m_hardware->setText(tr("QEMU Virtual Machine"));
 
             if(m_proc->text().isEmpty())
                 m_proc->setText(tr("Virtual 64-Bit ARM"));
+
             return;
         }
     }

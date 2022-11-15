@@ -22,7 +22,7 @@ private:
     QAction *actionMove_to_Trash;
     QAction *a_Eject_Volume;
     QAction *a_Open;
-    QAction *actionOp_en_With;
+    QAction *a_OpenWith;
     QAction *a_Undo;
     QAction *a_Redo;
     QAction *a_Cut;
@@ -34,6 +34,18 @@ private:
     QAction *a_Icons;
     QAction *a_List;
     QAction *a_Columns;
+
+    QAction *a_sortNone;
+    QAction *a_sortName;
+    QAction *a_sortSize;
+    QAction *a_sortKind;
+    QAction *a_sortModified;
+    QAction *a_sortOwner;
+    QAction *a_sortGroup;
+    QAction *a_sortComment;
+
+    QAction *a_sortAsc;
+    QAction *a_sortDesc;
     QAction *a_ViewOptions;
 
     QAction *a_Back;

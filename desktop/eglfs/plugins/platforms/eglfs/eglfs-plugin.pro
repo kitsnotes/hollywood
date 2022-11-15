@@ -1,8 +1,10 @@
+include(../../../../include/global.pri)
 TARGET = hweglfs
 TEMPLATE = lib
 QT += core-private gui-private
 
 CONFIG += egl plugin
+DESTDIR=$${OBJECTS_DIR}../../../../output/
 
 # Avoid X11 header collision, use generic EGL native types
 DEFINES += QT_EGL_NO_X11
@@ -21,4 +23,4 @@ DISTFILES += hollywood-eglfs.json
 target.path = $$[QT_INSTALL_PLUGINS]/platforms
 INSTALLS += target
 
-LIBS += -lHWEglFSDeviceIntegration -L$$OUT_PWD
+LIBS += -L../../../../output/ -lhwudev-$${HOLLYWOOD_APIVERSION} -lhwlogind-$${HOLLYWOOD_APIVERSION} -lHWEglFSDeviceIntegration -L$$OUT_PWD

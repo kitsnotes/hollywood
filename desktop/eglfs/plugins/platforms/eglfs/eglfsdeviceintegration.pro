@@ -1,3 +1,4 @@
+include(../../../../include/global.pri)
 TEMPLATE=lib
 TARGET = HWEglFSDeviceIntegration
 CONFIG += internal_module link_pkgconfig
@@ -8,10 +9,11 @@ QT += input_support-private opengl-private fb_support-private dbus
 #QT += platformcompositor_support-private
 #QT += vulkan_support-private
 
+DESTDIR=$${OBJECTS_DIR}../../../../output/
 # Avoid X11 header collision, use generic EGL native types
 DEFINES += QT_EGL_NO_X11
 DEFINES += QT_BUILD_EGL_DEVICE_LIB
-PKGCONFIG += hwlogind-1.0 hwudev-1.0
+#PKGCONFIG += hwlogind-1.0 hwudev-1.0
 include($$PWD/api/api.pri)
 
 !isEmpty(EGLFS_PLATFORM_HOOKS_SOURCES) {
@@ -34,9 +36,9 @@ INCLUDEPATH += $$PWD/../../../platformheaders/hollywood/
 HEADERS += $$PWD/../../../platformheaders/hollywood/eglfsfunctions.h
 SOURCES += $$PWD/../../../platformheaders/eglfsfunctions.cpp
 
-LIBS += -L$$OUT_PWD -L$$PWD/../../../libinput \
-    -L$$PWD/../../../eglfsxkb -L$$PWD/../../../platformsupport/kmsconvenience \
-    -L$$PWD/../../../platformsupport/edid \
+LIBS += -L$$OUT_PWD \
+     -L$${OBJECTS_DIR}../../../../output/ \
+     -lhwudev-$${HOLLYWOOD_APIVERSION} -lhwlogind-$${HOLLYWOOD_APIVERSION} \
      -lHWKmsSupport -lHWInputSupport -lHWEdidSupport
 target.path = /usr/lib
 INSTALLS += target

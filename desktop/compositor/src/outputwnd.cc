@@ -201,6 +201,12 @@ void OutputWindow::drawTextureForObject(Surface *obj, bool useShadow)
                 if(obj->isXdgPopup())
                     sm = 15;
 
+                if(obj->isQtSurface())
+                {
+                    if(obj->surfaceType() == Surface::Popup)
+                        sm = 5;
+                }
+
                 dsize = dsize.grownBy(QMargins(sm,sm,sm,sm));
             }
 

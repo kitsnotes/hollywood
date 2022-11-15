@@ -23,7 +23,7 @@ static bool isDbusMenuAvailable()
     QDBusConnection connection = QDBusConnection::sessionBus();
     QString registrarService = QStringLiteral("com.canonical.AppMenu.Registrar");
     bool available = connection.interface()->isServiceRegistered(registrarService);
-    qDebug() << "testing if dbusmenu available: " << available;
+    //qDebug() << "testing if dbusmenu available: " << available;
     return available;
 }
 
@@ -121,9 +121,9 @@ const QPalette *HollywoodPlatformTheme::palette(Palette type) const
 
 const QFont *HollywoodPlatformTheme::font(Font type) const
 {
-    QString family = QLatin1String(HOLLYWOOD_DEF_STDFONT);
+    QString family = QString(m_def_font);
     if(type == FixedFont)
-        family = QLatin1String(HOLLYWOOD_DEF_FIXEDSYS);
+        family = QString(m_fixed_sys);
     uint ps = HOLLYWOOD_PT_NORMAL;
 
     switch(m_fontSize)
@@ -149,6 +149,7 @@ const QFont *HollywoodPlatformTheme::font(Font type) const
         ps = ps-2;
 
 
+    //qDebug() << family << ps;
     auto font = new QFont(family,ps);
     return font;
 }
@@ -316,9 +317,12 @@ void HollywoodPlatformTheme::settingsChanged()
     const auto widgets = QApplication::allWidgets();
     for(QWidget* const widget : widgets)
     {
-        QEvent event(QEvent::ThemeChange);
-        QApplication::sendEvent(widget, &event);
+        QEvent themeEvent(QEvent::ThemeChange);
+        QEvent fontEvent(QEvent::FontChange);
+        QApplication::sendEvent(widget, &themeEvent);
+        QApplication::sendEvent(widget, &fontEvent);
     }
+
 }
 
 QVariant HollywoodPlatformTheme::themeHint(ThemeHint hint) const {
@@ -397,7 +401,9 @@ QIcon HollywoodPlatformTheme::fileIcon(const QFileInfo &fileInfo, QPlatformTheme
 
     QMimeDatabase db;
     QMimeType type = db.mimeTypeForFile(fileInfo);
-    return QIcon::fromTheme(type.iconName());
+    auto mtname = type.name();
+    mtname.replace('/', '-');
+    return QIcon::fromTheme(mtname);
 }
 
 inline bool windowRelevantForGlobalMenu(QWindow* window)
@@ -478,6 +484,9 @@ void HollywoodPlatformTheme::loadSettings()
         fontsz = 1;
 
     m_fontSize = (FontSize)fontsz;
+
+    m_def_font = settings.value("DefaultFont", HOLLYWOOD_DEF_STDFONT).toString();
+    m_fixed_sys = settings.value("MonospaceFont", HOLLYWOOD_DEF_FIXEDSYS).toString();
 
     settings.endGroup();
 

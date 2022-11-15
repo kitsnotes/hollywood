@@ -15,4 +15,3 @@ Makefile
 */output
 */build-qt*
 *.a
-.DS_Store

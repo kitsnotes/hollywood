@@ -11,6 +11,7 @@
 #include "bootentrylistmodel.h"
 #include <QIcon>
 
+
 BootEntryListModel::BootEntryListModel(QObject *parent)
     : QAbstractListModel{parent}
 {
@@ -32,21 +33,21 @@ auto BootEntryListModel::data(const QModelIndex &index, int role) const -> QVari
     switch (role) {
     case Qt::EditRole:
     case Qt::DisplayRole:
-        return QString(entries.at(index.row()).description);
+        return entries.at(index.row()).prettyName();
         break;
     case Qt::DecorationRole:
         if (index.column() == 0) {
-            /* QIcon myicon = QIcon();
-            auto item = itemForIndex(index);
-            if(item->desktopEntry != nullptr)
-                myicon = item->desktopEntry->icon();
-
-            return myicon; */
-            return QIcon::fromTheme("drive-harddisk");
+            return entries.at(index.row()).icon();
         }
         break;
     case Qt::TextAlignmentRole:
         break;
+    case Qt::UserRole+1:
+        return entries.at(index.row()).statusEntry();
+    case Qt::UserRole+2:
+        return entries.at(index.row()).is_hollywood;
+    case Qt::UserRole+3:
+        return entries.at(index.row()).index;
     }
 
     return QVariant();

@@ -161,12 +161,12 @@ bool LSFileInfoGatherer::resolveSymlinks() const
 #endif
 }
 
-void LSFileInfoGatherer::setIconProvider(QFileIconProvider *provider)
+void LSFileInfoGatherer::setIconProvider(HWFileIconProvider *provider)
 {
     m_iconProvider = provider;
 }
 
-QFileIconProvider *LSFileInfoGatherer::iconProvider() const
+HWFileIconProvider *LSFileInfoGatherer::iconProvider() const
 {
     return m_iconProvider;
 }

@@ -2,7 +2,12 @@ include(../include/global.pri)
 
 QT += network widgets-private svg
 
-TARGET = shell-$${HOLLYWOOD_APIVERSION}
+CONFIG(debug, debug|release) {
+    TARGET = shelld-$${HOLLYWOOD_APIVERSION}
+} else {
+    TARGET = shell-$${HOLLYWOOD_APIVERSION}
+}
+
 TEMPLATE = lib
 DEFINES += LIBSHELL_LIBRARY
 DEFINES += USE_DNSSD
@@ -31,6 +36,7 @@ SOURCES += \
     src/filesystemmodel.cpp \
     src/fsitemdelegate.cc \
     src/fsnode.cc \
+    src/hwfileiconprovider.cc \
     src/locationbar.cpp \
     src/lslocationbar.cc \
     src/mdnsbrowser.cc \
@@ -55,6 +61,7 @@ HEADERS += \
     include/filesystemmodel_p.h \
     include/fsitemdelegate.h \
     include/fsnode.h \
+    include/hwfileiconprovider.h \
     include/libshell_int.h \
     include/locationbar.h \
     include/locationbarbtn.h \

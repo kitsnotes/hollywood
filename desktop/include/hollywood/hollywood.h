@@ -6,7 +6,8 @@
 #define HOLLYWOOD_OS_ORGNAME        "Originull Software"
 
 #define HOLLYWOOD_SESSION_DBUS      "org.originull.hollywood"
-#define HOLLYWOOD_SESSION_DBUSOBJ   "/HollywoodSession"
+#define HOLLYWOOD_SESSION_DBUSOBJ   "/Session"
+#define HOLLYWOOD_SESSION_DBUSPATH  "org.originull.hollywood.Session"
 
 #define HOLYWOOD_SETTINGS_APP       "org.originull.hwsettings.desktop"
 #define HOLYWOOD_SYSMON_APP         "org.originull.hwsysmon.desktop"

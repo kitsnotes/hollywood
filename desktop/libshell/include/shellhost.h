@@ -13,6 +13,7 @@ class LSColumnPreview;
 class LSFSItemDelegate;
 
 typedef LSFSModel FilesystemModel;
+typedef QList<QUrl> UrlList;
 
 class LIBSHELL_EXPORT LSEmbeddedShellHost : public QWidget
 {
@@ -47,20 +48,27 @@ private slots:
     void tabCloseRequested(int index);
     // view slots
     void viewClicked(const QModelIndex &idx);
-    void viewDoubleClicked(const QModelIndex &idx);
+    void viewActivated(const QModelIndex &idx);
     void viewSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
     void placeClicked(const QModelIndex &idx);
     void updateColumnWidget(const QModelIndex &idx);
     // model slots
     void modelRootPathChanged(const QString &path);
     void createNewTab();
+    void viewContextMenuRequested(const QPoint &pos);
 private:
+    void disableActionsForNoSelection();
+    void enableActionsForFileSelection(bool multiple);
     void updatePlaceModelSelection(const QUrl &place);
     QString generateStatusBarMsg() const;
     void setupLocationBar();
     void restoreViewModeFromSettings();
-    void updateRootIndex(const QModelIndex &idx);
+    void updateRootIndex(const QModelIndex &idx, bool internal = false);
     void showFolderPermissionError(const QString &folder);
+    void disconnectViewSlots();
+    void updateBackForwardList(const QUrl &url, bool goback = false);
+    void updateNavigationButtonStatus();
+
 private:
     LSActionManager *m_actions;
     LSLocationBar *m_location = nullptr;
@@ -76,14 +84,21 @@ private:
 
     ArionShell::ViewMode m_viewMode;
     FilesystemModel *m_model;
+
     LSPlaceModel *m_placeModel;
     QMap<QUuid, QUrl> m_tabLocations;
     QMap<QUuid, ArionShell::ViewMode> m_tabViewMode;
+
+    QMap<QUuid, UrlList> m_backLists;
+    QMap<QUuid, UrlList> m_forwardLists;
+
     QTabBar *m_tabs;
     QVBoxLayout *m_tabWndHostLayout;
     QWidget *m_tabWndHost;
     ViewOptionsDialog *m_viewOptions;
     LSFSItemDelegate *m_delegate = nullptr;
+
+    QItemSelectionModel *m_curSelModel = nullptr;
 };
 
 #endif // SHELLHOST_H

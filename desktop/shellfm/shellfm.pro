@@ -8,8 +8,13 @@ INCLUDEPATH += include/
 INCLUDEPATH += ../libcommdlg/include
 INCLUDEPATH += ../libcompositor/include
 
-LIBS += -L../libshell -L../output -lshell-$${HOLLYWOOD_APIVERSION}
-LIBS += -I../libcompositor/include -L../output -lcompositor-$${HOLLYWOOD_APIVERSION} -lcommdlg-$${HOLLYWOOD_APIVERSION}
+CONFIG(debug, debug|release) {
+    LIBS += -L../output -lshelld-$${HOLLYWOOD_APIVERSION}
+} else {
+    LIBS += -lshell-$${HOLLYWOOD_APIVERSION}
+}
+
+LIBS += -L../output -lcompositor-$${HOLLYWOOD_APIVERSION} -lcommdlg-$${HOLLYWOOD_APIVERSION}
 WAYLANDCLIENTSOURCES += ../compositor/protocols/originull-privateapi.xml
 # PKGCONFIG += hwcompositor
 SOURCES += \

@@ -7,6 +7,7 @@
  *
  * Originated from github.com/Neverous/efibooteditor
  */
+
 #pragma once
 
 #include <QHostAddress>
@@ -15,6 +16,7 @@
 #include <QUuid>
 #include <QVariant>
 #include <QVector>
+#include <QIcon>
 
 #include "efiboot.h"
 
@@ -490,6 +492,7 @@ inline bool register_json_reader()
 
 Q_DECLARE_METATYPE(const Device_path::ANY *)
 
+class QIcon;
 class BootEntry
 {
 public:
@@ -503,16 +506,29 @@ public:
 
     quint16 index = 0;
     QString description = "New entry";
+    QString statusLabel;
     QVector<Device_path::ANY> file_path = {};
     QString optional_data = "";
     quint32 attributes = 0;
     quint32 efi_attributes = EFIBoot::EFI_VARIABLE_ATTRIBUTE_DEFAULTS;
 
+    bool is_hollywood = false;
     bool is_next_boot = false;
+    QString m_prettyname;
+    QIcon myIcon;
 
     OptionalDataFormat optional_data_format = OptionalDataFormat::Base64;
 
+
+    QString prettyName() const;
+    QIcon icon() const;
+    QString statusEntry() const;
+    void doHeuristics();
 private:
+    QString prettyDiskName() const;
+
+    QString prettyNetworkName() const;
+
     mutable QString file_path_str = "";
 
 public:

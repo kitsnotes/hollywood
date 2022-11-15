@@ -1,7 +1,6 @@
-include(../../include/global.pri)
+include(../../include/global-applet.pri)
 TEMPLATE = lib
 QT += network core5compat
-
 CONFIG += link_pkgconfig
 TARGET=56-efiboot
 
@@ -25,12 +24,15 @@ HEADERS += \
     efivar-lite/efivar.h \
     startup.h
 
+RESOURCES += resources.qrc
+
 LIBS += -lefiboot -lefivar
-   # QMAKE_SUBSTITUTES += org.originull.hwsettings.datetime.policy.in
-    #polkit.path = $$PREFIX/share/polkit-1/actions/
-   # polkit.files = org.originull.hwsettings.datetime.policy
+    QMAKE_SUBSTITUTES += org.originull.hwsettings.efiboot.policy.in
+    polkit.path = $$PREFIX/share/polkit-1/actions/
+    polkit.files = org.originull.hwsettings.efiboot.policy
     target.path = $$PREFIX/libexec/hollywood/settings
-    INSTALLS += target #polkit
+    INSTALLS += target polkit
 
 DISTFILES += \
-    applet-efiboot.json
+    applet-efiboot.json \
+    org.originull.hwsettings.efiboot.policy.in

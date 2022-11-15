@@ -1,0 +1,20 @@
+[Desktop Entry]
+Type=Application
+Terminal=false
+Name=Popular
+Icon=kuiviewer
+Comment=A viewer of popular file types.
+Categories=Viewer;Office;
+Keywords=viewer;document;presentation;pdf;ps;djvu;
+TryExec=popular
+Exec=popular --unique %F
+MimeType=application/pdf;application/x-pdf;text/pdf;text/x-pdf;image/pdf;image/x-pdf;application/postscript;image/vnd.djvu;image/x-djvu;
+Actions=ChooseInstance;NonUniqueInstance;
+
+[Desktop Action ChooseInstance]
+Name=Choose instance
+Exec=popular --unique --choose-instance %F
+
+[Desktop Action NonUniqueInstance]
+Name=Non-unique instance
+Exec=popular %F

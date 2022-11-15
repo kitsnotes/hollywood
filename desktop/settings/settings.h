@@ -26,6 +26,7 @@ public:
     SettingsWindow(QWidget *parent = nullptr);
     ~SettingsWindow();
     void showAppletById(const QString &id);
+    void setSingleMode(bool single);
 protected:
     void closeEvent(QCloseEvent*);
 private slots:
@@ -52,5 +53,7 @@ private:
     unsigned int m_homeHeight = 600;
 
     SettingsAppletInterface *m_current = nullptr;
+
+    bool m_single = false;
 };
 #endif // SETTINGS_H

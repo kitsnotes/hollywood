@@ -1,3 +1,4 @@
+include(../../include/global.pri)
 TARGET = HWEglfsXkbSupport
 TEMPLATE = lib
 

@@ -49,6 +49,8 @@ bool StageApplet::loadSettings()
     m_24hour->setChecked(clock_24hr);
     showClockChecked();
 
+    // TODO: remove when fixed
+    m_northern->setChecked(true);
     return true;
 }
 
@@ -317,6 +319,8 @@ void StageApplet::setupWidget()
     m_seconds->setText(QCoreApplication::translate("StageSettings", "Show time with seconds.", nullptr));
     m_24hour->setText(QCoreApplication::translate("StageSettings", "Use a 24 hour clock.", nullptr));
 
-    QMetaObject::connectSlotsByName(m_host);
+    // TODO: remove when fixed
+    m_southern->setDisabled(true);
+    m_position->setDisabled(true);
 }
 

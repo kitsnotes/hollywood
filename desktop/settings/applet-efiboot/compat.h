@@ -44,7 +44,8 @@ typedef char TCHAR;
 #define _T
 inline int _tcserror_s(TCHAR *buffer, size_t size, int errnum)
 {
-    return strerror_r(errnum, buffer, size);
+    strerror_r(errnum, buffer, size);
+    return errnum;
 }
 
 #define _sntprintf_s(buffer, buffer_size, count, format, ...) snprintf(buffer, buffer_size, format, __VA_ARGS__)

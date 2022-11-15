@@ -1,7 +1,10 @@
+include(../../../../../../include/global.pri)
 TARGET = QtEglFsKmsSupport
 CONFIG += static
 TEMPLATE=lib link_pkgconfig
 QT += core-private gui-private fb_support-private dbus
+
+DESTDIR=$${OBJECTS_DIR}../../../../../../output/
 
 INCLUDEPATH += $$PWD/hollywood
 INCLUDEPATH += $$PWD/../../api/hollywood/private

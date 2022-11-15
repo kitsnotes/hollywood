@@ -1,8 +1,12 @@
+include(../../include/global.pri)
 TARGET = HWInputSupport
 TEMPLATE = lib
 
 QT = core-private gui-private core5compat dbus
 CONFIG += internal_module
+DESTDIR=$${OBJECTS_DIR}../../output/
+
+LIBS += -L../../output -lhwudev-$${HOLLYWOOD_APIVERSION}
 
 DEFINES += QT_NO_CAST_FROM_ASCII
 

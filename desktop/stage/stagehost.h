@@ -44,8 +44,7 @@ private:
     QHBoxLayout *m_hbox = nullptr;
     QSpacerItem *m_spacer = nullptr;
     QToolButton *m_menu = nullptr;
-    QToolButton *m_shutdown = nullptr;
-    QMenu *m_context = nullptr;
+    QToolButton *m_showdesktop = nullptr;
 
     QList<TaskButton*> m_windows;
     QButtonGroup *m_group = nullptr;

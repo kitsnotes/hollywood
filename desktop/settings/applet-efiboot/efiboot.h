@@ -18,8 +18,12 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
+#include <QStringList>
 
 #include "compat.h"
+
+static QStringList s_optical_tags = {"cd-rom", "cd-rw", "dvd-rom", "dvd-ram", "dvd-rw", "bd-rom", "bd-rw"};
+static QStringList s_disk_tags = {"harddisk", "hard disk", "nvme", "ssd", "hard drive", "harddrive"};
 
 template <class... Ts>
 struct overloaded: Ts...

@@ -14,6 +14,12 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QTextCodec>
+#include <QIcon>
+#include <QString>
+#include <QApplication>
+#include <QDir>
+
+#include <variant>
 
 std::unique_ptr<std::unordered_map<QString, std::function<std::optional<Device_path::ANY>(const QJsonObject &)>>> Device_path::JSON_readers__instance;
 std::unique_ptr<std::unordered_map<uint16_t, std::function<std::optional<EFIBoot::Device_path::ANY>(const void *, size_t)>>> EFIBoot::Device_path::deserializers__instance;
@@ -28,6 +34,254 @@ std::unique_ptr<std::unordered_map<uint16_t, std::function<std::optional<EFIBoot
 #define try_read_3(field, typecheck, typecast) \
     check_type(field, typecheck);              \
     value.field = static_cast<decltype(value.field)>(obj[#field].to##typecast())
+
+QString BootEntry::prettyName() const
+{
+    return m_prettyname;
+}
+
+QIcon BootEntry::icon() const
+{
+    return myIcon;
+}
+
+QString BootEntry::statusEntry() const
+{
+    return statusLabel;
+}
+
+void BootEntry::doHeuristics()
+{
+    auto name = description.toLower();
+
+    // set our pretty name
+    m_prettyname = description;
+    auto def_sys = QApplication::translate("EFIBoot", "System HD");
+    auto def_win = QApplication::translate("EFIBoot", "Microsoft Windows");
+    auto def_mac = QApplication::translate("EFIBoot", "Apple macOS");
+
+    if(name.contains("windows boot manager"))
+        m_prettyname = def_win;
+
+    if(name.contains("macos") ||
+       name.contains("os x"))
+         m_prettyname = def_mac;
+
+    for(auto &o : s_optical_tags)
+    {
+        if(name.contains(o))
+            m_prettyname = prettyDiskName();
+    }
+
+    for(auto &o2 : s_disk_tags)
+    {
+        if(name.contains(o2))
+            m_prettyname = prettyDiskName();
+    }
+
+    const auto &fp = file_path.at(file_path.length()-2);
+
+    auto is_usb = std::visit([](const auto &obj) {
+        using T = std::decay_t<decltype(obj)>;
+        if constexpr(std::is_same_v<T,Device_path::USB>)
+            return true;
+
+        return false;
+    }, fp);
+
+    auto is_v4_pxe = std::visit([](const auto &obj) {
+        using T = std::decay_t<decltype(obj)>;
+        if constexpr(std::is_same_v<T,Device_path::IPv4>)
+            return true;
+
+        return false;
+    }, fp);
+
+    auto is_v6_pxe = std::visit([](const auto &obj) {
+        using T = std::decay_t<decltype(obj)>;
+        if constexpr(std::is_same_v<T,Device_path::IPv6>)
+            return true;
+
+        return false;
+    }, fp);
+
+    if(is_usb)
+    {
+        auto usbname = description.split(' ').last();
+        auto usbname_parts = usbname.split('-');
+        auto pci_id = usbname_parts[1];
+        auto pci_pathparts = pci_id.split(':');
+        pci_pathparts.removeLast();
+        auto pci_path = pci_pathparts.join(':');
+
+
+        auto usb_id = usbname_parts[2];
+        auto usb_bus = usbname_parts[2].split('.').first();
+        quint8 usb_interface = std::visit([](const auto &obj) {
+            using T = std::decay_t<decltype(obj)>;
+            if constexpr(std::is_same_v<T,Device_path::USB>)
+            {
+                auto myobj = static_cast<Device_path::USB>(obj);
+                return myobj.interface;
+            }
+
+            return quint8(0);
+        }, fp);
+
+        usb_interface++;
+
+        auto path = QString("/sys/devices/pci%1/%2/usb%3/%4-%5/%6-%7/product").arg(pci_path, pci_id,
+                                     QString::number(usb_interface), QString::number(usb_interface),
+                                      usb_bus, QString::number(usb_interface),  usb_id);
+
+        if(QFile::exists(path))
+        {
+            QFile f(path);
+            f.open(QFile::ReadOnly);
+            auto name = f.readAll().trimmed();
+            f.close();
+            m_prettyname = name;
+        }
+    }
+
+    // set our icon
+    myIcon = QIcon::fromTheme("application-x-sharedlib");
+    if(name.contains("efi") && name.contains("shell"))
+        myIcon = QIcon::fromTheme("utilities-terminal");
+
+    if(name.contains("windows boot manager"))
+         myIcon = QIcon(":/OS/Windows");
+
+    if(name.contains("macos") ||
+       name.contains("os x"))
+         myIcon = QIcon(":/OS/Mac");
+
+    for(auto &s : s_optical_tags)
+    {
+        if(name.contains(s))
+             myIcon = QIcon::fromTheme("media-optical");
+    }
+
+    for(auto &s : s_disk_tags)
+    {
+        if(name.contains(s))
+             myIcon = QIcon::fromTheme("drive-harddisk");
+    }
+
+
+    auto testicon = std::visit([](const auto &obj) {
+        using T = std::decay_t<decltype(obj)>;
+        if constexpr(std::is_same_v<T,Device_path::PCI>)
+        {
+            // TODO: fix this its ugly but no better generic card in breeze
+            return QIcon::fromTheme("network-card");
+        }
+        return QIcon();
+    }, fp);
+
+    if(!testicon.isNull())
+        myIcon = testicon;
+
+
+    // verify we are real hollywood
+    auto testloader = std::visit([](const auto &obj) {
+        using T = std::decay_t<decltype(obj)>;
+        if constexpr(std::is_same_v<T,Device_path::File>)
+        {
+            auto myobj = static_cast<Device_path::File>(obj);
+            if(myobj.name == "\\efi\\hollywood\\grubx64.efi" ||
+               myobj.name == "\\efi\\hollywood\\grubaa64.efi" ||
+               myobj.name == "\\efi\\hollywood\\bootx64.efi" ||
+               myobj.name == "\\efi\\hollywood\\bootaa64.efi")
+            return true;
+        }
+        return false;
+    }, fp);
+
+    if(name.contains("hollywood") && testloader)
+    {
+        is_hollywood = true;
+        myIcon = QIcon(":/OS/Hollywood");
+    }
+
+
+    // set our status label
+    QString retstr = QApplication::translate("EFIBoot", "You have selected %1");
+
+    auto mystatus = std::visit([](const auto &obj) {
+        qDebug() << obj.toString(true);
+        using T = std::decay_t<decltype(obj)>;
+        if constexpr(std::is_same_v<T,Device_path::FirmwareFile>)
+        {
+            auto myobj = static_cast<Device_path::FirmwareFile>(obj);
+            return QString("%1 (EFI Boot GUID: ").append(myobj.name.toString().append(")"));
+        }
+        if constexpr(std::is_same_v<T,Device_path::File>)
+        {
+            auto myobj = static_cast<Device_path::File>(obj);
+            return QString("%1 (EFI Boot File: ").append(myobj.name).append(")");
+        }
+        if constexpr(std::is_same_v<T,Device_path::USB>)
+        {
+            auto myobj = static_cast<Device_path::USB>(obj);
+            return QString("%1 (on USB device: ").append(QString::number(myobj.interface))
+                    .append(" port ").append(QString::number(myobj.parent_port_number)).append(")");
+        }
+        return QString("%1");
+    }, fp);
+
+    statusLabel = QString(retstr.arg(mystatus)).arg(m_prettyname);
+
+    if(is_v4_pxe)
+    {
+        m_prettyname = "Network Boot (IPv4)";
+        myIcon = QIcon::fromTheme("network-rj45-female");
+    }
+
+    if(is_v6_pxe)
+    {
+        m_prettyname = "Network Boot (IPv6)";
+        myIcon = QIcon::fromTheme("network-rj45-female");
+    }
+
+}
+
+QString BootEntry::prettyDiskName() const
+{
+    QDir dir("/dev/disk/by-id");
+    for(auto &d : dir.entryInfoList(QDir::NoDotAndDotDot))
+    {
+        if(d.fileName().startsWith("ata") ||
+           d.fileName().startsWith("nvm") ||
+           d.fileName().startsWith("scsi"))
+        {
+            if(d.fileName().mid(d.fileName().length()-5, 5).startsWith("part"))
+            {
+                qDebug() << "this is a partition " << d.fileName();
+                continue;
+            }
+            auto fn = d.fileName().split('-');
+            fn.removeFirst();
+            auto newName = fn.join('-');
+            auto spacetok = newName.split('_');
+
+            auto diskname = spacetok.join(' ');
+            spacetok.removeLast();
+            auto filter = spacetok.join(' ');
+            if(description.contains(diskname))
+                return filter;
+
+            if(description.contains(filter))
+                return filter;
+        }
+    }
+
+    auto desc = description;
+    desc.remove("UEFI");
+    desc.remove("EFI");
+
+    return desc;
+}
 
 auto BootEntry::fromEFIBootLoadOption(
     const EFIBoot::Load_option &load_option) -> BootEntry
@@ -63,6 +317,7 @@ auto BootEntry::fromEFIBootLoadOption(
             { return path; },
             device_path));
 
+    value.doHeuristics();
     return value;
 }
 

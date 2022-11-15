@@ -280,7 +280,11 @@ void Surface::setPosition(const QPointF &pos)
         m_position = pos;
 
     if(m_qt != nullptr && m_qt_moveserial != 0)
-        m_qt->send_set_position(m_qt_moveserial, m_position.x(), m_position.y());
+    {
+        auto x = m_position.x();
+        auto y = m_position.y();
+        m_qt->send_set_position(m_qt_moveserial, x, y);
+    }
 }
 
 QSize Surface::windowSize() const

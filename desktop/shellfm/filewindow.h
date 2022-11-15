@@ -64,13 +64,14 @@ private:
     QMenu *menu_Edit;
     QMenu *menu_View;
     QMenu *menu_Go;
+    QMenu *menu_Sort;
     QMenu *menuRecent_Locations;
     QMenu *menu_Bookmark;
     QMenu *menu_Help;
     QStatusBar *m_statusBar;
     QLabel *m_statusLabel;
     QToolBar *m_toolBar;
-
+    QLineEdit *m_search;
 };
 
 #endif // FILEWINDOW_H

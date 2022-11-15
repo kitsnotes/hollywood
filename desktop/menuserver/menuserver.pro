@@ -37,7 +37,7 @@ HEADERS += \
 QMAKE_SUBSTITUTES += org.originull.menuserver.desktop.in
 desktop.path = $$PREFIX/share/applications
 desktop.files = org.originull.menuserver.desktop
-target.path = $$PREFIX/usr/libexec/hollywood/
+target.path = $$PREFIX/libexec/hollywood/
 
 INSTALLS += target desktop
 

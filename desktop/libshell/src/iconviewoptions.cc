@@ -5,8 +5,9 @@ IconViewOptions::IconViewOptions(QWidget *parent)
     : QWidget(parent),
       m_view(nullptr)
 {
+    layout_Main = new QVBoxLayout(this);
+    setLayout(layout_Main);
     setupWidget();
-    resize(327, 433);
 
     m_Organize->addItem(tr("Name"));
     m_Organize->addItem(tr("File Type"));
@@ -17,6 +18,10 @@ IconViewOptions::IconViewOptions(QWidget *parent)
     m_IconSizing->setOrientation(Qt::Horizontal);
     m_IconSizing->setMinimum(16);
     m_IconSizing->setMaximum(128);
+    m_IconSizing->setSingleStep(4);
+    m_IconSizing->setPageStep(8);
+    m_IconSizing->setTickInterval(8);
+    m_IconSizing->setTickPosition(QSlider::TicksBelow);
 
     QIcon fileIcon = QIcon::fromTheme("text-x-generic");
     QPixmap smallIcon = fileIcon.pixmap(QSize(16,16));
@@ -27,19 +32,37 @@ IconViewOptions::IconViewOptions(QWidget *parent)
     l_IconSzSmall->setMaximumSize(QSize(40,40));
     l_IconSzLarge->setMaximumSize(QSize(40,40));
 
-    m_IconSizing->setMinimum(16);
-    m_IconSizing->setMaximum(128);
-    m_IconSizing->setTickInterval(4);
-    m_IconSizing->setTickPosition(QSlider::TicksBothSides);
+    QIcon smGridIcon = QIcon::fromTheme("games-config-board");
+    QIcon lgGridIcon = QIcon::fromTheme("map-flat");
+    smallIcon = smGridIcon.pixmap(QSize(16,16));
+    largeIcon = lgGridIcon.pixmap(QSize(20,20));
+
+    m_GridSizing->setMinimum(1);
+    m_GridSizing->setMaximum(20);
+    m_GridSizing->setSingleStep(1);
+    m_GridSizing->setPageStep(2);
+    m_GridSizing->setTickInterval(2);
+    m_GridSizing->setTickPosition(QSlider::TicksBelow);
+
+    l_GridSzSmall->setPixmap(smallIcon);
+    l_GridSzLarge->setPixmap(largeIcon);
+    l_GridSzLarge->setMaximumSize(QSize(40,40));
+    l_GridSzSmall->setMaximumSize(QSize(40,40));
+
+    m_TextSize->addItem("10");
+    m_TextSize->addItem("11");
+    m_TextSize->addItem("12");
+    m_TextSize->addItem("13");
+    m_TextSize->addItem("14");
+    m_TextSize->addItem("15");
+    m_TextSize->addItem("16");
 
 }
 
 void IconViewOptions::setupWidget()
 {
-    layout_Main = new QVBoxLayout(this);
-    layout_Main->setObjectName(QString::fromUtf8("layout_Main"));
     layout_Organize = new QHBoxLayout();
-    layout_Organize->setObjectName(QString::fromUtf8("layout_Organize"));
+
     l_Organize = new QLabel(this);
     l_Organize->setObjectName(QString::fromUtf8("l_Organize"));
 
@@ -175,16 +198,16 @@ void IconViewOptions::setupWidget()
     layout_Main->addWidget(checkBox_2);
     layoutDefaults = new QHBoxLayout();
     layoutDefaults->setObjectName(QString::fromUtf8("LayoutDefauls"));
-    sp_DefLeft = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+    sp_DefLeft = new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Minimum);
     layoutDefaults->addItem(sp_DefLeft);
     m_setDefaults = new QPushButton(this);
     m_setDefaults->setObjectName(QString::fromUtf8("SetDefaults"));
     layoutDefaults->addWidget(m_setDefaults);
-    sp_DefRight = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+    sp_DefRight = new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Minimum);
     layoutDefaults->addItem(sp_DefRight);
-    layout_Main->addLayout(layoutDefaults);
-    spBottom = new QSpacerItem(20, 23, QSizePolicy::Minimum, QSizePolicy::Expanding);
+    spBottom = new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding);
     layout_Main->addItem(spBottom);
+    layout_Main->addLayout(layoutDefaults);
 
     l_Organize->setText(tr("Organize By:"));
     l_IconSize->setText(tr("Icon Size: 0x0 px"));

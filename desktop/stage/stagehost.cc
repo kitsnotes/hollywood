@@ -6,11 +6,11 @@
 #include <QButtonGroup>
 #include <QtWaylandClient/private/qwaylandwindow_p.h>
 
+
 StageHost::StageHost(QScreen *screen, QWidget *parent)
     : QWidget(parent)
     , m_screen(screen)
     , m_menu(new QToolButton(this))
-    , m_context(new QMenu(this))
     , m_group(new QButtonGroup(this))
     , m_clock(new StageClock(this))
 {
@@ -22,30 +22,13 @@ StageHost::StageHost(QScreen *screen, QWidget *parent)
     m_menu->setPopupMode(QToolButton::InstantPopup);
     m_menu->setToolTip(tr("Launch applications and control your system."));
 
-    //m_menu->setDisabled(true);
-    m_shutdown = new QToolButton(this);
+    /*m_shutdown = new QToolButton(this);
     m_shutdown->setIcon(QIcon::fromTheme("system-shutdown"));
-    m_shutdown->setAutoRaise(true);
-
-
-    auto aboutSys = m_context->addAction(tr("&About This Computer..."));
-    m_context->addSeparator();
-    m_menu->setMenu(m_context);
+    m_shutdown->setAutoRaise(true); */    
+    //connect(m_shutdown, &QToolButton::pressed, app, &StageApplication::logoffSession);
+    m_menu->setMenu(app->systemMenu());
     m_menu->setArrowType(Qt::NoArrow);
-    auto settings = m_context->addAction(tr("System &Settings"));
-    auto sysmon = m_context->addAction(tr("System &Monitor"));
-    auto term = m_context->addAction(tr("&Terminull"));
-
-    connect(aboutSys, &QAction::triggered, app, &StageApplication::launchAbout);
-    connect(settings, &QAction::triggered, app, &StageApplication::launchSettings);
-    connect(sysmon, &QAction::triggered, app, &StageApplication::launchSysmon);
-    connect(term, &QAction::triggered, app, &StageApplication::launchTerminull);
-    m_context->addSeparator();
-    auto logoff = m_context->addAction(tr("&Exit Session..."));
-    connect(logoff, &QAction::triggered, app, &StageApplication::logoffSession);
-    connect(m_shutdown, &QToolButton::pressed, app, &StageApplication::logoffSession);
     setAlignment(Horizontal);
-
 
     m_group->setExclusive(true);
 }
@@ -79,7 +62,7 @@ void StageHost::setAlignment(Alignment align)
         m_spacer = new QSpacerItem(1,1,QSizePolicy::Expanding);
         m_hbox->addItem(m_spacer);
         m_hbox->addWidget(m_clock);
-        m_hbox->addWidget(m_shutdown);
+        //m_hbox->addWidget(m_shutdown);
         setLayout(m_hbox);
         setMinimumHeight(1);
         setMaximumHeight(30);

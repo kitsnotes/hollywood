@@ -86,6 +86,13 @@ void SettingsWindow::closeEvent(QCloseEvent *event)
     event->accept();
 }
 
+void SettingsWindow::setSingleMode(bool single)
+{
+    m_menuBar->setVisible(!single);
+    m_toolBar->setVisible(!single);
+    m_single = single;
+}
+
 void SettingsWindow::clicked(const QModelIndex &index)
 {
     if(!m_proxyModel->checkIndex(index))
@@ -120,16 +127,25 @@ void SettingsWindow::showAppletWidget(SettingsAppletInterface *applet)
     setWindowIcon(applet->icon());
     m_showAll->setEnabled(true);
 
-    auto wheight = applet->applet()->heightForWidth(m_homeWidth);
-    auto animation = new QPropertyAnimation(this, "size");
-    QSize start = size();
-    QSize end = QSize(m_homeWidth, wheight+m_menuBar->height()+m_toolBar->height());
-    animation->setStartValue(start);
-    animation->setEndValue(end);
-    animation->setDuration(190);
-    animation->setEasingCurve(QEasingCurve::InOutQuad);
-    animation->start(QAbstractAnimation::DeleteWhenStopped);
-
+    if(!m_single)
+    {
+        auto wheight = applet->applet()->heightForWidth(m_homeWidth);
+        auto animation = new QPropertyAnimation(this, "size");
+        QSize start = size();
+        QSize end = QSize(m_homeWidth, wheight+m_menuBar->height()+m_toolBar->height());
+        animation->setStartValue(start);
+        animation->setEndValue(end);
+        animation->setDuration(190);
+        animation->setEasingCurve(QEasingCurve::InOutQuad);
+        animation->start(QAbstractAnimation::DeleteWhenStopped);
+    }
+    else
+    {
+        QSize sizeHint(m_homeWidth, applet->applet()->minimumHeight());
+        setMaximumHeight(applet->applet()->minimumHeight());
+        resize(sizeHint);
+        qDebug() << "sizeHint" << sizeHint;
+    }
     setCentralWidget(applet->applet());
     m_list = nullptr; // qmainwindow will destroy this
     applet->applet()->setFocus();
@@ -303,18 +319,27 @@ int main(int argc, char *argv[])
     p.addHelpOption();
     p.addVersionOption();
 
+    p.addOptions({
+     {{"S", "single"},
+         QCoreApplication::translate("main", "Start in single applet mode.")},
+    });
     p.process(a);
 
     auto execapplet = QString();
 
+
     if(p.positionalArguments().count() > 0)
         execapplet = p.positionalArguments().first();
 
+    bool single = false;
+    if(p.isSet("single"))
+        single = true;
 
     SettingsWindow w;
-    w.show();
+    w.setSingleMode(single);
     if(!execapplet.isEmpty())
         w.showAppletById(execapplet);
+    w.show();
 
     return a.exec();
 }

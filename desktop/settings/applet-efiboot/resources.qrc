@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/OS">
+        <file alias="Mac">icons/os_mac_alt.png</file>
+        <file alias="Windows">icons/os_windows.png</file>
+        <file alias="Linux">icons/Tux.png</file>
+        <file alias="Hollywood">icons/hollywood.png</file>
+    </qresource>
+</RCC>

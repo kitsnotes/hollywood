@@ -25,7 +25,7 @@ QAction* LSActionManager::shellAction(ArionShell::ShellActions action)
     case ArionShell::ACT_FILE_TRASH:
         return actionMove_to_Trash;
     case ArionShell::ACT_FILE_OPEN_WITH:
-        return actionOp_en_With;
+        return a_OpenWith;
     case ArionShell::ACT_EDIT_UNDO:
         return a_Undo;
     case ArionShell::ACT_EDIT_REDO:
@@ -46,6 +46,26 @@ QAction* LSActionManager::shellAction(ArionShell::ShellActions action)
         return a_List;
     case ArionShell::ACT_VIEW_COLUMNS:
         return a_Columns;
+    case ArionShell::ACT_VIEW_SORT_NONE:
+        return a_sortNone;
+    case ArionShell::ACT_VIEW_SORT_NAME:
+        return a_sortName;
+    case ArionShell::ACT_VIEW_SORT_SIZE:
+        return a_sortSize;
+    case ArionShell::ACT_VIEW_SORT_KIND:
+        return a_sortKind;
+    case ArionShell::ACT_VIEW_SORT_MODIFIED:
+        return a_sortModified;
+    case ArionShell::ACT_VIEW_SORT_OWNER:
+        return a_sortOwner;
+    case ArionShell::ACT_VIEW_SORT_GROUP:
+        return a_sortGroup;
+    case ArionShell::ACT_VIEW_SORT_COMMENT:
+        return a_sortComment;
+    case ArionShell::ACT_VIEW_SORT_ASC:
+        return a_sortAsc;
+    case ArionShell::ACT_VIEW_SORT_DESC:
+        return a_sortDesc;
     case ArionShell::ACT_VIEW_OPTIONS:
         return a_ViewOptions;
     case ArionShell::ACT_GO_BACK:
@@ -91,38 +111,46 @@ void LSActionManager::setupActions()
     a_Open->setObjectName(QString::fromUtf8("FileOpen"));
     a_Open->setShortcut(QKeySequence(QKeySequence::Open));
 
-    actionOp_en_With = new QAction(this);
-    actionOp_en_With->setObjectName(QString::fromUtf8("FileOpenWith"));
+    a_OpenWith = new QAction(this);
+    a_OpenWith->setObjectName(QString::fromUtf8("FileOpenWith"));
 
     a_Undo = new QAction(this);
     a_Undo->setObjectName(QString::fromUtf8("EditUndo"));
     a_Undo->setShortcut(QKeySequence(QKeySequence::Undo));
     a_Undo->setIcon(QIcon::fromTheme(QString::fromUtf8("edit-undo")));
+    a_Undo->setIconVisibleInMenu(false);
     a_Redo = new QAction(this);
     a_Redo->setObjectName(QString::fromUtf8("EditRedo"));
     a_Redo->setShortcut(QKeySequence(QKeySequence::Redo));
     a_Redo->setIcon(QIcon::fromTheme(QString::fromUtf8("edit-redo")));
+    a_Redo->setIconVisibleInMenu(false);
     a_Cut = new QAction(this);
     a_Cut->setObjectName(QString::fromUtf8("EditCut"));
     a_Cut->setShortcut(QKeySequence(QKeySequence::Cut));
     a_Cut->setIcon(QIcon::fromTheme(QString::fromUtf8("edit-cut")));
+    a_Cut->setIconVisibleInMenu(false);
     a_Copy = new QAction(this);
     a_Copy->setObjectName(QString::fromUtf8("EditCopy"));
     a_Copy->setShortcut(QKeySequence(QKeySequence::Copy));
     a_Copy->setIcon(QIcon::fromTheme(QString::fromUtf8("edit-copy")));
+    a_Copy->setIconVisibleInMenu(false);
     a_Paste = new QAction(this);
     a_Paste->setObjectName(QString::fromUtf8("EditPaste"));
     a_Paste->setShortcut(QKeySequence(QKeySequence::Paste));
     a_Paste->setIcon(QIcon::fromTheme(QString::fromUtf8("edit-paste")));
+    a_Paste->setIconVisibleInMenu(false);
     actionSelect_All = new QAction(this);
     actionSelect_All->setObjectName(QString::fromUtf8("EditSelectAll"));
     actionSelect_All->setShortcut(QKeySequence(QKeySequence::SelectAll));
+    actionSelect_All->setIconVisibleInMenu(false);
     a_InvertSelection = new QAction(this);
     a_InvertSelection->setObjectName(QString::fromUtf8("EditInvertSelection"));
 
 
     // View Menu
     QActionGroup *grpViewStyles = new QActionGroup(this);
+    QActionGroup *grpViewSortCol = new QActionGroup(this);
+    QActionGroup *grpViewSortDir = new QActionGroup(this);
     a_Icons = new QAction(this);
     a_Icons->setObjectName(QString::fromUtf8("ViewIcons"));
     a_Icons->setCheckable(true);
@@ -138,6 +166,72 @@ void LSActionManager::setupActions()
     grpViewStyles->addAction(a_Icons);
     grpViewStyles->addAction(a_List);
     grpViewStyles->addAction(a_Columns);
+
+    a_sortNone = new QAction(this);
+    a_sortNone->setObjectName(QString::fromUtf8("SortNone"));
+    a_sortNone->setCheckable(true);
+    a_sortNone->setShortcut(QKeySequence("Ctrl+Alt+Shift+0"));
+    a_sortNone->setText(tr("None"));
+
+    a_sortName = new QAction(this);
+    a_sortName->setObjectName(QString::fromUtf8("SortByName"));
+    a_sortName->setCheckable(true);
+    a_sortName->setShortcut(QKeySequence("Ctrl+Alt+Shift+1"));
+    a_sortName->setText(tr("&Name"));
+    a_sortSize = new QAction(this);
+    a_sortSize->setObjectName(QString::fromUtf8("SortBySize"));
+    a_sortSize->setCheckable(true);
+    a_sortSize->setShortcut(QKeySequence("Ctrl+Alt+Shift+2"));
+    a_sortSize->setText(tr("&Size"));
+    a_sortKind = new QAction(this);
+    a_sortKind->setObjectName(QString::fromUtf8("SortByKind"));
+    a_sortKind->setCheckable(true);
+    a_sortKind->setShortcut(QKeySequence("Ctrl+Alt+Shift+3"));
+    a_sortKind->setText(tr("&Kind"));
+
+    a_sortModified = new QAction(this);
+    a_sortModified->setObjectName(QString::fromUtf8("SortByName"));
+    a_sortModified->setCheckable(true);
+    a_sortModified->setShortcut(QKeySequence("Ctrl+Alt+Shift+4"));
+    a_sortModified->setText(tr("&Modification Date"));
+    a_sortOwner = new QAction(this);
+    a_sortOwner->setObjectName(QString::fromUtf8("SortByOwner"));
+    a_sortOwner->setCheckable(true);
+    a_sortOwner->setShortcut(QKeySequence("Ctrl+Alt+Shift+5"));
+    a_sortOwner->setText(tr("&Owner"));
+    a_sortGroup = new QAction(this);
+    a_sortGroup->setObjectName(QString::fromUtf8("SortByGroup"));
+    a_sortGroup->setCheckable(true);
+    a_sortGroup->setShortcut(QKeySequence("Ctrl+Alt+Shift+6"));
+    a_sortGroup->setText(tr("&Group"));
+    a_sortComment = new QAction(this);
+    a_sortComment->setObjectName(QString::fromUtf8("SortByComment"));
+    a_sortComment->setCheckable(true);
+    a_sortComment->setShortcut(QKeySequence("Ctrl+Alt+Shift+7"));
+    a_sortComment->setText(tr("&Comment"));
+
+    grpViewSortCol->addAction(a_sortNone);
+    grpViewSortCol->addAction(a_sortName);
+    grpViewSortCol->addAction(a_sortSize);
+    grpViewSortCol->addAction(a_sortKind);
+    grpViewSortCol->addAction(a_sortModified);
+    grpViewSortCol->addAction(a_sortOwner);
+    grpViewSortCol->addAction(a_sortGroup);
+    grpViewSortCol->addAction(a_sortComment);
+
+    a_sortAsc = new QAction(this);
+    a_sortAsc->setObjectName(QString::fromUtf8("SortAsc"));
+    a_sortAsc->setCheckable(true);
+    //a_sortAsc->setShortcut(QKeySequence("Ctrl+Alt+Shift+7"));
+    a_sortAsc->setText(tr("&Ascending Order"));
+    a_sortDesc = new QAction(this);
+    a_sortDesc->setObjectName(QString::fromUtf8("SortDesc"));
+    a_sortDesc->setCheckable(true);
+    //a_sortDesc->setShortcut(QKeySequence("Ctrl+Alt+Shift+7"));
+    a_sortDesc->setText(tr("&Descending Order"));
+
+    grpViewSortDir->addAction(a_sortAsc);
+    grpViewSortDir->addAction(a_sortDesc);
 
     a_ViewOptions = new QAction(this);
     a_ViewOptions->setObjectName(QString::fromUtf8("ShowViewOptions"));
@@ -214,7 +308,7 @@ void LSActionManager::setupActions()
     actionMove_to_Trash->setText(tr("Move to &Trash"));
     a_Eject_Volume->setText(tr("&Eject Volume"));
     a_Open->setText(tr("&Open"));
-    actionOp_en_With->setText(tr("Op&en With"));
+    a_OpenWith->setText(tr("Op&en With"));
     a_Undo->setText(tr("&Undo"));
     a_Redo->setText(tr("&Redo"));
     a_Cut->setText(tr("&Cut"));

@@ -24,8 +24,9 @@
 #include <qelapsedtimer.h>
 
 #include "fileinfo.h"
+#include "hwfileiconprovider.h"
 
-class QFileIconProvider;
+class HWFileIconProvider;
 class LSFileInfoGatherer : public QThread
 {
 Q_OBJECT
@@ -52,7 +53,7 @@ public:
     void clear();
     void removePath(const QString &path);
     LSExtendedFileInfo getInfo(const QFileInfo &info) const;
-    QFileIconProvider *iconProvider() const;
+    HWFileIconProvider *iconProvider() const;
     bool resolveSymlinks() const;
 
 public Q_SLOTS:
@@ -60,7 +61,7 @@ public Q_SLOTS:
     void fetchExtendedInformation(const QString &path, const QStringList &files);
     void updateFile(const QString &path);
     void setResolveSymlinks(bool enable);
-    void setIconProvider(QFileIconProvider *provider);
+    void setIconProvider(HWFileIconProvider *provider);
 
 private:
     void run() Q_DECL_OVERRIDE;
@@ -83,8 +84,8 @@ private:
 #ifdef Q_OS_WIN
     bool m_resolveSymlinks; // not accessed by run()
 #endif
-    QFileIconProvider *m_iconProvider; // not accessed by run()
-    QFileIconProvider defaultProvider;
+    HWFileIconProvider *m_iconProvider; // not accessed by run()
+    HWFileIconProvider defaultProvider;
     bool m_watching = true;
 };
 

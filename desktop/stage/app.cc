@@ -8,11 +8,15 @@
 #include <executor.h>
 
 #include <desktopentry.h>
-
+#include <QDBusInterface>
 #include <QIcon>
 
+#include <sys/types.h>
+#include <pwd.h>
+#include <unistd.h>
+
 #define HWSETTINGS_APP      "org.originull.hwsettings.desktop"
-#define HWSYSMON_APP        "org.originull.hwsysmon.desktop"
+#define HWSYSMON_APP        "org.originull.sysmon.desktop"
 #define TERMINULL_APP       "org.originull.terminull.desktop"
 #define ABOUT_APP           "org.originull.about.desktop"
 
@@ -21,12 +25,16 @@ StageApplication::StageApplication(int &argc, char **argv)
     , m_cfgwatch(new QFileSystemWatcher(this))
     , m_wndmgr(new PlasmaWindowManagement())
     , m_model(new QStandardItemModel(this))
+    , m_context(new QMenu(0))
 {
     setApplicationVersion(HOLLYWOOD_OS_VERSION);
     setOrganizationDomain(HOLLYWOOD_OS_DOMAIN);
     setOrganizationName(HOLLYWOOD_OS_ORGNAME);
     setApplicationName("Stage");
     setWindowIcon(QIcon::fromTheme("system-file-manager"));
+
+    if(callSessionDBus("startedByDisplayManager"))
+        m_started_dm = true;
 
     loadSettings();
     m_cfgwatch = new QFileSystemWatcher();
@@ -36,6 +44,44 @@ StageApplication::StageApplication(int &argc, char **argv)
 
     connect(m_wndmgr, &PlasmaWindowManagement::windowCreated,
             this, &StageApplication::newPlasmaWindow);
+
+    auto aboutSys = m_context->addAction(tr("&About This Computer..."));
+    m_context->addSeparator();
+    auto settings = m_context->addAction(tr("System &Settings"));
+    auto sysmon = m_context->addAction(tr("System &Monitor"));
+    auto term = m_context->addAction(tr("&Terminull"));
+
+    connect(aboutSys, &QAction::triggered, this, &StageApplication::launchAbout);
+    connect(settings, &QAction::triggered, this, &StageApplication::launchSettings);
+    connect(sysmon, &QAction::triggered, this, &StageApplication::launchSysmon);
+    connect(term, &QAction::triggered, this, &StageApplication::launchTerminull);
+    m_context->addSeparator();
+    auto restart = m_context->addAction(tr("&Restart..."));
+    connect(restart, &QAction::triggered, this, &StageApplication::restartSystem);
+    auto shutdown = m_context->addAction(tr("Shut &Down..."));
+    connect(shutdown, &QAction::triggered, this, &StageApplication::shutdownSystem);
+    m_context->addSeparator();
+    auto logoff = m_context->addAction(tr("&Exit Session..."));
+    if(displayManagerStart())
+    {
+        struct passwd *me;
+        if((me = getpwuid(getuid())) != NULL)
+        {
+            auto gecos = QString(me->pw_gecos);
+            auto name = QString(me->pw_name);
+
+            QString display = name;
+            if(!gecos.isEmpty())
+                display = gecos;
+
+            logoff->setText(tr("Log off %1...").arg(display));
+        }
+        else
+            logoff->setText(tr("Log off..."));
+
+        logoff->setDisabled(true);
+    }
+    connect(logoff, &QAction::triggered, this, &StageApplication::logoffSession);
 }
 
 void StageApplication::createWindows()
@@ -75,6 +121,30 @@ void StageApplication::showProgramManager()
         m_pm = new ProgramManager(0);
     }
     m_pm->show();
+}
+
+void StageApplication::restartSystem()
+{
+    QMessageBox msg(0);
+    msg.setIconPixmap(QIcon::fromTheme("system-reboot").pixmap(QSize(64,64)));
+    msg.setWindowTitle(tr("Restart System"));
+    msg.setText(tr("<b>Are you ready to restart your computer now?</b>"));
+    msg.setInformativeText(tr("You should save all documents before restarting."));
+    msg.setStandardButtons(QMessageBox::Yes|QMessageBox::No);
+    if(msg.exec() == QMessageBox::Yes)
+        callSessionDBus("reboot");
+}
+
+void StageApplication::shutdownSystem()
+{
+    QMessageBox msg(0);
+    msg.setIconPixmap(QIcon::fromTheme("system-shutdown").pixmap(QSize(64,64)));
+    msg.setWindowTitle(tr("Shut Down System"));
+    msg.setText(tr("<b>Are you ready to shut down your computer now?</b>"));
+    msg.setInformativeText(tr("You should save all documents before shutting down."));
+    msg.setStandardButtons(QMessageBox::Yes|QMessageBox::No);
+    if(msg.exec() == QMessageBox::Yes)
+        callSessionDBus("powerOff");
 }
 
 void StageApplication::privateProtocolReady()
@@ -142,8 +212,36 @@ void StageApplication::newPlasmaWindow(PlasmaWindow *c)
 
 void StageApplication::configChanged()
 {
-    qDebug() << "configChanged";
     loadSettings();
+}
+
+bool StageApplication::callSessionDBus(const QString &exec)
+{
+    QDBusInterface ldb(HOLLYWOOD_SESSION_DBUS, HOLLYWOOD_SESSION_DBUSOBJ, HOLLYWOOD_SESSION_DBUSPATH);
+    if(!ldb.isValid())
+    {
+         qDebug() << QString("Could not call session DBUS interface. Command: %1")
+                   .arg(exec);
+        return false;
+    }
+
+    QDBusMessage msg = ldb.call(exec);
+
+    if(msg.arguments().isEmpty() || msg.arguments().constFirst().isNull())
+        return true;
+
+    auto response = msg.arguments().constFirst();
+
+    if(msg.arguments().isEmpty())
+        return true;
+
+    if(response.isNull())
+        return true;
+
+    if(response.toBool())
+        return true;
+
+    return false;
 }
 
 void StageApplication::startProcess(const QString &exec)

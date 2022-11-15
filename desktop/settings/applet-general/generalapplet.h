@@ -16,6 +16,7 @@
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QComboBox>
+#include <QtWidgets/QFontComboBox>
 
 class ASGeneralApplet : public QObject, SettingsAppletInterface
 {
@@ -74,8 +75,8 @@ private:
 
     QSlider *m_fontSize;
 
-    QComboBox *m_browser;
-    QComboBox *m_email;
+    QFontComboBox *m_def_font;
+    QFontComboBox *m_def_fixedsys;
 
     QButtonGroup *bg_accentcolor;
     QButtonGroup *bg_apperance;

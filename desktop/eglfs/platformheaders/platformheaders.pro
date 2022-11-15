@@ -1,5 +1,6 @@
 TARGET = HollywoodEglfsPlatformSupport
 TEMPLATE=lib
+DESTDIR=$${OBJECTS_DIR}../../output/
 
 QT = core-private gui core5compat
 CONFIG += lib

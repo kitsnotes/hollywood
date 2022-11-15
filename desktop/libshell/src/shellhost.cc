@@ -19,8 +19,6 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
       m_delegate(new LSFSItemDelegate(this))
 {
     setContentsMargins(0,0,0,0);
-    // TODO: arion shell (not app) settings
-    // since this is a library
     QSettings settings("originull", "hollywood");
     m_model->setRootPath("/");
 
@@ -83,12 +81,13 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
 
     m_columnPreview = new LSColumnPreview(this);
     m_filesColumn->setPreviewWidget(m_columnPreview);
+    m_filesColumn->setContextMenuPolicy(Qt::CustomContextMenu);
 
     /* Setup Icon View */
     m_filesList->setObjectName(QString::fromUtf8("FilesIcon"));
     m_filesList->setModel(m_model);
-    m_filesList->setIconSize(QSize(48,48));
-    m_filesList->setSpacing(10);
+    m_filesList->setIconSize(QSize(32,32));
+    m_filesList->setSpacing(6);
     m_filesList->setViewMode(QListView::IconMode);
     m_filesList->setFlow(QListView::LeftToRight);
     m_filesList->setTextElideMode(Qt::ElideMiddle);
@@ -97,7 +96,7 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
     m_filesList->setUniformItemSizes(false);
     m_filesList->setItemDelegate(m_delegate);
     m_filesList->setSelectionMode(QAbstractItemView::ContiguousSelection);
-
+    m_filesList->setContextMenuPolicy(Qt::CustomContextMenu);
 
     /* Setup List View */
     m_filesTable = new QTreeView(this);
@@ -106,7 +105,11 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
     m_filesTable->setAlternatingRowColors(true);
     m_filesTable->setAnimated(true);
     m_filesTable->setExpandsOnDoubleClick(false);
-
+    m_filesTable->setContextMenuPolicy(Qt::CustomContextMenu);
+    m_filesTable->setSelectionMode(QAbstractItemView::ContiguousSelection);
+    m_filesTable->setSortingEnabled(true);
+    m_filesTable->header()->setFirstSectionMovable(false);
+    m_filesTable->header()->resizeSection(0,290);
     /* Only the icons is visible here - window setup
      * procedure will set the default where required */
     m_filesColumn->setVisible(false);
@@ -241,6 +244,7 @@ bool LSEmbeddedShellHost::navigateToUrl(const QUrl &path)
         QModelIndex idx = m_model->index(file);
         if(idx.isValid())
         {
+            // TODO: back list append
             updateRootIndex(idx);
             return true;
         }
@@ -252,7 +256,6 @@ bool LSEmbeddedShellHost::navigateToUrl(const QUrl &path)
 
 void LSEmbeddedShellHost::newTabWithPath(const QUrl &path)
 {
-    qDebug() << "newTabWithPath: " << path.toString();
     if(path.isLocalFile())
     {
      const QString localPath = path.toLocalFile();
@@ -291,23 +294,27 @@ void LSEmbeddedShellHost::currentTabChanged(int index)
         setIconListView(false);
     }
     navigateToUrl(path);
+    updateNavigationButtonStatus();
     emit updateStatusBar(generateStatusBarMsg());
  }
 
 
 void LSEmbeddedShellHost::setIconListView(bool updateSettings)
 {
-    disconnect(this, nullptr, m_filesList, nullptr);
-    disconnect(this, nullptr, m_filesColumn, nullptr);
-    disconnect(this, nullptr, m_filesTable, nullptr);
+    if(m_curSelModel != nullptr)
+        m_curSelModel->clear();
+
+    m_curSelModel = nullptr;
+    disconnectViewSlots();
 
     m_tabWndHostLayout->replaceWidget(m_tabWndHostLayout->itemAt(1)->widget(), m_filesList);
     m_filesColumn->setVisible(false);
     m_filesList->setVisible(true);
     m_filesTable->setVisible(false);
     m_actions->shellAction(ArionShell::ACT_VIEW_ICONS)->setChecked(true);
+    connect(m_filesList, &QAbstractItemView::customContextMenuRequested, this, &LSEmbeddedShellHost::viewContextMenuRequested);
     connect(m_filesList, &QListView::clicked, this, &LSEmbeddedShellHost::viewClicked);
-    connect(m_filesList, &QListView::activated, this, &LSEmbeddedShellHost::viewDoubleClicked);
+    connect(m_filesList, &QListView::activated, this, &LSEmbeddedShellHost::viewActivated);
     connect(m_filesList->selectionModel(), &QItemSelectionModel::selectionChanged,
             this, &LSEmbeddedShellHost::viewSelectionChanged);
     m_viewMode = ArionShell::VIEW_ICONS;
@@ -319,20 +326,26 @@ void LSEmbeddedShellHost::setIconListView(bool updateSettings)
         QSettings settings("originull", "hollywood");
         settings.setValue("Preferences/DefaultView", m_viewMode);
     }
+    disableActionsForNoSelection();
+    m_curSelModel = m_filesList->selectionModel();
     emit updateStatusBar(generateStatusBarMsg());
 }
 
 void LSEmbeddedShellHost::setColumnView(bool updateSettings)
 {
-    disconnect(this, nullptr, m_filesList, nullptr);
-    disconnect(this, nullptr, m_filesColumn, nullptr);
-    disconnect(this, nullptr, m_filesTable, nullptr);
+    if(m_curSelModel != nullptr)
+        m_curSelModel->clear();
+
+    m_curSelModel = nullptr;
+
+    disconnectViewSlots();
     m_tabWndHostLayout->replaceWidget(m_tabWndHostLayout->itemAt(1)->widget(), m_filesColumn);
     m_filesColumn->setVisible(true);
     m_filesList->setVisible(false);
     m_filesTable->setVisible(false);
     m_actions->shellAction(ArionShell::ACT_VIEW_COLUMNS)->setChecked(true);
-    connect(m_filesColumn, &QColumnView::doubleClicked, this, &LSEmbeddedShellHost::viewDoubleClicked);
+    connect(m_filesColumn, &QAbstractItemView::customContextMenuRequested, this, &LSEmbeddedShellHost::viewContextMenuRequested);
+    connect(m_filesColumn, &QColumnView::doubleClicked, this, &LSEmbeddedShellHost::viewActivated);
     connect(m_filesColumn->selectionModel(), &QItemSelectionModel::selectionChanged,
             this, &LSEmbeddedShellHost::viewSelectionChanged);
     m_viewMode = ArionShell::VIEW_COLUMN;
@@ -344,23 +357,29 @@ void LSEmbeddedShellHost::setColumnView(bool updateSettings)
         QSettings settings("originull", "hollywood");
         settings.setValue("Preferences/DefaultView", m_viewMode);
     }
+    m_curSelModel = m_filesColumn->selectionModel();
+    disableActionsForNoSelection();
     emit updateStatusBar(generateStatusBarMsg());
 }
 
 void LSEmbeddedShellHost::setTableListView(bool updateSettings)
 {
-    disconnect(this, nullptr, m_filesList, nullptr);
-    disconnect(this, nullptr, m_filesColumn, nullptr);
-    disconnect(this, nullptr, m_filesTable, nullptr);
+    if(m_curSelModel != nullptr)
+        m_curSelModel->clear();
 
+    disconnectViewSlots();
+    m_curSelModel = nullptr;
     m_tabWndHostLayout->replaceWidget(m_tabWndHostLayout->itemAt(1)->widget(), m_filesTable);
     m_filesColumn->setVisible(false);
     m_filesList->setVisible(false);
     m_filesTable->setVisible(true);
     m_actions->shellAction(ArionShell::ACT_VIEW_LIST)->setChecked(true);
     m_viewMode = ArionShell::VIEW_LIST;
+    connect(m_filesTable, &QAbstractItemView::customContextMenuRequested, this, &LSEmbeddedShellHost::viewContextMenuRequested);
     connect(m_filesTable, &QTreeView::clicked, this, &LSEmbeddedShellHost::viewClicked);
-    connect(m_filesTable, &QTreeView::doubleClicked, this, &LSEmbeddedShellHost::viewDoubleClicked);
+    connect(m_filesTable, &QTreeView::activated, this, &LSEmbeddedShellHost::viewActivated);
+    connect(m_filesTable->selectionModel(), &QItemSelectionModel::selectionChanged,
+            this, &LSEmbeddedShellHost::viewSelectionChanged);
     QUuid uuid = m_tabs->tabData(m_tabs->currentIndex()).toUuid();
     m_tabViewMode[uuid] = m_viewMode;
     m_viewOptions->setCurrentView(ArionShell::VIEW_LIST);
@@ -369,6 +388,8 @@ void LSEmbeddedShellHost::setTableListView(bool updateSettings)
         QSettings settings("originull", "hollywood");
         settings.setValue("Preferences/DefaultView", m_viewMode);
     }
+    m_curSelModel = m_filesTable->selectionModel();
+    disableActionsForNoSelection();
     emit updateStatusBar(generateStatusBarMsg());
 }
 
@@ -378,14 +399,17 @@ void LSEmbeddedShellHost::viewClicked(const QModelIndex &idx)
     emit updateStatusBar(generateStatusBarMsg());
 }
 
-void LSEmbeddedShellHost::viewDoubleClicked(const QModelIndex &idx)
+void LSEmbeddedShellHost::viewActivated(const QModelIndex &idx)
 {
     QFileInfo fileInfo(m_model->fileInfo(idx));
     if(fileInfo.isDir())
     {
         // TODO: Handle a spacitial mode
         if(fileInfo.isReadable() && fileInfo.isExecutable())
+        {
+            updateBackForwardList(QUrl::fromLocalFile(fileInfo.canonicalFilePath()));
             updateRootIndex(idx);
+        }
         else
             showFolderPermissionError(fileInfo.fileName());
     }
@@ -407,7 +431,13 @@ void LSEmbeddedShellHost::viewDoubleClicked(const QModelIndex &idx)
 
 void LSEmbeddedShellHost::viewSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected)
 {
-    Q_UNUSED(selected);
+    if(selected.count() > 2)
+        enableActionsForFileSelection(true);
+    else if(selected.count() == 1)
+        enableActionsForFileSelection(false);
+    else
+        disableActionsForNoSelection();
+
     Q_UNUSED(deselected);
     emit updateStatusBar(generateStatusBarMsg());
 }
@@ -434,6 +464,107 @@ void LSEmbeddedShellHost::createNewTab()
     QString path =
             QStandardPaths::standardLocations(QStandardPaths::HomeLocation).first();
     newTabWithPath(QUrl::fromLocalFile(path));
+}
+
+void LSEmbeddedShellHost::viewContextMenuRequested(const QPoint &pos)
+{
+    auto menu = new QMenu(this);
+    connect(menu, &QMenu::aboutToHide, menu, &QMenu::deleteLater);
+
+    QModelIndex pointIndex;
+    switch(m_viewMode)
+    {
+    case ArionShell::VIEW_ICONS:
+        pointIndex = m_filesList->indexAt(pos);
+        break;
+    case ArionShell::VIEW_LIST:
+        pointIndex = m_filesTable->indexAt(pos);
+        break;
+    case ArionShell::VIEW_COLUMN:
+        pointIndex = m_filesColumn->indexAt(pos);
+        break;
+    }
+
+    bool onSel = false;
+    if(pointIndex.isValid())
+    {
+        // we rightclick on a valid index
+
+        if(m_curSelModel != nullptr)
+        {
+            if(m_curSelModel->selectedIndexes().contains(pointIndex))
+                onSel = true;
+            else
+            {
+                // vald index, not part of selection though
+                // lets select it
+                m_curSelModel->clearSelection();
+                m_curSelModel->select(pointIndex, QItemSelectionModel::ClearAndSelect);
+                onSel = true;
+            }
+        }
+    }
+
+    if(onSel)
+    {
+        // create our menu for a selection
+        //menu->addAction(m_actions->shellAction(ArionShell::ACT_FILE_OPEN_WITH));
+        menu->addAction(m_actions->shellAction(ArionShell::ACT_FILE_OPEN_WITH));
+        menu->addAction(m_actions->shellAction(ArionShell::ACT_FILE_ARCHIVE));
+        menu->addAction(m_actions->shellAction(ArionShell::ACT_FILE_RENAME));
+        menu->addAction(m_actions->shellAction(ArionShell::ACT_EDIT_COPY));
+        menu->addSeparator();
+        menu->addAction(m_actions->shellAction(ArionShell::ACT_FILE_TRASH));
+        menu->addSeparator();
+        menu->addAction(m_actions->shellAction(ArionShell::ACT_FILE_GET_INFO));
+    }
+    else
+    {
+        // no selection - create menu for this folder
+        menu->addAction(m_actions->shellAction(ArionShell::ACT_FILE_NEW_FOLDER));
+        menu->addAction(m_actions->shellAction(ArionShell::ACT_EDIT_PASTE));
+        menu->addSeparator();
+        menu->addAction(m_actions->shellAction(ArionShell::ACT_FILE_GET_INFO));
+    }
+
+    menu->popup(mapToGlobal(pos));
+}
+
+void LSEmbeddedShellHost::disableActionsForNoSelection()
+{
+    m_actions->shellAction(ArionShell::ACT_FILE_RENAME)->setText(tr("&Rename"));
+    m_actions->shellAction(ArionShell::ACT_FILE_OPEN_WITH)->setDisabled(true);
+    m_actions->shellAction(ArionShell::ACT_FILE_GET_INFO)->setDisabled(true);
+    m_actions->shellAction(ArionShell::ACT_FILE_RENAME)->setDisabled(true);
+    m_actions->shellAction(ArionShell::ACT_FILE_ARCHIVE)->setDisabled(true);
+    m_actions->shellAction(ArionShell::ACT_FILE_TRASH)->setDisabled(true);
+
+    m_actions->shellAction(ArionShell::ACT_EDIT_COPY)->setDisabled(true);
+    m_actions->shellAction(ArionShell::ACT_EDIT_CUT)->setDisabled(true);
+    m_actions->shellAction(ArionShell::ACT_EDIT_INV_SEL)->setDisabled(true);
+}
+
+void LSEmbeddedShellHost::enableActionsForFileSelection(bool multiple)
+{
+    if(!multiple)
+        m_actions->shellAction(ArionShell::ACT_FILE_RENAME)->setText(tr("&Rename"));
+    else
+        m_actions->shellAction(ArionShell::ACT_FILE_RENAME)->setText(tr("&Rename..."));
+
+
+    m_actions->shellAction(ArionShell::ACT_FILE_GET_INFO)->setEnabled(true);
+    m_actions->shellAction(ArionShell::ACT_FILE_RENAME)->setEnabled(true);
+    //m_actions->shellAction(ArionShell::ACT_FILE_ARCHIVE)->setEnabled(true);
+    m_actions->shellAction(ArionShell::ACT_FILE_TRASH)->setEnabled(true);
+
+    m_actions->shellAction(ArionShell::ACT_EDIT_COPY)->setEnabled(true);
+
+    // TODO: check if .desktop
+    m_actions->shellAction(ArionShell::ACT_FILE_OPEN_WITH)->setEnabled(true);
+
+    //m_actions->shellAction(ArionShell::ACT_EDIT_CUT)->setDisabled(true);
+    m_actions->shellAction(ArionShell::ACT_EDIT_INV_SEL)->setDisabled(true);
+
 }
 
 void LSEmbeddedShellHost::updatePlaceModelSelection(const QUrl &place)
@@ -520,7 +651,56 @@ void LSEmbeddedShellHost::showFolderPermissionError(const QString &folder)
     delete msg;
 }
 
-void LSEmbeddedShellHost::updateRootIndex(const QModelIndex &idx)
+void LSEmbeddedShellHost::disconnectViewSlots()
+{
+    disconnect(m_filesColumn, &QAbstractItemView::customContextMenuRequested, this, &LSEmbeddedShellHost::viewContextMenuRequested);
+    disconnect(m_filesList, &QAbstractItemView::customContextMenuRequested, this, &LSEmbeddedShellHost::viewContextMenuRequested);
+    disconnect(m_filesTable, &QAbstractItemView::customContextMenuRequested, this, &LSEmbeddedShellHost::viewContextMenuRequested);
+
+    disconnect(m_filesColumn, &QColumnView::activated, this, &LSEmbeddedShellHost::viewActivated);
+    disconnect(m_filesColumn->selectionModel(), &QItemSelectionModel::selectionChanged,
+            this, &LSEmbeddedShellHost::viewSelectionChanged);
+    disconnect(m_filesList, &QListView::clicked, this, &LSEmbeddedShellHost::viewClicked);
+    disconnect(m_filesList, &QListView::activated, this, &LSEmbeddedShellHost::viewActivated);
+    disconnect(m_filesList->selectionModel(), &QItemSelectionModel::selectionChanged,
+            this, &LSEmbeddedShellHost::viewSelectionChanged);
+
+    disconnect(m_filesTable, &QTreeView::clicked, this, &LSEmbeddedShellHost::viewClicked);
+    disconnect(m_filesTable, &QTreeView::activated, this, &LSEmbeddedShellHost::viewActivated);
+    disconnect(m_filesTable->selectionModel(), &QItemSelectionModel::selectionChanged,
+            this, &LSEmbeddedShellHost::viewSelectionChanged);
+}
+
+void LSEmbeddedShellHost::updateBackForwardList(const QUrl &url, bool goback)
+{
+    if(!goback)
+    {
+        QUuid uuid = m_tabs->tabData(m_tabs->currentIndex()).toUuid();
+        m_backLists[uuid].prepend(url);
+        m_forwardLists[uuid].clear();
+    }
+    updateNavigationButtonStatus();
+}
+
+void LSEmbeddedShellHost::updateNavigationButtonStatus()
+{
+    QUuid uuid = m_tabs->tabData(m_tabs->currentIndex()).toUuid();
+    auto bc = m_backLists[uuid].count();
+    auto fc = m_forwardLists[uuid].count();
+
+    if(bc == 0)
+        m_actions->shellAction(ArionShell::ACT_GO_BACK)->setEnabled(false);
+    else
+        m_actions->shellAction(ArionShell::ACT_GO_BACK)->setEnabled(true);
+
+    if(fc == 0)
+        m_actions->shellAction(ArionShell::ACT_GO_FORWARD)->setEnabled(false);
+    else
+        m_actions->shellAction(ArionShell::ACT_GO_FORWARD)->setEnabled(true);
+
+}
+
+void LSEmbeddedShellHost::updateRootIndex(const QModelIndex &idx, bool internal)
 {
     QSettings settings("originull", "hollywood");
     bool showFullPath = settings.value("Preferences/ShowFullPathName", false).toBool();
@@ -553,6 +733,7 @@ void LSEmbeddedShellHost::updateRootIndex(const QModelIndex &idx)
     }
     m_tabs->setTabIcon(m_tabs->currentIndex(), ico);
     QUuid uuid = m_tabs->tabData(m_tabs->currentIndex()).toUuid();
+
     m_tabLocations[uuid] = QUrl::fromLocalFile(info.canonicalFilePath());
     emit updateWindowIcon(ico);
     QUrl url = QUrl::fromLocalFile(directory);
@@ -598,7 +779,7 @@ void LSEmbeddedShellHost::goEnclosingFolder()
     default:
         currentIndex = m_filesList->rootIndex();
     }
-
+    updateBackForwardList(QUrl::fromLocalFile(m_model->fileInfo(currentIndex).canonicalFilePath()));
     updateRootIndex(currentIndex.parent());
 }
 

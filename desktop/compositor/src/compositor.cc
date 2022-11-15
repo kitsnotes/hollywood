@@ -508,7 +508,6 @@ void Compositor::onSetTransient(QWaylandSurface *parent, const QPoint &relativeT
 
 void Compositor::onSetPopup(QWaylandSeat *seat, QWaylandSurface *parent, const QPoint &relativeToParent)
 {
-    qDebug() << "onSetPopup";
     Q_UNUSED(relativeToParent);
     Q_UNUSED(seat);
     QWaylandWlShellSurface *surface = qobject_cast<QWaylandWlShellSurface*>(sender());

@@ -1,5 +1,6 @@
 TARGET = HWKmsSupport
 TEMPLATE=lib
+DESTDIR=$${OBJECTS_DIR}../../../output/
 
 QT = core-private gui-private core5compat dbus
 CONFIG += internal_module

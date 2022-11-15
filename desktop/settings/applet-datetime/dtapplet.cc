@@ -15,6 +15,7 @@
 #include <QProcess>
 #include <QFile>
 #include <QToolButton>
+#include <QStringList>
 
 ASDateTimeApplet::ASDateTimeApplet(QObject *parent)
     : QObject(parent)
@@ -135,7 +136,6 @@ void ASDateTimeApplet::polkitActivated()
     } else {
         // OR return false to notify the caller that the action is not authorized.
         qDebug() << "caller is NOT authorized to do:" << action->actionId();
-
     }
 }
 
@@ -397,7 +397,16 @@ void ASDateTimeApplet::getCurrentTimezone()
     }
     else
     {
+        QStringList sl = f.symLinkTarget().split('/');
 
+        auto location = sl.takeLast();
+        auto region = sl.takeLast();
+
+        auto zone = m_zones->findtz(region, location);
+        if(zone)
+            m_timezones->setCurrentLocation(zone);
+        else
+            m_timezones->setCurrentLocation(m_zones->findtz(QLatin1String("Etc"), QLatin1String("UTC")));
     }
 }
 

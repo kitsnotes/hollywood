@@ -9,7 +9,7 @@
 class SessionDBus : public QDBusAbstractAdaptor
 {
     Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", HOLLYWOOD_SESSION_DBUS)
+    Q_CLASSINFO("D-Bus Interface", HOLLYWOOD_SESSION_DBUSPATH)
 
 public:
     SessionDBus(SMApplication *parent)
@@ -29,6 +29,11 @@ public slots:
     bool canPowerOff()
     {
         return m_parent->canShutdown();
+    }
+
+    bool startedByDisplayManager()
+    {
+        return m_parent->displayManagerStart();
     }
 
     Q_NOREPLY void logout()

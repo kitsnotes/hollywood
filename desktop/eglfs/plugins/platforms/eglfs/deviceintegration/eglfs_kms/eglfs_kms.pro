@@ -6,7 +6,8 @@ PLUGIN_CLASS_NAME = QEglFSKmsGbmIntegrationPlugin
 TEMPLATE=lib
 CONFIG += plugin link_pkgconfig
 QT += core-private gui-private fb_support-private dbus opengl_private
-PKGCONFIG += hwudev-$${HOLLYWOOD_APIVERSION} hwlogind-$${HOLLYWOOD_APIVERSION}
+
+DESTDIR=$${OBJECTS_DIR}../../../../../../output/
 
 INCLUDEPATH += $$PWD/../../api $$PWD/../eglfs_kms_support
 INCLUDEPATH += $$PWD/../../api/hollywood/private
@@ -39,11 +40,13 @@ HEADERS += $$PWD/qeglfskmsgbmintegration_p.h \
 OTHER_FILES += $$PWD/eglfs_kms.json
 
 LIBS += -L$$OUT_PWD \
+    -L$${OBJECTS_DIR}../../../../../../output/ \
     -L$$PWD/../eglfs_kms_support/ \
     -L$$[QT_INSTALL_PLUGINS]/platforms/ \
     -L$$PWD/../../ \
     -L$$PWD/../../../../../platformsupport/kmsconvenience \
     -L$$PWD/../../../../../platformsupport/edid \
+    -lhwudev-$${HOLLYWOOD_APIVERSION} -lhwlogind-$${HOLLYWOOD_APIVERSION} \
     -lHWEglFSDeviceIntegration -lQtEglFsKmsSupport -lHWKmsSupport -lHWInputSupport -lHWEdidSupport
 
 target.path = $$[QT_INSTALL_PLUGINS]/hwdeviceintegrations

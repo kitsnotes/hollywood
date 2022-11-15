@@ -1,7 +1,9 @@
+include(../../include/global.pri)
 TARGET = HWEdidSupport
 TEMPLATE = lib
 QT = core-private
 CONFIG += internal_module
+DESTDIR=$${OBJECTS_DIR}../../../output/
 
 INCLUDEPATH += $$PWD/hollywood
 

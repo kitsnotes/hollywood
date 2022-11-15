@@ -19,9 +19,9 @@
 #include <QtCore/qdiriterator.h>
 
 class ExtendedInformation;
+class HWFileIconProvider;
 class LSFSModelPrivate;
 class QFileIconProvider;
-
 class LSFSModel : public QAbstractItemModel
 {
     Q_OBJECT
@@ -33,13 +33,24 @@ Q_SIGNALS:
     void rootPathChanged(const QString &newPath);
     void fileRenamed(const QString &path, const QString &oldName, const QString &newName);
     void directoryLoaded(const QString &path);
-
+    void sortingChanged();
 public:
     enum Roles {
         FileIconRole = Qt::DecorationRole,
         FilePathRole = Qt::UserRole + 1,
         FileNameRole = Qt::UserRole + 2,
         FilePermissions = Qt::UserRole + 3
+    };
+
+    enum Column
+    {
+        Name,
+        Size,
+        Kind,
+        ModificationDate,
+        Owner,
+        Group,
+        Comment
     };
 
     enum Option
@@ -77,6 +88,9 @@ public:
     Qt::ItemFlags flags(const QModelIndex &index) const Q_DECL_OVERRIDE;
 
     void sort(int column, Qt::SortOrder order = Qt::AscendingOrder) Q_DECL_OVERRIDE;
+    Column sortColumn() const;
+    Qt::SortOrder sortOrder() const;
+
     QHash<int, QByteArray> roleNames() const Q_DECL_OVERRIDE;
 
     void setOption(Option option, bool);
@@ -95,8 +109,7 @@ public:
     QString rootPath() const;
     QDir rootDirectory() const;
 
-    void setIconProvider(QFileIconProvider *provider);
-    QFileIconProvider *iconProvider() const;
+    HWFileIconProvider *iconProvider() const;
 
     void setFilter(QDir::Filters filters);
     QDir::Filters filter() const;

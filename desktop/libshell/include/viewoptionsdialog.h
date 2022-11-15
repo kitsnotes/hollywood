@@ -17,8 +17,11 @@ public slots:
 private:
     void refreshViewOptions();
 private:
+    QVBoxLayout *m_layout;
     ArionShell::ViewMode m_viewMode;
     IconViewOptions *m_icons;
+
+    QWidget *m_current = nullptr;
 };
 
 #endif // VIEWOPTIONSDIALOG_H

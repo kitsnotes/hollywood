@@ -5,7 +5,8 @@ FileWindow::FileWindow(ArionShell::WindowMode windowMode, QWidget *parent)
     : QMainWindow(parent),
       m_shellHost(new LSEmbeddedShellHost(this)),
       m_windowMode(windowMode),
-      m_menuBar(new QMenuBar(this))
+      m_menuBar(new QMenuBar(this)),
+      m_search(new QLineEdit(this))
 {
     setObjectName("FMWindow");
     setupActions();
@@ -47,10 +48,12 @@ void FileWindow::setupMenuBar()
     menu_Bookmark = new QMenu(m_menuBar);
     menu_Help = new QMenu(m_menuBar);
     menuRecent_Locations = new QMenu(menu_Go);
+    menu_Sort = new QMenu(menu_View);
 
     menu_File->setObjectName(QString::fromUtf8("FileMenu"));
     menu_Edit->setObjectName(QString::fromUtf8("EditMenu"));
     menu_View->setObjectName(QString::fromUtf8("ViewMeu"));
+    menu_Sort->setObjectName(QString::fromUtf8("SortOrderMenu"));
     menu_Go->setObjectName(QString::fromUtf8("GoMenu"));
     menuRecent_Locations->setObjectName(QString::fromUtf8("RecentLocationsMenu"));
     menu_Bookmark->setObjectName(QString::fromUtf8("BookmarskMeu"));
@@ -63,6 +66,7 @@ void FileWindow::setupMenuBar()
     menuRecent_Locations->setTitle(tr("Recent &Locations"));
     menu_Bookmark->setTitle(tr("&Bookmarks"));
     menu_Help->setTitle(tr("&Help"));
+    menu_Sort->setTitle(tr("&Sort By"));
 
     m_menuBar->addAction(menu_File->menuAction());
     m_menuBar->addAction(menu_Edit->menuAction());
@@ -76,7 +80,7 @@ void FileWindow::setupMenuBar()
     menu_File->addAction(m_shellHost->shellAction(ArionShell::ACT_FILE_NEW_FOLDER));
     menu_File->addAction(m_shellHost->shellAction(ArionShell::ACT_FILE_NEW_FILE));
     menu_File->addSeparator();
-    //menu_File->addAction(m_shellHost->shellAction(ArionShell::ACT_FILE_OPEN));
+    menu_File->addAction(m_shellHost->shellAction(ArionShell::ACT_FILE_OPEN));
     menu_File->addAction(m_shellHost->shellAction(ArionShell::ACT_FILE_OPEN_WITH));
     menu_File->addAction(m_shellHost->shellAction(ArionShell::ACT_FILE_GET_INFO));
     menu_File->addAction(m_shellHost->shellAction(ArionShell::ACT_FILE_RENAME));
@@ -95,9 +99,24 @@ void FileWindow::setupMenuBar()
     menu_Edit->addSeparator();
     menu_Edit->addAction(m_shellHost->shellAction(ArionShell::ACT_EDIT_SEL_ALL));
     menu_Edit->addAction(m_shellHost->shellAction(ArionShell::ACT_EDIT_INV_SEL));
+
     menu_View->addAction(m_shellHost->shellAction(ArionShell::ACT_VIEW_ICONS));
     menu_View->addAction(m_shellHost->shellAction(ArionShell::ACT_VIEW_LIST));
     menu_View->addAction(m_shellHost->shellAction(ArionShell::ACT_VIEW_COLUMNS));
+    menu_View->addSeparator();
+    menu_View->addAction(menu_Sort->menuAction());
+    menu_Sort->addAction(m_shellHost->shellAction(ArionShell::ACT_VIEW_SORT_NONE));
+    menu_Sort->addAction(m_shellHost->shellAction(ArionShell::ACT_VIEW_SORT_NAME));
+    menu_Sort->addAction(m_shellHost->shellAction(ArionShell::ACT_VIEW_SORT_SIZE));
+    menu_Sort->addAction(m_shellHost->shellAction(ArionShell::ACT_VIEW_SORT_KIND));
+    menu_Sort->addAction(m_shellHost->shellAction(ArionShell::ACT_VIEW_SORT_MODIFIED));
+    menu_Sort->addAction(m_shellHost->shellAction(ArionShell::ACT_VIEW_SORT_OWNER));
+    menu_Sort->addAction(m_shellHost->shellAction(ArionShell::ACT_VIEW_SORT_GROUP));
+    menu_Sort->addAction(m_shellHost->shellAction(ArionShell::ACT_VIEW_SORT_COMMENT));
+    menu_Sort->addSeparator();
+    menu_Sort->addAction(m_shellHost->shellAction(ArionShell::ACT_VIEW_SORT_ASC));
+    menu_Sort->addAction(m_shellHost->shellAction(ArionShell::ACT_VIEW_SORT_DESC));
+
     menu_View->addSeparator();
     menu_View->addAction(a_Toolbar);
     menu_View->addAction(a_StatusBar);
@@ -287,6 +306,10 @@ void FileWindow::setupMainView()
     m_toolBar->addAction(m_shellHost->shellAction(ArionShell::ACT_GO_FORWARD));
     m_toolBar->addAction(m_shellHost->shellAction(ArionShell::ACT_GO_ENCLOSING_FOLDER));
     m_toolBar->addWidget(m_shellHost->locationBar());
+    m_toolBar->addWidget(m_search);
+    m_search->setMaximumWidth(150);
+    m_search->setDisabled(true);
+    m_search->setPlaceholderText(tr("Search"));
     m_toolBar->setWindowTitle(tr("Toolbar"));
     m_toolBar->setMovable(false);
     m_toolBar->setFloatable(false);

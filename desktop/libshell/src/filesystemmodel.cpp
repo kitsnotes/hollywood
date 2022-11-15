@@ -226,8 +226,6 @@ bool LSFSModel::isDesktop(const QModelIndex &index) const
     if (!index.isValid())
         return false;
     LSFSNode *n = d->node(index);
-    //n->desktopFileNameEntry();
-    qDebug() << "index dekstop check";
     return n->isDesktopFile();
 }
 
@@ -402,12 +400,13 @@ QVariant LSFSModel::data(const QModelIndex &index, int role) const
     case Qt::DecorationRole:
         if (index.column() == 0) {
             QIcon icon = d->icon(index);
-            if (icon.isNull()) {
+
+            /*if (icon.isNull()) {
                 if (d->node(index)->isDir())
                     icon = d->fileInfoGatherer.iconProvider()->icon(QAbstractFileIconProvider::Folder);
                 else
                     icon = d->fileInfoGatherer.iconProvider()->icon(QAbstractFileIconProvider::File);
-            }
+            }*/
             return icon;
         }
         break;
@@ -787,6 +786,18 @@ void LSFSModel::sort(int column, Qt::SortOrder order)
     emit layoutChanged();
 }
 
+LSFSModel::Column LSFSModel::sortColumn() const
+{
+    Q_D(const LSFSModel);
+    return (LSFSModel::Column)d->sortColumn;
+}
+
+Qt::SortOrder LSFSModel::sortOrder() const
+{
+    Q_D(const LSFSModel);
+    return d->sortOrder;
+}
+
 QStringList LSFSModel::mimeTypes() const
 {
     return QStringList(QLatin1String("text/uri-list"));
@@ -1051,16 +1062,10 @@ QDir LSFSModel::rootDirectory() const
     return dir;
 }
 
-QFileIconProvider *LSFSModel::iconProvider() const
+HWFileIconProvider *LSFSModel::iconProvider() const
 {
     Q_D(const LSFSModel);
     return d->fileInfoGatherer.iconProvider();
-}
-
-void LSFSModel::setIconProvider(QFileIconProvider *provider)
-{
-    Q_D(LSFSModel);
-    d->fileInfoGatherer.setIconProvider(provider);
 }
 
 void LSFSModel::setFilter(QDir::Filters filters)
