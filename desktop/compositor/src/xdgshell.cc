@@ -1548,7 +1548,7 @@ void HWWaylandXdgPopup::handleRedraw()
     Q_D(HWWaylandXdgPopup);
 
     if (!d->m_layerParent) {
-        auto *resource = HWWaylandXdgSurfacePrivate::get(d->m_xdgSurface)->resource();
+        //auto *resource = HWWaylandXdgSurfacePrivate::get(d->m_xdgSurface)->resource();
         // TODO: fix this? it breaks xdg-shell
         //wl_resource_post_error(resource->handle, XDG_WM_BASE_ERROR_INVALID_POPUP_PARENT,
         //                       "xdg_surface.get_popup with invalid popup parent");

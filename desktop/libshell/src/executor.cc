@@ -53,6 +53,9 @@ bool ExecutorPrivate::createProcess(QString &exec, QStringList args)
     auto proc = new QProcess(p);
     proc->setProgram(exec);
     proc->setArguments(args);
+    auto env = QProcessEnvironment::systemEnvironment();
+    env.remove("HW_TWILIGHT_SHELL");
+    proc->setProcessEnvironment(env);
 
     bool start = proc->startDetached();
     if(start)

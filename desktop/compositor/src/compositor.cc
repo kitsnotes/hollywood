@@ -16,16 +16,18 @@
 #include "layershell.h"
 #include "gtkshell.h"
 #include "qtshell.h"
+#include "fullscreen.h"
 
 #include "surfaceobject.h"
 
 #include <QSettings>
 #include <QPainter>
 #include <QTextOption>
+#include <QFile>
 #include <hollywood/hollywood.h>
 #include <sys/utsname.h>
 
-Compositor::Compositor()
+Compositor::Compositor(bool sddm)
     : m_wlShell(new QWaylandWlShell(this)),
     m_xdgShell(new HWWaylandXdgShell(this)),
     m_xdgDecoration(new QWaylandXdgDecorationManagerV1()),
@@ -35,6 +37,8 @@ Compositor::Compositor()
     m_appMenu(new AppMenuManager(this)),
     m_gtk(new GtkShell(this)),
     m_qt(new QtShell(this)),
+    m_fs(new FullscreenShell(this)),
+    m_sddm(sddm),
     m_desktop_bg(QColor(HOLLYWOOD_DEF_DESKTOP_BG))
 {
     loadSettings();
@@ -61,6 +65,7 @@ Compositor::Compositor()
     connect(m_layerShell, &WlrLayerShellV1::layerSurfaceCreated, this, &Compositor::onLayerSurfaceCreated);
     connect(m_gtk, &GtkShell::surfaceCreated, this, &Compositor::onGtkSurfaceCreated);
     connect(m_qt, &QtShell::surfaceCreated, this, &Compositor::onQtSurfaceCreated);
+    connect(m_fs, &FullscreenShell::surfacePresented, this, &Compositor::onFullscreenSurfaceRequested);
 
     generateDesktopInfoLabelImage();
 }
@@ -168,7 +173,7 @@ void Compositor::generateDesktopInfoLabelImage()
         kernel = QLatin1String(unb.release);
 
     lines << QString("Hollywood %1 (API %2, Kernel %3)")
-        .arg(QLatin1String(HOLLYWOOD_OS_VERSION))
+        .arg(QLatin1String("Edge"))
         .arg(QLatin1String(QT_VERSION_STR))
         .arg(kernel);
 
@@ -224,6 +229,23 @@ QImage *Compositor::desktopLabelImage()
     return m_dtlabel;
 }
 
+bool Compositor::processHasTwilightMode(quint64 pid) const
+{
+    QFile file(QString("/proc/%1/environ").arg(QString::number(pid)));
+    if(file.exists())
+    {
+        if(file.open(QFile::ReadOnly))
+        {
+            auto data = file.readAll();
+            file.close();
+            if(data.contains("HW_TWILIGHT_SHELL"))
+                return true;
+        }
+    }
+
+    return false;
+}
+
 QList<SurfaceView*> Compositor::views() const
 {
     QList<SurfaceView*> returnList;
@@ -239,6 +261,8 @@ QList<SurfaceView*> Compositor::views() const
 void Compositor::onSurfaceCreated(QWaylandSurface *surface)
 {
     auto *obj = new Surface(surface);
+    bool twilight = processHasTwilightMode(surface->client()->processId());
+    obj->setTwilight(twilight);
     auto outputAt = outputAtPosition(obj->position().toPoint());
     if(outputAt == nullptr)
     {
@@ -368,8 +392,9 @@ void Compositor::loadSettings()
         ac = QColor(QLatin1String(HOLLYWOOD_ACCENT_BLUE));
     m_accent = ac;
 
-    int _app = settings.value(QLatin1String("ApperanceMode")).toInt();
-    if(_app < 0 || _app > 1)
+    uint old_app = m_apperance;
+    uint _app = settings.value(QLatin1String("ApperanceMode")).toUInt();
+    if(_app > 2)
         _app = 0;   // default to light mode on invalid settings
     m_apperance = _app;
 
@@ -408,6 +433,13 @@ void Compositor::loadSettings()
     m_legacyExperience = settings.value("LegacyExperience", false).toBool();
 
     settings.endGroup();
+
+    if(m_apperance != old_app)
+    {
+        // dark/light mode changed - redraw SSD's
+        for(auto s : m_surfaces)
+            s->renderDecoration();
+    }
     emit settingsChanged();
 }
 
@@ -456,6 +488,19 @@ void Compositor::onQtSurfaceCreated(QtSurface *qtSurface)
     surface->createQtSurface(qtSurface);
 }
 
+void Compositor::onFullscreenSurfaceRequested(QWaylandSurface *surface)
+{
+    m_hasFullscreenSurface = true;
+    auto ms = findSurfaceObject(surface);
+    m_fullscreenSurface = ms;
+    ms->m_fullscreenShell = true;
+    // TODO: multi-output
+    ms->setPosition(QPoint(0,0));
+
+    defaultSeat()->setKeyboardFocus(surface);
+    // TODO: handle destruction
+}
+
 void Compositor::onXdgTopLevelCreated(HWWaylandXdgToplevel *topLevel, HWWaylandXdgSurface *surface)
 {
     auto *mySurface = findSurfaceObject(surface->surface());
@@ -463,8 +508,8 @@ void Compositor::onXdgTopLevelCreated(HWWaylandXdgToplevel *topLevel, HWWaylandX
     mySurface->createXdgTopLevelSurface(topLevel);
     // TODO: better initial position of top level xdg shells
 
-    auto scrsize  =m_outputs.first()->size();
-    auto surfsize = surface->surface()->destinationSize();
+    /*auto scrsize  =m_outputs.first()->size();
+    auto surfsize = surface->surface()->destinationSize(); */
 
     mySurface->setPosition(QPointF(40,50));
 }
@@ -661,6 +706,7 @@ void Compositor::handleMouseEvent(QWaylandView *target, QMouseEvent *me)
                         || surface->role() == QWaylandWlShellSurface::role()
                         || surface->role() == HWWaylandXdgToplevel::role()
                         || surface->role() == QtSurface::role()
+                        || findSurfaceObject(surface)->isFullscreenShell()
                         || surface->role() == HWWaylandXdgPopup::role()) {
                     seat->setKeyboardFocus(surface);
                 }

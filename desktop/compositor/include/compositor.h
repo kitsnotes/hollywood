@@ -28,6 +28,7 @@
 #define BUTTON_WIDTH 18
 #define BUTTONS_RIGHT_MARGIN 8
 
+class FullscreenShell;
 class QWaylandWlShell;
 class QWaylandWlShellSurface;
 class QWaylandXdgShell;
@@ -50,7 +51,7 @@ class Compositor : public QWaylandCompositor
 {
     Q_OBJECT
 public:
-    Compositor();
+    Compositor(bool is_sddm);
     ~Compositor() override;
     void create() override;
 
@@ -80,7 +81,7 @@ public:
 
     uint decorationSize() const { return m_decorationSize; }
     uint borderSize() const { return m_borderSize; }
-    uint darkMode() const { return m_apperance; }
+    uint viewMode() const { return m_apperance; }
 
     PlasmaWindowManagement *windowManager() { return m_wndmgr; }
     WlrLayerShellV1 *layerShell() { return m_layerShell; }
@@ -95,6 +96,9 @@ public:
     QString surfaceZOrderByUUID() const;
     void generateDesktopInfoLabelImage();
     QImage *desktopLabelImage();
+    bool hasFullscreenSurface() const { return m_hasFullscreenSurface; }
+    bool processHasTwilightMode(quint64 pid) const;
+    bool isRunningLoginManager() const { return m_sddm; }
 protected:
     void adjustCursorSurface(QWaylandSurface *surface, int hotspotX, int hotspotY);
     void recycleSurfaceObject(Surface *obj);
@@ -124,6 +128,7 @@ protected slots:
     void onLayerSurfaceCreated(WlrLayerSurfaceV1 *layerSurface);
     void onGtkSurfaceCreated(GtkSurface *gtkSurface);
     void onQtSurfaceCreated(QtSurface *qtSurface);
+    void onFullscreenSurfaceRequested(QWaylandSurface *surface);
     void onSetTransient(QWaylandSurface *parentSurface, const QPoint &relativeToParent, bool inactive);
     void onSetPopup(QWaylandSeat *seat, QWaylandSurface *parent, const QPoint &relativeToParent);
 
@@ -154,6 +159,8 @@ private:
     uint m_borderSize = 1;
     uint m_apperance = 0;
 
+    bool m_sddm = false;
+
     QList<Output*> m_outputs;
     uint m_id = 0;
     // Our list of surfaces
@@ -178,7 +185,8 @@ private:
     GtkShell *m_gtk = nullptr;
     // Qt Shell protocol support
     QtShell *m_qt = nullptr;
-
+    // fullscreen-shell protocol support
+    FullscreenShell *m_fs = nullptr;
     // Our cursor
     Surface *m_cursorObject = nullptr;
     int m_cursorHotspotX;
@@ -203,6 +211,9 @@ private:
     bool m_legacyExperience = false;
 
     QImage *m_dtlabel = nullptr;
+
+    bool m_hasFullscreenSurface = false;
+    Surface *m_fullscreenSurface = nullptr;
 };
 
 #endif // WINDOWCOMPOSITOR_H

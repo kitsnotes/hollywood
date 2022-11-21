@@ -125,6 +125,8 @@ public:
     QImage* decorationImage();
     Surface *topLevelSurface() const { return m_parentTopLevelSurface; }
     QIcon icon() const { return m_icon; }
+    bool isFullscreenShell() const { return m_fullscreenShell; }
+    void setTwilight(bool twilight) { m_twilight = twilight; }
 public slots:
     void activate();
     void deactivate();
@@ -213,6 +215,8 @@ private:
     bool m_moving = false;
     SurfaceType m_surfaceType;
 
+    bool m_fullscreenShell = false;
+
     QRectF m_viewport;
 
     QSize m_ls_size;
@@ -254,6 +258,8 @@ private:
     Output *m_ls_output = nullptr;
 
     QIcon m_icon = QIcon();
+
+    bool m_twilight = false;
 };
 
 #endif // SURFACEOBJECT_H

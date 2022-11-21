@@ -97,6 +97,8 @@ private:
     uint m_cursorFlash = 1000;
 
     QScopedPointer<WaylandIntegration> m_wayland;
+
+    bool m_twilightShell = false;
 };
 
 #endif // PLATFORMTHEME_H

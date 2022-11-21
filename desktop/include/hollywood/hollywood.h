@@ -43,8 +43,8 @@
 // colors.txt definition file
 #define HOLLYWOOD_DEF_DESKTOP_BG    "#be93d4"
 
-#define HOLLYWOOD_PT_SMALL          8
-#define HOLLYWOOD_PT_NORMAL         10
+#define HOLLYWOOD_PT_SMALL          6
+#define HOLLYWOOD_PT_NORMAL         9
 #define HOLLYWOOD_PT_LARGE          12
 #define HOLLYWOOD_PT_XLARGE         14
 

@@ -505,17 +505,30 @@ QString HorizonWizard::toHScript() {
               dynamic_cast<DateTimePage *>(page(Page_DateTime))->selectedTimeZone());
 
     // lines << "svcenable defaults";
-    lines << "svcenable acpid sysinit";
+    //lines << "svcenable acpid sysinit";
     lines << "svcenable sysklogd sysinit";
     lines << "svcenable udev sysinit";
-    lines << "svcenable udev-trigger boot";
-    lines << "svcenable dbus boot";
-    lines << "svcenable connman boot";
+    lines << "svcenable udev-trigger sysinit";
+    lines << "svcenable loadkeys sysinit";
+    lines << "svcenable sysctl sysinit";
+    lines << "svcenable bootmisc sysinit";
+    lines << "svcenable dbus sysinit";
+    lines << "svcenable connman sysinit";
+    lines << "svcenable urandom sysinit";
+
     lines << "svcenable openntpd boot";
     lines << "svcenable cronie boot";
     lines << "svcenable elogind boot";
-    lines << "svcenable agetty.tty1 boot";
+    lines << "svcenable bootmisc boot";
     lines << "svcenable polkit boot";
+    lines << "svcenable rtkit boot";
+    lines << "svcenable wpa_supplicant boot";
+    lines << "svcenable agetty.tty1 default";
+
+    lines << "svcenable killprocs shutdown";
+    lines << "svcenable savecache shutdown";
+    lines << "svcenable savekeymaps shutdown";
+    lines << "svcenable mount-ro shutdown";
 
     /* char *root = encrypt_pw(field("rootpw").toString().toStdString().c_str());
     Q_ASSERT(root != nullptr);
@@ -549,7 +562,7 @@ QString HorizonWizard::toHScript() {
         if(acctWidget->isAutoLogin() && !did_autologin)
         {
             lines << ("autologin " + acctWidget->accountText());
-            lines << "svcenable sddm boot";
+            lines << "svcenable sddm default";
 
             did_autologin = true;
         }

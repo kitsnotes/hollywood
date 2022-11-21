@@ -31,13 +31,14 @@ void WallpaperManager::setup()
     m_shader->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/Shaders/transition.fsh");
     m_shader->link();
 
-    glUseProgram(m_shader->programId());
+    QOpenGLFunctions *functions = QOpenGLContext::currentContext()->functions();
+    functions->glUseProgram(m_shader->programId());
 
-    glGenBuffers(1,&VBOWP);
-    glBindBuffer(GL_ARRAY_BUFFER, VBOWP);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(pos), pos, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(m_shader->attributeLocation("position"));
-    glVertexAttribPointer(m_shader->attributeLocation("position"), 2, GL_FLOAT, GL_FALSE, 0, 0);
+    functions->glGenBuffers(1,&VBOWP);
+    functions->glBindBuffer(GL_ARRAY_BUFFER, VBOWP);
+    functions->glBufferData(GL_ARRAY_BUFFER, sizeof(pos), pos, GL_STATIC_DRAW);
+    functions->glEnableVertexAttribArray(m_shader->attributeLocation("position"));
+    functions->glVertexAttribPointer(m_shader->attributeLocation("position"), 2, GL_FLOAT, GL_FALSE, 0, 0);
 }
 
 void WallpaperManager::wallpaperChanged()
@@ -171,7 +172,11 @@ void WallpaperManager::clearBackgroundColor()
         ac = QColor(HOLLYWOOD_DEF_DESKTOP_BG);
 
     QOpenGLFunctions *functions = m_parent->context()->functions();
-    functions->glClearColor(ac.redF(), ac.greenF(), ac.blueF(), ac.alphaF());
+    if(!hwComp->isRunningLoginManager())
+        functions->glClearColor(ac.redF(), ac.greenF(), ac.blueF(), ac.alphaF());
+    else
+        functions->glClearColor(0.0f,0.0f,0.0f,1.0f);
+
     functions->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
@@ -339,18 +344,18 @@ void WallpaperManager::renderTransition()
 
     m_shader->setUniformValue("progress", m_transprogress);
 
-    glActiveTexture(GL_TEXTURE0);
+    functions->glActiveTexture(GL_TEXTURE0);
     m_oldtexture->bind(GL_TEXTURE_2D);
-    glActiveTexture(GL_TEXTURE0+1);
+    functions->glActiveTexture(GL_TEXTURE0+1);
     m_texture->bind(GL_TEXTURE_2D);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    glDisable(GL_BLEND);
+    functions->glEnable(GL_BLEND);
+    functions->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    functions->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    functions->glDisable(GL_BLEND);
     m_transprogress += 0.1f;
 
     m_oldtexture->release();
-    glActiveTexture(GL_TEXTURE0);
+    functions->glActiveTexture(GL_TEXTURE0);
     m_texture->release();
     m_shader->release();
 
@@ -375,8 +380,9 @@ void WallpaperManager::renderTransition()
 
 void WallpaperManager::completeTransition()
 {
+    QOpenGLFunctions *functions = m_parent->context()->functions();
     qDebug() << "complete transition";
-    glActiveTexture(GL_TEXTURE0);
+    functions->glActiveTexture(GL_TEXTURE0);
 
     m_shader->release();
     delete m_oldtexture;

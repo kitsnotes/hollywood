@@ -17,6 +17,7 @@
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QComboBox>
 #include <QtWidgets/QFontComboBox>
+#include <QtWidgets/QPushButton>
 
 class ASGeneralApplet : public QObject, SettingsAppletInterface
 {
@@ -53,6 +54,8 @@ public:
     Category category() const;
 private slots:
     void widgetUpdate();
+    void fontSliderValueChanged();
+    void fontSizeApplyClicked();
 private:
     void setupWidget();
 
@@ -74,6 +77,8 @@ private:
     QCheckBox *m_allowAppAccent;
 
     QSlider *m_fontSize;
+    QLabel *m_fontPreview;
+    QPushButton *m_fontApply;
 
     QFontComboBox *m_def_font;
     QFontComboBox *m_def_fixedsys;
@@ -81,6 +86,7 @@ private:
     QButtonGroup *bg_accentcolor;
     QButtonGroup *bg_apperance;
 
+    uint m_currentFontSize;
 };
 
 #endif // MOUSEAPPLET_H

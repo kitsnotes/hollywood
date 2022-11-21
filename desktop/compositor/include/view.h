@@ -31,7 +31,7 @@ public:
     Surface* surfaceObject() { return m_surface; }
     QOpenGLTexture *getTexture();
     QOpenGLTextureBlitter::Origin textureOrigin() const;
-
+    bool isSharedMem();
     int nearEdge(QPointF point) const;
 
 private:

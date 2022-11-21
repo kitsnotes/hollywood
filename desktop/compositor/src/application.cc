@@ -6,8 +6,11 @@
 #include "outputwnd.h"
 #include "compositor.h"
 #include "output.h"
-
+#include <sys/types.h>
+#include <pwd.h>
+#include <errno.h>
 #include <hollywood/hollywood.h>
+#include <stdlib.h>
 
 #include <QMessageBox>
 
@@ -16,9 +19,9 @@ void handleShutDownSignal(int /* signalId */)
     return;
 }
 
-CompositorApp::CompositorApp(int &argc, char **argv)
+CompositorApp::CompositorApp(bool use_sddm, int &argc, char **argv)
     :QGuiApplication(argc, argv),
-     m_compositor(new Compositor())
+     m_compositor(new Compositor(use_sddm))
 {
     setApplicationName("Hollywood Compositor");
     setApplicationVersion(HOLLYWOOD_OS_VERSION);
@@ -79,13 +82,34 @@ void CompositorApp::createDummyDebugWindow()
 
 int main(int argc, char *argv[])
 {
-    struct sigaction sa;
-    sa.sa_flags = 0;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_handler = handleShutDownSignal;
-    sigaction(SIGINT, &sa, NULL);
+    const char *name = "sddm";
+    struct passwd *p;
+    bool is_sddm = false;
+    p = getpwnam(name);
+    if(p != NULL)
+    {
+        if(getuid() == p->pw_uid)
+            is_sddm = true;
+    }
+
+    if(!is_sddm)
+    {
+        struct sigaction sa;
+        sa.sa_flags = 0;
+        sigemptyset(&sa.sa_mask);
+        sa.sa_handler = handleShutDownSignal;
+        sigaction(SIGINT, &sa, NULL);
+    }
+    else
+    {
+        QString xdg = QString("/run/user/%1").arg(getuid());
+        qDebug() << "setting xdg runtime dir:" << xdg;
+        qputenv("XDG_RUNTIME_DIR", xdg.toUtf8().data());
+        qputenv("QT_QPA_PLATFORM", "hollywood-eglfs");
+    }
+
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts, true);
-    CompositorApp app(argc, argv);
+    CompositorApp app(is_sddm, argc, argv);
     app.doInit();
 
     return app.exec();

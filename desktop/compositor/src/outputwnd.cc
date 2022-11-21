@@ -12,6 +12,7 @@
 #include <QOpenGLTexture>
 #include <QOpenGLFunctions>
 #include <QOpenGLFramebufferObject>
+#include <QOpenGLBuffer>
 #include <QMatrix4x4>
 #include <QPainter>
 #include <QtWaylandCompositor/qwaylandseat.h>
@@ -23,6 +24,9 @@
 #include <QStaticText>
 #include <QOpenGLFramebufferObject>
 #include <QOpenGLFramebufferObjectFormat>
+#include <QOpenGLFunctions>
+#include <QOpenGLContext>
+
 #include <QRectF>
 #include <hollywood/hollywood.h>
 
@@ -36,11 +40,37 @@
 
 unsigned int VBO;
 
+static const GLfloat vertex_buffer_data[] {
+     -1,-1,0,
+     -1,1,0,
+     1,-1,0,
+     -1,1,0,
+     1,-1,0,
+     1,1,0
+};
+
+static const GLfloat texture_buffer_data[] {
+    0,0,
+    0,1,
+    1,0,
+    0,1,
+    1,0,
+    1,1
+};
+
+
 OutputWindow::OutputWindow(Output* parent)
     :m_output(parent)
     ,m_shadowShader(new QOpenGLShaderProgram(this))
+    ,m_rgbShader(new QOpenGLShaderProgram(this))
     ,m_wpm(new WallpaperManager(this))
+    ,m_rgb_vao(new QOpenGLVertexArrayObject)
 {
+    QSurfaceFormat format;
+    //format.setRenderableType(QSurfaceFormat::OpenGL);
+    //format.setVersion(3,2);
+    //format.setProfile(QSurfaceFormat::CompatibilityProfile);
+    //this->setFormat(format);
     connect(hwComp, &Compositor::startMove, this, &OutputWindow::startMove);
     connect(hwComp, &Compositor::startResize, this, &OutputWindow::startResize);
     connect(hwComp, &Compositor::dragStarted, this, &OutputWindow::startDrag);
@@ -58,17 +88,37 @@ int OutputWindow::height()
 
 void OutputWindow::initializeGL()
 {
+    m_rgbShader->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/rgbconv.vsh");
+    m_rgbShader->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/Shaders/rgbconv.fsh");
+    m_rgbShader->link();
+    if(m_rgbShader->isLinked())
+            qDebug() << "shader linked";
+
+    QOpenGLVertexArrayObject::Binder vaoBinder(m_rgb_vao.data());
+    m_vertexBuffer.create();
+    m_vertexBuffer.bind();
+    m_vertexBuffer.allocate(vertex_buffer_data, sizeof(vertex_buffer_data));
+    m_vertexBuffer.release();
+
+    m_textureBuffer.create();
+    m_textureBuffer.bind();
+    m_textureBuffer.allocate(texture_buffer_data, sizeof(texture_buffer_data));
+    m_textureBuffer.release();
+
     m_textureBlitter.create();
     m_wpm->setup();
     m_shadowShader->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/shadow.vsh");
     m_shadowShader->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/Shaders/shadow.fsh");
     m_shadowShader->link();
+
     glGenBuffers(1,&VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     float data[] = {0,0,1,0,0,1,1,1};
     glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 2, GL_FLOAT, false, 0, 0);
+
+
 }
 
 void OutputWindow::paintGL()
@@ -76,7 +126,9 @@ void OutputWindow::paintGL()
     hwComp->startRender();
     // render our background & wallpaper
     m_wpm->clearBackgroundColor();
-    m_wpm->renderWallpaper();
+
+    if(!hwComp->isRunningLoginManager())
+        m_wpm->renderWallpaper();
 
     // draw our desktops (bottom most) - we can't do this recursively
     // because the pop-ups will be under z-order things
@@ -89,7 +141,8 @@ void OutputWindow::paintGL()
     for(Surface *obj : hwComp->bottomLayerSurfaces())
         drawTextureForObject(obj, false);
 
-    drawDesktopInfoString();
+    if(!hwComp->isRunningLoginManager())
+        drawDesktopInfoString();
 
     bool useShadow = !hwComp->legacyRender();
 
@@ -157,8 +210,6 @@ void OutputWindow::recursiveDrawTextureForObject(Surface *obj, bool useShadow)
 
 void OutputWindow::drawTextureForObject(Surface *obj, bool useShadow)
 {
-    glActiveTexture(GL_TEXTURE0);
-
     QRect dispRect(m_output->wlOutput()->position(), m_output->size());
     QRect objRect(obj->decoratedRect().toRect());
 
@@ -171,10 +222,7 @@ void OutputWindow::drawTextureForObject(Surface *obj, bool useShadow)
         return;
 
     if (texture->target() != currentTarget)
-    {
         currentTarget = texture->target();
-        m_textureBlitter.bind(currentTarget);
-    }
 
     if ((obj->surface() && obj->surface()->hasContent()) || obj->viewForOutput(m_output)->isBufferLocked()) {
         QSize s = obj->size();
@@ -185,96 +233,177 @@ void OutputWindow::drawTextureForObject(Surface *obj, bool useShadow)
             if (m_mouseSelectedSurfaceObject == obj && m_grabState == ResizeGrab && m_resizeAnchored)
                 obj->setPosition(getAnchoredPosition(m_resizeAnchorPosition, m_resizeEdge, s));
 
-            // we use FBO's to construct a final thing to ouptut
-            // including shadow, server decorations and the window contents
-            QOpenGLFramebufferObjectFormat fbofmt;
-            fbofmt.setInternalTextureFormat(texture->format());
-            fbofmt.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
-
-            QSize dsize = obj->decoratedRect().size().toSize();
-            if(!obj->serverDecorated())
-                dsize = obj->size();
-            uint sm = 0;
-            if(useShadow)
-            {
-                sm = 45;
-                if(obj->isXdgPopup())
-                    sm = 15;
-
-                if(obj->isQtSurface())
-                {
-                    if(obj->surfaceType() == Surface::Popup)
-                        sm = 5;
-                }
-
-                dsize = dsize.grownBy(QMargins(sm,sm,sm,sm));
-            }
+            auto surfaceOrigin = obj->primaryView()->textureOrigin();
 
             if(m_fbo != nullptr)
+            {
                 delete m_fbo;
+                m_fbo = nullptr;
+            }
 
-            m_fbo = new QOpenGLFramebufferObject(dsize, fbofmt);
-            m_fbo->bind();
-            functions->glViewport(0,0,dsize.width(),dsize.height());
-            functions->glClearColor(0.0f,0.0f,0.0f,0.0f);
-            functions->glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+            bool use_fbo = true;
+            if(obj->isFullscreenShell() || obj->isFullscreen())
+                use_fbo = false;
 
-            if(obj->layerSurface() != nullptr)
-                useShadow = false;
+            if(use_fbo)
+            {
+                // we use FBO's to construct a final thing to ouptut
+                // including shadow, server decorations
+                QOpenGLFramebufferObjectFormat fbofmt;
+                fbofmt.setInternalTextureFormat(QOpenGLTexture::RGBAFormat);
+                fbofmt.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
 
-            if(useShadow)
-                drawShadowForObject(sm, obj);
+                QSize dsize = obj->decoratedRect().size().toSize();
+                if(!obj->serverDecorated())
+                    dsize = obj->size();
+                uint sm = 0;
+                if(useShadow)
+                {
+                    sm = 45;
+                    if(obj->isXdgPopup())
+                        sm = 15;
 
-            QPointF pos = QPoint(0,0);
-            QRectF surfaceGeometry(pos, s);
+                    if(obj->isQtSurface())
+                    {
+                        if(obj->surfaceType() == Surface::Popup)
+                            sm = 5;
+                    }
+
+                    dsize = dsize.grownBy(QMargins(sm,sm,sm,sm));
+                }
+
+                m_fbo = new QOpenGLFramebufferObject(dsize, fbofmt);
+                m_fbo->bind();
+                functions->glViewport(0,0,dsize.width(),dsize.height());
+                functions->glClearColor(0.0f,0.0f,0.0f,0.0f);
+                functions->glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+
+                if(obj->layerSurface() != nullptr)
+                    useShadow = false;
+
+                if(useShadow)
+                    drawShadowForObject(sm, obj);
+
+                QPointF pos = QPoint(0,0);
+                QRectF surfaceGeometry(pos, s);
+                if(obj->serverDecorated())
+                    drawServerSideDecoration(dsize, sm, obj);
+
+                QRectF targetRect(QPoint(hwComp->borderSize(),
+                           obj->serverDecorated() ? hwComp->decorationSize() : 0), surfaceGeometry.size());
+
+                functions->glEnable(GL_BLEND);
+                functions->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+                if(useShadow)
+                    targetRect.adjust(sm,sm,sm,sm);
+
+                m_fbo->release();
+
+                // switch back to our primary scene and blit fbo contents onto it
+                functions->glViewport(0,0,size().width(),size().height());
+                m_textureBlitter.bind();
+                functions->glEnable(GL_BLEND);
+                functions->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+                QRect target(QPointF(obj->position()+ obj->parentPosition()).toPoint(), dsize);
+
+                // if we are rendering with a shadow we should offset our starting position
+                if(useShadow)
+                {
+                    auto point = target.topLeft();
+                    point.setX(point.x()-sm);
+                    point.setY(point.y()-sm);
+                    target.moveTopLeft(point);
+                }
+
+                // blit the decorations/shadow from fbo
+                QMatrix4x4 tt_fbo = QOpenGLTextureBlitter::targetTransform(target,
+                                                        QRect(m_output->wlOutput()->position(), size()));
+                m_textureBlitter.blit(m_fbo->texture(), tt_fbo,
+                                      QOpenGLTextureBlitter::OriginBottomLeft);
+                m_textureBlitter.release();
+                functions->glDisable(GL_BLEND);
+            }
+
+            functions->glEnable(GL_BLEND);
+            functions->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+            QPoint startPoint = obj->position().toPoint() + obj->parentPosition().toPoint();
             if(obj->serverDecorated())
-                drawServerSideDecoration(dsize, sm, obj);
-
-            auto surfaceOrigin = obj->primaryView()->textureOrigin();
-            QRectF targetRect(QPoint(hwComp->borderSize(),
-                       obj->serverDecorated() ? hwComp->decorationSize() : 0), surfaceGeometry.size());
-
-            m_textureBlitter.bind();
-            functions->glEnable(GL_BLEND);
-            functions->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-            if(useShadow)
             {
-                targetRect.adjust(sm,sm,sm,sm);
-            }
-            texture->bind();
-            QMatrix4x4 targetTransform = QOpenGLTextureBlitter::targetTransform(targetRect,
-                                      QRect(QPoint(0,0), QSize(dsize.width(), dsize.height())));
-            m_textureBlitter.blit(texture->textureId(), targetTransform, surfaceOrigin);
-            m_textureBlitter.release();
-            texture->release();
-
-            m_fbo->release();
-            // we are done rendering our window into fbo
-
-            // switch back to our primary scene and blit fbo contents onto it
-            functions->glViewport(0,0,size().width(),size().height());
-            m_textureBlitter.bind();
-            functions->glEnable(GL_BLEND);
-            functions->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-            QRect target(QPointF(obj->position()+ obj->parentPosition()).toPoint(), dsize);
-
-            // if we are rendering with a shadow we should offset our starting position
-            if(useShadow)
-            {
-                auto point = target.topLeft();
-                point.setX(point.x()-sm);
-                point.setY(point.y()-sm);
-                target.moveTopLeft(point);
+                startPoint.setX(startPoint.x()+hwComp->borderSize());
+                startPoint.setY(startPoint.y()+hwComp->decorationSize());
             }
 
-            QMatrix4x4 targetTransform2 = QOpenGLTextureBlitter::targetTransform(target,
-                                                    QRect(m_output->wlOutput()->position(), size()));
-            m_textureBlitter.blit(m_fbo->texture(), targetTransform2, QOpenGLTextureBlitter::OriginBottomLeft);
-            m_textureBlitter.release();
-            functions->glDisable(GL_BLEND);
-            //qDebug() << "drawTextureForObject" << obj->uuid().toString() << objRect;
+            if(obj->isFullscreenShell())
+            {
+                qDebug() << "rendering fullscreen-shell-v1 object with destinationSize:"
+                         << obj->surface()->destinationSize()
+                         << "objectSize:" << obj->size()
+                         << obj->surface()->bufferSize()
+                         << obj->surface()->bufferScale()
+                         << obj->viewForOutput(m_output)->isSharedMem()
+                         << texture->height() << texture->width() << texture->format() << texture->depth();
+            }
+
+            QRect tr = QRect(startPoint, obj->size());
+
+            QMatrix4x4 tt_surface = QOpenGLTextureBlitter::targetTransform(tr,
+                                      QRect(m_output->wlOutput()->position(), size()));
+
+ 	    bool doA = false;
+            // if(texture->format() == QOpenGLTexture::RGBFormat)
+	    if(doA)
+            {
+                glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+                functions->glDisable(GL_BLEND);
+                qDebug() << texture->format() << texture->depth();
+                //functions->glBindTexture(currentTarget, GL_TEXTURE_2D);
+                /*
+                if(m_rgb_vao->isCreated())
+                    m_rgb_vao->bind(); */
+
+                texture->allocateStorage();
+                texture->bind();
+
+                m_rgbShader->bind();
+
+                m_vertexBuffer.bind();
+                m_rgbShader->setAttributeBuffer("vertexCoord", GL_FLOAT, 0, 3, 0);
+                m_rgbShader->enableAttributeArray("vertexCoord");
+                m_vertexBuffer.release();
+                m_rgbShader->setUniformValue("vertexTransform", tt_surface);
+                m_textureBuffer.bind();
+                m_rgbShader->setAttributeBuffer("textureCoord", GL_FLOAT, 0, 2, 0);
+                m_rgbShader->enableAttributeArray("textureCoord");
+                m_textureBuffer.release();
+                m_rgbShader->setUniformValue("textureTransform", QMatrix3x3());
+                functions->glDrawArrays(GL_TRIANGLES, 0, 6);
+                /*
+                if(m_rgb_vao->isCreated())
+                    m_rgb_vao->release();
+                    */
+                //functions->glBindTexture(currentTarget, 0);
+                m_rgbShader->release();
+
+                texture->release();
+                functions->glDisable(GL_BLEND);
+
+            }
+            else
+            {
+                m_textureBlitter.setOpacity(1.0);
+                m_textureBlitter.bind(currentTarget);
+                m_textureBlitter.blit(texture->textureId(), tt_surface, surfaceOrigin);
+                m_textureBlitter.release();
+                functions->glDisable(GL_BLEND);
+            }
         }
     }
 }

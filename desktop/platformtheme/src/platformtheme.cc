@@ -35,14 +35,12 @@ static bool isDBusGlobalMenuAvailable()
 
 HollywoodPlatformTheme::HollywoodPlatformTheme()
 {
+    auto val = qgetenv("HW_TWILIGHT_SHELL");
+    if(!val.isEmpty())
+        m_twilightShell = true;
+
     loadSettings();
     createPalettes();
-
-//#if QT_VERSION < 0x060000
-    /* if (QGuiApplication::platformName() == QLatin1String("wayland") ||
-        QGuiApplication::platformName() == QLatin1String("hollywood"))
-            m_wayland.reset(new WaylandIntegration(this));*/
-//#endif
 
     QMetaObject::invokeMethod(this, "secondInit", Qt::QueuedConnection);
 }
@@ -106,6 +104,13 @@ QPlatformTheme::Appearance HollywoodPlatformTheme::appearance() const
     if(m_apperance == SetDark)
         return QPlatformTheme::Appearance::Dark;
 
+    if(m_apperance == SetTwilight)
+    {
+        if(m_twilightShell)
+            return QPlatformTheme::Appearance::Dark;
+        else
+            return QPlatformTheme::Appearance::Light;
+    }
     return QPlatformTheme::Appearance::Unknown;
 }
 #endif
@@ -165,7 +170,9 @@ QPalette *HollywoodPlatformTheme::preferredPalette() const
 
     if(m_apperance == SetTwilight)
     {
-        // TODO: check for stage/menuserver
+        if(m_twilightShell)
+            return m_palette_dark;
+
         return m_palette_light;
     }
 
@@ -261,6 +268,9 @@ QString HollywoodPlatformTheme::preferredIcons() const
     if(m_apperance == SetDark)
         return QLatin1String(HOLLYWOOD_DARK_ICONTHEME);
 
+    if(m_apperance == SetTwilight && m_twilightShell)
+        return QLatin1String(HOLLYWOOD_DARK_ICONTHEME);
+
     return QLatin1String(HOLLYWOOD_DEF_ICONTHEME);
 }
 
@@ -291,6 +301,7 @@ void HollywoodPlatformTheme::settingsChanged()
     auto oldIconTheme = preferredIcons();
     SettingApperance oldApp = m_apperance;
     QColor oldac = m_accentColor;
+    FontSize oldFont = m_fontSize;
     loadSettings();
     createPalettes();
 
@@ -312,6 +323,39 @@ void HollywoodPlatformTheme::settingsChanged()
 
     if(preferredIcons() != oldIconTheme)
         QIconLoader::instance()->updateSystemTheme();
+
+    // check for font changes
+    QFont font(QApplication::font());
+    bool font_change = false;
+    if(m_fontSize != oldFont)
+    {
+        switch(m_fontSize)
+        {
+        case Small:
+            font.setPointSize(HOLLYWOOD_PT_SMALL);
+            break;
+        case Large:
+            font.setPointSize(HOLLYWOOD_PT_LARGE);
+            break;
+        case XLarge:
+            font.setPointSize(HOLLYWOOD_PT_XLARGE);
+            break;
+        case Normal:
+        default:
+            font.setPointSize(HOLLYWOOD_PT_NORMAL);
+            break;
+        }
+        font_change = true;
+    }
+
+    bool is_eglfs = false;
+
+    if(QGuiApplication::platformName() == "eglfs" ||
+            QGuiApplication::platformName() == "hollywood-eglfs")
+        is_eglfs = true;
+
+    if(font_change && !is_eglfs)
+        QApplication::setFont(font);
 
     // emit a ThemeChange event to all widgets
     const auto widgets = QApplication::allWidgets();
@@ -468,8 +512,8 @@ void HollywoodPlatformTheme::loadSettings()
     m_configfile = settings.fileName();
 
     settings.beginGroup(QLatin1String("General"));
-    int _app = settings.value(QLatin1String("ApperanceMode")).toInt();
-    if(_app < 0 || _app > 1)
+    uint _app = settings.value(QLatin1String("ApperanceMode")).toUInt();
+    if(_app > 2)
         _app = 0;   // default to light mode on invalid settings
     m_apperance = (SettingApperance)_app;
 

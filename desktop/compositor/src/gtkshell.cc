@@ -105,6 +105,7 @@ void GtkSurface::gtk_surface1_destroy_resource(Resource *res)
 void GtkSurface::gtk_surface1_set_dbus_properties(Resource *res, const QString &application_id, const QString &app_menu_path, const QString &menubar_path, const QString &window_object_path, const QString &application_object_path, const QString &unique_bus_name)
 {
     Q_UNUSED(res);
+    Q_UNUSED(menubar_path);
     m_appId = application_id;
     m_appMenuPath = app_menu_path;
     m_windowObjectPath = window_object_path;

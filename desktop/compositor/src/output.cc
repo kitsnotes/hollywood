@@ -79,7 +79,6 @@ void Output::configureForScreen(QScreen *s, bool defaultScreen)
 {
     m_screen = s;
     QWaylandOutputMode mode(s->size(), s->refreshRate());
-    qDebug() << "refresh rate:" << s->refreshRate();
     m_wlOutput->addMode(mode, true);
     m_wlOutput->setCurrentMode(mode);
     m_wlOutput->setManufacturer(s->manufacturer());

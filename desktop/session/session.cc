@@ -26,10 +26,27 @@ QLoggingCategory lcStage("hollywood.stage");
 QLoggingCategory lcDesktop("hollywood.shell");
 QLoggingCategory lcMenuServer("hollywood.shell");
 QLoggingCategory lcElevator("hollywood.elevator");
+QLoggingCategory lcWireplumber("wireplumber");
+QLoggingCategory lcPipewire("pipewire");
+QLoggingCategory lcPipewirePulse("pipewire.pulse");
+
+QString g_logfile;
 
 void handleShutDownSignal(int /* signalId */)
 {
     return;
+}
+
+void messageHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg)
+{
+    Q_UNUSED(type)
+    QFile outFile(g_logfile);
+    if(outFile.open(QIODevice::WriteOnly|QIODevice::Append))
+    {
+        QTextStream s(&outFile);
+        s << context.category << msg << "\n";
+        outFile.close();
+    }
 }
 
 SMApplication::SMApplication(int &argc, char **argv)
@@ -59,6 +76,10 @@ SMApplication::SMApplication(int &argc, char **argv)
                 m_startedDisplayManager = true;
         }
     }
+    qCInfo(lcSession) << "Starting new session.";
+    if(m_startedDisplayManager)
+        qCInfo(lcSession) << "Session started via display manager.";
+
 }
 
 bool SMApplication::startSession()
@@ -67,7 +88,8 @@ bool SMApplication::startSession()
     if(!sp.isEmpty())
     {
         auto hd = sp.first().toUtf8().data();
-        chdir(hd);
+        int res = chdir(hd);
+        Q_UNUSED(res);
     }
     auto def_xdg_config = sp.first() + "/.config/";
     auto env_xdg_config = qgetenv("XDG_CONFIG_DIR");
@@ -120,14 +142,24 @@ bool SMApplication::startSession()
         qputenv("WAYLAND_DISPLAY", "wayland-0");
         qputenv("DISPLAY", ":0");
 
-        qputenv("QT_QPA_PLATFORM", "hollywood");
-        qputenv("QT_QPA_PLATFORMTHEME", "hollywood");
-        if(m_useElevator && !startElevator())
+        if(m_usePipewire && !startPipewire())
         {
-            qCCritical(lcSession) << "Unable to launch elevator process";
+            qCCritical(lcSession) << "Unable to launch pipewire process";
+            if(m_dbusSessionProcess->isOpen())
+                m_dbusSessionProcess->kill();
             if(m_compProcess->isOpen())
                 m_compProcess->kill();
 
+            return false;
+        }
+
+        if(m_useElevator && !startElevator())
+        {
+            qCCritical(lcSession) << "Unable to launch elevator process";
+            if(m_dbusSessionProcess->isOpen())
+                m_dbusSessionProcess->kill();
+            if(m_compProcess->isOpen())
+                m_compProcess->kill();
             return false;
         }
 
@@ -147,6 +179,38 @@ bool SMApplication::startSession()
             }
         }
 
+        if(m_usePipewire && !startWireplumber())
+        {
+            qCCritical(lcSession) << "Unable to launch wireplumber process";
+            if(m_dbusSessionProcess->isOpen())
+                m_dbusSessionProcess->kill();
+            if(m_compProcess->isOpen())
+                m_compProcess->kill();
+            if(m_elevatorProcess->isOpen())
+                m_elevatorProcess->kill();
+            if(m_pipewireProcess->isOpen())
+                m_pipewireProcess->kill();
+
+            return false;
+        }
+
+        /* if(m_usePipewire && !startPipewirePulse())
+        {
+            qCCritical(lcSession) << "Unable to launch pipewire (pulse emulation) process";
+            if(m_dbusSessionProcess->isOpen())
+                m_dbusSessionProcess->kill();
+            if(m_compProcess->isOpen())
+                m_compProcess->kill();
+            if(m_pipewireProcess->isOpen())
+                m_pipewireProcess->kill();
+            if(m_wireplumberProcess->isOpen())
+                m_wireplumberProcess->kill();
+            if(m_elevatorProcess->isOpen())
+                m_elevatorProcess->kill();
+
+            return false;
+        }*/
+
         /*if(!startMenuServer())
         {
             qCCritical(lcSession) << "Unable to launch menuserver process";
@@ -161,8 +225,16 @@ bool SMApplication::startSession()
         if(!startDesktop())
         {
             qCCritical(lcSession) << "Unable to launch desktop process";
+            if(m_dbusSessionProcess->isOpen())
+                m_dbusSessionProcess->kill();
             if(m_compProcess->isOpen())
                 m_compProcess->kill();
+            if(m_pipewireProcess->isOpen())
+                m_pipewireProcess->kill();
+            if(m_wireplumberProcess->isOpen())
+                m_wireplumberProcess->kill();
+            if(m_pipewirePulseProcess->isOpen())
+                m_pipewirePulseProcess->kill();
             if(m_elevatorProcess->isOpen())
                 m_elevatorProcess->kill();
             if(m_menuProcess->isOpen())
@@ -176,8 +248,16 @@ bool SMApplication::startSession()
         if(!startStage())
         {
             qCCritical(lcSession) << "Unable to launch stage process";
+            if(m_dbusSessionProcess->isOpen())
+                m_dbusSessionProcess->kill();
             if(m_compProcess->isOpen())
                 m_compProcess->kill();
+            if(m_pipewireProcess->isOpen())
+                m_pipewireProcess->kill();
+            if(m_wireplumberProcess->isOpen())
+                m_wireplumberProcess->kill();
+            if(m_pipewirePulseProcess->isOpen())
+                m_pipewirePulseProcess->kill();
             if(m_elevatorProcess->isOpen())
                 m_elevatorProcess->kill();
             if(m_menuProcess->isOpen())
@@ -186,6 +266,8 @@ bool SMApplication::startSession()
                 m_desktopProcess->kill();
             return false;
         }
+
+        startPipewirePulse();
 
         m_sessionStarted = true;
         m_dbus = new SessionDBus(this);
@@ -229,7 +311,9 @@ bool SMApplication::canReboot()
 
 bool SMApplication::haveSDDMAutoStart()
 {
+    // TODO: this
 
+    return false;
 }
 
 bool SMApplication::startCompositor()
@@ -251,6 +335,7 @@ bool SMApplication::startCompositor()
     const QString processPath = applicationDirPath() + "/compositor";
     m_compProcess->setProgram(processPath);
     auto env = QProcessEnvironment::systemEnvironment();
+    env.remove("QT_QPA_PLATFORMTHEME");
     env.insert("QT_QPA_PLATFORMTHEME", "hollywood");
 #ifdef QT_DEBUG
     env.insert("LD_LIBRARY_PATH", applicationDirPath().toUtf8());
@@ -384,6 +469,24 @@ void SMApplication::processStdError()
     const QString senderProc = sender()->objectName();
     auto lines = proc->readAllStandardError().split('\n');
 
+    if(proc == m_pipewireProcess)
+    {
+        for(auto line : lines)
+            if(!line.isEmpty())
+                qCWarning(lcPipewire) << line;
+    }
+    if(proc == m_pipewirePulseProcess)
+    {
+        for(auto line : lines)
+            if(!line.isEmpty())
+                qCWarning(lcPipewirePulse) << line;
+    }
+    if(proc == m_wireplumberProcess)
+    {
+        for(auto line : lines)
+            if(!line.isEmpty())
+                qCWarning(lcWireplumber) << line;
+    }
     if(proc == m_elevatorProcess)
     {
         for(auto line : lines)
@@ -438,6 +541,25 @@ void SMApplication::processStdOut()
     auto proc = qobject_cast<QProcess*>(sender());
     const QString senderProc = sender()->objectName();
     auto lines = proc->readAllStandardOutput().split('\n');
+
+    if(proc == m_pipewireProcess)
+    {
+        for(auto line : lines)
+            if(!line.isEmpty())
+                qCInfo(lcPipewire) << line;
+    }
+    if(proc == m_pipewirePulseProcess)
+    {
+        for(auto line : lines)
+            if(!line.isEmpty())
+                qCInfo(lcPipewirePulse) << line;
+    }
+    if(proc == m_wireplumberProcess)
+    {
+        for(auto line : lines)
+            if(!line.isEmpty())
+                qCInfo(lcWireplumber) << line;
+    }
 
     if(proc == m_elevatorProcess)
     {
@@ -600,6 +722,42 @@ void SMApplication::dbusProcessStopped()
     startDBusSession();
 }
 
+void SMApplication::pipewireStopped()
+{
+    if(m_pipewireProcess->exitStatus() == QProcess::NormalExit)
+        return;     // Standard system shutdown, so don't restart
+
+    qWarning() << QString("SessionManager: pipewire process (pid %1) stopped (return %2). Restarting...")
+                  .arg(m_pipewireProcess->processId())
+                  .arg(m_pipewireProcess->exitCode());
+
+    startPipewire();
+}
+
+void SMApplication::wireplumberStopped()
+{
+    if(m_wireplumberProcess->exitStatus() == QProcess::NormalExit)
+        return;     // Standard system shutdown, so don't restart
+
+    qWarning() << QString("SessionManager: wireplumber process (pid %1) stopped (return %2). Restarting...")
+                  .arg(m_wireplumberProcess->processId())
+                  .arg(m_wireplumberProcess->exitCode());
+
+    startWireplumber();
+}
+
+void SMApplication::pipewirePulseStopped()
+{
+    if(m_pipewirePulseProcess->exitStatus() == QProcess::NormalExit)
+        return;     // Standard system shutdown, so don't restart
+
+    qWarning() << QString("SessionManager: pipewire (pulse emulation) process (pid %1) stopped (return %2). Restarting...")
+                  .arg(m_pipewirePulseProcess->processId())
+                  .arg(m_pipewirePulseProcess->exitCode());
+
+    startPipewirePulse();
+}
+
 // ===========================================================
 // ======            DESKTOP HOST FUNCTIONS             ======
 // ===========================================================
@@ -672,6 +830,7 @@ bool SMApplication::startStage()
     env.insert("QT_QPA_PLATFORM", "hollywood");
     env.insert("QT_QPA_PLATFORMTHEME", "hollywood");
     env.insert("QT_WAYLAND_SHELL_INTEGRATION", "hw-layer-shell");
+    env.insert("HW_TWILIGHT_SHELL", "1");
 #ifdef QT_DEBUG
     env.insert("LD_LIBRARY_PATH", applicationDirPath().toUtf8());
 #else
@@ -687,6 +846,116 @@ bool SMApplication::startStage()
     if(m_stageProcess->isOpen())
     {
         qCInfo(lcSession) << QString("SessionManager: Started Stage (pid %1)").arg(m_stageProcess->processId());
+        return true;
+    }
+    return false;
+}
+
+bool SMApplication::startPipewire()
+{
+    if(m_pipewireProcess)
+    {
+        if(m_pipewireProcess->state() != QProcess::Running)
+        {
+            qCInfo(lcSession) << QString("startPipewire: reaping old pipewire (pid %1)")
+                       .arg(m_pipewireProcess->processId());
+            delete m_pipewireProcess;
+        }
+        else
+            return false;
+    }
+
+    auto env = QProcessEnvironment::systemEnvironment();
+    m_pipewireProcess = new QProcess(this);
+    m_pipewireProcess->setObjectName("pipewire");
+    const QString processPath = "/usr/bin/pipewire";
+    m_pipewireProcess->setProgram(processPath);
+    m_pipewireProcess->setProcessEnvironment(env);
+
+    connect(m_pipewireProcess, &QProcess::finished, this, &SMApplication::pipewireStopped);
+    connect(m_pipewireProcess, &QProcess::errorOccurred, this, &SMApplication::pipewireStopped);
+    connect(m_pipewireProcess, &QProcess::readyReadStandardError, this, &SMApplication::processStdError);
+    connect(m_pipewireProcess, &QProcess::readyReadStandardOutput, this, &SMApplication::processStdOut);
+
+    m_pipewireProcess->start();
+    if(m_pipewireProcess->isOpen())
+    {
+        qCInfo(lcSession) << QString("SessionManager: Started pipewire (pid %1)").arg(m_pipewireProcess->processId());
+        return true;
+    }
+    return false;
+}
+
+bool SMApplication::startWireplumber()
+{
+    if(m_wireplumberProcess)
+    {
+        if(m_wireplumberProcess->state() != QProcess::Running)
+        {
+            qCInfo(lcSession) << QString("startWireplumber: reaping old wireplumber (pid %1)")
+                       .arg(m_wireplumberProcess->processId());
+            delete m_wireplumberProcess;
+        }
+        else
+            return false;
+    }
+
+    auto env = QProcessEnvironment::systemEnvironment();
+    m_wireplumberProcess = new QProcess(this);
+    m_wireplumberProcess->setObjectName("wireplumber");
+    const QString processPath = "/usr/bin/wireplumber";
+    m_wireplumberProcess->setProgram(processPath);
+    m_wireplumberProcess->setProcessEnvironment(env);
+
+    connect(m_wireplumberProcess, &QProcess::finished, this, &SMApplication::wireplumberStopped);
+    connect(m_wireplumberProcess, &QProcess::errorOccurred, this, &SMApplication::wireplumberStopped);
+    connect(m_wireplumberProcess, &QProcess::readyReadStandardError, this, &SMApplication::processStdError);
+    connect(m_wireplumberProcess, &QProcess::readyReadStandardOutput, this, &SMApplication::processStdOut);
+
+    m_wireplumberProcess->start();
+    if(m_wireplumberProcess->isOpen())
+    {
+        qCInfo(lcSession) << QString("SessionManager: Started wireplumber (pid %1)").arg(m_wireplumberProcess->processId());
+        return true;
+    }
+    return false;
+}
+
+bool SMApplication::startPipewirePulse()
+{
+    if(m_pipewirePulseProcess)
+    {
+        if(m_pipewirePulseProcess->state() != QProcess::Running)
+        {
+            qCInfo(lcSession) << QString("startPipewire: reaping old pipewire (pulse emulation) (pid %1)")
+                       .arg(m_pipewirePulseProcess->processId());
+            delete m_pipewirePulseProcess;
+        }
+        else
+            return false;
+    }
+
+    auto env = QProcessEnvironment::systemEnvironment();
+    m_pipewirePulseProcess = new QProcess(this);
+    m_pipewirePulseProcess->setObjectName("pipewire-pulse");
+    const QString processPath = "/usr/bin/pipewire";
+
+    m_pipewirePulseProcess->setProgram(processPath);
+    QStringList args;
+    args << "--c" << "pipewire-pulse.conf";
+
+    m_desktopProcess->setArguments(args);
+    m_pipewirePulseProcess->setProcessEnvironment(env);
+
+    connect(m_pipewirePulseProcess, &QProcess::finished, this, &SMApplication::pipewirePulseStopped);
+    connect(m_pipewirePulseProcess, &QProcess::errorOccurred, this, &SMApplication::pipewirePulseStopped);
+    connect(m_pipewirePulseProcess, &QProcess::readyReadStandardError, this, &SMApplication::processStdError);
+    connect(m_pipewirePulseProcess, &QProcess::readyReadStandardOutput, this, &SMApplication::processStdOut);
+
+    m_pipewirePulseProcess->start();
+    if(m_pipewirePulseProcess->isOpen())
+    {
+        qCInfo(lcSession) << QString("SessionManager: Started pipewire (pulse emulation) (pid %1)").arg(m_pipewirePulseProcess->processId());
         return true;
     }
     return false;
@@ -800,6 +1069,10 @@ bool SMApplication::stopSession()
     }
 
 
+    m_pipewirePulseProcess->kill();
+    m_wireplumberProcess->kill();
+    m_pipewireProcess->kill();
+
     m_dbusSessionProcess->kill();
 
     m_socket->close();
@@ -845,6 +1118,15 @@ void SMApplication::disconnectProcessWatchers()
     disconnect(m_compProcess, &QProcess::finished, this, &SMApplication::compositorStopped);
     disconnect(m_compProcess, &QProcess::errorOccurred, this, &SMApplication::compositorStopped);
 
+    disconnect(m_pipewireProcess, &QProcess::finished, this, &SMApplication::pipewireStopped);
+    disconnect(m_pipewireProcess, &QProcess::errorOccurred, this, &SMApplication::pipewireStopped);
+
+    disconnect(m_pipewirePulseProcess, &QProcess::finished, this, &SMApplication::pipewirePulseStopped);
+    disconnect(m_pipewirePulseProcess, &QProcess::errorOccurred, this, &SMApplication::pipewirePulseStopped);
+
+    disconnect(m_wireplumberProcess, &QProcess::finished, this, &SMApplication::wireplumberStopped);
+    disconnect(m_wireplumberProcess, &QProcess::errorOccurred, this, &SMApplication::wireplumberStopped);
+
 }
 
 void SMApplication::desktopStopped()
@@ -875,6 +1157,8 @@ int main(int argc, char *argv[])
          QCoreApplication::translate("main", "Do not launch the elevator (PolicyKit Agent) with this session.")},
      {"no-notifications",
          QCoreApplication::translate("main", "Do not launch the notification daemon with this session.")},
+     {"no-pipewire",
+         QCoreApplication::translate("main", "Do not launch pipewire daemon with this session.")},
      {"no-dbus",
          QCoreApplication::translate("main", "Do not launch a dbus-daemon for session bus with this session.")},
     });
@@ -884,6 +1168,20 @@ int main(int argc, char *argv[])
         a.setUseElevator(false);
     if(p.isSet("no-dbus"))
         a.setUseDBus(false);
+    if(p.isSet("no-pipewire"))
+        a.setUsePipewire(false);
+
+    QString xdg = qgetenv("XDG_DATA_HOME");
+    if(xdg.isEmpty())
+        xdg = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).first() + "/.local/share/";
+
+    QDir dir(xdg);
+    dir.mkpath(xdg+"/hollywood");
+
+    g_logfile = QString("%1/hollywood/session-%2.log").arg(xdg,
+           QDateTime::currentDateTime().toString("yyyy-MM-dd-hhmm"));
+
+    qInstallMessageHandler(messageHandler);
 
     if(!a.startSession())
         return 1;

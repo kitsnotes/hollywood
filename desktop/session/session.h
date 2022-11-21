@@ -28,6 +28,7 @@ public:
 
     void setUseDBus(bool use) { m_useDBus = use; }
     void setUseElevator(bool use) { m_useElevator = use; }
+    void setUsePipewire(bool use) { m_usePipewire = use; }
     bool displayManagerStart() { return m_startedDisplayManager; }
     bool haveSDDMAutoStart();
 private:
@@ -39,6 +40,9 @@ private:
     bool startElevator();
     bool startDesktop();
     bool startStage();
+    bool startPipewire();
+    bool startWireplumber();
+    bool startPipewirePulse();
     QProcessEnvironment createDesktopEnvironment();
     bool verifyXdgRuntime();
     bool stopSession();
@@ -54,6 +58,9 @@ private slots:
     void desktopStopped();
     void stageStopped();
     void dbusProcessStopped();
+    void pipewireStopped();
+    void wireplumberStopped();
+    void pipewirePulseStopped();
 private:
     QProcess *m_compProcess = nullptr;
     QString m_compSocket;
@@ -62,6 +69,9 @@ private:
     QProcess *m_desktopProcess = nullptr;
     QProcess *m_elevatorProcess = nullptr;
     QProcess *m_dbusSessionProcess = nullptr;
+    QProcess *m_pipewireProcess = nullptr;
+    QProcess *m_pipewirePulseProcess = nullptr;
+    QProcess *m_wireplumberProcess = nullptr;
     QLocalServer* m_socket = nullptr;
     SessionDBus *m_dbus = nullptr;
     QString m_xdg_runtime_dir;
@@ -70,6 +80,7 @@ private:
     QString m_dbusSessionVar;
     bool m_useDBus = true;
     bool m_useElevator = true;
+    bool m_usePipewire = true;
 
     bool m_startedDisplayManager = false;
 };

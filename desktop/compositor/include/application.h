@@ -20,7 +20,7 @@ class Compositor;
 class CompositorApp : public QGuiApplication
 {
 public:
-    CompositorApp(int &argc, char **argv);
+    CompositorApp(bool is_sddm, int &argc, char **argv);
     static CompositorApp* instance() { return static_cast<CompositorApp*>(QGuiApplication::instance()); }
     static Compositor* compositorInstance() { return static_cast<CompositorApp*>(QGuiApplication::instance())->compositor(); }
     Compositor* compositor();

@@ -10,7 +10,7 @@ HEADERS += \
 
 DISTFILES += applet.json
 unix {
-    target.path = /usr/libexec/holywood/settings
+    target.path = /usr/libexec/hollywood/settings
 }
 !isEmpty(target.path): INSTALLS += target
 

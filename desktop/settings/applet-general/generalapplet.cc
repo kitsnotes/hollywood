@@ -22,7 +22,7 @@ bool ASGeneralApplet::loadSettings()
 
     settings.beginGroup(QLatin1String("General"));
     uint _app = settings.value(QLatin1String("ApperanceMode"), 0).toUInt();
-    if(_app < 0 || _app > 1)
+    if(_app > 2)
         _app = 0;   // default to light mode on invalid settings
     switch((SettingApperance)_app)
     {
@@ -65,10 +65,12 @@ bool ASGeneralApplet::loadSettings()
         qDebug() << "GeneralApplet: unknown accent color";
 
     uint fontsize = settings.value(QLatin1String("FontSize"), 1).toUInt();
-    if(fontsize < 0 || fontsize > 3)
+    if(fontsize > 3)
         fontsize = 1;   // default to normal font sizes
 
     m_fontSize->setValue(fontsize);
+
+    m_currentFontSize = fontsize;
 
     auto fontstr = settings.value("DefaultFont").toString();
     auto monostr = settings.value("MonospaceFont").toString();
@@ -127,7 +129,6 @@ bool ASGeneralApplet::saveSettings()
     else
         qDebug() << "GeneralApplet: saveSettings: no selected accent color";
 
-    settings.setValue("FontSize", m_fontSize->value());
     settings.setValue("DefaultFont", m_def_font->font().family());
     settings.setValue("MonospaceFont", m_def_fixedsys->font().family());
 
@@ -175,6 +176,45 @@ void ASGeneralApplet::widgetUpdate()
     saveSettings();
 }
 
+void ASGeneralApplet::fontSliderValueChanged()
+{
+    if(m_currentFontSize == m_fontSize->value())
+        m_fontApply->setEnabled(false);
+    else
+        m_fontApply->setEnabled(true);
+
+    QFont font = m_fontPreview->font();
+    switch(m_fontSize->value())
+    {
+    case 3:
+        font.setPointSize(HOLLYWOOD_PT_XLARGE);
+        break;
+    case 2:
+        font.setPointSize(HOLLYWOOD_PT_LARGE);
+        break;
+    case 0:
+        font.setPointSize(HOLLYWOOD_PT_SMALL);
+        break;
+    case 1:
+    default:
+        font.setPointSize(HOLLYWOOD_PT_NORMAL);
+        break;
+    }
+
+    m_fontPreview->setFont(font);
+}
+
+void ASGeneralApplet::fontSizeApplyClicked()
+{
+    QSettings settings(QSettings::UserScope,
+       QLatin1String("originull"), QLatin1String("hollywood"));
+
+    settings.beginGroup("General");
+    settings.setValue("FontSize", m_fontSize->value());
+    m_currentFontSize = m_fontSize->value();
+    m_fontApply->setEnabled(false);
+}
+
 void ASGeneralApplet::setupWidget()
 {
     m_host = new QWidget(0);
@@ -212,8 +252,9 @@ void ASGeneralApplet::setupWidget()
     auto l_smfonticon = new QLabel(m_host);
     auto l_lgfonticon = new QLabel(m_host);
     m_fontSize = new QSlider(m_host);
+    m_fontApply = new QPushButton(m_host);
     auto hs_font = new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum);
-    auto m_fontPreview = new QLabel(m_host);
+    m_fontPreview = new QLabel(m_host);
     auto lbl_browser = new QLabel(m_host);
     m_def_font = new QFontComboBox(m_host);
     m_def_font->setFontFilters(QFontComboBox::ScalableFonts);
@@ -297,6 +338,7 @@ void ASGeneralApplet::setupWidget()
     hl_fontsize->addWidget(l_smfonticon);
     hl_fontsize->addWidget(m_fontSize);
     hl_fontsize->addWidget(l_lgfonticon);
+    hl_fontsize->addWidget(m_fontApply);
     hl_fontsize->addSpacerItem(hs_font);
 
     mainLayout->setWidget(0, QFormLayout::LabelRole, apperance);
@@ -311,12 +353,12 @@ void ASGeneralApplet::setupWidget()
     mainLayout->setWidget(4, QFormLayout::LabelRole, fontsize);
     mainLayout->setLayout(4, QFormLayout::FieldRole, hl_fontsize);
 
-    mainLayout->setWidget(5, QFormLayout::LabelRole, lbl_browser);
-    mainLayout->setWidget(5, QFormLayout::FieldRole, m_def_font);
-    mainLayout->setWidget(6, QFormLayout::LabelRole, lbl_email);
-    mainLayout->setWidget(6, QFormLayout::FieldRole, m_def_fixedsys);
+    mainLayout->setWidget(5, QFormLayout::FieldRole, m_fontPreview);
+    mainLayout->setWidget(6, QFormLayout::LabelRole, lbl_browser);
+    mainLayout->setWidget(6, QFormLayout::FieldRole, m_def_font);
+    mainLayout->setWidget(7, QFormLayout::LabelRole, lbl_email);
+    mainLayout->setWidget(7, QFormLayout::FieldRole, m_def_fixedsys);
 
-    mainLayout->setWidget(7, QFormLayout::FieldRole, m_fontPreview);
 
     // KEEP THIS LAST in the layout!
     mainLayout->setItem(8, QFormLayout::SpanningRole, vs_main);
@@ -330,18 +372,22 @@ void ASGeneralApplet::setupWidget()
     fontsize->setText(tr("Font size:"));
     l_smfonticon->setText(QString());
     l_lgfonticon->setText(QString());
-    m_fontPreview->setText(tr("Font Preview"));
-    m_fontPreview->setVisible(false);
     lbl_browser->setText(tr("Default font:"));
     lbl_email->setText(tr("Default monospace font:"));
 
+    m_fontPreview->setText(tr("The quick brown fox jumped over the lazy dog."));
     m_fontSize->setTickInterval(1);
-    m_fontSize->setRange(1,4);
+    m_fontSize->setRange(0,3);
     m_fontSize->setValue(2);
     m_fontSize->setMaximumWidth(180);
 
+    m_fontApply->setText(tr("Apply Size"));
+
     m_def_font->setEditable(false);
     m_def_fixedsys->setEditable(false);
+
+    connect(m_fontApply, &QPushButton::clicked, this, &ASGeneralApplet::fontSizeApplyClicked);
+    connect(m_fontSize, &QSlider::valueChanged, this, &ASGeneralApplet::fontSliderValueChanged);
 
     for(auto btn : bg_apperance->buttons())
         connect(btn, &QAbstractButton::toggled, this, &ASGeneralApplet::widgetUpdate);

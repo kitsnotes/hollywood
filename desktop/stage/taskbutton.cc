@@ -8,6 +8,9 @@ TaskButton::TaskButton(PlasmaWindow *wnd, QWidget *parent)
     ,m_window(wnd)
     ,m_context(new QMenu(this))
 {
+    QFont myFont = font();
+    myFont.setPointSize(myFont.pointSize()+1);
+    setFont(myFont);
     setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     connect(wnd, &PlasmaWindow::themeIconChanged,
             this, &TaskButton::themeIconChanged);

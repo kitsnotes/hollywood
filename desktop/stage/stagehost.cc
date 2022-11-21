@@ -21,14 +21,15 @@ StageHost::StageHost(QScreen *screen, QWidget *parent)
     m_menu->setAutoRaise(true);
     m_menu->setPopupMode(QToolButton::InstantPopup);
     m_menu->setToolTip(tr("Launch applications and control your system."));
-
-    /*m_shutdown = new QToolButton(this);
-    m_shutdown->setIcon(QIcon::fromTheme("system-shutdown"));
-    m_shutdown->setAutoRaise(true); */    
-    //connect(m_shutdown, &QToolButton::pressed, app, &StageApplication::logoffSession);
+    m_menu->setStyleSheet("QToolButton::menu-indicator { image: none; }");
     m_menu->setMenu(app->systemMenu());
     m_menu->setArrowType(Qt::NoArrow);
     setAlignment(Horizontal);
+
+    QFont font = m_menu->font();
+    font.setPointSize(font.pointSize()+1);
+    m_clock->setFont(font);
+    m_menu->setFont(font);
 
     m_group->setExclusive(true);
 }

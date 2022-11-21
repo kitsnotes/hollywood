@@ -42,6 +42,12 @@ QOpenGLTextureBlitter::Origin SurfaceView::textureOrigin() const
     return m_origin;
 }
 
+bool SurfaceView::isSharedMem()
+{
+    QWaylandBufferRef buf = currentBuffer();
+    return buf.isSharedMemory();
+}
+
 int SurfaceView::nearEdge(QPointF point) const
 {
     auto pm = 3; // the margin (in px) on each side of the handle

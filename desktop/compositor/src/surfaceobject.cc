@@ -35,7 +35,6 @@ Surface::Surface(QWaylandSurface *surface)
     connect(m_surface, &QWaylandSurface::hasContentChanged, hwComp, &Compositor::surfaceHasContentChanged);
     connect(m_surface, &QWaylandSurface::redraw, hwComp, &Compositor::triggerRender);    
     connect(m_surface, &QWaylandSurface::subsurfacePositionChanged, hwComp, &Compositor::onSubsurfacePositionChanged);
-
     connect(m_surface, &QWaylandSurface::sourceGeometryChanged, this, &Surface::onSurfaceSourceGeometryChanged);
 
     // TODO: multi-monitor suppot
@@ -289,6 +288,9 @@ void Surface::setPosition(const QPointF &pos)
 
 QSize Surface::windowSize() const
 {
+    if(m_fullscreenShell)
+        return surface()->destinationSize();
+
     if(m_layerSurface)
         return m_ls_size;
 
@@ -507,12 +509,20 @@ void Surface::renderDecoration()
                           QImage::Format_RGBA8888);
     QPainter p(m_ssdimg);
 
+    bool do_dark = false;
+    if(hwComp->viewMode() == 1)
+        do_dark = true;
+
+    if(hwComp->viewMode() == 2 && m_twilight)
+        do_dark = true;
+
     auto fg = QColor(HOLLYWOOD_TEXTCLR_LIGHT);
     auto bg = QColor(HOLLYWOOD_WNDCLR_LIGHT);
     bg.setAlpha(255);
     auto fg_inactive = QColor(HOLLYWOOD_TEXTCLR_LIGHT);
     auto stroke = QColor(HOLLYWOOD_WNDCLR_DARK);
-    if(hwComp->darkMode() == 1)
+
+    if(do_dark)
     {
         fg = QColor(HOLLYWOOD_TEXTCLR_DARK);
         bg = QColor(HOLLYWOOD_WNDCLR_DARK);
@@ -600,8 +610,8 @@ void Surface::renderDecoration()
     // Close button
     p.save();
     // close button
-    auto icopath = hwComp->darkMode() == 1 ? ":/Icons/Dark/window-close"
-                                                 : ":/Icons/Light/window-close";
+    auto icopath = do_dark ? ":/Icons/Dark/window-close"
+                           : ":/Icons/Light/window-close";
     int close_left = windowSize().width()-bs-btnsz;
     QIcon wcico = QIcon(icopath);
     if (!wcico.isNull())
@@ -619,8 +629,8 @@ void Surface::renderDecoration()
         p.save();
         if(isMaximized())
         {
-            auto icopath = hwComp->darkMode() == 1 ? ":/Icons/Dark/window-restore"
-                                                         : ":/Icons/Light/window-restore";
+            auto icopath = do_dark ? ":/Icons/Dark/window-restore"
+                                   : ":/Icons/Light/window-restore";
             QIcon ico = QIcon(icopath);
             if (!ico.isNull())
             {
@@ -630,8 +640,8 @@ void Surface::renderDecoration()
         }
         else
         {
-            auto icopath = hwComp->darkMode() == 1 ? ":/Icons/Dark/window-maximize"
-                                                         : ":/Icons/Light/window-maximize";
+            auto icopath = do_dark ? ":/Icons/Dark/window-maximize"
+                                   : ":/Icons/Light/window-maximize";
             QIcon ico = QIcon(icopath);
             if (!ico.isNull())
             {
@@ -645,8 +655,8 @@ void Surface::renderDecoration()
         int min_left = max_left - btnsp - btnsz;
         if(canMinimize())
         {
-            auto icopath = hwComp->darkMode() == 1 ? ":/Icons/Dark/window-minimize"
-                                                         : ":/Icons/Light/window-minimize";
+            auto icopath = do_dark ? ":/Icons/Dark/window-minimize"
+                                   : ":/Icons/Light/window-minimize";
             QIcon ico = QIcon(icopath);
             if (!ico.isNull())
             {
@@ -689,7 +699,7 @@ void Surface::handleLayerShellPopupPositioning()
 void Surface::onSurfaceSourceGeometryChanged()
 {
     qDebug() << "Surface::onSurfaceSourceGeometryChanged" << surface()->sourceGeometry();
-    m_viewport = surface()->sourceGeometry();
+    //m_viewport = surface()->sourceGeometry();
 }
 
 void Surface::onXdgStartResize(QWaylandSeat *seat, Qt::Edges edges)

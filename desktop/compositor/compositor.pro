@@ -11,6 +11,7 @@ INCLUDEPATH += $$PWD/../eglfs/platformheaders/
 WAYLANDSERVERSOURCES += protocols/originull-privateapi.xml
 WAYLANDSERVERSOURCES += protocols/appmenu.xml
 WAYLANDSERVERSOURCES += protocols/plasma-window-management.xml
+WAYLANDSERVERSOURCES += protocols/fullscreen-shell-unstable-v1.xml
 WAYLANDSERVERSOURCES += protocols/wlr-layer-shell-unstable-v1.xml
 WAYLANDSERVERSOURCES += protocols/gtk.xml
 WAYLANDSERVERSOURCES += protocols/qt-shell-unstable-v1.xml
@@ -19,6 +20,7 @@ WAYLANDSERVERSOURCES += protocols/xdg-shell.xml
 HEADERS += \
     include/application.h \
     include/appmenu.h \
+    include/fullscreen.h \
     include/gtkshell.h \
     include/hwc.h \
     include/layershell.h \
@@ -37,6 +39,7 @@ HEADERS += \
 SOURCES += \
     src/application.cc \
     src/appmenu.cc \
+    src/fullscreen.cc \
     src/gtkshell.cc \
     src/layershell.cc \
     src/originull.cc \
@@ -66,8 +69,11 @@ DISTFILES += \
     protocols/wlr-layer-shell-unstable-v1.xml \
     protocols/qt-shell-unstable-v1.xml \
     protocols/xdg-shell.xml \
+    rgbconv.fsh \
+    rgbconv.vsh \
     shadow.fsh \
     shadow.vsh \
+    surface.vsh \
     transition.fsh \
     transition.vsh
 

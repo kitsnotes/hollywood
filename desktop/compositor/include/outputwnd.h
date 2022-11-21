@@ -11,6 +11,8 @@
 #include <QOpenGLFramebufferObject>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLPaintDevice>
+#include <QOpenGLVertexArrayObject>
+#include <QOpenGLBuffer>
 
 class QOpenGLTexture;
 class Compositor;
@@ -60,6 +62,7 @@ private:
     Output *m_output;
     QOpenGLTextureBlitter m_textureBlitter;
     QOpenGLShaderProgram *m_shadowShader;
+    QOpenGLShaderProgram *m_rgbShader;
     QOpenGLFramebufferObject *m_fbo = nullptr;
 
     QPointer<Surface> m_mouseSelectedSurfaceObject;
@@ -73,6 +76,11 @@ private:
     QPointF m_initialMousePos;
     Surface *m_dragIconSurfaceObject = nullptr;
     WallpaperManager *m_wpm = nullptr;
+
+    QScopedPointer<QOpenGLVertexArrayObject> m_rgb_vao;
+    QOpenGLBuffer m_textureBuffer;
+    QOpenGLBuffer m_vertexBuffer;
+
 };
 
 #endif // OUTPUTWND_H
