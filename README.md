@@ -55,5 +55,6 @@ Much thanks needs to be given to
 * [Liri OS](https://github.com/lirios) for the base of our Qt EGLFS plugin and other Qt/Wayland reference bits.
 * [LXQt](https://lxqt.org) for a lot more re-used code.
 * [postmarketOS](https://postmarketos.org/) for the ApkQt package library.
+* [cmst](https://github.com/andrew-bibb/cmst) for the basis of network settings.
 * The Linux Kernel Developers
 * Many, many more.
