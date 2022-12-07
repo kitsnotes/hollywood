@@ -165,11 +165,14 @@ int PartitionChoicePage::nextId() const {
 
 bool PartitionChoicePage::validatePage() {
     if(buttons->checkedButton() == eraseButton) {
-        return (QMessageBox::critical(this, tr("Erase Disk"),
-                tr("You have chosen to ERASE %1.  "
-                   "All data on %1 will be permanently erased.\n\n"
-                   "Do you wish to continue?").arg(QString::fromStdString(horizonWizard()->chosen_disk)),
-                QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes);
+        QMessageBox msg(QMessageBox::Critical, tr("Erase Disk"), tr("You have chosen to erase the disk %1").arg(QString::fromStdString(horizonWizard()->chosen_disk)),
+                        QMessageBox::Yes|QMessageBox::No);
+        msg.setInformativeText(tr("All data on %1 will be permanently erased.\n\n"
+                   "Do you wish to continue?").arg(QString::fromStdString(horizonWizard()->chosen_disk)));
+
+        int result = msg.exec();
+        if(result == QMessageBox::No)
+            return false;
     }
 
     return true;

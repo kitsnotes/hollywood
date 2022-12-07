@@ -604,14 +604,14 @@ void HorizonWizard::reject() {
     QMessageBox cancel(QMessageBox::Question,
                        tr("Exit Hollywood Setup Assistant"),
                #ifdef HAS_INSTALL_ENV
-                       tr("Hollywood has not yet been set up on your computer.  Exiting will reboot your computer.  Do you wish to exit?"),
+                       tr("Hollywood has not yet been set up on your computer. Do you wish to exit?"),
                #else
                        tr("You have not yet completed the System Installation wizard.  No installfile will be generated.  Do you wish to exit?"),
                #endif
                        QMessageBox::Yes | QMessageBox::No,
                        this);
     cancel.setDefaultButton(QMessageBox::No);
-
+    cancel.setInformativeText(tr("No changes have been made to your system and you will be returned to the live boot environment."));
     if(cancel.exec() == QMessageBox::Yes) {
 #ifdef HAS_INSTALL_ENV
         qApp->exit(1);

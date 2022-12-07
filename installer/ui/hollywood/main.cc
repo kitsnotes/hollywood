@@ -59,12 +59,12 @@ int main(int argc, char *argv[]) {
         app.installTranslator(translator);
     }
 
-    WaitDialog d;
-    d.show();
+    //WaitDialog d;
+    //d.show();
     app.setOverrideCursor(Qt::WaitCursor);
     app.processEvents(QEventLoop::AllEvents, 1000);
 
-    app.setWindowIcon(QIcon(":/horizon-256.png"));
+    app.setWindowIcon(QIcon::fromTheme("system-software-install"));
 
     QCommandLineParser parser;
     parser.setApplicationDescription(app.tr("Guides the user through creation of a HorizonScript."));
@@ -87,7 +87,6 @@ int main(int argc, char *argv[]) {
     }
 
     HorizonWizard wizard;
-    d.hide();
     app.restoreOverrideCursor();
     wizard.show();
 

@@ -109,15 +109,16 @@ bool add_default_repos(std::vector<std::unique_ptr<Repository>> &repos,
                        const Script *s, bool firmware = false) {
     std::string base_url = "https://depot.originull.org/";
     const ScriptLocation p{"internal", 0};
-    //const Key *ver = s->getOneValue("version");
-    /* if(ver != nullptr) {
+    const Key *ver = s->getOneValue("version");
+    if(ver != nullptr) {
         base_url += dynamic_cast<const StringKey *>(ver)->value() + "/";
     } else {
-        base_url += "stable/";
-    }*/
+        base_url += "edge/";
+    }
     Repository *sys_key = static_cast<Repository *>(
         Repository::parseFromData(base_url + "system", p, nullptr, nullptr, s)
     );
+
     if(!sys_key) {
         /* LCOV_EXCL_START - only relevant in OOM conditions */
         output_error("internal", "failed to create default system repository");
@@ -126,8 +127,8 @@ bool add_default_repos(std::vector<std::unique_ptr<Repository>> &repos,
     }
     std::unique_ptr<Repository> sys_repo(sys_key);
     repos.push_back(std::move(sys_repo));
-    /*Repository *user_key = static_cast<Repository *>(
-        Repository::parseFromData(base_url + "user", p, nullptr, nullptr, s)
+    Repository *user_key = static_cast<Repository *>(
+        Repository::parseFromData(base_url + "applications", p, nullptr, nullptr, s)
     );
     if(!user_key) {
         // LCOV_EXCL_START - only relevant in OOM conditions
@@ -136,7 +137,7 @@ bool add_default_repos(std::vector<std::unique_ptr<Repository>> &repos,
         // LCOV_EXCL_STOP
     }
     std::unique_ptr<Repository> user_repo(user_key);
-    repos.push_back(std::move(user_repo)); */
+    repos.push_back(std::move(user_repo));
 
 #ifdef NON_LIBRE_FIRMWARE
     /* REQ: Runner.Execute.firmware.Repository */

@@ -70,8 +70,7 @@ MountDialog::MountDialog(QStringList skipParts, QStringList skipMounts,
     });
 #endif
 
-    QStringList pathCandidates{"/", "/home", "/opt", "/srv", "/usr",
-                               "/usr/local", "/var", "/var/db", "/var/log"};
+    QStringList pathCandidates{"/", "/boot", "/boot/efi", "/home", "/var"};
     for(QString &mount: skipMounts) {
         pathCandidates.removeAll(mount);
     }
