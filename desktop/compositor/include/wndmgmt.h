@@ -1,3 +1,7 @@
+// Hollywood Wayland Compositor
+// (C) 2021, 2022 Cat Stevenson <cat@originull.org>
+// SPDX-License-Identifier: GPL-3.0-only
+
 #ifndef WNDMGMT_H
 #define WNDMGMT_H
 

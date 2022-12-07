@@ -1,3 +1,5 @@
+// Hollywood Wayland Compositor
+// (C) 2022 Cat Stevenson <cat@originull.org>
 // Copyright (C) 2018 The Qt Company Ltd.
 // SPDX-License-Identifier: GPL-3.0-only
 

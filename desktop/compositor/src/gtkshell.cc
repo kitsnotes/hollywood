@@ -1,7 +1,5 @@
 // Hollywood Wayland Compositor
 // (C) 2022 Cat Stevenson <cat@originull.org>
-// This class was derived from Liri
-// (C) 2019 Pier Luigi Fiorini <pierluigi.fiorini@gmail.com>
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
 #include "gtkshell.h"

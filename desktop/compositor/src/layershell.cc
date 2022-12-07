@@ -1,3 +1,9 @@
+// Hollywood Wayland Compositor
+// (C) 2021, 2022 Cat Stevenson <cat@originull.org>
+// This class was derived from Liri
+// (C) 2019 Pier Luigi Fiorini <pierluigi.fiorini@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-only
+
 #include "layershell.h"
 #include "application.h"
 #include "compositor.h"
