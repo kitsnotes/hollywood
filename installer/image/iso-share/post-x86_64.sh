@@ -8,13 +8,18 @@ set prefix=($root)/boot
 EARLYCFG
 
 cat >cdroot/boot/grub.cfg <<'GRUBCFG'
+load_video
+set gfxpayload=keep
+insmod gzio
+insmod part_gpt
+insmod ext2
+insmod iso9660
+insmod linux
+search --label "HWAMD64" --no-floppy --set
 set timeout=0
 menuentry "Hollywood (AMD/Intel 64-bit)" --class linux --id hollywood-stable {
-        insmod iso9660
-        insmod linux
-        search --label "HWAMD64" --no-floppy --set
-        linux ($root)/boot/kernel-stable-x86_64 root=live:LABEL=HWAMD64 rd.live.dir=/ rd.live.squashimg=x86_64.squashfs quiet splash
-        initrd ($root)/boot/initrd-stable-x86_64
+        linux ($root)/boot/kernel-stable root=live:LABEL=HWAMD64 rd.live.dir=/ rd.live.squashimg=x86_64.squashfs quiet splash
+        initrd ($root)/boot/initrd-stable
 }
 
 GRUB_DEFAULT=hollywood-stable

@@ -373,7 +373,7 @@ public:
         std::ifstream kverstream(kverpath);
         kverstream >> kver;
 
-        const std::string irdname = "initrd-stable-" + my_arch;
+        const std::string irdname = "initrd-stable";
         if(run_command("chroot", {target, "dracut", "--kver", kver, "-N",
                                   "--force", "-a", "dmsquash-live",
                                   "/boot/" + irdname}) != 0) {
@@ -408,7 +408,7 @@ public:
             std::ifstream kverstream(kverpath);
             kverstream >> kver;
 
-            const std::string irdname = "initrd-asahi-" + my_arch;
+            const std::string irdname = "initrd-asahi";
             if(run_command("chroot", {target, "dracut", "--kver", kver, "-N",
                                       "--force", "-a", "dmsquash-live",
                                       "/boot/" + irdname}) != 0) {
@@ -451,7 +451,7 @@ public:
         for(const auto &candidate : fs::directory_iterator(target + "/boot")) {
             auto name = candidate.path().filename().string();
             if(name == "vmlinuz-stable") {
-                fs::copy(candidate.path(), cdpath + "/boot/kernel-stable-" + my_arch, ec);
+                fs::copy(candidate.path(), cdpath + "/boot/kernel-stable", ec);
                 if(ec) {
                     output_error("CD backend", "failed to copy kernel",
                                  ec.message());
@@ -462,14 +462,24 @@ public:
             }
         }
 
+
         /* REQ: ISO.25 */
         if(my_arch == "aarch64")
         {
+            output_info("CD backend", "installing devicetrees");
+            fs::copy(target + "/boot/dtbs-stable", cdpath + "/boot/dtbs-stable",
+                     fs::copy_options::recursive, ec);
+            if(ec) {
+                output_error("CD backend", "failed to copy devicetrees",
+                             ec.message());
+                return FS_ERROR;
+            }
+
             output_info("CD backend", "installing asahi kernel");
             for(const auto &candidate : fs::directory_iterator(target + "/boot")) {
                 auto name = candidate.path().filename().string();
                 if(name == "vmlinuz-asahi") {
-                    fs::copy(candidate.path(), cdpath + "/boot/kernel-asahi-" + my_arch, ec);
+                    fs::copy(candidate.path(), cdpath + "/boot/kernel-asahi", ec);
                     if(ec) {
                         output_error("CD backend", "failed to copy asahi kernel",
                                      ec.message());
@@ -479,6 +489,16 @@ public:
                     break;
                 }
             }
+
+            output_info("CD backend", "installing asahi devicetrees");
+            fs::copy(target + "/boot/dtbs-asahi", cdpath + "/boot/dtbs-asahi",
+                     fs::copy_options::recursive, ec);
+            if(ec) {
+                output_error("CD backend", "failed to copy asahi devicetrees",
+                             ec.message());
+                return FS_ERROR;
+            }
+
         }
 
         /* REQ: ISO.26 */

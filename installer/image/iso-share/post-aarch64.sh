@@ -8,21 +8,24 @@ set prefix=($root)/boot
 EARLYCFG
 
 cat >cdroot/boot/grub.cfg <<'GRUBCFG'
+load_video
+set gfxpayload=keep
+insmod gzio
+insmod part_gpt
+insmod ext2
+insmod iso9660
+insmod linux
+search --label "HWARM64" --no-floppy --set
 set timeout=5
-menuentry "Hollywood (ARM 64-bit - for all VMs and physical machines not listed below)" --class linux --id hollywood-stable {
-        insmod iso9660
-        insmod linux
-        search --label "HWARM64" --no-floppy --set
-        linux ($root)/boot/kernel-stable-aarch64 root=live:LABEL=HWARM64 rd.live.dir=/ rd.live.squashimg=aarch64.squashfs quiet splash
-        initrd ($root)/boot/initrd-stable-aarch64
+
+menuentry "Hollywood (ARM 64-bit - for all VMs and machines not listed below)" --class linux --id hollywood-stable {
+        linux ($root)/boot/kernel-stable root=live:LABEL=HWARM64 rd.live.dir=/ rd.live.squashimg=aarch64.squashfs quiet splash
+        initrd ($root)/boot/initrd-stable
 }
 
 menuentry "Hollywood (Apple Silicon - on bare metal only)" --class linux --id hollywood-asahi {
-        insmod iso9660
-        insmod linux
-        search --label "HWARM64" --no-floppy --set
-        linux ($root)/boot/kernel-asahi-aarch64 root=live:LABEL=HWARM64 rd.live.dir=/ rd.live.squashimg=aarch64.squashfs quiet splash
-        initrd ($root)/boot/initrd-asahi-aarch64
+        linux ($root)/boot/kernel-asahi root=live:LABEL=HWARM64 rd.live.dir=/ rd.live.squashimg=aarch64.squashfs quiet splash
+        initrd ($root)/boot/initrd-asahi
 }
 
 GRUB_DEFAULT=hollywood-stable
