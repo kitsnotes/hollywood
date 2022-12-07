@@ -49,8 +49,8 @@ public:
         XLarge
     };
 
-    //bool usePlatformNativeDialog(DialogType type) const override;
-    //QPlatformDialogHelper *createPlatformDialogHelper(DialogType type) const override;
+    bool usePlatformNativeDialog(DialogType type) const override;
+    QPlatformDialogHelper *createPlatformDialogHelper(DialogType type) const override;
     QPlatformMenuBar *createPlatformMenuBar() const override;
 
     void globalMenuBarExistsNow();
@@ -93,7 +93,7 @@ private:
     bool m_iconColorize = true;
 
     uint m_doubleClickInt;
-    uint m_wheelScroll;
+    uint m_wheelScroll = 3;
     uint m_cursorFlash = 1000;
 
     QScopedPointer<WaylandIntegration> m_wayland;

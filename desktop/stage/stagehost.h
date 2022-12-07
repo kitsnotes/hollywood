@@ -9,8 +9,11 @@
 #include "wndmgmt.h"
 #include <hollywood/layershellwindow.h>
 
+class NotifierHost;
+class StatusNotifierButton;
 class StageClock;
 class TaskButton;
+class SurfaceManager;
 class StageHost : public QWidget
 {
     Q_OBJECT
@@ -23,18 +26,16 @@ public:
     explicit StageHost(QScreen *screen, QWidget *parent = nullptr);
 
     void setAlignment(Alignment align);
-    void createWindowButton(PlasmaWindow *wnd);
-    void removeWindowButton(PlasmaWindow *wnd);
 
 public slots:
     void show();
-    void stackingOrderChanged();
 protected:
     void resizeEvent(QResizeEvent *event) override;
 protected slots:
-    void buttonClicked();
-    void windowClosed();
-    void minimizedChanged();
+    void createWindowButton(TaskButton *btn);
+    void windowClosed(TaskButton *btn);
+    void createStatusButton(StatusNotifierButton *btn);
+    void statusButtonRemoved(StatusNotifierButton *btn);
 private:
     bool m_ready = false;
     LayerShellQt::Window *m_lswnd;
@@ -46,9 +47,8 @@ private:
     QToolButton *m_menu = nullptr;
     QToolButton *m_showdesktop = nullptr;
 
-    QList<TaskButton*> m_windows;
-    QButtonGroup *m_group = nullptr;
-
+    SurfaceManager *m_sm = nullptr;
+    NotifierHost *m_notifier = nullptr;
     StageClock *m_clock = nullptr;
 };
 

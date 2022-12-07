@@ -3,7 +3,7 @@ include(../include/global.pri)
 QT       += charts
 
 INCLUDEPATH += include/
-INCLUDEPATH += ../libcommdlg/include/
+INCLUDEPATH += ../libcommdlg/
 
 TARGET=hwcalc
 LIBS += -L../libcommdlg -L../output -lcommdlg-$${HOLLYWOOD_APIVERSION}

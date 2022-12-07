@@ -1,7 +1,7 @@
 #ifndef DUCKAPPLET_H
 #define DUCKAPPLET_H
 
-#include <appletinterface.h>
+#include <hollywood/appletinterface.h>
 #include <QtCore/QVariant>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QCheckBox>

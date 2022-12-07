@@ -6,19 +6,21 @@ CONFIG += compile_libtool create_libtool create_pc create_prl no_install_prl
 DEFINES += LIBCOMMDLG_LIBRARY
 VERSION = $${HOLLYWOOD_APIVERSION}
 SEMVER_VERSION = $${HOLLYWOOD_MAJOR_VERSION}.$${HOLLYWOOD_MINOR_VERSION}.$${HOLLYWOOD_PATCH_VERSION}
-
-INCLUDEPATH += include/
+QT += multimedia
+INCLUDEPATH += private/
 
 SOURCES += \
-    src/aboutdialog.cc \
-    src/messagedialog.cc \
-    src/preferencedialog.cc
+    aboutdialog.cc \
+    messagebox.cc \
+    preferencedialog.cc
 
 HEADERS += \
-    include/aboutdialog.h \
-    include/libcommdlg_global.h \
-    include/messagedialog.h \
-    include/preferencedialog.h
+    aboutdialog.h \
+    libcommdlg_global.h \
+    messagebox.h \
+    private/aboutdialog_p.h \
+    private/messagebox_p.h \
+    preferencedialog.h
 
 QMAKE_PKGCONFIG_DESCRIPTION = Hollywood Common Dialog Library
 !versionAtLeast(QT_VERSION, 6.0.0) {

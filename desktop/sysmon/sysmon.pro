@@ -4,7 +4,7 @@ QT       += core gui widgets charts
 
 INCLUDEPATH += include/
 INCLUDEPATH += ../libshell/include
-INCLUDEPATH += ../libcommdlg/include
+INCLUDEPATH += ../libcommdlg
 INCLUDEPATH += /usr/include/ApkQt/
 CONFIG += link_pkgconfig
 TARGET = hwsysmon

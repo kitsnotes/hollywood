@@ -1,3 +1,7 @@
+// Hollywood Wayland Compositor
+// (C) 2022 Cat Stevenson <cat@originull.org>
+// SPDX-License-Identifier: GPL-3.0-only
+
 #include "appmenu.h"
 #include "surfaceobject.h"
 #include "compositor.h"

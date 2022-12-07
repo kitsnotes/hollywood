@@ -3,6 +3,6 @@ Type=Application
 Exec=/usr/libexec/hollywood/elevator
 Name=Elevator
 Terminal=False
-Icon=lock
+Icon=preferences-security
 NoDisplay=true
 X-Hollywood-System=true

@@ -1,6 +1,6 @@
 include(../include/global.pri)
 
-QT       += core gui widgets waylandclient concurrent waylandclient-private dbus
+QT       += core gui widgets waylandclient concurrent waylandclient-private dbus multimedia
 CONFIG   += c++11 wayland-scanner
 DESTDIR= ../output
 TARGET = stage
@@ -23,17 +23,41 @@ DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000
 
 SOURCES += \
     app.cc \
-    progman.cc \
+    dbusmenu/dbusmenuimporter.cpp \
+    dbusmenu/dbusmenushortcut.cc \
+    dbusmenu/dbusmenutypes.cc \
+    dbusmenu/utils.cc \
+    notifierhost.cc \
     stageclock.cc \
     stagehost.cc \
+    statusnotifier/dbustypes.cpp \
+    statusnotifier/sniasync.cpp \
+    statusnotifier/statusnotifierbutton.cpp \
+    statusnotifier/statusnotifieriteminterface.cpp \
+    statusnotifier/statusnotifierproxy.cpp \
+    statusnotifier/statusnotifierwatcher.cpp \
+    surfacemanager.cc \
     taskbutton.cc \
     wndmgmt.cc
 
 HEADERS += \
     app.h \
-    progman.h \
+    dbusmenu/dbusmenu_interface.h \
+    dbusmenu/dbusmenuimporter.h \
+    dbusmenu/dbusmenuimporter_p.h \
+    dbusmenu/dbusmenushortcut_p.h \
+    dbusmenu/dbusmenutypes_p.h \
+    dbusmenu/utils.h \
+    notifierhost.h \
     stageclock.h \
     stagehost.h \
+    statusnotifier/dbustypes.h \
+    statusnotifier/sniasync.h \
+    statusnotifier/statusnotifierbutton.h \
+    statusnotifier/statusnotifieriteminterface.h \
+    statusnotifier/statusnotifierproxy.h \
+    statusnotifier/statusnotifierwatcher.h \
+    surfacemanager.h \
     taskbutton.h \
     wndmgmt.h
 

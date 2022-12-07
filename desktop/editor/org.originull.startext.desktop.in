@@ -4,7 +4,7 @@ Icon=accessories-text-editor
 Exec=startext
 Terminal=false
 Categories=Accessories;Qt;Hollywood;Utility;TextEditor;
-
+MimeType=text/plain;text/markdown;text/x-changelog;text/css;text/x-readme;text/x-log;
 Name=StarText
 Comment=A feature filled plain text editor.
 GenericName=StarText

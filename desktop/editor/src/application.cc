@@ -14,12 +14,6 @@ Application::Application(int &argc, char **argv)
     : QApplication(argc, argv),
       m_menubar(NULL),
       m_prefs(NULL),
-      #ifdef Q_OS_WIN
-      m_jumplist(new QWinJumpList(this)),
-      #endif
-      #ifdef THINK_DIFFERENT
-      m_dock_menu(new QMenu()),
-      #endif
       m_spell_check(new SpellCheck(this)),
       m_current(NULL)
 {
@@ -720,16 +714,16 @@ void Application::createDefaultSettings()
 void Application::aboutApplication(QWidget *parent)
 {
 #ifdef BUILD_HOLLYWOOD
-    ADAboutDialog *about;
+    HWAboutDialog *about;
     if(parent != nullptr)
     {
         if(parent->objectName().startsWith("FMWindow"))
-            about = new ADAboutDialog(parent);
+            about = new HWAboutDialog(parent);
         else
-            about = new ADAboutDialog(0);
+            about = new HWAboutDialog(0);
     }
     else
-        about = new ADAboutDialog(0);
+        about = new HWAboutDialog(0);
 
     about->setAppDescription(tr("An editor made for you!"));
     about->setAppCopyright("Copyright © 2019-2022\nOriginull Software");
@@ -972,79 +966,9 @@ void Application::installMacResponder()
 }
 #endif
 
-#ifdef Q_WS_WIN
-void Application::createJumpList()
-{
-    QString id("ArionEditor.ArionEditorClient.%1");
-    id = id.arg(LUVEDIT_BUILD);
-    m_jumplist->setIdentifier(id);
-
-    QWinJumpListItem *new_doc = new QWinJumpListItem(QWinJumpListItem::Link);
-    new_doc->setArguments(QStringList("--new-document"));
-    new_doc->setIcon(QIcon(":/IconActions/NewDocument"));
-    new_doc->setTitle(tr("New Document"));
-
-    QWinJumpListItem *open = new QWinJumpListItem(QWinJumpListItem::Link);
-    open->setArguments(QStringList("--show-open-dialog"));
-    open->setIcon(QIcon(":/IconActions/Open"));
-    open->setTitle(tr("Open File on Disk..."));
-
-    m_jumplist->tasks()->setTitle("Tasks");
-    m_jumplist->tasks()->addItem(new_doc);
-    m_jumplist->tasks()->addItem(open);
-    m_jumplist->tasks()->setVisible(true);
-}
-#endif
-
-
 int main(int argc, char *argv[])
 {
-#ifdef NATIVE_WINDOWS_MENU
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 10, 0))
-    QByteArray b;
-    for(int i = 0; i < argc; i++)
-        b.append(argv[i]);
-
-    QList<QByteArray> l;
-    bool removePlatform = false;
-    foreach(QByteArray b2, b.split(' '))
-    {
-        if(!b2.startsWith("-platform"))
-            l.append(b2);
-        else
-            removePlatform = true;
-
-        if(removePlatform)
-        {
-            if(!b2.toLower().startsWith("windows"))
-                l.append(b2);
-
-            removePlatform = false;
-        }
-    }
-
-    l.append("-platform");
-    l.append("windows:menus=native");
-
-    argc = l.count();
-
-    char** argp = (char**)malloc((l.count()+1) * sizeof *argp);
-    for(int i = 0; i < l.count(); ++i)
-    {
-        size_t length = strlen(l.at(i).data())+1;
-        argp[i] = (char*)malloc(length);
-        memcpy(argp[i], l.at(i).data(), length);
-    }
-    argp[l.count()] = NULL;
-
-    Application a(argc, argp);
-#else
     Application a(argc, argv);
-#endif
-#else
-    Application a(argc, argv);
-#endif
-
     a.parseCommandLine();
 
     return a.exec();

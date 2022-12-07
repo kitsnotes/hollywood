@@ -14,7 +14,7 @@ bool DuckApplet::init()
 
 QString DuckApplet::id() const
 {
-    return QLatin1String("org.arionos.duck");
+    return QLatin1String("org.hollywood.duck");
 }
 
 QString DuckApplet::name() const
@@ -110,7 +110,7 @@ void DuckApplet::setupWidget()
     m_host->setWindowTitle(tr("Duck"));
     m_duckLabel->setText(QString());
     m_welcome->setText(tr("This is Mr Duck."));
-    m_description->setText(tr("Mr. Duck shows us how to implement a Settings Applet in Arion."));
+    m_description->setText(tr("Mr. Duck shows us how to implement a Settings Applet in Hollywood."));
     m_quackMidnight->setText(tr("Quack at midnight"));
     m_quackHourly->setText(tr("Quack on the hour"));
     m_quackNow->setText(tr("Quack Now"));

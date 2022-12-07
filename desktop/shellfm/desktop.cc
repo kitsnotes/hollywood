@@ -13,6 +13,7 @@ DesktopWindow::DesktopWindow(QWidget *parent)
     , m_actions(new LSActionManager(this))
     , m_rightclick(new QMenu(this))
 {
+    setWindowFlags(Qt::Window|Qt::FramelessWindowHint|Qt::X11BypassWindowManagerHint);
     setObjectName("DesktopWindow");
     setCentralWidget(m_view);
     m_view->setModel(m_model);

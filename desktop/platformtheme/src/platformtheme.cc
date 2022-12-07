@@ -13,6 +13,7 @@
 #include <private/qiconloader_p.h>
 #include <QGuiApplication>
 #include <qpa/qplatformintegration.h>
+#include <dialoghelpers.h>
 
 #include <hollywood/hollywood.h>
 #include "wayland.h"
@@ -43,6 +44,25 @@ HollywoodPlatformTheme::HollywoodPlatformTheme()
     createPalettes();
 
     QMetaObject::invokeMethod(this, "secondInit", Qt::QueuedConnection);
+}
+
+bool HollywoodPlatformTheme::usePlatformNativeDialog(DialogType type) const
+{
+    if(type == MessageDialog)
+        return true;
+
+    return false;
+}
+
+QPlatformDialogHelper *HollywoodPlatformTheme::createPlatformDialogHelper(DialogType type) const
+{
+    if(type == MessageDialog)
+    {
+        auto dlg = new HWMessageDialogHelper;
+        return dlg;
+    }
+
+    return nullptr;
 }
 
 
@@ -535,7 +555,7 @@ void HollywoodPlatformTheme::loadSettings()
     settings.endGroup();
 
     settings.beginGroup(QLatin1String("Mouse"));
-    auto ws = settings.value("MouseScrollSpeed").toUInt();
+    auto ws = settings.value("MouseScrollSpeed", HOLLYWOOD_DEF_SCROLL_SPEED).toUInt();
     if(ws > HOLLYWOOD_MAX_SCROLL_SPEED)
         ws = HOLLYWOOD_MAX_SCROLL_SPEED;
     if(ws <= 1)

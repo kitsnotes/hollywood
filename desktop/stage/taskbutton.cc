@@ -47,7 +47,10 @@ void TaskButton::displayContextMenu(const QPoint &pos)
 
 void TaskButton::titleChanged(const QString &title)
 {
-    this->setText(title);
+    // double ampersands to distinguish them from mnemonics
+    auto newtitle = title;
+    newtitle.replace(QLatin1Char('&'), QLatin1String("&&"));
+    this->setText(newtitle);
 }
 
 void TaskButton::restore()

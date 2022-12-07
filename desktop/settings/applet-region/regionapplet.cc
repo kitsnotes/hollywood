@@ -1,17 +1,26 @@
+// Hollywood Settings - Regional Applet
+// (C) 2022 Cat Stevenson <cat@originull.org>
+// (C) Copyright: 2014 LXQt team
+// (C) 2014 Sebastian Kügler <sebas@kde.org>
+// (C) Julien Lavergne <gilir@ubuntu.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "regionapplet.h"
 
 #include <QTextCodec>
 #include <QStandardPaths>
+#include <QSettings>
+#include <hollywood/hollywood.h>
+#include <messagebox.h>
+#include <QDBusInterface>
 
 const static QString lcLang = QStringLiteral("LANG");
-
 const static QString lcNumeric = QStringLiteral("LC_NUMERIC");
 const static QString lcTime = QStringLiteral("LC_TIME");
 const static QString lcMonetary = QStringLiteral("LC_MONETARY");
 const static QString lcMeasurement = QStringLiteral("LC_MEASUREMENT");
 const static QString lcCollate = QStringLiteral("LC_COLLATE");
 const static QString lcCtype = QStringLiteral("LC_CTYPE");
-
 const static QString lcLanguage = QStringLiteral("LANGUAGE");
 
 
@@ -56,21 +65,28 @@ bool RegionalApplet::init()
     setCombo(comboMeasurement, QString::fromLocal8Bit(qgetenv(lcMeasurement.toLatin1().constData())));
     QList<QLocale> allLocales = QLocale::matchingLocales(QLocale::AnyLanguage, QLocale::AnyScript, QLocale::AnyCountry);
     std::sort(allLocales.begin(), allLocales.end(), countryLessThan);
+
+    m_combos.clear();
+    m_combos.append(comboGlobal);
+    m_combos.append(comboNumbers);
+    m_combos.append(comboTime);
+    m_combos.append(comboCollate);
+    m_combos.append(comboCurrency);
+    m_combos.append(comboMeasurement);
+
     for(QComboBox * combo : qAsConst(m_combos))
-    {
         initCombo(combo, allLocales);
-    }
 
-    //readConfig();
+    loadSettings();
 
     for(QComboBox * combo : qAsConst(m_combos))
-    {
         connectCombo(combo);
-    }
 
     connect(checkDetailed, &QGroupBox::toggled, [ = ]()
     {
         updateExample();
+        saveSettings();
+        m_warning->setVisible(true);
         hasChanged = true;
     });
 
@@ -80,9 +96,136 @@ bool RegionalApplet::init()
     return true;
 }
 
+bool RegionalApplet::loadSettings()
+{
+    QSettings settings("originull", "hollywood");
+    settings.beginGroup(QStringLiteral("Regional"));
+    bool useDetailed = settings.value(QStringLiteral("UseDetailed"), false).toBool();
+    checkDetailed->setChecked(useDetailed);
+
+    setCombo(comboGlobal, settings.value(lcLang, QString::fromLocal8Bit(qgetenv(lcLang.toLatin1().constData()))).toString());
+
+    setCombo(comboNumbers, settings.value(lcNumeric, QString::fromLocal8Bit(qgetenv(lcNumeric.toLatin1().constData()))).toString());
+    setCombo(comboTime, settings.value(lcTime, QString::fromLocal8Bit(qgetenv(lcTime.toLatin1().constData()))).toString());
+    setCombo(comboCollate, settings.value(lcCollate, QString::fromLocal8Bit(qgetenv(lcCollate.toLatin1().constData()))).toString());
+    setCombo(comboCurrency, settings.value(lcMonetary, QString::fromLocal8Bit(qgetenv(lcMonetary.toLatin1().constData()))).toString());
+    setCombo(comboMeasurement, settings.value(lcMeasurement, QString::fromLocal8Bit(qgetenv(lcMeasurement.toLatin1().constData()))).toString());
+
+    bool settingsChange = settings.value("SettingsChanged").toBool();
+    if(settingsChange)
+        m_warning->setVisible(true);
+    settings.endGroup();
+    return true;
+}
+
+bool RegionalApplet::saveSettings()
+{
+    QSettings settings("originull", "hollywood");
+
+    settings.beginGroup(QStringLiteral("Regional"));
+    settings.setValue("SettingsChanged", true);
+    // global ends up empty here when OK button is clicked from kcmshell5,
+    // apparently the data in the combo is gone by the time save() is called.
+    // This might be a problem in KCModule, but does not directly affect us
+    // since within systemsettings, it works fine.
+    // See https://bugs.kde.org/show_bug.cgi?id=334624
+    if (comboGlobal->count() == 0)
+    {
+        qWarning() << "Couldn't read data from UI, writing configuration failed.";
+        return false;
+    }
+    const QString global = comboGlobal->currentData().toString();
+
+    if (!checkDetailed->isChecked())
+    {
+        // Global setting, clean up config
+        settings.remove(QStringLiteral("UseDetailed"));
+        if (global.isEmpty())
+        {
+            settings.remove(lcLang);
+        }
+        else
+        {
+            settings.setValue(lcLang, global);
+        }
+        settings.remove(lcNumeric);
+        settings.remove(lcTime);
+        settings.remove(lcMonetary);
+        settings.remove(lcMeasurement);
+        settings.remove(lcCollate);
+        settings.remove(lcCtype);
+    }
+    else
+    {
+        // Save detailed settings
+        settings.setValue(QStringLiteral("UseDetailed"), true);
+
+        if (global.isEmpty())
+        {
+            settings.remove(lcLang);
+        }
+        else
+        {
+            settings.setValue(lcLang, global);
+        }
+
+        const QString numeric = comboNumbers->currentData().toString();
+        if (numeric.isEmpty())
+        {
+            settings.remove(lcNumeric);
+        }
+        else
+        {
+            settings.setValue(lcNumeric, numeric);
+        }
+
+        const QString time = comboTime->currentData().toString();
+        if (time.isEmpty())
+        {
+            settings.remove(lcTime);
+        }
+        else
+        {
+            settings.setValue(lcTime, time);
+        }
+
+        const QString monetary = comboCurrency->currentData().toString();
+        if (monetary.isEmpty())
+        {
+            settings.remove(lcMonetary);
+        }
+        else
+        {
+            settings.setValue(lcMonetary, monetary);
+        }
+
+        const QString measurement = comboMeasurement->currentData().toString();
+        if (measurement.isEmpty())
+        {
+            settings.remove(lcMeasurement);
+        }
+        else
+        {
+            settings.setValue(lcMeasurement, measurement);
+        }
+
+        const QString collate = comboCollate->currentData().toString();
+        if (collate.isEmpty())
+        {
+            settings.remove(lcCollate);
+        }
+        else
+        {
+            settings.setValue(lcCollate, collate);
+        }
+    }
+    settings.endGroup();
+    return true;
+}
+
 QString RegionalApplet::id() const
 {
-    return QLatin1String("org.originull.regional");
+    return QLatin1String("org.originull.hwsettings.regional");
 }
 
 QString RegionalApplet::name() const
@@ -112,6 +255,16 @@ QWidget *RegionalApplet::applet() const
 SettingsAppletInterface::Category RegionalApplet::category() const
 {
     return Personal;
+}
+
+void RegionalApplet::restartSession()
+{
+    HWMessageBox msg(QMessageBox::Question, tr("Restart Session"), tr("Are you ready to restart your session now?"));
+    msg.setIconPixmap(QIcon::fromTheme("system-reboot").pixmap(QSize(64,64)));
+    msg.setInformativeText(tr("You should save all documents before restarting your session."));
+    msg.setStandardButtons(QMessageBox::Yes|QMessageBox::No);
+    if(msg.exec() == QMessageBox::Yes)
+        callSessionDBus("reboot");
 }
 
 void RegionalApplet::setupWidget()
@@ -290,6 +443,20 @@ void RegionalApplet::setupWidget()
 
     mainLayout->addItem(verticalSpacer_3);
 
+    m_warning = new QFrame(m_host);
+
+    auto hl_warn = new QHBoxLayout(m_warning);
+    auto label_warning = new QLabel(m_warning);
+    auto relaunch = new QPushButton(m_warning);
+    hl_warn->addWidget(label_warning);
+    hl_warn->addWidget(relaunch);
+    hl_warn->setStretch(0,1);
+
+    label_warning->setText(tr("You must relaunch your session and all open applications before your changes will take effect."));
+    relaunch->setText(tr("Relaunch Now..."));
+    connect(relaunch, &QPushButton::pressed, this, &RegionalApplet::restartSession);
+    mainLayout->addWidget(m_warning);
+    m_warning->setVisible(false);
     #if QT_CONFIG(shortcut)
     labelGlobal->setBuddy(comboGlobal);
     labelNumbers->setBuddy(comboNumbers);
@@ -368,6 +535,8 @@ void RegionalApplet::connectCombo(QComboBox *combo)
     {
         hasChanged = true;
         updateExample();
+        m_warning->setVisible(true);
+        saveSettings();
     });
 }
 
@@ -419,3 +588,31 @@ void RegionalApplet::updateExample()
     exampleMeasurement->setText(measurementSetting);
 }
 
+bool RegionalApplet::callSessionDBus(const QString &exec)
+{
+    QDBusInterface ldb(HOLLYWOOD_SESSION_DBUS, HOLLYWOOD_SESSION_DBUSOBJ, HOLLYWOOD_SESSION_DBUSPATH);
+    if(!ldb.isValid())
+    {
+         qDebug() << QString("Could not call session DBUS interface. Command: %1")
+                   .arg(exec);
+        return false;
+    }
+
+    QDBusMessage msg = ldb.call(exec);
+
+    if(msg.arguments().isEmpty() || msg.arguments().constFirst().isNull())
+        return true;
+
+    auto response = msg.arguments().constFirst();
+
+    if(msg.arguments().isEmpty())
+        return true;
+
+    if(response.isNull())
+        return true;
+
+    if(response.toBool())
+        return true;
+
+    return false;
+}

@@ -32,7 +32,7 @@ HEADERS += \
     terminal.h \
     window.h
 
-INCLUDEPATH += ../libcommdlg/include
+INCLUDEPATH += ../libcommdlg
 QMAKE_SUBSTITUTES += org.originull.terminull.desktop.in
 desktop.path = $$PREFIX/share/applications
 desktop.files = org.originull.terminull.desktop

@@ -204,8 +204,10 @@ void FileWindow::setupActions()
             this, SLOT(goQuickAction()));
     a_Applications = new QAction(this);
     a_Applications->setObjectName(QString::fromUtf8("GoApplications"));
-    a_Applications->setEnabled(false);
+    a_Applications->setIcon(QIcon::fromTheme(QString::fromUtf8("folder-activities")));
     a_Applications->setShortcut(QKeySequence("Ctrl+Shift+A"));
+    connect(a_Applications, SIGNAL(triggered()),
+            this, SLOT(goQuickAction()));
     a_Network = new QAction(this);
     a_Network->setObjectName(QString::fromUtf8("GoNetwork"));
     a_Network->setIcon(QIcon::fromTheme(QString::fromUtf8("network-workgroup")));
@@ -386,6 +388,17 @@ void FileWindow::goQuickAction()
     if(actionName == "GoMusic")
         path = QStandardPaths::standardLocations(QStandardPaths::MusicLocation).first();
 
+    if(!path.isEmpty())
+    {
+        m_shellHost->navigateToPath(path);
+        return;
+    }
+
+    if(actionName == "GoApplications")
+    {
+        m_shellHost->navigateToUrl(QUrl("applications://"));
+        return;
+    }
     if(!path.isEmpty())
     {
     //    if(m_windowMode == ArionShell::WINDOW_BROWSER)

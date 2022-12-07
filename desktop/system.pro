@@ -15,26 +15,13 @@ SUBDIRS = \
     platformplugin \
     editor \
     eglfs \
+    elevator \
     style \
-    libshell \
-    menuserver \
     session \
     shellfm \
     compositor \
-    elevator \
+    libshell \
     settings \
-    settings/applet-apk \
-    settings/applet-datetime \
-    settings/applet-efiboot \
-    settings/applet-general \
-    settings/applet-displays \
-    settings/applet-network \
-    settings/applet-keyboard \
-    settings/applet-mouse \
-    settings/applet-wallpaper \
-    settings/applet-region \
-    settings/applet-stage \
-    settings/applet-energy \
     shellintegration \
     stage \
     sysmon \
@@ -49,10 +36,14 @@ SUBDIRS = \
     shellfm.depends = libshell libcompositor libcommdlg
     editor.depends = libcommdlg
     calculator.depends = libcommdlg
+    platformtheme.depends = libcommdlg libshell
     settings.depends = libshell libcommdlg
     menuserver.depends = libshell libcompositor
     terminal.depends = libcommdlg
     stage.depends = libcompositor libshell
+    session.depends = libshell
+    sysmon.depends = libshell libcommdlg
+    popular.depends = libshell libcommdlg
 }
 
 # We only build libraries on Qt5
@@ -62,7 +53,6 @@ SUBDIRS = \
     libcompositor \
     platformtheme \
     platformplugin \
-    style \
-    libshell
+    style
 }
 

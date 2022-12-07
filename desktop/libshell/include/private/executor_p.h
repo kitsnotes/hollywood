@@ -9,7 +9,7 @@ class ExecutorPrivate
 {
 private:
     friend class LSExecutor;
-    LSExecutor *p;
+    LSExecutor *d;
     ExecutorPrivate(LSExecutor *parent);
     ~ExecutorPrivate();
     bool findBestApplication();

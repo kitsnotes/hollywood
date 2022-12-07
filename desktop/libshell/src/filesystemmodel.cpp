@@ -9,7 +9,7 @@
 ** This file, like the rest of libshell is licensed under LGPL 2.1.
 ****************************************************************************/
 
-#include "filesystemmodel_p.h"
+#include "private/filesystemmodel_p.h"
 #include "filesystemmodel.h"
 #include <qlocale.h>
 #include <qmimedata.h>

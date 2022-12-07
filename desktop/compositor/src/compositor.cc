@@ -276,6 +276,13 @@ void Compositor::onSurfaceCreated(QWaylandSurface *surface)
 
 void Compositor::recycleSurfaceObject(Surface *obj)
 {
+    Surface *parent = nullptr;
+    if(obj->parentSurfaceObject() != nullptr)
+    {
+        if(obj->surfaceType() == Surface::Popup)
+            parent = obj->parentSurfaceObject();
+    }
+
     m_surfaces.removeOne(obj);
     m_zorder.removeOne(obj);
     m_desktops.removeOne(obj);
@@ -287,6 +294,15 @@ void Compositor::recycleSurfaceObject(Surface *obj)
     if(m_menuServer == obj)
         m_menuServer = nullptr;
 
+    // if we delete a popup object lets raise our parent
+    // and set keyboard focus
+    if(parent)
+    {
+        raise(parent);
+        defaultSeat()->setKeyboardFocus(parent->surface());
+        defaultSeat()->setMouseFocus(parent->surface()->primaryView());
+    }
+
     delete obj;
 }
 
@@ -297,8 +313,10 @@ void Compositor::surfaceHasContentChanged()
         // TODO: if we support more compositor protocols we need to add roles here
         if (surface->role() == QWaylandWlShellSurface::role()
                 || surface->role() == HWWaylandXdgToplevel::role()
+                || surface->role() == QtSurface::role()
                 || surface->role() == HWWaylandXdgPopup::role()) {
             defaultSeat()->setKeyboardFocus(surface);
+            defaultSeat()->setMouseFocus(surface->primaryView());
         }
     }
     // TODO: avoid this if surface is minimized?
@@ -354,19 +372,6 @@ void Compositor::onDesktopRequest(QWaylandSurface *surface)
         m_zorder.removeOne(acSurface);
 
     acSurface->m_surfaceType = Surface::Desktop;
-
-    if(acSurface->m_wndctl != nullptr)
-    {
-        m_wndmgr->m_windows.removeOne(acSurface->m_wndctl);
-        delete acSurface->m_wndctl;
-        acSurface->m_wndctl = nullptr;
-        qDebug() << "removing wndmgr";
-    }
-
-    if(m_menuServer)
-       acSurface->setPosition(QPointF(0,m_menuServer->size().height()));
-    else
-        acSurface->setPosition(QPointF(0,0));
 
     m_desktops.append(acSurface);
 }
@@ -709,6 +714,7 @@ void Compositor::handleMouseEvent(QWaylandView *target, QMouseEvent *me)
                         || findSurfaceObject(surface)->isFullscreenShell()
                         || surface->role() == HWWaylandXdgPopup::role()) {
                     seat->setKeyboardFocus(surface);
+                    defaultSeat()->setMouseFocus(surface->primaryView());
                 }
             }
             break;

@@ -9,6 +9,7 @@
 #include <QActionGroup>
 #include <QSettings>
 #include <QClipboard>
+#include <QVBoxLayout>
 #include <aboutdialog.h>
 
 #include "window.h"
@@ -205,7 +206,7 @@ void CalculatorWindow::printTape()
 
 void CalculatorWindow::about()
 {
-    auto about = new ADAboutDialog(this);
+    auto about = new HWAboutDialog(this);
     connect(about, SIGNAL(finished(int)), about, SLOT(deleteLater()));
     about->show();
 }

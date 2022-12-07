@@ -17,10 +17,13 @@ public:
     void setArguments(const QStringList &arguments);
     void addArgument(const QString &argument);
     bool launch();
+    void terminate();
+    void kill();
+    uint runningProcesses() const;
 signals:
-
+    void terminated(int signal);
 private:
-    ExecutorPrivate *d;
+    ExecutorPrivate *p;
 };
 
 #endif // LSEXECUTOR_H

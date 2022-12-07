@@ -8,12 +8,17 @@
 #include "columnpreview.h"
 #include "fsitemdelegate.h"
 #include "executor.h"
+#include "appmodel.h"
+
+#include <QDBusInterface>
+#include <hollywood/hollywood.h>
 
 LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
     : QWidget(parent),
       m_actions(new LSActionManager(this)),
       m_filesList(new QListView(this)),
       m_model(new FilesystemModel(this)),
+      m_apps(new ApplicationModel(this)),
       m_placeModel(new LSPlaceModel(this)),
       m_viewOptions(new ViewOptionsDialog(this)),
       m_delegate(new LSFSItemDelegate(this))
@@ -76,7 +81,6 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
 
     m_filesColumn = new QColumnView(this);
     m_filesColumn->setObjectName(QString::fromUtf8("FilesColumn"));
-    m_filesColumn->setModel(m_model);
     m_filesColumn->setAutoScroll(true);
 
     m_columnPreview = new LSColumnPreview(this);
@@ -85,7 +89,6 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
 
     /* Setup Icon View */
     m_filesList->setObjectName(QString::fromUtf8("FilesIcon"));
-    m_filesList->setModel(m_model);
     m_filesList->setIconSize(QSize(32,32));
     m_filesList->setSpacing(6);
     m_filesList->setViewMode(QListView::IconMode);
@@ -101,7 +104,6 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
     /* Setup List View */
     m_filesTable = new QTreeView(this);
     m_filesTable->setObjectName(QString::fromUtf8("FilesList"));
-    m_filesTable->setModel(m_model);
     m_filesTable->setAlternatingRowColors(true);
     m_filesTable->setAnimated(true);
     m_filesTable->setExpandsOnDoubleClick(false);
@@ -118,6 +120,8 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
     m_mainSplitter->addWidget(m_treeToolbox);
     m_mainSplitter->addWidget(m_tabWndHost);
     m_viewOptions->attachIconView(m_filesList);
+
+    swapToModel(Filesystem);
 
     connect(m_filesColumn, &QColumnView::updatePreviewWidget, this, &LSEmbeddedShellHost::updateColumnWidget);
 
@@ -234,9 +238,30 @@ bool LSEmbeddedShellHost::navigateToPath(const QString &path)
 
 bool LSEmbeddedShellHost::navigateToUrl(const QUrl &path)
 {
-    qDebug() << "navigateToUrl: " << path.toString();
+    if(path.isEmpty())
+        return false;
+
     if(!path.isValid())
         return false;
+
+    swapModelForUrl(path);
+
+    if(path.scheme() == "applications")
+    {
+        QIcon ico = QIcon::fromTheme("folder-activities");
+        emit updateWindowTitle(tr("Applications"));
+        m_tabs->setTabText(m_tabs->currentIndex(), tr("Applications"));
+        m_tabs->setTabIcon(m_tabs->currentIndex(), ico);
+        QUuid uuid = m_tabs->tabData(m_tabs->currentIndex()).toUuid();
+
+        m_tabLocations[uuid] = path;
+        emit updateWindowIcon(ico);
+        m_location->setPath(path);
+
+        updatePlaceModelSelection(path);
+        m_actions->shellAction(ArionShell::ACT_GO_ENCLOSING_FOLDER)->setEnabled(false);
+        return true;
+    }
 
     if(path.isLocalFile())
     {
@@ -280,6 +305,7 @@ void LSEmbeddedShellHost::currentTabChanged(int index)
  {
     QUuid uuid = m_tabs->tabData(index).toUuid();
     QUrl path = m_tabLocations[uuid];
+    swapModelForUrl(path);
     ArionShell::ViewMode mode = m_tabViewMode[uuid];
     switch(mode)
     {
@@ -401,32 +427,37 @@ void LSEmbeddedShellHost::viewClicked(const QModelIndex &idx)
 
 void LSEmbeddedShellHost::viewActivated(const QModelIndex &idx)
 {
-    QFileInfo fileInfo(m_model->fileInfo(idx));
-    if(fileInfo.isDir())
+    if(m_currentModel == Filesystem)
     {
-        // TODO: Handle a spacitial mode
-        if(fileInfo.isReadable() && fileInfo.isExecutable())
+        QFileInfo fileInfo(m_model->fileInfo(idx));
+        if(fileInfo.isDir())
         {
-            updateBackForwardList(QUrl::fromLocalFile(fileInfo.canonicalFilePath()));
-            updateRootIndex(idx);
+            // TODO: Handle a spacitial mode
+            if(fileInfo.isReadable() && fileInfo.isExecutable())
+            {
+                updateBackForwardList(QUrl::fromLocalFile(fileInfo.canonicalFilePath()));
+                updateRootIndex(idx);
+            }
+            else
+                showFolderPermissionError(fileInfo.fileName());
         }
-        else
-            showFolderPermissionError(fileInfo.fileName());
+
+        // handle a .desktop file
+        if(m_model->isDesktop(idx))
+        {
+            executeDesktopOverDBus(m_model->desktopFileForIndex(idx));
+            return;
+        }
+
+        openFileOverDBusWithDefault(fileInfo.canonicalFilePath());
+        // TODO: handle executing an executable file???
     }
 
-    // handle a .desktop file
-    if(m_model->isDesktop(idx))
+    if(m_currentModel == Applications)
     {
-        qDebug() << "executing desktop";
-        LSExecutor *exec = new LSExecutor(this);
-        exec->setDesktopFile(m_model->desktopFileForIndex(idx));
-        exec->launch();
-        return;
+        auto da = m_apps->data(idx, Qt::UserRole+1);
+        executeDesktopOverDBus(da.toString());
     }
-
-    // TODO: handle launching a non-executable file
-
-    // TODO: handle executing an executable file
 }
 
 void LSEmbeddedShellHost::viewSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected)
@@ -530,6 +561,63 @@ void LSEmbeddedShellHost::viewContextMenuRequested(const QPoint &pos)
     menu->popup(mapToGlobal(pos));
 }
 
+bool LSEmbeddedShellHost::executeDesktopOverDBus(const QString &desktop)
+{
+    QDBusInterface ldb(HOLLYWOOD_SESSION_DBUS, HOLLYWOOD_SESSION_DBUSOBJ, HOLLYWOOD_SESSION_DBUSPATH);
+    if(!ldb.isValid())
+    {
+        qDebug() << QString("Could not call session DBUS interface. Command: executeDesktop");
+        return false;
+    }
+
+    QDBusMessage msg = ldb.call("executeDesktop", desktop, QStringList(), QStringList());
+
+    if(msg.arguments().isEmpty() || msg.arguments().constFirst().isNull())
+        return true;
+
+    auto response = msg.arguments().constFirst();
+
+    if(msg.arguments().isEmpty())
+        return true;
+
+    if(response.isNull())
+        return true;
+
+    if(response.toBool())
+        return true;
+
+    return false;
+}
+
+bool LSEmbeddedShellHost::openFileOverDBusWithDefault(const QString &file)
+{
+    qDebug() << file;
+    QDBusInterface ldb(HOLLYWOOD_SESSION_DBUS, HOLLYWOOD_SESSION_DBUSOBJ, HOLLYWOOD_SESSION_DBUSPATH);
+    if(!ldb.isValid())
+    {
+        qDebug() << QString("Could not call session DBUS interface. Command: executeDesktop");
+        return false;
+    }
+
+    QDBusMessage msg = ldb.call("openFileWithDefault", file);
+
+    if(msg.arguments().isEmpty() || msg.arguments().constFirst().isNull())
+        return true;
+
+    auto response = msg.arguments().constFirst();
+
+    if(msg.arguments().isEmpty())
+        return true;
+
+    if(response.isNull())
+        return true;
+
+    if(response.toBool())
+        return true;
+
+    return false;
+}
+
 void LSEmbeddedShellHost::disableActionsForNoSelection()
 {
     m_actions->shellAction(ArionShell::ACT_FILE_RENAME)->setText(tr("&Rename"));
@@ -591,11 +679,14 @@ QString LSEmbeddedShellHost::generateStatusBarMsg() const
         count = selected ? m_filesList->selectionModel()->selectedIndexes().count() : 0;
         if(count == 1)
         {
-            QFileInfo info =
-                    m_model->fileInfo(m_filesList->selectionModel()->selectedIndexes().first());
-            fileName = info.fileName();
-            fileSize = tr("0KB");
-            fileType = info.fileName();
+            if(m_currentModel == Filesystem)
+            {
+                QFileInfo info =
+                        m_model->fileInfo(m_filesList->selectionModel()->selectedIndexes().first());
+                fileName = info.fileName();
+                fileSize = tr("0KB");
+                fileType = info.fileName();
+            }
         }
         break;
     case ArionShell::VIEW_LIST:
@@ -604,11 +695,14 @@ QString LSEmbeddedShellHost::generateStatusBarMsg() const
         count = selected ? m_filesTable->selectionModel()->selectedIndexes().count() : 0;
         if(count == 1)
         {
-            QFileInfo info =
-                    m_model->fileInfo(m_filesList->selectionModel()->selectedIndexes().first());
-            fileName = info.fileName();
-            fileSize = tr("0KB");
-            fileType = info.fileName();
+            if(m_currentModel == Filesystem)
+            {
+                QFileInfo info =
+                        m_model->fileInfo(m_filesList->selectionModel()->selectedIndexes().first());
+                fileName = info.fileName();
+                fileSize = tr("0KB");
+                fileType = info.fileName();
+            }
         }
         break;
     default:
@@ -626,10 +720,13 @@ QString LSEmbeddedShellHost::generateStatusBarMsg() const
     {
         if(current.isValid())
         {
-            if(m_model->rowCount(current) == 1)
-                return tr("%1 item").arg(m_model->rowCount(current));
-            else
-                return tr("%1 items").arg(m_model->rowCount(current));
+            if(m_currentModel == Filesystem)
+            {
+                if(m_model->rowCount(current) == 1)
+                    return tr("%1 item").arg(m_model->rowCount(current));
+                else
+                    return tr("%1 items").arg(m_model->rowCount(current));
+            }
         }
     }
     return QString();
@@ -700,14 +797,52 @@ void LSEmbeddedShellHost::updateNavigationButtonStatus()
 
 }
 
+void LSEmbeddedShellHost::swapToModel(ShellModel model)
+{
+    switch(model)
+    {
+    case Applications:
+        m_filesColumn->setModel(m_apps);
+        m_filesList->setModel(m_apps);
+        m_filesTable->setModel(m_apps);
+        m_currentModel = Applications;
+        break;
+    case Filesystem:
+    default:
+        m_filesColumn->setModel(m_model);
+        m_filesList->setModel(m_model);
+        m_filesTable->setModel(m_model);
+        m_currentModel = Filesystem;
+        break;
+    }
+}
+
+void LSEmbeddedShellHost::swapModelForUrl(const QUrl &url)
+{
+    if(url.isLocalFile())
+    {
+        if(m_currentModel != Filesystem)
+            swapToModel(Filesystem);
+
+        return;
+    }
+
+    if(url.scheme() == QLatin1String("applications"))
+    {
+        if(m_currentModel != Applications)
+            swapToModel(Applications);
+
+        return;
+    }
+}
+
 void LSEmbeddedShellHost::updateRootIndex(const QModelIndex &idx, bool internal)
 {
+    Q_UNUSED(internal)
     QSettings settings("originull", "hollywood");
     bool showFullPath = settings.value("Preferences/ShowFullPathName", false).toBool();
     QFileIconProvider icons;
     QFileInfo info(m_model->fileInfo(idx));
-    qDebug() << "updateRootIndex: " << info.canonicalFilePath();
-
     m_filesList->setRootIndex(idx);
 
     // we shouldn't do the following two in desktop mode

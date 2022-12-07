@@ -13,6 +13,7 @@ WAYLANDSERVERSOURCES += protocols/appmenu.xml
 WAYLANDSERVERSOURCES += protocols/plasma-window-management.xml
 WAYLANDSERVERSOURCES += protocols/fullscreen-shell-unstable-v1.xml
 WAYLANDSERVERSOURCES += protocols/wlr-layer-shell-unstable-v1.xml
+WAYLANDSERVERSOURCES += protocols/wlr-screencopy-unstable-v1.xml
 WAYLANDSERVERSOURCES += protocols/gtk.xml
 WAYLANDSERVERSOURCES += protocols/qt-shell-unstable-v1.xml
 WAYLANDSERVERSOURCES += protocols/xdg-shell.xml
@@ -27,6 +28,7 @@ HEADERS += \
     include/originull.h \
     include/output.h \
     include/qtshell.h \
+    include/screencopy.h \
     include/surfaceobject.h \
     include/outputwnd.h \
     include/view.h \
@@ -45,6 +47,7 @@ SOURCES += \
     src/originull.cc \
     src/output.cc \
     src/qtshell.cc \
+    src/screencopy.cc \
     src/surfaceobject.cc \
     src/compositor.cc \
     src/outputwnd.cc \

@@ -2,18 +2,22 @@
 #include "taskbutton.h"
 #include "app.h"
 #include "stageclock.h"
+#include "surfacemanager.h"
+#include "notifierhost.h"
 
-#include <QButtonGroup>
 #include <QtWaylandClient/private/qwaylandwindow_p.h>
-
 
 StageHost::StageHost(QScreen *screen, QWidget *parent)
     : QWidget(parent)
     , m_screen(screen)
     , m_menu(new QToolButton(this))
-    , m_group(new QButtonGroup(this))
+    , m_sm(new SurfaceManager(this))
+    , m_notifier(new NotifierHost(this))
     , m_clock(new StageClock(this))
 {
+    connect(m_sm, &SurfaceManager::windowCreated, this, &StageHost::createWindowButton);
+    connect(m_sm, &SurfaceManager::windowDestroyed, this, &StageHost::windowClosed);
+
     auto app = StageApplication::instance();
     connect(app, &StageApplication::clockSettingsChanged, m_clock, &StageClock::clockSettingsChanged);
     setWindowFlag(Qt::FramelessWindowHint, true);
@@ -30,8 +34,8 @@ StageHost::StageHost(QScreen *screen, QWidget *parent)
     font.setPointSize(font.pointSize()+1);
     m_clock->setFont(font);
     m_menu->setFont(font);
-
-    m_group->setExclusive(true);
+    connect(m_notifier, &NotifierHost::buttonAdded, this, &StageHost::createStatusButton);
+    connect(m_notifier, &NotifierHost::buttonRemoved, this, &StageHost::statusButtonRemoved);
 }
 
 void StageHost::setAlignment(Alignment align)
@@ -73,27 +77,12 @@ void StageHost::setAlignment(Alignment align)
     }
 }
 
-void StageHost::createWindowButton(PlasmaWindow *wnd)
+void StageHost::createWindowButton(TaskButton *btn)
 {
-    auto btn = new TaskButton(wnd, this);
-    btn->setText(wnd->windowTitle());
-    btn->setToolTip(wnd->windowTitle());
-#ifdef QT_DEBUG
-    btn->setToolTip(wnd->uuid().toString());
-#endif
-    connect(wnd, &PlasmaWindow::windowClosed, this, &StageHost::windowClosed);
-    connect(wnd, &PlasmaWindow::minimizedChanged, this, &StageHost::minimizedChanged);
-    connect(wnd, &PlasmaWindow::destroyed, btn, &TaskButton::deleteLater);
-
-
     if(m_align == Horizontal)
         m_hbox->insertWidget(m_hbox->indexOf(m_spacer), btn);
     else
         m_vbox->addWidget(btn);
-
-    m_group->addButton(btn);
-    m_windows.append(btn);
-    connect(btn, &QAbstractButton::pressed, this, &StageHost::buttonClicked);
 }
 
 void StageHost::show()
@@ -109,40 +98,28 @@ void StageHost::show()
         m_lswnd->setSize(QSize(size().width(), 0));
 }
 
-void StageHost::stackingOrderChanged()
+void StageHost::windowClosed(TaskButton *btn)
 {
-    //qDebug() << "stacking order chanaged" << StageApplication::instance()->windowManager()->stackingOrder();
-
-    for (auto &uuid : StageApplication::instance()->windowManager()->stackingOrder())
-    {
-        for(auto btn : m_windows)
-        {
-            auto btnuuid = btn->window()->uuid().toString(QUuid::WithoutBraces);
-            if(btnuuid == uuid)
-            {
-                //qDebug() << btnuuid << "selected" << btn->window()->windowTitle();
-                btn->setDown(true);
-                return;
-            }
-        }
-    }
+    if(m_align == Horizontal)
+        m_hbox->removeWidget(btn);
+    else
+        m_vbox->removeWidget(btn);
 }
 
-void StageHost::buttonClicked()
+void StageHost::createStatusButton(StatusNotifierButton *btn)
 {
-    auto btn = qobject_cast<TaskButton*>(sender());
-    if(btn->window()->minimized())
-    {
-        btn->window()->toggleMinimize();
-        btn->window()->activate();
-    }
+    if(m_align == Horizontal)
+        m_hbox->insertWidget(m_hbox->indexOf(m_spacer)+1, btn);
     else
-    {
-        if(!btn->window()->isActive())
-            btn->window()->activate();
-        else
-            btn->window()->toggleMinimize();
-    }
+        m_vbox->addWidget(btn);
+}
+
+void StageHost::statusButtonRemoved(StatusNotifierButton *btn)
+{
+    if(m_align == Horizontal)
+        m_hbox->removeWidget(btn);
+    else
+        m_vbox->removeWidget(btn);
 }
 
 void StageHost::resizeEvent(QResizeEvent *event)
@@ -151,36 +128,4 @@ void StageHost::resizeEvent(QResizeEvent *event)
     if(!m_ready)
         return;
     m_lswnd->setSize(size());
-}
-
-void StageHost::windowClosed()
-{
-    qDebug() << "windowClosed";
-    auto pm = qobject_cast<PlasmaWindow*>(sender());
-
-    if(!pm)
-        return;
-
-    for(auto btn : m_windows)
-    {
-        if(btn->window() == pm)
-        {
-            m_group->removeButton(btn);
-            connect(pm, &PlasmaWindow::windowTitleChanged, btn, &QToolButton::setText);
-            if(m_align == Horizontal)
-                m_hbox->removeWidget(btn);
-            else
-                m_vbox->removeWidget(btn);
-
-            m_windows.removeOne(btn);
-            btn->deleteLater();
-        }
-    }
-}
-
-void StageHost::minimizedChanged()
-{
-    auto pm = qobject_cast<PlasmaWindow*>(sender());
-
-    qDebug() << "minimizedChanged" << pm->uuid() << pm->minimized();
 }

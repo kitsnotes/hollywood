@@ -149,13 +149,3 @@ void MenuImporter::slotServiceUnregistered(const QString &service)
     m_serviceWatcher->removeWatchedService(service);
 }
 
-DBusMenuInterface::DBusMenuInterface(const QString &service, const QString &path, const QDBusConnection &connection, QObject *parent)
-    : QDBusAbstractInterface(service, path, staticInterfaceName(), connection, parent)
-{
-}
-
-DBusMenuInterface::~DBusMenuInterface()
-{
-}
-
-

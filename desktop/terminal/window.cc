@@ -8,7 +8,8 @@
 #include <QLayout>
 #include <QMimeData>
 #include <QFileDialog>
-
+#include <QClipboard>
+#include <QMessageBox>
 #if QT_VERSION >= 0x060000
 #include <qtermwidget6/qtermwidget.h>
 #else
@@ -16,7 +17,7 @@
 #endif
 
 #include <aboutdialog.h>
-
+#include <QSettings>
 TerminalWindow::TerminalWindow(QWidget *parent)
     : QMainWindow(parent),
       m_tabs(new TabHost(this))
@@ -174,7 +175,7 @@ void TerminalWindow::showPreferences()
 
 void TerminalWindow::aboutTerminal()
 {
-    auto about = new ADAboutDialog(this);
+    auto about = new HWAboutDialog(this);
     about->setAppDescription(tr("Terminal emulator for Hollywood Linux\nAPI Version %1")
                              .arg(QLatin1String(QT_VERSION_STR)));
     connect(about, SIGNAL(finished(int)), about, SLOT(deleteLater()));

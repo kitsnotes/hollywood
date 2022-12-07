@@ -8,7 +8,7 @@ greaterThan(QT_MAJOR_VERSION, 5): QT += core5compat
 isEmpty(PREFIX): PREFIX=/usr
 
 DEFINES += BUILD_HOLLYWOOD
-INCLUDEPATH += ../libcommdlg/include
+INCLUDEPATH += ../libcommdlg
 INCLUDEPATH += ../include
 
 DISTFILES += \

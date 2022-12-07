@@ -66,11 +66,6 @@ OutputWindow::OutputWindow(Output* parent)
     ,m_wpm(new WallpaperManager(this))
     ,m_rgb_vao(new QOpenGLVertexArrayObject)
 {
-    QSurfaceFormat format;
-    //format.setRenderableType(QSurfaceFormat::OpenGL);
-    //format.setVersion(3,2);
-    //format.setProfile(QSurfaceFormat::CompatibilityProfile);
-    //this->setFormat(format);
     connect(hwComp, &Compositor::startMove, this, &OutputWindow::startMove);
     connect(hwComp, &Compositor::startResize, this, &OutputWindow::startResize);
     connect(hwComp, &Compositor::dragStarted, this, &OutputWindow::startDrag);
@@ -993,6 +988,19 @@ void OutputWindow::wheelEvent(QWheelEvent *e)
         vert = true;
     }
 
+    qDebug() << "wheel event at:" << delta;
+
     hwComp->defaultSeat()->sendMouseWheelEvent(vert ? Qt::Vertical : Qt::Horizontal,
                                                delta);
+}
+
+void OutputWindow::touchEvent(QTouchEvent *e)
+{
+    QPoint adjustedPoint(m_output->wlOutput()->position().x()+e->points().first().position().x(),
+                 m_output->wlOutput()->position().y()+e->points().first().position().y());
+    SurfaceView *view = m_mouseSelectedSurfaceObject ?
+                m_mouseSelectedSurfaceObject->viewForOutput(m_output) : viewAt(adjustedPoint);
+
+    qDebug() << "touch event at:" << adjustedPoint;
+    hwComp->defaultSeat()->sendFullTouchEvent(view->surface(), e);
 }

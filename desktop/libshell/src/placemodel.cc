@@ -76,6 +76,14 @@ LSPlaceModel::PlaceItem LSPlaceModel::constructLocalPlace(const QString &path)
 
 void LSPlaceModel::populateFavorites()
 {
+    PlaceItem pia;
+    pia.location = QUrl("applications://");
+    pia.type = Applications;
+    pia.displayName = tr("Applications");
+    pia.displayIcon = QIcon::fromTheme("folder-activities");
+
+    m_favorites.append(pia);
+
     PlaceItem pi;
 
     pi = constructLocalPlace(QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation).first());
@@ -90,4 +98,6 @@ void LSPlaceModel::populateFavorites()
     pi = constructLocalPlace(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).first());
     pi.displayIcon = QIcon::fromTheme("user-home");
     m_favorites.append(pi);
+
+
 }

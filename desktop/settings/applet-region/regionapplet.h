@@ -1,3 +1,10 @@
+// Hollywood Settings - Regional Applet
+// (C) 2022 Cat Stevenson <cat@originull.org>
+// (C) Copyright: 2014 LXQt team
+// (C) 2014 Sebastian Kügler <sebas@kde.org>
+// (C) Julien Lavergne <gilir@ubuntu.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #ifndef REGIONAPPLET_H
 #define REGIONAPPLET_H
 
@@ -24,8 +31,8 @@ public:
     explicit RegionalApplet(QObject *parent = nullptr);
     bool init();
     bool available() const { return true; }
-    bool loadSettings() { return true; }
-    bool saveSettings() { return true; }
+    bool loadSettings();
+    bool saveSettings();
     bool canExit() const { return true; }
     bool closeUp() { delete m_host; m_host = nullptr; return true; }
     QString id() const;
@@ -34,7 +41,10 @@ public:
     QIcon icon() const;
     QWidget* applet() const;
     Category category() const;
+private slots:
+    void restartSession();
 private:
+    bool callSessionDBus(const QString &exec);
     void setupWidget();
     void addLocaleToCombo(QComboBox *combo, const QLocale &locale);
     void initCombo(QComboBox *combo, const QList<QLocale> &allLocales);
@@ -72,6 +82,8 @@ private:
     QLabel *lexMeasurement_2;
     QLabel *exampleMeasurement;
     QSpacerItem *verticalSpacer_3;
+
+    QFrame *m_warning;
 };
 
 #endif // REGIONAPPLET_H

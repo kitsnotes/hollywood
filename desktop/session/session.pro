@@ -4,14 +4,22 @@ CONFIG -= app_bundle
 QT -= gui
 QT += network dbus
 
-TARGET = session
+CONFIG(debug, debug|release) {
+    LIBS += -L../output -lshelld-$${HOLLYWOOD_APIVERSION}
+} else {
+    LIBS += -L../output -lshell-$${HOLLYWOOD_APIVERSION}
+}
 
+TARGET = session
+INCLUDEPATH += ../libshell/include
 INCLUDEPATH += ../include
 SOURCES += \
+        process.cc \
         session.cc
 
 HEADERS += \
     dbus.h \
+    process.h \
     session.h
 
 QMAKE_SUBSTITUTES += hollywood.desktop.in

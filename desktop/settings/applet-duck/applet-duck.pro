@@ -1,11 +1,7 @@
-QT += gui
+include(../../include/global-applet.pri)
 
 TEMPLATE = lib
-CONFIG += plugin
-
-CONFIG += c++11
-INCLUDEPATH += ../
-DESTDIR= ../../output/hollywood-settings
+TARGET=11-duck
 
 DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000
 
@@ -17,7 +13,7 @@ HEADERS += \
 
 DISTFILES += applet-duck.json
 unix {
-    target.path = /usr/libexec/hollwyood/settings
+    target.path = /usr/libexec/hollywood/settings
 }
 !isEmpty(target.path): INSTALLS += target
 

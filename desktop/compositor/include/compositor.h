@@ -159,8 +159,6 @@ private:
     uint m_borderSize = 1;
     uint m_apperance = 0;
 
-    bool m_sddm = false;
-
     QList<Output*> m_outputs;
     uint m_id = 0;
     // Our list of surfaces
@@ -187,6 +185,9 @@ private:
     QtShell *m_qt = nullptr;
     // fullscreen-shell protocol support
     FullscreenShell *m_fs = nullptr;
+
+    bool m_sddm = false;
+
     // Our cursor
     Surface *m_cursorObject = nullptr;
     int m_cursorHotspotX;

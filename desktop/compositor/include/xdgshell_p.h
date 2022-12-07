@@ -1,3 +1,6 @@
+// Copyright (C) 2018 The Qt Company Ltd.
+// SPDX-License-Identifier: GPL-3.0-only
+
 #ifndef XDGSHELL_P_H
 #define XDGSHELL_P_H
 

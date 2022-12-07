@@ -27,10 +27,12 @@ TerminalHost::TerminalHost(TerminalProfile *profile, QWidget *parent)
     if(profile->startupBehavior() == TerminalProfile::CustomShell)
         m_widget->setShellProgram(m_profile->alternativeShell());
 
+    m_widget->setScrollBarPosition(QTermWidget::ScrollBarRight);
     m_widget->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(m_profile, &TerminalProfile::profileChanged, this, &TerminalHost::profileChanged);
     connect(m_widget, &QTermWidget::finished, this, &TerminalHost::terminalFinished);
     connect(m_widget, &QTermWidget::titleChanged, this, &TerminalHost::terminalTitleChanged);
+    connect(m_widget, &QTermWidget::copyAvailable, this, &TerminalHost::copyAvailable);
     m_widget->startShellProgram();
 }
 
@@ -41,6 +43,7 @@ TerminalHost::~TerminalHost()
 
 void TerminalHost::terminalTitleChanged()
 {
+    qDebug() << m_widget->title();
     emit windowTitleChanged(generateWindowTitle());
     emit tabTitleChanged(generateTabTitle());
 }
@@ -176,6 +179,12 @@ QString TerminalHost::getProcessName(uint pid)
         return proc;
     }
     return QString();
+}
+
+void TerminalHost::copyAvailable(bool canCopy)
+{
+    m_copy = canCopy;
+    emit canCopyChanged(m_copy);
 }
 
 TerminalHost *TerminalHost::create(const QString &profile, QWidget *parent)

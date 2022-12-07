@@ -1,6 +1,6 @@
 include(../include/global.pri)
 
-QT += network widgets-private svg
+QT += network widgets-private svg dbus
 
 CONFIG(debug, debug|release) {
     TARGET = shelld-$${HOLLYWOOD_APIVERSION}
@@ -25,6 +25,7 @@ versionAtLeast(QT_VERSION, 6.0.0) {
 }
 
 SOURCES += \
+    src/appmodel.cc \
     src/executor.cc \
     src/actionmanager.cc \
     src/columnpreview.cc \
@@ -32,13 +33,12 @@ SOURCES += \
     src/desktopmodel.cc \
     src/directories.cc \
     src/fileinfo.cc \
-    src/fileinfogatherer.cpp \
+    src/fileinfogatherer.cc \
     src/filesystemmodel.cpp \
     src/fsitemdelegate.cc \
     src/fsnode.cc \
     src/hwfileiconprovider.cc \
     src/locationbar.cpp \
-    src/lslocationbar.cc \
     src/mdnsbrowser.cc \
     src/mdnsresolver.cc \
     src/mimeapps.cc \
@@ -50,22 +50,24 @@ SOURCES += \
     src/iconviewoptions.cc
 
 HEADERS += \
+    include/appmodel.h \
     include/actionmanager.h \
     include/columnpreview.h \
     include/desktopentry.h \
     include/desktopmodel.h \
     include/directories.h \
     include/fileinfo.h \
-    include/fileinfogatherer_p.h \
+    include/private/actionmanager_p.h \
+    include/private/appmodel_p.h \
+    include/private/fileinfogatherer_p.h \
     include/filesystemmodel.h \
-    include/filesystemmodel_p.h \
+    include/private/filesystemmodel_p.h \
     include/fsitemdelegate.h \
     include/fsnode.h \
     include/hwfileiconprovider.h \
     include/libshell_int.h \
     include/locationbar.h \
-    include/locationbarbtn.h \
-    include/lslocationbar.h \
+    include/private/locationbarbtn.h \
     include/mdnsbrowser.h \
     include/mdnsrecord.h \
     include/mdnsresolver.h \

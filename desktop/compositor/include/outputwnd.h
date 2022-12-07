@@ -38,6 +38,8 @@ protected:
     void keyReleaseEvent(QKeyEvent *e) override;
     void wheelEvent(QWheelEvent *) override;
 
+    void touchEvent(QTouchEvent *) override;
+
 private slots:
     void startMove();
     void startResize(int edge, bool anchored);

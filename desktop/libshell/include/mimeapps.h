@@ -37,10 +37,11 @@ public:
     LSDesktopEntry* findDesktopForFile(const QString &file);
     LSDesktopEntry* findDesktopForExec(const QString &file);
     void cacheAllDesktops();
+public slots:
+    void processGlobalMimeCache();
 signals:
     void changed();
 private slots:
-    void processGlobalMimeCache();
     void processDefaults();
     void fileUpdated(const QString &file);
 private:

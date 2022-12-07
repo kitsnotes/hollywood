@@ -38,6 +38,9 @@ int main(int argc, char *argv[])
 #endif
 
     QApplication app(argc, argv);
+    app.setApplicationName("Elevator");
+    app.setDesktopFileName("org.originull.elevator.desktop");
+    app.setWindowIcon(QIcon::fromTheme("preferences-security"));
     app.setQuitOnLastWindowClosed(false);
 
     QCommandLineParser parser;
@@ -53,9 +56,9 @@ int main(int argc, char *argv[])
     PolicykitAgent agent;
     if(!agent.registered())
     {
-        QMessageBox::critical(nullptr, QApplication::translate("main", "Elevator Registration Failed"),
-           QApplication::translate("main", "There is already a polkit agent running on the system or there is an underlying polkit issue.\nCheck system logs for further details."));
-
+        QMessageBox msg(QMessageBox::Critical, QApplication::translate("main", "Elevator Registration Failed"), QApplication::translate("main", "Failed to register Hollywood Elevator as polkit agent."), QMessageBox::Ok, nullptr);
+        msg.setInformativeText(QApplication::translate("main", "There is already a polkit agent running on the system or there is an underlying polkit issue. Check system logs for further details."));
+        msg.exec();
         app.exit();
         return 0;
     }

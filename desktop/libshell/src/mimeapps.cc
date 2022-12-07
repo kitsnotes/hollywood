@@ -31,6 +31,7 @@ LSMimeApplications::LSMimeApplications(QObject *parent)
     m_defaultsFile = file.fileName();
     if(file.exists())
         m_watch->addPath(file.fileName());
+
 }
 
 LSMimeApplications::~LSMimeApplications() = default;
@@ -116,7 +117,10 @@ LSDesktopEntry *LSMimeApplications::defaultApp(const QString &mimeType)
 
     // no user preference? find the first global app
     if(m_globalMime.contains(mimeType))
+    {
+        qDebug() << "returning global value" << m_globalMime.values(mimeType).first()->fileName();
         return m_globalMime.values(mimeType).first();
+    }
 
     return nullptr;
 }
@@ -175,7 +179,7 @@ void LSMimeApplications::processGlobalMimeCache()
             .arg(MIMEINFO_CACHE);
 
     QFile file(fileName);
-    if(file.exists() && file.isReadable())
+    if(file.exists())
     {
         QSettings settings(fileName, QSettings::IniFormat);
         settings.beginGroup(QLatin1String("MIME Cache"));
@@ -184,6 +188,7 @@ void LSMimeApplications::processGlobalMimeCache()
             QStringList candidates = settings.value(mime).toStringList();
             for(auto candidate : candidates)
             {
+                qDebug() << mime << candidate;
                 auto filename = LSDesktopEntry::findDesktopFile(candidate);
                 auto cache = findDesktopForFile(filename);
                 if(cache == nullptr)
@@ -247,10 +252,7 @@ LSDesktopEntry *LSMimeApplications::findDesktopForFile(const QString &file)
     for(auto desktop : m_desktops)
     {
         if(desktop->fileName() == file)
-        {
-            qDebug() << "returning desktop";
             return desktop;
-        }
     }
 
     return nullptr;
@@ -298,10 +300,7 @@ void LSMimeApplications::cacheAllDesktops()
                 auto entry = new LSDesktopEntry;
                 entry->load(file);
                 if(entry->isValid())
-                {
-                    qDebug() << "Loaded Desktop:" << entry->fileName();
                     m_desktops.append(entry);
-                }
             }
         }
     }

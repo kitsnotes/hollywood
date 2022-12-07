@@ -1,3 +1,7 @@
+// Hollywood Session Manager
+// (C) 2021, 2022 Cat Stevenson <cat@originull.org>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #ifndef DBUS_H
 #define DBUS_H
 
@@ -51,6 +55,20 @@ public slots:
         m_parent->shutdown();
     }
 
+    Q_NOREPLY void restartSession()
+    {
+        m_parent->restartSession();
+    }
+
+    bool executeDesktop(const QString &desktop, const QStringList &arguments, const QStringList &env)
+    {
+        return m_parent->executeDesktop(desktop, arguments, env);
+    }
+
+    bool openFileWithDefault(const QString &file)
+    {
+        return m_parent->openFileWithDefault(file);
+    }
 private:
     SMApplication *m_parent;
 };

@@ -2,6 +2,8 @@
 #include "application.h"
 #include "profiletab.h"
 
+#include <QSettings>
+
 GeneralTab::GeneralTab(QWidget *parent)
     :QWidget(parent),
      gridLayout(new QGridLayout(0)),

@@ -18,7 +18,7 @@
  */
 
 #include "locationbar.h"
-#include "locationbarbtn.h"
+#include "private/locationbarbtn.h"
 #include <QToolButton>
 #include <QScrollArea>
 #include <QScrollBar>
@@ -31,10 +31,11 @@
 #include <QTimer>
 #include <QDebug>
 
-LSLocationBar::LSLocationBar(QWidget* parent):
-    QWidget(parent),
-    tempPathEdit_(nullptr),
-    toggledBtn_(nullptr) {
+LSLocationBar::LSLocationBar(QWidget* parent)
+   : QWidget(parent)
+   , tempPathEdit_(nullptr)
+   , toggledBtn_(nullptr)
+{
 
     QHBoxLayout* topLayout = new QHBoxLayout(this);
     topLayout->setContentsMargins(0, 0, 0, 0);
@@ -163,6 +164,9 @@ void LSLocationBar::setScrollButtonVisibility() {
 
 QUrl LSLocationBar::pathForButton(PathButton* btn)
 {
+    if(currentPath_.scheme() == "applications")
+        return QUrl("applications://");
+
     std::string fullPath;
     int buttonCount = buttonsLayout_->count() - 1; // the last item is a spacer
     for(int i = 0; i < buttonCount; ++i) {
@@ -179,6 +183,9 @@ QUrl LSLocationBar::pathForButton(PathButton* btn)
 
 void LSLocationBar::onButtonToggled(bool checked)
 {
+    if(currentPath_.scheme() == "applications")
+        return;
+
     if(checked) {
         PathButton* btn = static_cast<PathButton*>(sender());
         toggledBtn_ = btn;
@@ -251,47 +258,61 @@ void LSLocationBar::setPath(const QUrl &path)
         delete item;
     }
 
-    // create new buttons for the new path
-    auto btnPath = currentPath_.toLocalFile();
-
-    QDir dir(btnPath);
-    while(dir.isReadable()) {
-        std::string name;
-        QString displayName;
-        auto parentPaths = btnPath.split('/');
-        parentPaths.removeLast();
-        auto parent = parentPaths.join('/');
-        // FIXME: some buggy uri types, such as menu://, fail to return NULL when there is no parent path.
-        // Instead, the path itself is returned. So we check if the parent path is the same as current path.
-        QUrl pdir(parent);
-        auto isRoot = !pdir.isValid() || parent == btnPath;
-        if(isRoot) {
-            displayName = btnPath;
-            name = btnPath.toStdString();
-        }
-        else {
-            displayName = btnPath.split("/").last();
-            // NOTE: "name" is used for making the path from its components in PathBar::pathForButton().
-            // In places like folders inside trashes of mounted volumes, FilePath::baseName() cannot be
-            // used for making a full path. On the other hand, the base name of FilePath::displayName()
-            // causes trouble when a file name contains newline or tab.
-            //
-            // Therefore, we simply set "name" to the last component of FilePath::toString().
-            auto pathStr = btnPath;
-            pathStr = pathStr.section(QLatin1Char('/'), -1);
-            name = pathStr.toStdString();
-        }
-        // double ampersands to distinguish them from mnemonics
-        displayName.replace(QLatin1Char('&'), QLatin1String("&&"));
-        auto btn = new PathButton(name, displayName, isRoot, buttonsWidget_);
+    if(currentPath_.scheme() == "applications")
+    {
+        auto btn = new PathButton("applications://", "Applications", true, buttonsWidget_);
         btn->show();
         connect(btn, &QAbstractButton::toggled, this, &LSLocationBar::onButtonToggled);
         buttonsLayout_->insertWidget(0, btn);
-        if(isRoot) { // this is the root element of the path
-            break;
-        }
-        btnPath = parent;
+
     }
+    if(currentPath_.scheme() == "file")
+    {
+        // create new buttons for the new path
+        auto btnPath = currentPath_.toLocalFile();
+
+        QDir dir(btnPath);
+        while(dir.isReadable()) {
+            std::string name;
+            QString displayName;
+            auto parentPaths = btnPath.split('/');
+            parentPaths.removeLast();
+            auto parent = parentPaths.join('/');
+            if(parent == "" && btnPath != "/")
+                parent = "/";
+            // FIXME: some buggy uri types, such as menu://, fail to return NULL when there is no parent path.
+            // Instead, the path itself is returned. So we check if the parent path is the same as current path.
+            QUrl pdir(parent);
+            auto isRoot = !pdir.isValid() || parent == btnPath;
+            if(isRoot) {
+                displayName = btnPath;
+                name = btnPath.toStdString();
+            }
+            else {
+                displayName = btnPath.split("/").last();
+                // NOTE: "name" is used for making the path from its components in PathBar::pathForButton().
+                // In places like folders inside trashes of mounted volumes, FilePath::baseName() cannot be
+                // used for making a full path. On the other hand, the base name of FilePath::displayName()
+                // causes trouble when a file name contains newline or tab.
+                //
+                // Therefore, we simply set "name" to the last component of FilePath::toString().
+                auto pathStr = btnPath;
+                pathStr = pathStr.section(QLatin1Char('/'), -1);
+                name = pathStr.toStdString();
+            }
+            // double ampersands to distinguish them from mnemonics
+            displayName.replace(QLatin1Char('&'), QLatin1String("&&"));
+            auto btn = new PathButton(name, displayName, isRoot, buttonsWidget_);
+            btn->show();
+            connect(btn, &QAbstractButton::toggled, this, &LSLocationBar::onButtonToggled);
+            buttonsLayout_->insertWidget(0, btn);
+            if(isRoot) { // this is the root element of the path
+                break;
+            }
+            btnPath = parent;
+        }
+    }
+
     buttonsLayout_->addStretch(1); // add a spacer at the tail of the buttons
 
     // we don't want to scroll vertically. make the scroll area fit the height of the buttons

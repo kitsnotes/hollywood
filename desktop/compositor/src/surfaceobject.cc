@@ -790,7 +790,7 @@ void Surface::onQtWindowFlagsChanged(const Qt::WindowFlags &f)
 {
     m_qt_wndflags = f;
 
-    if(f.testFlag(Qt::Window) && !f.testFlag(Qt::Popup))
+    if(f.testFlag(Qt::Window) && !f.testFlag(Qt::Popup) && !f.testFlag(Qt::FramelessWindowHint))
     {
         m_ssd = true;
         createPlasmaWindowControl();
@@ -825,6 +825,13 @@ void Surface::onQtWindowFlagsChanged(const Qt::WindowFlags &f)
 
     if(f.testFlag(Qt::Popup) && !!f.testFlag(Qt::Tool))
         m_surfaceType = Popup;
+
+    // TODO: ghetto assumption but nothing beyond shellfm should be using qt-shell
+    if(f.testFlag(Qt::X11BypassWindowManagerHint))
+    {
+        hwComp->onDesktopRequest(this->surface());
+        m_surfaceType = TopLevel;
+    }
 
     if(!f.testFlag(Qt::WindowMinMaxButtonsHint))
         m_showMinMaxBtn = false;

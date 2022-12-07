@@ -1,6 +1,12 @@
 include(../../include/global-applet.pri)
 
-QT += core5compat
+QT += core5compat dbus
+
+INCLUDEPATH += ../../include
+INCLUDEPATH += ../../libcommdlg
+
+CONFIG(debug): LIBS += -L../../output -lcommdlg-$${HOLLYWOOD_APIVERSION}
+CONFIG(release): LIBS += -lcommdlg-$${HOLLYWOOD_APIVERSION}
 
 TEMPLATE = lib
 TARGET=08-regionlaguage

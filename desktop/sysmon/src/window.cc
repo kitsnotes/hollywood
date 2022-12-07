@@ -16,6 +16,13 @@
 #include <aboutdialog.h>
 #include <hollywood/hollywood.h>
 #include <signal.h>
+#include <QActionGroup>
+#include <QSettings>
+#include <QScreen>
+#include <QCloseEvent>
+#include <QResizeEvent>
+#include <QClipboard>
+#include <QMessageBox>
 
 SysmonWindow::SysmonWindow(QWidget *parent)
     : QMainWindow(parent),
@@ -380,7 +387,7 @@ void SysmonWindow::updatePauseTriggered()
 
 void SysmonWindow::about()
 {
-    auto about = new ADAboutDialog(this);
+    auto about = new HWAboutDialog(this);
     about->setAppDescription(tr("API Version %1").arg(QLatin1String(QT_VERSION_STR)));
     connect(about, SIGNAL(finished(int)), about, SLOT(deleteLater()));
     about->show();

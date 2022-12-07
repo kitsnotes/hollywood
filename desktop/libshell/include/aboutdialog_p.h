@@ -1,4 +1,0 @@
-#ifndef ABOUTDIALOG_P_H
-#define ABOUTDIALOG_P_H
-
-#endif // ABOUTDIALOG_P_H

@@ -1,12 +1,14 @@
 include(../include/global.pri)
 
-QT       += core gui widgets waylandclient
+QT       += core gui widgets waylandclient network dbus multimedia
 CONFIG   += c++11 wayland-scanner link_pkgconfig
 
 INCLUDEPATH += ../libshell/include
 INCLUDEPATH += include/
-INCLUDEPATH += ../libcommdlg/include
+INCLUDEPATH += ../libcommdlg
 INCLUDEPATH += ../libcompositor/include
+
+DBUS_ADAPTORS += org.freedesktop.FileManager1.xml
 
 CONFIG(debug, debug|release) {
     LIBS += -L../output -lshelld-$${HOLLYWOOD_APIVERSION}

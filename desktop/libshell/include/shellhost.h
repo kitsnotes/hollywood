@@ -3,6 +3,7 @@
 
 #include "libshell_int.h"
 
+class ApplicationModel;
 class LSLocationBar;
 class LSActionManager;
 class ViewOptionsDialog;
@@ -19,6 +20,13 @@ class LIBSHELL_EXPORT LSEmbeddedShellHost : public QWidget
 {
     Q_OBJECT
 public:
+    enum ShellModel
+    {
+        Filesystem,
+        Applications,
+        Network,
+        Trash
+    };
     explicit LSEmbeddedShellHost(QWidget *parent = nullptr);
     QAction* shellAction(ArionShell::ShellActions shellAction);
     LSLocationBar* locationBar();
@@ -57,6 +65,8 @@ private slots:
     void createNewTab();
     void viewContextMenuRequested(const QPoint &pos);
 private:
+    bool executeDesktopOverDBus(const QString &desktop);
+    bool openFileOverDBusWithDefault(const QString &file);
     void disableActionsForNoSelection();
     void enableActionsForFileSelection(bool multiple);
     void updatePlaceModelSelection(const QUrl &place);
@@ -68,8 +78,10 @@ private:
     void disconnectViewSlots();
     void updateBackForwardList(const QUrl &url, bool goback = false);
     void updateNavigationButtonStatus();
-
+    void swapToModel(ShellModel model);
+    void swapModelForUrl(const QUrl &url);
 private:
+    ShellModel m_currentModel = ShellModel::Filesystem;
     LSActionManager *m_actions;
     LSLocationBar *m_location = nullptr;
     QSplitter *m_mainSplitter;
@@ -84,6 +96,8 @@ private:
 
     ArionShell::ViewMode m_viewMode;
     FilesystemModel *m_model;
+
+    ApplicationModel *m_apps;
 
     LSPlaceModel *m_placeModel;
     QMap<QUuid, QUrl> m_tabLocations;

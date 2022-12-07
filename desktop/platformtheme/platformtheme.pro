@@ -7,11 +7,14 @@ TARGET=hollywood
 TEMPLATE = lib
 CONFIG += plugin wayland-scanner
 INCLUDEPATH += include/
+INCLUDEPATH += ../libcommdlg
 DEFINES -=QT_NO_SIGNALS_SLOTS_KEYWORDS
+LIBS += -L../output -lcommdlg-$${HOLLYWOOD_APIVERSION}
 
 WAYLANDCLIENTSOURCES += ../compositor/protocols/appmenu.xml
 
 SOURCES += \
+    src/dialoghelpers.cc \
     src/platformtheme.cc \
     src/qdbusmenuadaptor.cc \
     src/qdbusmenubar.cc \
@@ -21,6 +24,7 @@ SOURCES += \
     src/wayland.cc
 
 HEADERS += \
+    include/dialoghelpers.h \
     include/platformtheme.h \
     include/qdbusmenuadaptor_p.h \
     include/qdbusmenubar_p.h \
