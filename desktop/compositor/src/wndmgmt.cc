@@ -81,7 +81,6 @@ void PlasmaWindowManagement::org_kde_plasma_window_management_get_window_by_uuid
     {
         if(w->uuid().toString(QUuid::WithoutBraces) == internal_window_uuid)
         {
-            qDebug() << "bound client for:" << internal_window_uuid;
             w->add(resource->client(), id, resource->version());
             return;
         }
@@ -100,7 +99,6 @@ PlasmaWindowControl::PlasmaWindowControl(Surface *obj, const QUuid &uuid)
 
 PlasmaWindowControl::~PlasmaWindowControl()
 {
-    qDebug() << "PMWC: unmap";
     unmap();
 }
 
@@ -112,7 +110,6 @@ void PlasmaWindowControl::org_kde_plasma_window_bind_resource(Resource *resource
         return;
     }
 
-    qDebug() << "org_kde_plasma_window_bind_resource: client bind, send initial states." << uuid();
     send_initial_state(resource->handle);
     send_title_changed(resource->handle, m_title);
     send_pid_changed(resource->handle, m_parent->surface()->client()->processId());
@@ -171,7 +168,6 @@ void PlasmaWindowControl::setTitle(const QString &title)
 void PlasmaWindowControl::setThemedIcon(const QString &icon)
 {
     m_themedicon = icon;
-    qDebug() << "PlasmaWindowControl: setThemedIcon" << icon;
     for (auto r : resourceMap())
         send_themed_icon_name_changed(r->handle, icon);
     Q_EMIT themedIconChanged(icon);

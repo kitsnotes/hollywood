@@ -101,14 +101,12 @@ void QtSurface::zqt_shell_surface_v1_set_maximum_size(Resource *resource, int32_
 void QtSurface::zqt_shell_surface_v1_set_window_title(Resource *resource, const QString &window_title)
 {
     Q_UNUSED(resource);
-    qDebug() << window_title;
     emit windowTitleChanged(window_title);
 }
 
 void QtSurface::zqt_shell_surface_v1_set_window_flags(Resource *resource, uint32_t flags)
 {
     Q_UNUSED(resource);
-    qDebug() << flags;
     emit windowFlagsChanged((Qt::WindowFlags) flags);
 }
 

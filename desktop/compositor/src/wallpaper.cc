@@ -50,7 +50,6 @@ void WallpaperManager::wallpaperChanged()
         m_texture = nullptr;
     }
 
-    qDebug() << m_wallpaper;
     if(m_wallpaper.isNull())
         return;
 
@@ -152,11 +151,9 @@ void WallpaperManager::wallpaperChanged()
             break;
         }
     }
-    qDebug() << "creating new texture" << bg.size();
     m_texture = new QOpenGLTexture(QOpenGLTexture::Target2D);
     m_texture->create();
     m_texture->setSize(bg.size().width(), bg.size().height());
-    //m_texture->setFormat(QOpenGLTexture::RGBFormat);
     m_texture->setMagnificationFilter(QOpenGLTexture::Nearest);
     m_texture->setMinificationFilter(QOpenGLTexture::Linear);
     m_texture->setWrapMode(QOpenGLTexture::ClampToEdge);
@@ -267,13 +264,11 @@ void WallpaperManager::querySettings()
             dm = 0;
     m_displayMode = (Layout)dm;
 
-    qDebug() << m_wallpaper;
     /*QFile file(m_wallpaper);
 
     if(!file.isReadable())
         m_wallpaper = QString("");*/
 
-    qDebug() << m_wallpaper;
     m_rotateTime = settings.value("RotateTime", 6).toUInt();
     m_rotateMode = settings.value("RotateMode", 0).toUInt();
     settings.endGroup();

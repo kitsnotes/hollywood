@@ -53,12 +53,12 @@ private:
     void sendMouseEvent(QMouseEvent *e, SurfaceView *target);
     static QPointF getAnchoredPosition(const QPointF &anchorPosition, int resizeEdge, const QSize &windowSize);
     static QPointF getAnchorPosition(const QPointF &position, int resizeEdge, const QSize &windowSize);
-    void recursiveDrawTextureForObject(Surface *obj, bool useShadow = false);
-    void drawTextureForObject(Surface *obj, bool useShadow = false);
-    void drawPopupsForObject(Surface *obj, bool useShadow = false);
+    void recursiveDrawTextureForObject(Surface *obj);
+    void drawTextureForObject(Surface *obj);
+    void drawPopupsForObject(Surface *obj);
     void drawShadowForObject(uint shadowOffset, Surface *obj);
     void drawDesktopInfoString();
-    void drawServerSideDecoration(const QSize buf, uint shadowOffset, Surface *obj);
+    void drawServerSideDecoration(Surface *obj);
 private:
     friend class WallpaperManager;
     Output *m_output;

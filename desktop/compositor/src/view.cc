@@ -50,7 +50,8 @@ bool SurfaceView::isSharedMem()
 
 int SurfaceView::nearEdge(QPointF point) const
 {
-    auto pm = 3; // the margin (in px) on each side of the handle
+    // TODO: a margin > 0 breaks things
+    auto pm = 0; // the margin (in px) on each side of the handle
     int NoEdge = 0x0;
     if(!m_surface)
         return NoEdge;
@@ -59,18 +60,12 @@ int SurfaceView::nearEdge(QPointF point) const
         return NoEdge;
 
     //point is global to the compositor output
-    int left = m_surface->position().x();
-    int top = m_surface->position().y();
+    int left = m_surface->decoratedRect().left();
+    int top = m_surface->decoratedRect().top();
 
-    int bottom = top + m_surface->size().height();
-    int right = left + m_surface->size().width();
+    int bottom = top + m_surface->decoratedRect().height();
+    int right = left + m_surface->decoratedRect().width();
 
-    if(m_surface->serverDecorated())
-    {
-        bottom = top + m_surface->decoratedRect().height();
-        right = left + m_surface->decoratedRect().width();
-
-    }
     if(point.y() >= top-pm &&
        point.y() <= top+pm)
         return 0x01;

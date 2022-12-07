@@ -28,6 +28,16 @@ CompositorApp::CompositorApp(bool use_sddm, int &argc, char **argv)
     setOrganizationDomain(HOLLYWOOD_OS_DOMAIN);
     setOrganizationName(HOLLYWOOD_OS_ORGNAME);
     Originull::Platform::EglFSFunctions::setCursorTheme(QLatin1String("neutral"), 32);
+    Originull::Platform::ScreenChange chg;
+    chg.screen = QGuiApplication::primaryScreen();
+    chg.position = QPoint(0,0);
+    chg.enabled = true;
+    chg.refreshRate = 60;
+    chg.scale = 1.0;
+    chg.resolution = QSize(1680,1050);
+    QVector<Originull::Platform::ScreenChange> changes;
+    changes << chg;
+    Originull::Platform::EglFSFunctions::applyScreenChanges(changes);
 
     m_compositor->create();
 }

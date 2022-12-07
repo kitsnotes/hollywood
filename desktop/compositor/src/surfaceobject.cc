@@ -139,7 +139,6 @@ void Surface::setMinimized()
 
 bool Surface::activated() const
 {
-    qDebug() << "surface::activated";
     if(m_minimized)
         return false;
 
@@ -170,10 +169,14 @@ SurfaceView *Surface::primaryView() const
     SurfaceView *view = nullptr;
     uint content = 0;
 
+    if(m_viewList.count() == 1)
+        return m_viewList.first();
+
     QMap<Output*, SurfaceView*>::const_iterator i;
     for (i = m_viewList.begin(); i != m_viewList.end(); ++i)
     {
-        QRect r = decoratedRect().intersected(i.key()->wlOutput()->geometry()).toRect();
+        QRectF deco = decoratedRect();
+        QRect r = deco.intersected(i.key()->wlOutput()->geometry()).toRect();
         uint pixels = r.width() * r.height();
         if(pixels > content)
         {
@@ -197,10 +200,6 @@ bool Surface::isSpecialShellObject() const
     if(surface())
         if(surface()->isCursorSurface())
             return true;
-
-    if(m_menuServer)
-        return true;
-
 
     if(m_surfaceType == Desktop)
         return true;
@@ -242,11 +241,6 @@ WlrLayerSurfaceV1 *Surface::layerSurface() const { return m_layerSurface; }
 
 AppMenu *Surface::appMenu() const { return m_appMenu; }
 
-OriginullMenuServer *Surface::menuServer() const
-{
-    return m_ms;
-}
-
 GtkSurface *Surface::gtkSurface() const
 {
     return m_gtk;
@@ -257,36 +251,41 @@ QtSurface *Surface::qtSurface() const
     return m_qt;
 }
 
-void Surface::setMenuServer(OriginullMenuServer *m)
-{
-    m_ms = m;
-}
-
 void Surface::setPosition(const QPointF &pos)
 {
-    if(m_surfaceType == TopLevel || m_surfaceType == TopLevelTool)
-    {
-        QPointF copy(pos);
-        if(hwComp->hasMenuServer() && !m_menuServer)
-        {
-            if(pos.y() < hwComp->menuServerHeight())
-                copy.setY(hwComp->menuServerHeight() + 1);
-        }
-
-        m_position = copy;
-    }
-    else
-        m_position = pos;
+    // TODO: check for bounds of layer-shell items
+    m_surfacePosition = pos;
 
     if(m_qt != nullptr && m_qt_moveserial != 0)
     {
-        auto x = m_position.x();
-        auto y = m_position.y();
+        auto x = m_surfacePosition.x();
+        auto y = m_surfacePosition.y();
         m_qt->send_set_position(m_qt_moveserial, x, y);
     }
 }
 
-QSize Surface::windowSize() const
+uint Surface::shadowSize() const
+{
+    if(m_layerSurface)
+        return 0;
+
+    if(isMaximized() || isFullscreen())
+        return 0;
+
+    // GTK Shell does it's own shadowing
+    if(m_gtk)
+        return 0;
+
+    if(surfaceType() == Popup)
+        return 15;
+
+    if(surfaceType() == TopLevel)
+        return 45;
+
+    return 0;
+}
+
+QSize Surface::surfaceSize() const
 {
     if(m_fullscreenShell)
         return surface()->destinationSize();
@@ -308,20 +307,45 @@ QSize Surface::windowSize() const
     return surface()->destinationSize();
 }
 
+QSize Surface::decoratedSize() const
+{
+    auto size = surfaceSize();
+    if(m_ssd)
+    {
+        auto bs = hwComp->borderSize();
+        auto ds = hwComp->decorationSize();
+        size.setHeight(size.height()+bs+ds);
+        size.setWidth(size.width()+bs+bs);
+    }
+    return size;
+}
+
+QSize Surface::renderSize() const
+{
+    auto size = decoratedSize();
+    uint shadow = shadowSize();
+    if(shadow > 1)
+    {
+        size.setHeight(size.height()+shadow*2);
+        size.setWidth(size.width()+shadow*2);
+    }
+    return size;
+}
+
 QRectF Surface::windowRect() const
 {
-    return QRectF(m_position, QSizeF(windowSize()));
+    return QRectF(m_surfacePosition, QSizeF(surfaceSize()));
 }
 
 QRectF Surface::decoratedRect() const
 {
-    QRectF w = windowRect();
-    auto bs = hwComp->borderSize();
-    auto ds = hwComp->decorationSize();
-    w.setWidth(w.width()+(bs*2));
-    w.setHeight(w.height()+bs+ds);
-
-    return w;
+    auto pos = m_surfacePosition;
+    if(m_ssd)
+    {
+        pos.setX(pos.x()-hwComp->borderSize());
+        pos.setY(pos.y()-hwComp->decorationSize());
+    }
+    return QRectF(pos, decoratedSize());
 }
 
 QRectF Surface::closeButtonRect() const
@@ -332,7 +356,7 @@ QRectF Surface::closeButtonRect() const
     auto ds = hwComp->decorationSize();
     const int windowRight = decoratedRect().right() + 1;
     return QRectF(windowRight - BUTTON_WIDTH - BUTTON_SPACING * 0 - BUTTONS_RIGHT_MARGIN,
-                   m_position.y()+(ds - BUTTON_WIDTH) / 2, BUTTON_WIDTH, BUTTON_WIDTH);
+                   decorationPosition().y()+(ds - BUTTON_WIDTH) / 2, BUTTON_WIDTH, BUTTON_WIDTH);
 }
 
 QRectF Surface::maximizeButtonRect() const
@@ -343,7 +367,7 @@ QRectF Surface::maximizeButtonRect() const
     auto ds = hwComp->decorationSize();
     const int windowRight = decoratedRect().right() + 1;
     return QRectF(windowRight - BUTTON_WIDTH * 2 - BUTTON_SPACING * 1 - BUTTONS_RIGHT_MARGIN,
-                   m_position.y()+(ds - BUTTON_WIDTH) / 2, BUTTON_WIDTH, BUTTON_WIDTH);
+                   decorationPosition().y()+(ds - BUTTON_WIDTH) / 2, BUTTON_WIDTH, BUTTON_WIDTH);
 }
 
 QRectF Surface::minimizeButtonRect() const
@@ -354,19 +378,15 @@ QRectF Surface::minimizeButtonRect() const
     auto ds = hwComp->decorationSize();
     const int windowRight = decoratedRect().right() + 1;
     return QRectF(windowRight - BUTTON_WIDTH * 3 - BUTTON_SPACING * 2 - BUTTONS_RIGHT_MARGIN,
-                  m_position.y()+(ds - BUTTON_WIDTH) / 2, BUTTON_WIDTH, BUTTON_WIDTH);
+                  decorationPosition().y()+(ds - BUTTON_WIDTH) / 2, BUTTON_WIDTH, BUTTON_WIDTH);
 }
 
 QRectF Surface::titleBarRect() const
 {
+    auto point = decorationPosition();
     auto bs = hwComp->borderSize();
     auto ds = hwComp->decorationSize();
-    return QRectF(m_position, QSize(windowSize().width()+(bs*2), ds));
-}
-
-QSize Surface::size() const
-{
-    return windowSize();
+    return QRectF(point, QSize(surfaceSize().width()+(bs*2), ds));
 }
 
 QUuid Surface::uuid() const { return m_uuid; }
@@ -404,11 +424,16 @@ void Surface::setAppMenu(AppMenu *m)
 QPointF Surface::parentPosition() const
 {
     return m_parentSurface ?
-                (m_parentSurface->position() + m_parentSurface->parentPosition())
+                (m_parentSurface->surfacePosition() + m_parentSurface->parentPosition())
               : QPointF();
 }
 
 QList<Surface *> Surface::childSurfaceObjects() const { return m_children; }
+
+bool Surface::surfaceReadyToRender() const
+{
+    return m_surfaceInit;
+}
 
 bool Surface::serverDecorated() const
 {
@@ -433,17 +458,22 @@ bool Surface::serverDecorated() const
     return false;
 }
 
-QPointF Surface::position() const
-{
-    return m_position;
-}
-
-QPointF Surface::parentBasedPosition() const
+QPointF Surface::surfacePosition() const
 {
     if(m_parentSurface == nullptr)
-        return m_position;
+        return m_surfacePosition;
 
-    return m_parentSurface->position()+m_position;
+     return m_parentSurface->surfacePosition() + m_surfacePosition;
+}
+
+QPointF Surface::decorationPosition() const
+{
+    auto bs = hwComp->borderSize();
+    auto ds = hwComp->decorationSize();
+    auto point = m_surfacePosition;
+    point.setX(point.x()-bs);
+    point.setY(point.y()-ds);
+    return point;
 }
 
 void Surface::setParentSurfaceObject(Surface *parent)
@@ -470,6 +500,35 @@ void Surface::createPlasmaWindowControl()
     m_wndctl->setIcon(icon);
 }
 
+QPointF Surface::renderPosition() const
+{
+    if(isFullscreen())
+        return surfacePosition();
+
+    QRectF calculated(surfacePosition(), surfaceSize());
+
+    // account for the server decoration
+    if(m_ssd)
+    {
+        calculated.setTop(calculated.top()-hwComp->decorationSize());
+        calculated.setLeft(calculated.left()-hwComp->borderSize());
+        calculated.setRight(calculated.right()+hwComp->borderSize());
+        calculated.setBottom(calculated.bottom()+hwComp->borderSize());
+    }
+
+    // account for shadows if we are using them
+    uint shadow = shadowSize();
+    if(shadow > 1 && !isMaximized())
+    {
+        calculated.setTop(calculated.top()-shadow);
+        calculated.setLeft(calculated.left()-shadow);
+        calculated.setRight(calculated.right()+shadow);
+        calculated.setBottom(calculated.bottom()+shadow);
+    }
+
+    return calculated.topLeft();
+}
+
 void Surface::addChildSurfaceObject(Surface *child)
 {
      qDebug() << m_uuid.toString() << "add child" << child->uuid().toString();
@@ -489,12 +548,12 @@ void Surface::recycleChildSurfaceObject(Surface *child)
 
 void Surface::adjustPostionX(float x)
 {
-    m_position.setX(x);
+    m_surfacePosition.setX(x);
 }
 
 void Surface::adjustPostionY(float y)
 {
-    m_position.setY(y);
+    m_surfacePosition.setY(y);
 }
 
 void Surface::renderDecoration()
@@ -542,7 +601,7 @@ void Surface::renderDecoration()
 
     p.setCompositionMode(QPainter::CompositionMode_SourceOver);
     QRect wg = QRect(QPoint(0,0),
-             QPoint(windowSize().width()+bs+bs, windowSize().height()+bs+ds));
+             QPoint(surfaceSize().width()+bs+bs, surfaceSize().height()+bs+ds));
 
     QRect clips[] =
     {
@@ -612,7 +671,7 @@ void Surface::renderDecoration()
     // close button
     auto icopath = do_dark ? ":/Icons/Dark/window-close"
                            : ":/Icons/Light/window-close";
-    int close_left = windowSize().width()-bs-btnsz;
+    int close_left = surfaceSize().width()-bs-btnsz;
     QIcon wcico = QIcon(icopath);
     if (!wcico.isNull())
     {
@@ -698,7 +757,7 @@ void Surface::handleLayerShellPopupPositioning()
 
 void Surface::onSurfaceSourceGeometryChanged()
 {
-    qDebug() << "Surface::onSurfaceSourceGeometryChanged" << surface()->sourceGeometry();
+    //qDebug() << "Surface::onSurfaceSourceGeometryChanged" << surface()->sourceGeometry();
     //m_viewport = surface()->sourceGeometry();
 }
 
@@ -751,6 +810,7 @@ void Surface::decorationModeChanged()
     }
     else
         m_ssd = false;
+    hwComp->triggerRender();
 }
 
 void Surface::onQtWindowTitleChanged(const QString &title)
@@ -771,7 +831,7 @@ void Surface::onQtShellActivationRequest()
 
 void Surface::onQtShellReposition(const QPoint &pos)
 {
-    m_position = pos;
+    m_surfacePosition = pos;
     if(m_ssd)
         renderDecoration();
     hwComp->triggerRender();
@@ -804,7 +864,6 @@ void Surface::onQtWindowFlagsChanged(const Qt::WindowFlags &f)
 
     if(f.testFlag(Qt::Dialog) && !f.testFlag(Qt::Popup))
     {
-        qDebug() << "Creating SSD for Dialog";
         m_ssd = true;
         renderDecoration();
         auto bs = hwComp->borderSize();
@@ -823,7 +882,7 @@ void Surface::onQtWindowFlagsChanged(const Qt::WindowFlags &f)
         m_surfaceType = TopLevelTool;
     }
 
-    if(f.testFlag(Qt::Popup) && !!f.testFlag(Qt::Tool))
+    if(f.testFlag(Qt::Popup) && !f.testFlag(Qt::Tool))
         m_surfaceType = Popup;
 
     // TODO: ghetto assumption but nothing beyond shellfm should be using qt-shell
@@ -841,6 +900,7 @@ void Surface::onQtWindowFlagsChanged(const Qt::WindowFlags &f)
         m_canClose = false;
     }
 
+    m_surfaceInit = true;
     hwComp->triggerRender();
 }
 
@@ -855,7 +915,7 @@ void Surface::activate()
     {
         QList<HWWaylandXdgToplevel::State> states = m_xdgTopLevel->states();
         states.append(HWWaylandXdgToplevel::ActivatedState);
-        m_xdgTopLevel->sendConfigure(windowSize(), states);
+        m_xdgTopLevel->sendConfigure(surfaceSize(), states);
     }
 }
 
@@ -865,13 +925,12 @@ void Surface::deactivate()
     {
         QList<HWWaylandXdgToplevel::State> states = m_xdgTopLevel->states();
         states.removeOne(HWWaylandXdgToplevel::ActivatedState);
-        m_xdgTopLevel->sendConfigure(windowSize(), states);
+        m_xdgTopLevel->sendConfigure(surfaceSize(), states);
     }
 }
 
 void Surface::toggleMinimize()
 {
-    qDebug() << "Surface::toggleMinimize" << m_uuid.toString();
     if(m_minimized)
         unsetMinimized();
     else
@@ -904,8 +963,7 @@ void Surface::createWlShellSurface(QWaylandWlShellSurface *surface)
 void Surface::createXdgShellSurface(HWWaylandXdgSurface *surface)
 {
     m_xdgSurface = surface;
-    connect(m_xdgSurface, &HWWaylandXdgSurface::windowGeometryChanged, this, &Surface::windowGeometryChanged);
-    hwComp->triggerRender();
+    connect(m_xdgSurface, &HWWaylandXdgSurface::windowGeometryChanged, this, &Surface::onXdgWindowGeometryChanged);
 }
 
 void Surface::createXdgTopLevelSurface(HWWaylandXdgToplevel *topLevel)
@@ -926,14 +984,12 @@ void Surface::createXdgTopLevelSurface(HWWaylandXdgToplevel *topLevel)
     connect(m_xdgTopLevel, &HWWaylandXdgToplevel::parentToplevelChanged, this, &Surface::onXdgParentTopLevelChanged);
     connect(m_xdgTopLevel, &HWWaylandXdgToplevel::titleChanged, this, &Surface::onXdgTitleChanged);
     connect(m_xdgTopLevel, &HWWaylandXdgToplevel::appIdChanged, this, &Surface::onXdgAppIdChanged);
-
-
-    renderDecoration();
+    connect(m_xdgTopLevel, &HWWaylandXdgToplevel::maximizedChanged, this, &Surface::completeXdgConfigure);
+    connect(m_xdgTopLevel, &HWWaylandXdgToplevel::fullscreenChanged, this, &Surface::completeXdgConfigure);
 }
 
 void Surface::createXdgPopupSurface(HWWaylandXdgPopup *popup)
 {
-    qDebug() << "surface::createXdgPopupSurface" << this->uuid().toString();
     m_xdgPopup = popup;
     m_surfaceType = Popup;
     Surface *parentSurface = nullptr;
@@ -947,22 +1003,7 @@ void Surface::createXdgPopupSurface(HWWaylandXdgPopup *popup)
     if(popup->parentXdgSurface() == nullptr)
         return;
 
-    bool decorated = false;
-    if(parentSurface != nullptr)
-        decorated = parentSurface->serverDecorated();
-
-
-    qDebug() << popup->positionerSize();
-    qDebug() << popup->gravityEdges();
-    qDebug() << popup->anchorRect();
-
     auto rect = popup->anchorRect();
-    if(decorated)
-    {
-        auto bs = hwComp->borderSize();
-        auto ds = hwComp->decorationSize();
-        rect.adjust(0,bs+ds,0,bs+ds);
-    }
 
     float yPos = 0;
     if(popup->anchorEdges() & Qt::TopEdge)
@@ -981,12 +1022,15 @@ void Surface::createXdgPopupSurface(HWWaylandXdgPopup *popup)
         xPos = rect.left() + rect.width() / 2;
 
     setPosition(QPointF(xPos,yPos));
+
+    m_surfaceInit = true;
 }
 
 void Surface::createGtkSurface(GtkSurface *gtk)
 {
     m_gtk = gtk;
     m_surfaceType = TopLevel;
+    m_surfaceInit = true;
 }
 
 void Surface::createQtSurface(QtSurface *qt)
@@ -1027,7 +1071,7 @@ void Surface::onXdgSetMaximized()
 {
     m_minimized = false;
     m_maximized = true;
-    m_priorNormalPos = m_position;
+    m_priorNormalPos = m_surfacePosition;
     auto size = primaryView()->output()->availableGeometry();
     if(this->serverDecorated())
     {
@@ -1037,20 +1081,13 @@ void Surface::onXdgSetMaximized()
     m_xdgTopLevel->sendMaximized(size.size());
     if(m_wndctl)
         m_wndctl->setMaximized(true);
-    // An improvement here, would have been to wait for the commit after the ack_configure for the
-    // request above before moving the window. This would have prevented the window from being
-    // moved until the contents of the window had actually updated. This improvement is left as an
-    // exercise for the reader.
-
-    renderDecoration();
-    setPosition(primaryView()->output()->position());
 }
 
 void Surface::onXdgUnsetMaximized()
 {
     m_maximized = false;
     m_xdgTopLevel->sendUnmaximized();
-    m_position = m_priorNormalPos;
+    m_surfacePosition = m_priorNormalPos;
     if(m_wndctl)
         m_wndctl->setMaximized(true);
 }
@@ -1061,6 +1098,28 @@ void Surface::onXdgSetMinimized()
     hwComp->triggerRender();
     if(m_wndctl)
         m_wndctl->setMinimized(true);
+}
+
+void Surface::completeXdgConfigure()
+{
+    renderDecoration();
+    if(m_maximized)
+    {
+        auto pos = primaryView()->output()->position();
+        pos.setX(pos.x()+hwComp->borderSize());
+        pos.setY(pos.y()+hwComp->decorationSize());
+        setPosition(pos);
+        hwComp->triggerRender();
+    }
+    else if(m_fullscreen)
+    {
+        // TODO: use cache from onXdgSetFullscreen
+        setPosition(primaryView()->output()->position());
+    }
+    else
+    {
+        // restore our window to prior position
+    }
 }
 
 void Surface::unsetMinimized()
@@ -1075,17 +1134,12 @@ void Surface::onXdgSetFullscreen(QWaylandOutput* clientPreferredOutput)
 {
     m_minimized = false;
     m_fullscreen = true;
+    // TODO: cache this
     QWaylandOutput *outputToFullscreen = clientPreferredOutput
             ? clientPreferredOutput
             : primaryView()->output();
 
-    m_xdgSurface->toplevel()->sendFullscreen(outputToFullscreen->geometry().size());
-
-    // An improvement here, would have been to wait for the commit after the ack_configure for the
-    // request above before moving the window. This would have prevented the window from being
-    // moved until the contents of the window had actually updated. This improvement is left as an
-    // exercise for the reader.
-    setPosition(outputToFullscreen->position());
+    m_xdgSurface->toplevel()->sendFullscreen(outputToFullscreen->geometry().size());    
 }
 
 void Surface::onXdgUnsetFullscreen()
@@ -1129,9 +1183,16 @@ void Surface::onXdgAppIdChanged()
     }
 }
 
-void Surface::windowGeometryChanged()
+void Surface::onXdgWindowGeometryChanged()
 {
     renderDecoration();
+    // if we are initializing an xdg toplevel we should set a
+    // better initial position
+    if(!m_surfaceInit)
+    {
+        // TODO: reposition
+        m_surfaceInit = true;
+    }
 }
 
 // Layer Shell Functions
@@ -1157,7 +1218,6 @@ void Surface::onAnchorsChanged()
 
 void Surface::onExclusiveZoneChanged()
 {
-    qDebug() << "Surface::onExclusiveZoneChanged on " << m_uuid;
     if(m_layerSurface->exclusiveZone() > 0)
     {
         auto output = hwComp->outputFor(primaryView()->output());
@@ -1175,11 +1235,13 @@ void Surface::onExclusiveZoneChanged()
 void Surface::reconfigureLayerSurface()
 {
     m_layerSurface->sendConfigure(m_ls_size);
+    m_surfaceInit = true;
 }
 
 void Surface::onLayerChanged()
 {
     hwComp->resetLayerShellLayer(this);
+    m_surfaceInit = true;
 }
 
 void Surface::onLayerShellSizeChanged()
@@ -1212,7 +1274,10 @@ void Surface::recalculateAnchorPosition()
     if(anchors & WlrLayerSurfaceV1::TopAnchor || anchors & WlrLayerSurfaceV1::BottomAnchor)
     {
         if(m_ls_size.width() == 0)
-            m_ls_size.setWidth(primaryView()->output()->geometry().width());
+        {
+            auto view = primaryView();
+            m_ls_size.setWidth(view->output()->geometry().width());
+        }
     }
 
     if(anchors & WlrLayerSurfaceV1::LeftAnchor || anchors & WlrLayerSurfaceV1::RightAnchor)
@@ -1223,7 +1288,7 @@ void Surface::recalculateAnchorPosition()
 
     if(anchors == WlrLayerSurfaceV1::TopAnchor+WlrLayerSurfaceV1::LeftAnchor)
     {
-        m_position = primaryView()->output()->position();
+        m_surfacePosition = primaryView()->output()->position();
         return;
     }
 
@@ -1235,13 +1300,13 @@ void Surface::recalculateAnchorPosition()
             uint viewdiff = primaryView()->output()->geometry().width() - m_ls_size.width();
             pos.setX(pos.x() + viewdiff/2);
         }
-        m_position = pos;
+        m_surfacePosition = pos;
         return;
     }
 
     if(anchors == WlrLayerSurfaceV1::TopAnchor+WlrLayerSurfaceV1::RightAnchor)
     {
-        m_position = primaryView()->output()->position();
+        m_surfacePosition = primaryView()->output()->position();
         return;
     }
 
@@ -1254,7 +1319,7 @@ void Surface::recalculateAnchorPosition()
             btmpos.setY(btmpos.y() + viewdiff/2);
         }
         btmpos.setY(primaryView()->output()->geometry().height() - m_ls_size.height());
-        m_position = btmpos;
+        m_surfacePosition = btmpos;
         return;
     }
 
@@ -1262,7 +1327,7 @@ void Surface::recalculateAnchorPosition()
     {
         QPoint btmpos = primaryView()->output()->position();
         btmpos.setX(primaryView()->output()->geometry().height() - m_ls_size.height());
-        m_position = btmpos;
+        m_surfacePosition = btmpos;
         return;
     }
 }

@@ -69,18 +69,24 @@ public:
     QString appId() const { return m_appid; }
     QString themedIcon() const { return m_icontheme; }
 
+    bool surfaceReadyToRender() const;
     bool serverDecorated() const;
-    QPointF position() const;
-    QPointF parentBasedPosition() const;
+    QPointF renderPosition() const;
+    QPointF surfacePosition() const;
+    QPointF decorationPosition() const;
     void setPosition(const QPointF &pos);
-    QSize windowSize() const;
+    uint shadowSize() const;
+
+    QSize surfaceSize() const;
+    QSize decoratedSize() const;
+    QSize renderSize() const;
+
     QRectF windowRect() const;
     QRectF decoratedRect() const;
     QRectF closeButtonRect() const;
     QRectF maximizeButtonRect() const;
     QRectF minimizeButtonRect() const;
     QRectF titleBarRect() const;
-    QSize size() const;
     QUuid uuid() const;
     uint id() const;
     bool isCursor() const;
@@ -114,10 +120,8 @@ public:
     PlasmaWindowControl* plasmaControl() const;
     WlrLayerSurfaceV1* layerSurface() const;
     AppMenu* appMenu() const;
-    OriginullMenuServer* menuServer() const;
     GtkSurface* gtkSurface() const;
     QtSurface* qtSurface() const;
-    void setMenuServer(OriginullMenuServer* m);
     void startMove();
     void startResize();
     void endResize();
@@ -164,7 +168,8 @@ private slots:
     void onXdgTitleChanged();
     void onXdgParentTopLevelChanged();
     void onXdgAppIdChanged();
-    void windowGeometryChanged();
+    void onXdgWindowGeometryChanged();
+    void completeXdgConfigure();
     void surfaceDestroyed();
     void viewSurfaceDestroyed();
     void reconfigureLayerSurface();
@@ -192,13 +197,15 @@ private:
     SurfaceView* createViewForOutput(Output *o);
     void setAppMenu(AppMenu *m);
     void createPlasmaWindowControl();
+    void recalculateRenderPosition();
     QUuid m_uuid;
     uint m_id;
 
-    bool m_active = false;
-
+    bool m_surfaceInit = false;
+    // cursor surface?
     bool m_cursor = false;
-    bool m_menuServer = false;
+
+    bool m_active = false;
 
     bool m_canMaximize = true;
     bool m_canMinimize = true;
@@ -220,16 +227,19 @@ private:
     QRectF m_viewport;
 
     QSize m_ls_size;
-
     QSize m_qt_size;
+
     Qt::WindowFlags m_qt_wndflags;
     uint m_qt_moveserial;
     uint m_qt_sizeserial;
 
     QString m_windowTitle;
 
-    QPointF m_position;
-    QPointF m_priorNormalPos; // used for restoring window
+    // the point at where the actual wayland surface is visible
+    QPointF m_surfacePosition;
+
+    // used for restoring window
+    QPointF m_priorNormalPos;
 
     QString m_appid;
     QString m_icontheme;
@@ -253,6 +263,7 @@ private:
     GtkSurface *m_gtk = nullptr;
     QtSurface *m_qt = nullptr;
 
+    OriginullMenuServer *m_menuServer = nullptr;
     QImage *m_ssdimg = nullptr;
 
     Output *m_ls_output = nullptr;

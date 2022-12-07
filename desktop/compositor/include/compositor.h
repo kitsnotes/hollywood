@@ -66,6 +66,8 @@ public:
     QVector<Surface*> surfaceByZOrder() { return m_zorder; }
     QList<Surface*> desktopSurfaces() const { return m_desktops; }
     QList<SurfaceView*> views() const;
+    QList<Surface*> surfaces() { return m_surfaces; }
+
     void raise(Surface *surface);
     Surface* menuServerSurfaceObject() { return m_menuServer; }
     void handleMouseEvent(QWaylandView *target, QMouseEvent *me);
@@ -73,11 +75,8 @@ public:
     void handleDrag(SurfaceView *target, QMouseEvent *me);
 
     QWaylandClient *popupClient() const;
-    void closePopups();
     bool hasMenuServer();
-    uint menuServerHeight() const { return m_menuServerReserved; }
     uint nextId();
-    QList<Surface*> surfaces() { return m_surfaces; }
 
     uint decorationSize() const { return m_decorationSize; }
     uint borderSize() const { return m_borderSize; }
@@ -138,7 +137,6 @@ protected slots:
 private slots:
     void appMenuCreated(AppMenu *m);
     void configChanged();
-    void menuServerHeightChanged();
     void loadSettings();
 private:
     void sendWindowUUID(QUuid &uuid);
@@ -155,7 +153,7 @@ private:
     Surface* findSurfaceObject(const QWaylandSurface *s) const;
 private:
     // metrics (stored in settings)
-    uint m_decorationSize = 15;
+    uint m_decorationSize = 30;
     uint m_borderSize = 1;
     uint m_apperance = 0;
 

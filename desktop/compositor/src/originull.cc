@@ -47,9 +47,6 @@ void OriginullProtocol::org_originull_privateapi_provision_menu_server(QtWayland
         return;
     }
 
-    qDebug() << "initialized menuserver protocol object";
-    auto ms = new OriginullMenuServer(m_compositor, s, msr);
-    s->setMenuServer(ms);
     /* QObject::connect(appmenu, &QObject::destroyed, this,[=]() {
 
     }); */

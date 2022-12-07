@@ -263,7 +263,7 @@ void Compositor::onSurfaceCreated(QWaylandSurface *surface)
     auto *obj = new Surface(surface);
     bool twilight = processHasTwilightMode(surface->client()->processId());
     obj->setTwilight(twilight);
-    auto outputAt = outputAtPosition(obj->position().toPoint());
+    auto outputAt = outputAtPosition(obj->surfacePosition().toPoint());
     if(outputAt == nullptr)
     {
         qDebug() << "null outputAtPosition";
@@ -344,22 +344,7 @@ Surface* Compositor::findSurfaceObject(const QWaylandSurface *s) const
 
 void Compositor::onMenuServerRequest(QWaylandSurface *surface)
 {
-    auto *acSurface = findSurfaceObject(surface);
-    Q_ASSERT(acSurface);
-    m_menuServer = acSurface;
-    acSurface->setPosition(QPointF(0,0));
-    m_menuServer->m_menuServer = true;
-    if(m_menuServer->m_wndctl != nullptr)
-    {
-        delete m_menuServer->m_wndctl;
-        m_menuServer->m_wndctl = nullptr;
-    }
-
-    if(m_zorder.contains(m_menuServer))
-        m_zorder.removeOne(m_menuServer);
-    m_menuServerReserved = m_menuServer->size().height();
-    m_menuServer->m_surfaceType = Surface::MenuServer;
-    connect(m_menuServer->surface(), &QWaylandSurface::hasContentChanged, this, &Compositor::menuServerHeightChanged);
+    Q_UNUSED(surface);
 }
 
 void Compositor::onDesktopRequest(QWaylandSurface *surface)
@@ -376,13 +361,6 @@ void Compositor::onDesktopRequest(QWaylandSurface *surface)
     m_desktops.append(acSurface);
 }
 
-void Compositor::menuServerHeightChanged()
-{
-    if(m_menuServer)
-        m_menuServerReserved = m_menuServer->size().height();
-    else
-        m_menuServerReserved = 0;
-}
 
 void Compositor::loadSettings()
 {
@@ -511,24 +489,20 @@ void Compositor::onXdgTopLevelCreated(HWWaylandXdgToplevel *topLevel, HWWaylandX
     auto *mySurface = findSurfaceObject(surface->surface());
     Q_ASSERT(mySurface);
     mySurface->createXdgTopLevelSurface(topLevel);
-    // TODO: better initial position of top level xdg shells
-
-    /*auto scrsize  =m_outputs.first()->size();
-    auto surfsize = surface->surface()->destinationSize(); */
-
-    mySurface->setPosition(QPointF(40,50));
+    // this is temporary and will be better calculated in onXdgWindowGeometryChanged
+    mySurface->setPosition(QPointF(5,35));
 }
 
 void Compositor::onStartMove(QWaylandSeat *seat)
 {
     Q_UNUSED(seat);
-    closePopups();
+    m_wlShell->closeAllPopups();
     emit startMove();
 }
 
 void Compositor::onWlStartResize(QWaylandSeat *, QWaylandWlShellSurface::ResizeEdge edges)
 {
-    closePopups();
+    m_wlShell->closeAllPopups();
     emit startResize(int(edges), false);
 }
 
@@ -685,18 +659,12 @@ void Compositor::adjustCursorSurface(QWaylandSurface *surface, int hotspotX, int
         updateCursor();
 }
 
-void Compositor::closePopups()
-{
-    m_wlShell->closeAllPopups();
-    //m_xdgShell->closeAllPopups();
-}
-
 void Compositor::handleMouseEvent(QWaylandView *target, QMouseEvent *me)
 {
     auto popClient = popupClient();
     if (target && me->type() == QEvent::MouseButtonPress
             && popClient && popClient != target->surface()->client()) {
-        closePopups();
+        m_wlShell->closeAllPopups();
     }
 
     QWaylandSeat *seat = defaultSeat();
@@ -740,10 +708,10 @@ void Compositor::handleResize(SurfaceView *target, const QSize &initialSize, con
         auto qedge = static_cast<Qt::Edge>(edge);
 
         if(qedge == Qt::TopEdge)
-            target->m_surface->m_position.setY(m_globalCursorPos.y());
+            target->m_surface->m_surfacePosition.setY(m_globalCursorPos.y());
 
         if(qedge == Qt::LeftEdge)
-            target->m_surface->m_position.setX(m_globalCursorPos.x());
+            target->m_surface->m_surfacePosition.setX(m_globalCursorPos.x());
         wlShellSurface->sendConfigure(newSize, edges);
     }
 
@@ -757,10 +725,10 @@ void Compositor::handleResize(SurfaceView *target, const QSize &initialSize, con
 
             QSize newSize = topLevel->sizeForResize(initialSize, delta, qedge);
             if(qedge == Qt::TopEdge && newSize.height() != m_resizeOldVal)
-                    target->m_surface->m_position.setY(m_globalCursorPos.y());
+                    target->m_surface->m_surfacePosition.setY(m_globalCursorPos.y());
 
             if(qedge == Qt::LeftEdge && newSize.width() != m_resizeOldVal)
-                target->m_surface->m_position.setX(m_globalCursorPos.x());
+                target->m_surface->m_surfacePosition.setX(m_globalCursorPos.x());
 
             topLevel->sendResizing(newSize);
 
@@ -790,7 +758,7 @@ void Compositor::handleDrag(SurfaceView *target, QMouseEvent *me)
     QWaylandSurface *surface = nullptr;
     if (target) {
         surface = target->surface();
-        pos -= findSurfaceObject(surface)->position();
+        pos -= findSurfaceObject(surface)->renderPosition();
     }
     QWaylandDrag *currentDrag = defaultSeat()->drag();
     currentDrag->dragMove(surface, pos);
@@ -821,8 +789,8 @@ void Compositor::raise(Surface *obj)
     if(obj->m_xdgTopLevel && !obj->isSpecialShellObject())
     {
         // TODO: handle popups??
-        if(m_menuServer)
-            m_menuServer->menuServer()->setTopWindowForMenuServer(obj);
+        /*if(m_menuServer)
+            m_menuServer->menuServer()->setTopWindowForMenuServer(obj);*/
     }
 
     if(!m_zorder.contains(obj))
