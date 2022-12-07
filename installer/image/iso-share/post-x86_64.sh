@@ -9,15 +9,15 @@ EARLYCFG
 
 cat >cdroot/boot/grub.cfg <<'GRUBCFG'
 set timeout=0
-menuentry "Hollywood (AMD/Intel 64-bit)" --class linux --id hollywood-live {
+menuentry "Hollywood (AMD/Intel 64-bit)" --class linux --id hollywood-stable {
         insmod iso9660
         insmod linux
         search --label "HWAMD64" --no-floppy --set
-        linux ($root)/kernel-x86_64 root=live:LABEL=HWAMD64 rd.live.dir=/ rd.live.squashimg=x86_64.squashfs quiet splash
-        initrd ($root)/initrd-x86_64
+        linux ($root)/boot/kernel-stable-x86_64 root=live:LABEL=HWAMD64 rd.live.dir=/ rd.live.squashimg=x86_64.squashfs quiet splash
+        initrd ($root)/boot/initrd-stable-x86_64
 }
 
-GRUB_DEFAULT=hollywood-live
+GRUB_DEFAULT=hollywood-stable
 GRUB_DISABLE_OS_PROBER=true
 GRUB_TIMEOUT=0
 GRUB_DISTRIBUTOR="Hollywood"

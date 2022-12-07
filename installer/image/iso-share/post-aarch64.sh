@@ -13,16 +13,16 @@ menuentry "Hollywood (ARM 64-bit - for all VMs and physical machines not listed 
         insmod iso9660
         insmod linux
         search --label "HWARM64" --no-floppy --set
-        linux ($root)/kernel-aarch64 root=live:LABEL=HWARM64 rd.live.dir=/ rd.live.squashimg=aarch64.squashfs quiet splash
-        initrd ($root)/initrd-aarch64
+        linux ($root)/boot/kernel-stable-aarch64 root=live:LABEL=HWARM64 rd.live.dir=/ rd.live.squashimg=aarch64.squashfs quiet splash
+        initrd ($root)/boot/initrd-stable-aarch64
 }
 
 menuentry "Hollywood (Apple Silicon - on bare metal only)" --class linux --id hollywood-asahi {
         insmod iso9660
         insmod linux
         search --label "HWARM64" --no-floppy --set
-        linux ($root)/kernel-asahi root=live:LABEL=HWARM64 rd.live.dir=/ rd.live.squashimg=aarch64.squashfs quiet splash
-        initrd ($root)/initrd-asahi
+        linux ($root)/boot/kernel-asahi-aarch64 root=live:LABEL=HWARM64 rd.live.dir=/ rd.live.squashimg=aarch64.squashfs quiet splash
+        initrd ($root)/boot/initrd-asahi-aarch64
 }
 
 GRUB_DEFAULT=hollywood-stable

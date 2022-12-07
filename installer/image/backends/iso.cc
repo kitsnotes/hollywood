@@ -218,6 +218,14 @@ public:
         }
 
         /* REQ: ISO.2 */
+        fs::create_directory(this->ir_dir + "/cdroot/boot", ec);
+        if(ec && ec.value() != EEXIST) {
+            output_error("CD backend", "could not create ISO directory",
+                         ec.message());
+            return FS_ERROR;
+        }
+
+        /* REQ: ISO.2 */
         fs::create_directory(this->ir_dir + "/target", ec);
         if(ec && ec.value() != EEXIST) {
             output_error("CD backend", "could not create target directory",
@@ -365,7 +373,7 @@ public:
         std::ifstream kverstream(kverpath);
         kverstream >> kver;
 
-        const std::string irdname = "initrd-" + my_arch;
+        const std::string irdname = "initrd-stable-" + my_arch;
         if(run_command("chroot", {target, "dracut", "--kver", kver, "-N",
                                   "--force", "-a", "dmsquash-live",
                                   "/boot/" + irdname}) != 0) {
@@ -373,7 +381,7 @@ public:
             return COMMAND_ERROR;
         }
 
-        fs::rename(target + "/boot/" + irdname, cdpath + "/" + irdname, ec);
+        fs::rename(target + "/boot/" + irdname, cdpath + "/boot/" + irdname, ec);
         if(ec) {
             output_error("CD backend", "cannot install initrd to CD root");
             return FS_ERROR;
@@ -400,7 +408,7 @@ public:
             std::ifstream kverstream(kverpath);
             kverstream >> kver;
 
-            const std::string irdname = "initrd-asahi";
+            const std::string irdname = "initrd-asahi-" + my_arch;
             if(run_command("chroot", {target, "dracut", "--kver", kver, "-N",
                                       "--force", "-a", "dmsquash-live",
                                       "/boot/" + irdname}) != 0) {
@@ -408,7 +416,7 @@ public:
                 return COMMAND_ERROR;
             }
 
-            fs::rename(target + "/boot/" + irdname, cdpath + "/" + irdname, ec);
+            fs::rename(target + "/boot/" + irdname, cdpath + "/boot/" + irdname, ec);
             if(ec) {
                 output_error("CD backend", "cannot install asahi initrd to CD root");
                 return FS_ERROR;
@@ -442,8 +450,8 @@ public:
         output_info("CD backend", "installing kernel");
         for(const auto &candidate : fs::directory_iterator(target + "/boot")) {
             auto name = candidate.path().filename().string();
-            if(name.length() > 6 && name.substr(0, 6) == "vmlinuz-stable") {
-                fs::copy(candidate.path(), cdpath + "/kernel-" + my_arch, ec);
+            if(name == "vmlinuz-stable") {
+                fs::copy(candidate.path(), cdpath + "/boot/kernel-stable-" + my_arch, ec);
                 if(ec) {
                     output_error("CD backend", "failed to copy kernel",
                                  ec.message());
@@ -460,8 +468,8 @@ public:
             output_info("CD backend", "installing asahi kernel");
             for(const auto &candidate : fs::directory_iterator(target + "/boot")) {
                 auto name = candidate.path().filename().string();
-                if(name.length() > 6 && name.substr(0, 6) == "vmlinuz-asahi") {
-                    fs::copy(candidate.path(), cdpath + "/kernel-" + my_arch, ec);
+                if(name == "vmlinuz-asahi") {
+                    fs::copy(candidate.path(), cdpath + "/boot/kernel-asahi-" + my_arch, ec);
                     if(ec) {
                         output_error("CD backend", "failed to copy asahi kernel",
                                      ec.message());
