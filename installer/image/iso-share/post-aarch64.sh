@@ -8,8 +8,8 @@ set prefix=($root)/boot
 EARLYCFG
 
 cat >cdroot/boot/grub.cfg <<'GRUBCFG'
-set timeout=0
-menuentry "Hollywood (ARM 64-bit)" --class linux --id hollywood-live-cd {
+set timeout=5
+menuentry "Hollywood (ARM 64-bit - for all VMs and physical machines not listed below)" --class linux --id hollywood-stable {
         insmod iso9660
         insmod linux
         search --label "HWARM64" --no-floppy --set
@@ -17,9 +17,17 @@ menuentry "Hollywood (ARM 64-bit)" --class linux --id hollywood-live-cd {
         initrd ($root)/initrd-aarch64
 }
 
-GRUB_DEFAULT=hollywood-live-cd
+menuentry "Hollywood (Apple Silicon - on bare metal only)" --class linux --id hollywood-asahi {
+        insmod iso9660
+        insmod linux
+        search --label "HWARM64" --no-floppy --set
+        linux ($root)/kernel-asahi root=live:LABEL=HWARM64 rd.live.dir=/ rd.live.squashimg=aarch64.squashfs quiet splash
+        initrd ($root)/initrd-asahi
+}
+
+GRUB_DEFAULT=hollywood-stable
 GRUB_DISABLE_OS_PROBER=true
-GRUB_TIMEOUT=0
+GRUB_TIMEOUT=5
 GRUB_DISTRIBUTOR="Hollywood"
 GRUBCFG
 

@@ -350,7 +350,7 @@ public:
         output_info("CD backend", "creating initrd");
         std::string kver, kverpath;
         for(const auto &dent :
-            fs::recursive_directory_iterator(target + "/usr/share/kernel", ec))
+            fs::recursive_directory_iterator(target + "/usr/share/kernel/stable/", ec))
         {
             if(dent.is_regular_file() &&
                dent.path().filename().string() == "kernel.release") {
@@ -379,6 +379,41 @@ public:
             return FS_ERROR;
         }
 
+        /* REQ: ISO.23.1 */
+        if(my_arch == "aarch64")
+        {
+            output_info("CD backend", "creating initrd (asahi)");
+            std::string kver, kverpath;
+            for(const auto &dent :
+                fs::recursive_directory_iterator(target + "/usr/share/kernel/asahi/", ec))
+            {
+                if(dent.is_regular_file() &&
+                   dent.path().filename().string() == "kernel.release") {
+                    kverpath = dent.path().string();
+                    break;
+                }
+            }
+            if(kverpath.length() == 0) {
+                output_error("CD backend", "cannot find kernel.release");
+                return FS_ERROR;
+            }
+            std::ifstream kverstream(kverpath);
+            kverstream >> kver;
+
+            const std::string irdname = "initrd-asahi";
+            if(run_command("chroot", {target, "dracut", "--kver", kver, "-N",
+                                      "--force", "-a", "dmsquash-live",
+                                      "/boot/" + irdname}) != 0) {
+                output_error("CD backend", "dracut failed to create asahi initramfs");
+                return COMMAND_ERROR;
+            }
+
+            fs::rename(target + "/boot/" + irdname, cdpath + "/" + irdname, ec);
+            if(ec) {
+                output_error("CD backend", "cannot install asahi initrd to CD root");
+                return FS_ERROR;
+            }
+        }
         /* REQ: ISO.24 */
         std::string postscript;
         if(opts.find("post-script") != opts.end() &&
@@ -407,7 +442,7 @@ public:
         output_info("CD backend", "installing kernel");
         for(const auto &candidate : fs::directory_iterator(target + "/boot")) {
             auto name = candidate.path().filename().string();
-            if(name.length() > 6 && name.substr(0, 6) == "vmlinu") {
+            if(name.length() > 6 && name.substr(0, 6) == "vmlinuz-stable") {
                 fs::copy(candidate.path(), cdpath + "/kernel-" + my_arch, ec);
                 if(ec) {
                     output_error("CD backend", "failed to copy kernel",
@@ -416,6 +451,25 @@ public:
                 }
                 fs::remove(candidate.path(), ec);
                 break;
+            }
+        }
+
+        /* REQ: ISO.25 */
+        if(my_arch == "aarch64")
+        {
+            output_info("CD backend", "installing asahi kernel");
+            for(const auto &candidate : fs::directory_iterator(target + "/boot")) {
+                auto name = candidate.path().filename().string();
+                if(name.length() > 6 && name.substr(0, 6) == "vmlinuz-asahi") {
+                    fs::copy(candidate.path(), cdpath + "/kernel-" + my_arch, ec);
+                    if(ec) {
+                        output_error("CD backend", "failed to copy asahi kernel",
+                                     ec.message());
+                        return FS_ERROR;
+                    }
+                    fs::remove(candidate.path(), ec);
+                    break;
+                }
             }
         }
 
