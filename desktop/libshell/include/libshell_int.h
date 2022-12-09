@@ -53,7 +53,7 @@
 #include <QActionGroup>
 
 
-namespace ArionShell
+namespace HWShell
 {
     enum HostMode {
         HOST_SHELL,

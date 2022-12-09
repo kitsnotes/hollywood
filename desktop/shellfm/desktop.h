@@ -20,7 +20,7 @@ private:
     void setupMenuBar();
     void setupDesktopView();
     void desktopGeometryChanged(const QRect& geom);
-    QAction* shellAction(ArionShell::ShellActions shellAction);
+    QAction* shellAction(HWShell::ShellActions shellAction);
     void activated(const QModelIndex &idx);
     void contextMenu(const QPoint &pos);
 private:

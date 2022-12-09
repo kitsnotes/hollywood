@@ -8,73 +8,73 @@ LSActionManager::LSActionManager(QObject *parent)
     setupActions();
 }
 
-QAction* LSActionManager::shellAction(ArionShell::ShellActions action)
+QAction* LSActionManager::shellAction(HWShell::ShellActions action)
 {
     switch(action)
     {
-    case ArionShell::ACT_FILE_NEW_TAB:
+    case HWShell::ACT_FILE_NEW_TAB:
         return d->a_NewTab;
-    case ArionShell::ACT_FILE_NEW_FOLDER:
+    case HWShell::ACT_FILE_NEW_FOLDER:
         return d->a_NewFolder;
-    case ArionShell::ACT_FILE_NEW_FILE:
+    case HWShell::ACT_FILE_NEW_FILE:
         return d->actionNew_File;
-    case ArionShell::ACT_FILE_GET_INFO:
+    case HWShell::ACT_FILE_GET_INFO:
         return d->actionGet_Information;
-    case ArionShell::ACT_FILE_RENAME:
+    case HWShell::ACT_FILE_RENAME:
         return d->a_Rename;
-    case ArionShell::ACT_FILE_ARCHIVE:
+    case HWShell::ACT_FILE_ARCHIVE:
         return d->actionAdd_to_Archive;
-    case ArionShell::ACT_FILE_TRASH:
+    case HWShell::ACT_FILE_TRASH:
         return d->actionMove_to_Trash;
-    case ArionShell::ACT_FILE_OPEN_WITH:
+    case HWShell::ACT_FILE_OPEN_WITH:
         return d->a_OpenWith;
-    case ArionShell::ACT_EDIT_UNDO:
+    case HWShell::ACT_EDIT_UNDO:
         return d->a_Undo;
-    case ArionShell::ACT_EDIT_REDO:
+    case HWShell::ACT_EDIT_REDO:
         return d->a_Redo;
-    case ArionShell::ACT_EDIT_CUT:
+    case HWShell::ACT_EDIT_CUT:
         return d->a_Cut;
-    case ArionShell::ACT_EDIT_COPY:
+    case HWShell::ACT_EDIT_COPY:
         return d->a_Copy;
-    case ArionShell::ACT_EDIT_PASTE:
+    case HWShell::ACT_EDIT_PASTE:
         return d->a_Paste;
-    case ArionShell::ACT_EDIT_SEL_ALL:
+    case HWShell::ACT_EDIT_SEL_ALL:
         return d->actionSelect_All;
-    case ArionShell::ACT_EDIT_INV_SEL:
+    case HWShell::ACT_EDIT_INV_SEL:
         return d->a_InvertSelection;
-    case ArionShell::ACT_VIEW_ICONS:
+    case HWShell::ACT_VIEW_ICONS:
         return d->a_Icons;
-    case ArionShell::ACT_VIEW_LIST:
+    case HWShell::ACT_VIEW_LIST:
         return d->a_List;
-    case ArionShell::ACT_VIEW_COLUMNS:
+    case HWShell::ACT_VIEW_COLUMNS:
         return d->a_Columns;
-    case ArionShell::ACT_VIEW_SORT_NONE:
+    case HWShell::ACT_VIEW_SORT_NONE:
         return d->a_sortNone;
-    case ArionShell::ACT_VIEW_SORT_NAME:
+    case HWShell::ACT_VIEW_SORT_NAME:
         return d->a_sortName;
-    case ArionShell::ACT_VIEW_SORT_SIZE:
+    case HWShell::ACT_VIEW_SORT_SIZE:
         return d->a_sortSize;
-    case ArionShell::ACT_VIEW_SORT_KIND:
+    case HWShell::ACT_VIEW_SORT_KIND:
         return d->a_sortKind;
-    case ArionShell::ACT_VIEW_SORT_MODIFIED:
+    case HWShell::ACT_VIEW_SORT_MODIFIED:
         return d->a_sortModified;
-    case ArionShell::ACT_VIEW_SORT_OWNER:
+    case HWShell::ACT_VIEW_SORT_OWNER:
         return d->a_sortOwner;
-    case ArionShell::ACT_VIEW_SORT_GROUP:
+    case HWShell::ACT_VIEW_SORT_GROUP:
         return d->a_sortGroup;
-    case ArionShell::ACT_VIEW_SORT_COMMENT:
+    case HWShell::ACT_VIEW_SORT_COMMENT:
         return d->a_sortComment;
-    case ArionShell::ACT_VIEW_SORT_ASC:
+    case HWShell::ACT_VIEW_SORT_ASC:
         return d->a_sortAsc;
-    case ArionShell::ACT_VIEW_SORT_DESC:
+    case HWShell::ACT_VIEW_SORT_DESC:
         return d->a_sortDesc;
-    case ArionShell::ACT_VIEW_OPTIONS:
+    case HWShell::ACT_VIEW_OPTIONS:
         return d->a_ViewOptions;
-    case ArionShell::ACT_GO_BACK:
+    case HWShell::ACT_GO_BACK:
         return d->a_Back;
-    case ArionShell::ACT_GO_FORWARD:
+    case HWShell::ACT_GO_FORWARD:
         return d->a_Forward;
-    case ArionShell::ACT_GO_ENCLOSING_FOLDER:
+    case HWShell::ACT_GO_ENCLOSING_FOLDER:
         return d->a_Enclosing_Folder;
     default:
         return nullptr;

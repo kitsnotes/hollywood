@@ -3,12 +3,13 @@
 
 #include "libshell_int.h"
 
-class IconViewOptions;
-class LIBSHELL_EXPORT ViewOptionsDialog : public QDialog
+class LSIconViewOptions;
+class LSViewOptionsDialogPrivate;
+class LIBSHELL_EXPORT LSViewOptionsDialog : public QDialog
 {
 public:
-    ViewOptionsDialog(QWidget *parent = nullptr);
-    void setCurrentView(ArionShell::ViewMode view);
+    LSViewOptionsDialog(QWidget *parent = nullptr);
+    void setCurrentView(HWShell::ViewMode view);
     void attachIconView(QListView *view);
 protected:
     void closeEvent(QCloseEvent *event);
@@ -17,11 +18,7 @@ public slots:
 private:
     void refreshViewOptions();
 private:
-    QVBoxLayout *m_layout;
-    ArionShell::ViewMode m_viewMode;
-    IconViewOptions *m_icons;
-
-    QWidget *m_current = nullptr;
+    LSViewOptionsDialogPrivate *p;
 };
 
 #endif // VIEWOPTIONSDIALOG_H

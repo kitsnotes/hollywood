@@ -1,11 +1,18 @@
 #include "desktopmodel.h"
+#include "desktopmodel_p.h"
 #include "fsnode.h"
 #include "fileinfo.h"
 
+LSDesktopModelPrivate::LSDesktopModelPrivate(LSDesktopModel *parent)
+    : d(parent)
+{
+
+}
+
 LSDesktopModel::LSDesktopModel(QObject *parent)
     : QAbstractListModel(parent)
+    , p(new LSDesktopModelPrivate(this))
 {
-    qDebug() << "creating desktopmodel";
     /* connect(&m_fileInfoGatherer, &LSFSThread::newListOfFiles, this, &LSDesktopModel::directoryChanged);
     connect(&m_fileInfoGatherer, &LSFSThread::updates, this, &LSDesktopModel::fileSystemChanged);
     connect(&m_fileInfoGatherer, &LSFSThread::nameResolved, this, &LSDesktopModel::resolvedName);
@@ -18,7 +25,7 @@ LSDesktopModel::LSDesktopModel(QObject *parent)
 int LSDesktopModel::rowCount(const QModelIndex &parent) const
 {
     Q_UNUSED(parent);
-    return m_files.count();
+    return p->m_files.count();
 }
 
 int LSDesktopModel::columnCount(const QModelIndex &parent) const
@@ -53,13 +60,13 @@ QVariant LSDesktopModel::data(const QModelIndex &index, int role) const
 
 QIcon LSDesktopModel::icon(const QModelIndex &index) const
 {
-    return m_files.at(index.row())->icon();
+    return p->m_files.at(index.row())->icon();
 }
 
 QString LSDesktopModel::name(const QModelIndex &index) const
 {
-    if(m_files.at(index.row())->isDesktopFile())
-        return m_files.at(index.row())->desktopFileNameEntry();
+    if(p->m_files.at(index.row())->isDesktopFile())
+        return p->m_files.at(index.row())->desktopFileNameEntry();
 
     return name(index);
 }
@@ -86,7 +93,7 @@ void LSDesktopModel::fileSystemChanged(const QString &path, const QVector<QPair<
         //LSExtendedFileInfo info = m_fileInfoGatherer.getInfo(i.second);
         //LSFSNode *node = new LSFSNode(i.first, &m_root);
         //node->populate(info);
-        //m_files.append(node);
+        //p->m_files.append(node);
     }
 }
 

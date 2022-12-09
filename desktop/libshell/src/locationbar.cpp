@@ -18,6 +18,7 @@
  */
 
 #include "locationbar.h"
+#include "private/locationbar_p.h"
 #include "private/locationbarbtn.h"
 #include <QToolButton>
 #include <QScrollArea>
@@ -31,10 +32,19 @@
 #include <QTimer>
 #include <QDebug>
 
+
+LSLocationBarPrivate::LSLocationBarPrivate(LSLocationBar *parent)
+    : d(parent)
+    , m_tempPathEdit(nullptr)
+    , m_toggledBtn(nullptr)
+{
+
+}
+
+
 LSLocationBar::LSLocationBar(QWidget* parent)
    : QWidget(parent)
-   , tempPathEdit_(nullptr)
-   , toggledBtn_(nullptr)
+   , p(new LSLocationBarPrivate(this))
 {
 
     QHBoxLayout* topLayout = new QHBoxLayout(this);
@@ -43,41 +53,46 @@ LSLocationBar::LSLocationBar(QWidget* parent)
     bool rtl(layoutDirection() == Qt::RightToLeft);
 
     // the arrow button used to scroll to start of the path
-    scrollToStart_ = new QToolButton(this);
-    scrollToStart_->setArrowType(rtl ? Qt::RightArrow : Qt::LeftArrow);
-    scrollToStart_->setAutoRepeat(true);
-    scrollToStart_->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::MinimumExpanding);
-    connect(scrollToStart_, &QToolButton::clicked, this, &LSLocationBar::onScrollButtonClicked);
-    topLayout->addWidget(scrollToStart_);
+    p->m_scrollToStart = new QToolButton(this);
+    p->m_scrollToStart->setArrowType(rtl ? Qt::RightArrow : Qt::LeftArrow);
+    p->m_scrollToStart->setAutoRepeat(true);
+    p->m_scrollToStart->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::MinimumExpanding);
+    connect(p->m_scrollToStart, &QToolButton::clicked, this, &LSLocationBar::onScrollButtonClicked);
+    topLayout->addWidget(p->m_scrollToStart);
 
     // there might be too many buttons when the path is long, so make it scrollable.
-    scrollArea_ = new QScrollArea(this);
-    scrollArea_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    scrollArea_->setFrameShape(QFrame::NoFrame);
-    scrollArea_->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    scrollArea_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    scrollArea_->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
-    scrollArea_->verticalScrollBar()->setDisabled(true);
-    connect(scrollArea_->horizontalScrollBar(), &QAbstractSlider::valueChanged, this, &LSLocationBar::setArrowEnabledState);
-    topLayout->addWidget(scrollArea_, 1); // stretch factor=1, make it expandable
+    p->m_scrollArea = new QScrollArea(this);
+    p->m_scrollArea->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    p->m_scrollArea->setFrameShape(QFrame::NoFrame);
+    p->m_scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    p->m_scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    p->m_scrollArea->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
+    p->m_scrollArea->verticalScrollBar()->setDisabled(true);
+    connect(p->m_scrollArea->horizontalScrollBar(), &QAbstractSlider::valueChanged, this, &LSLocationBar::setArrowEnabledState);
+    topLayout->addWidget(p->m_scrollArea, 1); // stretch factor=1, make it expandable
 
     // the arrow button used to scroll to end of the path
-    scrollToEnd_ = new QToolButton(this);
-    scrollToEnd_->setArrowType(rtl ? Qt::LeftArrow : Qt::RightArrow);
-    scrollToEnd_->setAutoRepeat(true);
-    scrollToEnd_->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::MinimumExpanding);
-    connect(scrollToEnd_, &QToolButton::clicked, this, &LSLocationBar::onScrollButtonClicked);
-    topLayout->addWidget(scrollToEnd_);
+    p->m_scrollToEnd = new QToolButton(this);
+    p->m_scrollToEnd->setArrowType(rtl ? Qt::LeftArrow : Qt::RightArrow);
+    p->m_scrollToEnd->setAutoRepeat(true);
+    p->m_scrollToEnd->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::MinimumExpanding);
+    connect(p->m_scrollToEnd, &QToolButton::clicked, this, &LSLocationBar::onScrollButtonClicked);
+    topLayout->addWidget(p->m_scrollToEnd);
 
     // container widget of the path buttons
-    buttonsWidget_ = new QWidget(this);
-    buttonsWidget_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    p->m_buttonsWidget = new QWidget(this);
+    p->m_buttonsWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
-    buttonsLayout_ = new QHBoxLayout(buttonsWidget_);
-    buttonsLayout_->setContentsMargins(0, 0, 0, 0);
-    buttonsLayout_->setSpacing(0);
-    buttonsLayout_->setSizeConstraint(QLayout::SetFixedSize); // required when added to scroll area according to QScrollArea doc.
-    scrollArea_->setWidget(buttonsWidget_); // make the buttons widget scrollable if the path is too long
+    p->m_buttonsLayout = new QHBoxLayout(p->m_buttonsWidget);
+    p->m_buttonsLayout->setContentsMargins(0, 0, 0, 0);
+    p->m_buttonsLayout->setSpacing(0);
+    p->m_buttonsLayout->setSizeConstraint(QLayout::SetFixedSize); // required when added to scroll area according to QScrollArea doc.
+    p->m_scrollArea->setWidget(p->m_buttonsWidget); // make the buttons widget scrollable if the path is too long
+}
+
+const QUrl &LSLocationBar::path()
+{
+    return p->m_currentPath;
 }
 
 void LSLocationBar::resizeEvent(QResizeEvent* event) {
@@ -93,16 +108,16 @@ void LSLocationBar::wheelEvent(QWheelEvent* event) {
     QAbstractSlider::SliderAction action = QAbstractSlider::SliderNoAction;
     int vDelta = event->angleDelta().y();
     if(vDelta > 0) {
-        if(scrollToStart_->isEnabled()) {
+        if(p->m_scrollToStart->isEnabled()) {
             action = QAbstractSlider::SliderSingleStepSub;
         }
     }
     else if(vDelta < 0) {
-        if(scrollToEnd_->isEnabled()) {
+        if(p->m_scrollToEnd->isEnabled()) {
             action = QAbstractSlider::SliderSingleStepAdd;
         }
     }
-    scrollArea_->horizontalScrollBar()->triggerAction(action);
+    p->m_scrollArea->horizontalScrollBar()->triggerAction(action);
 }
 
 void LSLocationBar::mousePressEvent(QMouseEvent* event)
@@ -114,7 +129,7 @@ void LSLocationBar::mousePressEvent(QMouseEvent* event)
     {
         PathButton* btn = qobject_cast<PathButton*>(childAt(event->pos().x(), event->pos().y()));
         if(btn != nullptr) {
-            scrollArea_->ensureWidgetVisible(btn,
+            p->m_scrollArea->ensureWidgetVisible(btn,
                                              1); // a harmless compensation for a miscalculation in Qt
             Q_EMIT middleClickChdir(pathForButton(btn));
         }
@@ -143,37 +158,37 @@ void LSLocationBar::updateScrollButtonVisibility() {
 
 void LSLocationBar::setScrollButtonVisibility() {
     bool showScrollers;
-    if(tempPathEdit_ != nullptr) {
+    if(p->m_tempPathEdit != nullptr) {
         showScrollers = false;
     }
     else {
-        showScrollers = (buttonsLayout_->sizeHint().width() > width());
+        showScrollers = (p->m_buttonsLayout->sizeHint().width() > width());
     }
-    scrollToStart_->setVisible(showScrollers);
-    scrollToEnd_->setVisible(showScrollers);
+    p->m_scrollToStart->setVisible(showScrollers);
+    p->m_scrollToEnd->setVisible(showScrollers);
     if(showScrollers) {
-        QScrollBar* sb = scrollArea_->horizontalScrollBar();
+        QScrollBar* sb = p->m_scrollArea->horizontalScrollBar();
         int value = sb->value();
-        scrollToStart_->setEnabled(value != sb->minimum());
-        scrollToEnd_->setEnabled(value != sb->maximum());
+        p->m_scrollToStart->setEnabled(value != sb->minimum());
+        p->m_scrollToEnd->setEnabled(value != sb->maximum());
         // align scroll buttons horizontally
-        scrollToStart_->setMaximumHeight(qMax(buttonsWidget_->height(), scrollToStart_->minimumSizeHint().height()));
-        scrollToEnd_->setMaximumHeight(qMax(buttonsWidget_->height(), scrollToEnd_->minimumSizeHint().height()));
+        p->m_scrollToStart->setMaximumHeight(qMax(p->m_buttonsWidget->height(), p->m_scrollToStart->minimumSizeHint().height()));
+        p->m_scrollToEnd->setMaximumHeight(qMax(p->m_buttonsWidget->height(), p->m_scrollToEnd->minimumSizeHint().height()));
     }
 }
 
 QUrl LSLocationBar::pathForButton(PathButton* btn)
 {
-    if(currentPath_.scheme() == "applications")
+    if(p->m_currentPath.scheme() == "applications")
         return QUrl("applications://");
 
     std::string fullPath;
-    int buttonCount = buttonsLayout_->count() - 1; // the last item is a spacer
+    int buttonCount = p->m_buttonsLayout->count() - 1; // the last item is a spacer
     for(int i = 0; i < buttonCount; ++i) {
         if(!fullPath.empty() && fullPath.back() != '/') {
             fullPath += '/';
         }
-        PathButton* elem = static_cast<PathButton*>(buttonsLayout_->itemAt(i)->widget());
+        PathButton* elem = static_cast<PathButton*>(p->m_buttonsLayout->itemAt(i)->widget());
         fullPath += elem->name();
         if(elem == btn)
             break;
@@ -183,20 +198,20 @@ QUrl LSLocationBar::pathForButton(PathButton* btn)
 
 void LSLocationBar::onButtonToggled(bool checked)
 {
-    if(currentPath_.scheme() == "applications")
+    if(p->m_currentPath.scheme() == "applications")
         return;
 
     if(checked) {
         PathButton* btn = static_cast<PathButton*>(sender());
-        toggledBtn_ = btn;
-        currentPath_ = pathForButton(btn);
-        Q_EMIT chdir(currentPath_);
+        p->m_toggledBtn = btn;
+        p->m_currentPath = pathForButton(btn);
+        Q_EMIT chdir(p->m_currentPath);
 
         // since scrolling to the toggled buton will happen correctly only when the
         // layout is updated and because the update is disabled on creating buttons
         // in setPath(), the update status can be used as a sign to know when to wait
         if(updatesEnabled()) {
-            scrollArea_->ensureWidgetVisible(btn, 1);
+            p->m_scrollArea->ensureWidgetVisible(btn, 1);
         }
         else {
             QTimer::singleShot(0, this, SLOT(ensureToggledVisible()));
@@ -205,36 +220,36 @@ void LSLocationBar::onButtonToggled(bool checked)
 }
 
 void LSLocationBar::ensureToggledVisible() {
-    if(toggledBtn_ != nullptr && tempPathEdit_ == nullptr) {
-        scrollArea_->ensureWidgetVisible(toggledBtn_, 1);
+    if(p->m_toggledBtn != nullptr && p->m_tempPathEdit == nullptr) {
+        p->m_scrollArea->ensureWidgetVisible(p->m_toggledBtn, 1);
     }
 }
 
 void LSLocationBar::onScrollButtonClicked() {
     QToolButton* btn = static_cast<QToolButton*>(sender());
     QAbstractSlider::SliderAction action = QAbstractSlider::SliderNoAction;
-    if(btn == scrollToEnd_) {
+    if(btn == p->m_scrollToEnd) {
         action = QAbstractSlider::SliderSingleStepAdd;
     }
-    else if(btn == scrollToStart_) {
+    else if(btn == p->m_scrollToStart) {
         action = QAbstractSlider::SliderSingleStepSub;
     }
-    scrollArea_->horizontalScrollBar()->triggerAction(action);
+    p->m_scrollArea->horizontalScrollBar()->triggerAction(action);
 }
 
 void LSLocationBar::setPath(const QUrl &path)
 {
-    if(currentPath_ == path)
+    if(p->m_currentPath == path)
         return;
 
-    auto oldPath = std::move(currentPath_);
-    currentPath_ = std::move(path);
+    auto oldPath = std::move(p->m_currentPath);
+    p->m_currentPath = std::move(path);
     // check if we already have a button for this path
-    int buttonCount = buttonsLayout_->count() - 1; // the last item is a spacer
-    if(oldPath.isValid() && currentPath_.isParentOf(oldPath)) {
+    int buttonCount = p->m_buttonsLayout->count() - 1; // the last item is a spacer
+    if(oldPath.isValid() && p->m_currentPath.isParentOf(oldPath)) {
         for(int i = buttonCount - 1; i >= 0; --i) {
-            auto btn = static_cast<PathButton*>(buttonsLayout_->itemAt(i)->widget());
-            if(pathForButton(btn) == currentPath_) {
+            auto btn = static_cast<PathButton*>(p->m_buttonsLayout->itemAt(i)->widget());
+            if(pathForButton(btn) == p->m_currentPath) {
                 btn->setChecked(true); // toggle the button
                 /* we don't need to emit chdir signal here since later
                  * toggled signal will be triggered on the button, which
@@ -249,27 +264,27 @@ void LSLocationBar::setPath(const QUrl &path)
      *        all of the buttons. This can reduce flickers. */
 
     setUpdatesEnabled(false);
-    toggledBtn_ = nullptr;
+    p->m_toggledBtn = nullptr;
     // we do not have the path in the buttons list
     // destroy existing path element buttons and the spacer
     QLayoutItem* item;
-    while((item = buttonsLayout_->takeAt(0)) != nullptr) {
+    while((item = p->m_buttonsLayout->takeAt(0)) != nullptr) {
         delete item->widget();
         delete item;
     }
 
-    if(currentPath_.scheme() == "applications")
+    if(p->m_currentPath.scheme() == "applications")
     {
-        auto btn = new PathButton("applications://", "Applications", true, buttonsWidget_);
+        auto btn = new PathButton("applications://", "Applications", true, p->m_buttonsWidget);
         btn->show();
         connect(btn, &QAbstractButton::toggled, this, &LSLocationBar::onButtonToggled);
-        buttonsLayout_->insertWidget(0, btn);
+        p->m_buttonsLayout->insertWidget(0, btn);
 
     }
-    if(currentPath_.scheme() == "file")
+    if(p->m_currentPath.scheme() == "file")
     {
         // create new buttons for the new path
-        auto btnPath = currentPath_.toLocalFile();
+        auto btnPath = p->m_currentPath.toLocalFile();
 
         QDir dir(btnPath);
         while(dir.isReadable()) {
@@ -302,10 +317,10 @@ void LSLocationBar::setPath(const QUrl &path)
             }
             // double ampersands to distinguish them from mnemonics
             displayName.replace(QLatin1Char('&'), QLatin1String("&&"));
-            auto btn = new PathButton(name, displayName, isRoot, buttonsWidget_);
+            auto btn = new PathButton(name, displayName, isRoot, p->m_buttonsWidget);
             btn->show();
             connect(btn, &QAbstractButton::toggled, this, &LSLocationBar::onButtonToggled);
-            buttonsLayout_->insertWidget(0, btn);
+            p->m_buttonsLayout->insertWidget(0, btn);
             if(isRoot) { // this is the root element of the path
                 break;
             }
@@ -313,18 +328,18 @@ void LSLocationBar::setPath(const QUrl &path)
         }
     }
 
-    buttonsLayout_->addStretch(1); // add a spacer at the tail of the buttons
+    p->m_buttonsLayout->addStretch(1); // add a spacer at the tail of the buttons
 
     // we don't want to scroll vertically. make the scroll area fit the height of the buttons
     // FIXME: this is a little bit hackish :-(
-    scrollArea_->setFixedHeight(buttonsLayout_->sizeHint().height());
+    p->m_scrollArea->setFixedHeight(p->m_buttonsLayout->sizeHint().height());
     updateScrollButtonVisibility();
 
     // to guarantee that the button will be scrolled to correctly,
     // it should be toggled only after the layout update starts above
-    buttonCount = buttonsLayout_->count() - 1;
+    buttonCount = p->m_buttonsLayout->count() - 1;
     if(buttonCount > 0) {
-        PathButton* lastBtn = static_cast<PathButton*>(buttonsLayout_->itemAt(buttonCount - 1)->widget());
+        PathButton* lastBtn = static_cast<PathButton*>(p->m_buttonsLayout->itemAt(buttonCount - 1)->widget());
         // we don't have to emit the chdir signal since the "onButtonToggled()" slot will be triggered by this.
         lastBtn->setChecked(true);
     }
@@ -334,43 +349,43 @@ void LSLocationBar::setPath(const QUrl &path)
 
 void LSLocationBar::openEditor()
 {
-    if(tempPathEdit_ == nullptr)
+    if(p->m_tempPathEdit == nullptr)
     {
-        tempPathEdit_ = new QLineEdit(this);
-        delete layout()->replaceWidget(scrollArea_, tempPathEdit_, Qt::FindDirectChildrenOnly);
-        scrollArea_->hide();
-        scrollToStart_->setVisible(false);
-        scrollToEnd_->setVisible(false);
-        tempPathEdit_->setText(currentPath_.toDisplayString());
+        p->m_tempPathEdit = new QLineEdit(this);
+        delete layout()->replaceWidget(p->m_scrollArea, p->m_tempPathEdit, Qt::FindDirectChildrenOnly);
+        p->m_scrollArea->hide();
+        p->m_scrollToStart->setVisible(false);
+        p->m_scrollToEnd->setVisible(false);
+        p->m_tempPathEdit->setText(p->m_currentPath.toDisplayString());
 
-        connect(tempPathEdit_, &QLineEdit::returnPressed, this, &LSLocationBar::onReturnPressed);
-        connect(tempPathEdit_, &QLineEdit::editingFinished, this, &LSLocationBar::closeEditor);
+        connect(p->m_tempPathEdit, &QLineEdit::returnPressed, this, &LSLocationBar::onReturnPressed);
+        connect(p->m_tempPathEdit, &QLineEdit::editingFinished, this, &LSLocationBar::closeEditor);
     }
-    tempPathEdit_->selectAll();
-    QApplication::clipboard()->setText(tempPathEdit_->text(), QClipboard::Selection);
-    QTimer::singleShot(0, tempPathEdit_, SLOT(setFocus()));
+    p->m_tempPathEdit->selectAll();
+    QApplication::clipboard()->setText(p->m_tempPathEdit->text(), QClipboard::Selection);
+    QTimer::singleShot(0, p->m_tempPathEdit, SLOT(setFocus()));
 }
 
 void LSLocationBar::closeEditor()
 {
-    if(tempPathEdit_ == nullptr)
+    if(p->m_tempPathEdit == nullptr)
         return;
 
     // If a menu has popped up synchronously (with QMenu::exec), the path buttons may be drawn
     // but the path-edit may not disappear until the menu is closed. So, we hide it here.
     // However, since hiding the path-edit makes it lose focus and emit editingFinished(),
     // we should first disconnect from it to avoid recursive calling of the current function.
-    tempPathEdit_->disconnect();
-    tempPathEdit_->setVisible(false);
-    delete layout()->replaceWidget(tempPathEdit_, scrollArea_, Qt::FindDirectChildrenOnly);
-    scrollArea_->show();
-    if(buttonsLayout_->sizeHint().width() > width()) {
-        scrollToStart_->setVisible(true);
-        scrollToEnd_->setVisible(true);
+    p->m_tempPathEdit->disconnect();
+    p->m_tempPathEdit->setVisible(false);
+    delete layout()->replaceWidget(p->m_tempPathEdit, p->m_scrollArea, Qt::FindDirectChildrenOnly);
+    p->m_scrollArea->show();
+    if(p->m_buttonsLayout->sizeHint().width() > width()) {
+        p->m_scrollToStart->setVisible(true);
+        p->m_scrollToEnd->setVisible(true);
     }
 
-    tempPathEdit_->deleteLater();
-    tempPathEdit_ = nullptr;
+    p->m_tempPathEdit->deleteLater();
+    p->m_tempPathEdit = nullptr;
     updateScrollButtonVisibility();
 
     Q_EMIT editingFinished();
@@ -378,21 +393,21 @@ void LSLocationBar::closeEditor()
 
 void LSLocationBar::copyPath()
 {
-    QApplication::clipboard()->setText(currentPath_.toDisplayString());
+    QApplication::clipboard()->setText(p->m_currentPath.toDisplayString());
 }
 
 void LSLocationBar::onReturnPressed()
 {
-    QByteArray pathStr = tempPathEdit_->text().toLocal8Bit();
+    QByteArray pathStr = p->m_tempPathEdit->text().toLocal8Bit();
     //setPath(Fm::FilePath::fromPathStr(pathStr.constData()));
 }
 
 void LSLocationBar::setArrowEnabledState(int value)
 {
-    if(buttonsLayout_->sizeHint().width() > width())
+    if(p->m_buttonsLayout->sizeHint().width() > width())
     {
-        QScrollBar* sb = scrollArea_->horizontalScrollBar();
-        scrollToStart_->setEnabled(value != sb->minimum());
-        scrollToEnd_->setEnabled(value != sb->maximum());
+        QScrollBar* sb = p->m_scrollArea->horizontalScrollBar();
+        p->m_scrollToStart->setEnabled(value != sb->minimum());
+        p->m_scrollToEnd->setEnabled(value != sb->maximum());
     }
 }

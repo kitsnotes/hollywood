@@ -8,14 +8,14 @@
 #include "fileshell.h"
 #include "viewoptionsdialog.h"
 
-class ViewOptionsDialog;
+class LSViewOptionsDialog;
 class FileWindow : public QMainWindow
 {
     Q_OBJECT
     friend class FMApplication;
 
 public:
-    FileWindow(ArionShell::WindowMode windowMode = ArionShell::WINDOW_BROWSER,
+    FileWindow(HWShell::WindowMode windowMode = HWShell::WINDOW_BROWSER,
                QWidget *parent = nullptr);
     ~FileWindow();
 protected:
@@ -37,7 +37,7 @@ private:
     void setupDesktopView();
 private:
     LSEmbeddedShellHost *m_shellHost;
-    ArionShell::WindowMode m_windowMode;
+    HWShell::WindowMode m_windowMode;
     QFileSystemModel *m_desktopModel;
 private:
     QAction *a_NewWindow;

@@ -34,7 +34,7 @@ SOURCES += \
     src/directories.cc \
     src/fileinfo.cc \
     src/fileinfogatherer.cc \
-    src/filesystemmodel.cpp \
+    src/filesystemmodel.cc \
     src/fsitemdelegate.cc \
     src/fsnode.cc \
     src/hwfileiconprovider.cc \
@@ -50,32 +50,40 @@ SOURCES += \
     src/iconviewoptions.cc
 
 HEADERS += \
+    include/private/fileinfo.h \
+    include/private/actionmanager_p.h \
+    include/private/appmodel_p.h \
+    include/private/columnpreview_p.h \
+    include/private/desktopmodel_p.h \
+    include/private/fileinfogatherer_p.h \
+    include/private/filesystemmodel_p.h \
+    include/private/fsitemdelegate_p.h \
+    include/private/fsnode.h \
+    include/private/iconviewoptions_p.h \
+    include/private/locationbar_p.h \
+    include/private/locationbarbtn.h \
+    include/private/mdnsbrowser.h \
+    include/private/mdnsrecord.h \
+    include/private/mdnsresolver.h \
+    include/private/mimeapps_p.h \
+    include/private/placemodel.h \
+    include/private/placeview.h \
+    include/private/executor_p.h \
+    include/private/progresswidget.h \
     include/appmodel.h \
     include/actionmanager.h \
     include/columnpreview.h \
     include/desktopentry.h \
     include/desktopmodel.h \
     include/directories.h \
-    include/fileinfo.h \
-    include/private/actionmanager_p.h \
-    include/private/appmodel_p.h \
-    include/private/fileinfogatherer_p.h \
     include/filesystemmodel.h \
-    include/private/filesystemmodel_p.h \
     include/fsitemdelegate.h \
-    include/fsnode.h \
     include/hwfileiconprovider.h \
     include/libshell_int.h \
     include/locationbar.h \
-    include/private/locationbarbtn.h \
-    include/mdnsbrowser.h \
-    include/mdnsrecord.h \
-    include/mdnsresolver.h \
     include/mimeapps.h \
-    include/placemodel.h \
-    include/placeview.h \
-    include/private/executor_p.h \
-    include/progresswidget.h \
+    include/private/shellhost_p.h \
+    include/private/viewoptionsdialog_p.h \
     include/shellhost.h \
     include/viewoptionsdialog.h \
     include/iconviewoptions.h \

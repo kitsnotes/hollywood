@@ -1,19 +1,134 @@
 #include "iconviewoptions.h"
+#include "iconviewoptions_p.h"
 
 
-IconViewOptions::IconViewOptions(QWidget *parent)
-    : QWidget(parent),
-      m_view(nullptr)
+LSIconViewOptionsPrivate::LSIconViewOptionsPrivate(LSIconViewOptions *parent)
+    :d(parent)
 {
-    layout_Main = new QVBoxLayout(this);
-    setLayout(layout_Main);
-    setupWidget();
+    layout_Main = new QVBoxLayout(parent);
+    auto layout_Organize = new QHBoxLayout();
+    auto l_Organize = new QLabel(parent);
 
-    m_Organize->addItem(tr("Name"));
-    m_Organize->addItem(tr("File Type"));
-    m_Organize->addItem(tr("Size"));
-    m_Organize->addItem(tr("Date Created"));
-    m_Organize->addItem(tr("Date Last Modified"));
+    layout_Organize->addWidget(l_Organize);
+
+    m_Organize = new QComboBox(parent);
+    layout_Organize->addWidget(m_Organize);
+    layout_Main->addLayout(layout_Organize);
+
+    auto line = new QFrame(parent);
+    line->setFrameShape(QFrame::HLine);
+    line->setFrameShadow(QFrame::Sunken);
+
+    layout_Main->addWidget(line);
+
+    m_IconSizeLabel = new QLabel(parent);
+
+    layout_Main->addWidget(m_IconSizeLabel);
+
+    auto layout_IconSize = new QHBoxLayout();
+    auto l_IconSzSmall = new QLabel(parent);
+
+    layout_IconSize->addWidget(l_IconSzSmall);
+
+    m_IconSizing = new QSlider(parent);
+    layout_IconSize->addWidget(m_IconSizing);
+
+    auto l_IconSzLarge = new QLabel(parent);
+
+    layout_IconSize->addWidget(l_IconSzLarge);
+
+
+    layout_Main->addLayout(layout_IconSize);
+
+    m_GridSpacingLabel = new QLabel(parent);
+
+    layout_Main->addWidget(m_GridSpacingLabel);
+
+    auto horizontalLayout_2 = new QHBoxLayout();
+    auto l_GridSzSmall = new QLabel(parent);
+
+    horizontalLayout_2->addWidget(l_GridSzSmall);
+
+    m_GridSizing = new QSlider(parent);
+    m_GridSizing->setOrientation(Qt::Horizontal);
+
+    horizontalLayout_2->addWidget(m_GridSizing);
+
+    auto l_GridSzLarge = new QLabel(parent);
+    horizontalLayout_2->addWidget(l_GridSzLarge);
+
+
+    layout_Main->addLayout(horizontalLayout_2);
+
+    auto line_2 = new QFrame(parent);
+    line_2->setFrameShape(QFrame::HLine);
+    line_2->setFrameShadow(QFrame::Sunken);
+
+    layout_Main->addWidget(line_2);
+
+    auto layout_TextSize = new QHBoxLayout();
+    auto l_TextSize = new QLabel(parent);
+
+    layout_TextSize->addWidget(l_TextSize);
+
+    m_TextSize = new QComboBox(parent);
+    layout_TextSize->addWidget(m_TextSize);
+    layout_TextSize->addItem(new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Minimum));
+
+
+    layout_Main->addLayout(layout_TextSize);
+
+    auto l_LabelPos = new QLabel(parent);
+    layout_Main->addWidget(l_LabelPos);
+
+    auto layout_LabelPos = new QHBoxLayout();
+    m_lblBottom = new QRadioButton(parent);
+
+    layout_LabelPos->addWidget(m_lblBottom);
+
+    m_lblRight = new QRadioButton(parent);
+    layout_LabelPos->addWidget(m_lblRight);
+
+    layout_LabelPos->addItem(new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Minimum));
+    layout_Main->addLayout(layout_LabelPos);
+
+    auto line_3 = new QFrame(parent);
+    line_3->setObjectName(QString::fromUtf8("line_3"));
+    line_3->setFrameShape(QFrame::HLine);
+    line_3->setFrameShadow(QFrame::Sunken);
+    layout_Main->addWidget(line_3);
+    m_iconPreview = new QCheckBox(parent);
+    layout_Main->addWidget(m_iconPreview);
+    m_itemInfo = new QCheckBox(parent);
+    layout_Main->addWidget(m_itemInfo);
+    auto layoutDefaults = new QHBoxLayout();
+    layoutDefaults->addItem(new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Minimum));
+    m_setDefaults = new QPushButton(parent);
+    layoutDefaults->addWidget(m_setDefaults);
+    layoutDefaults->addItem(new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Minimum));
+    layout_Main->addItem(new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    layout_Main->addLayout(layoutDefaults);
+
+    l_Organize->setText(QApplication::tr("Organize By:"));
+    m_IconSizeLabel->setText(QApplication::tr("Icon Size: 0x0 px"));
+    l_IconSzSmall->setText(QApplication::tr("TextLabel"));
+    l_IconSzLarge->setText(QApplication::tr("TextLabel"));
+    m_GridSpacingLabel->setText(QApplication::tr("Grid Spacing:"));
+    l_GridSzSmall->setText(QApplication::tr("TextLabel"));
+    l_GridSzLarge->setText(QApplication::tr("TextLabel"));
+    l_TextSize->setText(QApplication::tr("Text Size:"));
+    l_LabelPos->setText(QApplication::tr("Label Position:"));
+    m_lblBottom->setText(QApplication::tr("Bottom"));
+    m_lblRight->setText(QApplication::tr("Right"));
+    m_iconPreview->setText(QApplication::tr("Show Icon Previews"));
+    m_itemInfo->setText(QApplication::tr("Show Item Info"));
+    m_setDefaults->setText(QApplication::tr("Set Defaults"));
+
+    m_Organize->addItem(QApplication::tr("Name"));
+    m_Organize->addItem(QApplication::tr("File Type"));
+    m_Organize->addItem(QApplication::tr("Size"));
+    m_Organize->addItem(QApplication::tr("Date Created"));
+    m_Organize->addItem(QApplication::tr("Date Last Modified"));
 
     m_IconSizing->setOrientation(Qt::Horizontal);
     m_IconSizing->setMinimum(16);
@@ -56,195 +171,33 @@ IconViewOptions::IconViewOptions(QWidget *parent)
     m_TextSize->addItem("14");
     m_TextSize->addItem("15");
     m_TextSize->addItem("16");
-
 }
 
-void IconViewOptions::setupWidget()
+LSIconViewOptions::LSIconViewOptions(QWidget *parent)
+    : QWidget(parent)
+    , p(new LSIconViewOptionsPrivate(this))
 {
-    layout_Organize = new QHBoxLayout();
-
-    l_Organize = new QLabel(this);
-    l_Organize->setObjectName(QString::fromUtf8("l_Organize"));
-
-    layout_Organize->addWidget(l_Organize);
-
-    m_Organize = new QComboBox(this);
-    m_Organize->setObjectName(QString::fromUtf8("m_Organize"));
-
-    layout_Organize->addWidget(m_Organize);
-
-
-    layout_Main->addLayout(layout_Organize);
-
-    line = new QFrame(this);
-    line->setObjectName(QString::fromUtf8("line"));
-    line->setFrameShape(QFrame::HLine);
-    line->setFrameShadow(QFrame::Sunken);
-
-    layout_Main->addWidget(line);
-
-    l_IconSize = new QLabel(this);
-    l_IconSize->setObjectName(QString::fromUtf8("l_IconSize"));
-
-    layout_Main->addWidget(l_IconSize);
-
-    layout_IconSize = new QHBoxLayout();
-    layout_IconSize->setObjectName(QString::fromUtf8("layout_IconSize"));
-    l_IconSzSmall = new QLabel(this);
-    l_IconSzSmall->setObjectName(QString::fromUtf8("l_IconSzSmall"));
-
-    layout_IconSize->addWidget(l_IconSzSmall);
-
-    m_IconSizing = new QSlider(this);
-    m_IconSizing->setObjectName(QString::fromUtf8("m_IconSizing"));
-    layout_IconSize->addWidget(m_IconSizing);
-
-    l_IconSzLarge = new QLabel(this);
-    l_IconSzLarge->setObjectName(QString::fromUtf8("l_IconSzLarge"));
-
-    layout_IconSize->addWidget(l_IconSzLarge);
-
-
-    layout_Main->addLayout(layout_IconSize);
-
-    l_GridSpacing = new QLabel(this);
-    l_GridSpacing->setObjectName(QString::fromUtf8("l_GridSpacing"));
-
-    layout_Main->addWidget(l_GridSpacing);
-
-    horizontalLayout_2 = new QHBoxLayout();
-    horizontalLayout_2->setObjectName(QString::fromUtf8("horizontalLayout_2"));
-    l_GridSzSmall = new QLabel(this);
-    l_GridSzSmall->setObjectName(QString::fromUtf8("l_GridSzSmall"));
-
-    horizontalLayout_2->addWidget(l_GridSzSmall);
-
-    m_GridSizing = new QSlider(this);
-    m_GridSizing->setObjectName(QString::fromUtf8("m_GridSizing"));
-    m_GridSizing->setOrientation(Qt::Horizontal);
-
-    horizontalLayout_2->addWidget(m_GridSizing);
-
-    l_GridSzLarge = new QLabel(this);
-    l_GridSzLarge->setObjectName(QString::fromUtf8("l_GridSzLarge"));
-
-    horizontalLayout_2->addWidget(l_GridSzLarge);
-
-
-    layout_Main->addLayout(horizontalLayout_2);
-
-    line_2 = new QFrame(this);
-    line_2->setObjectName(QString::fromUtf8("line_2"));
-    line_2->setFrameShape(QFrame::HLine);
-    line_2->setFrameShadow(QFrame::Sunken);
-
-    layout_Main->addWidget(line_2);
-
-    layout_TextSize = new QHBoxLayout();
-    layout_TextSize->setObjectName(QString::fromUtf8("layout_TextSize"));
-    l_TextSize = new QLabel(this);
-    l_TextSize->setObjectName(QString::fromUtf8("l_TextSize"));
-
-    layout_TextSize->addWidget(l_TextSize);
-
-    m_TextSize = new QComboBox(this);
-    m_TextSize->setObjectName(QString::fromUtf8("m_TextSize"));
-
-    layout_TextSize->addWidget(m_TextSize);
-
-    spTextSize = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
-
-    layout_TextSize->addItem(spTextSize);
-
-
-    layout_Main->addLayout(layout_TextSize);
-
-    l_LabelPos = new QLabel(this);
-    l_LabelPos->setObjectName(QString::fromUtf8("l_LabelPos"));
-
-    layout_Main->addWidget(l_LabelPos);
-
-    layout_LabelPos = new QHBoxLayout();
-    layout_LabelPos->setObjectName(QString::fromUtf8("layout_LabelPos"));
-    m_lblBottom = new QRadioButton(this);
-    m_lblBottom->setObjectName(QString::fromUtf8("m_lblBottom"));
-
-    layout_LabelPos->addWidget(m_lblBottom);
-
-    m_lblRight = new QRadioButton(this);
-    m_lblRight->setObjectName(QString::fromUtf8("m_lblRight"));
-
-    layout_LabelPos->addWidget(m_lblRight);
-
-    spLabelPos = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
-
-    layout_LabelPos->addItem(spLabelPos);
-    layout_Main->addLayout(layout_LabelPos);
-
-    line_3 = new QFrame(this);
-    line_3->setObjectName(QString::fromUtf8("line_3"));
-    line_3->setFrameShape(QFrame::HLine);
-    line_3->setFrameShadow(QFrame::Sunken);
-
-    layout_Main->addWidget(line_3);
-
-    checkBox = new QCheckBox(this);
-    checkBox->setObjectName(QString::fromUtf8("checkBox"));
-
-    layout_Main->addWidget(checkBox);
-
-    checkBox_2 = new QCheckBox(this);
-    checkBox_2->setObjectName(QString::fromUtf8("checkBox_2"));
-    layout_Main->addWidget(checkBox_2);
-    layoutDefaults = new QHBoxLayout();
-    layoutDefaults->setObjectName(QString::fromUtf8("LayoutDefauls"));
-    sp_DefLeft = new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Minimum);
-    layoutDefaults->addItem(sp_DefLeft);
-    m_setDefaults = new QPushButton(this);
-    m_setDefaults->setObjectName(QString::fromUtf8("SetDefaults"));
-    layoutDefaults->addWidget(m_setDefaults);
-    sp_DefRight = new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Minimum);
-    layoutDefaults->addItem(sp_DefRight);
-    spBottom = new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding);
-    layout_Main->addItem(spBottom);
-    layout_Main->addLayout(layoutDefaults);
-
-    l_Organize->setText(tr("Organize By:"));
-    l_IconSize->setText(tr("Icon Size: 0x0 px"));
-    l_IconSzSmall->setText(tr("TextLabel"));
-    l_IconSzLarge->setText(tr("TextLabel"));
-    l_GridSpacing->setText(tr("Grid Spacing:"));
-    l_GridSzSmall->setText(tr("TextLabel"));
-    l_GridSzLarge->setText(tr("TextLabel"));
-    l_TextSize->setText(tr("Text Size:"));
-    l_LabelPos->setText(tr("Label Position:"));
-    m_lblBottom->setText(tr("Bottom"));
-    m_lblRight->setText(tr("Right"));
-    checkBox->setText(tr("Show Icon Previews"));
-    checkBox_2->setText(tr("Show Item Info"));
-    m_setDefaults->setText(tr("Set Defaults"));
+    setLayout(p->layout_Main);
 }
 
-void IconViewOptions::attachView(QListView *view)
+void LSIconViewOptions::attachView(QListView *view)
 {
-    qDebug() << "IconViewOptions::attachView";
-    m_view = view;
+    p->m_view = view;
 }
 
-void IconViewOptions::refreshViewOptions()
+void LSIconViewOptions::refreshViewOptions()
 {
-    if(m_view == nullptr)
+    if(p->m_view == nullptr)
         return;
 
-    qDebug() << "Refreshing Icon View Options";
-    QSize iconSize = m_view->iconSize();
-    m_IconSizing->setValue(iconSize.width());
-    l_IconSize->setText(tr("Icon Size: %1x%2 px")
-                    .arg(m_view->iconSize().height())
-                    .arg(m_view->iconSize().width()));
+    QSize iconSize = p->m_view->iconSize();
+    p->m_IconSizing->setValue(iconSize.width());
+    p->m_IconSizeLabel->setText(QApplication::tr("Icon Size: %1x%2 px")
+                    .arg(p->m_view->iconSize().height())
+                    .arg(p->m_view->iconSize().width()));
 
-    l_GridSpacing->setText(tr("Grid Spacing: %1 px").arg(m_view->spacing()));
-    m_GridSizing->setValue(m_view->spacing());
+    p->m_GridSpacingLabel->setText(QApplication::tr("Grid Spacing: %1 px").arg(p->m_view->spacing()));
+    p->m_GridSizing->setValue(p->m_view->spacing());
 
     /* switch(view->flow())
     {

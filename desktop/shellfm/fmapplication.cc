@@ -48,7 +48,7 @@ void FMApplication::newFileWindow()
 
 void FMApplication::newFileWindow(const QUrl &path)
 {
-    FileWindow *w = new FileWindow(ArionShell::WINDOW_BROWSER, 0);
+    FileWindow *w = new FileWindow(HWShell::WINDOW_BROWSER, 0);
     w->shellHost()->newTabWithPath(path);
     m_fileWindows.append(w);
     w->show();

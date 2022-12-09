@@ -1,7 +1,7 @@
 #include "filewindow.h"
 #include "fmapplication.h"
 
-FileWindow::FileWindow(ArionShell::WindowMode windowMode, QWidget *parent)
+FileWindow::FileWindow(HWShell::WindowMode windowMode, QWidget *parent)
     : QMainWindow(parent),
       m_shellHost(new LSEmbeddedShellHost(this)),
       m_windowMode(windowMode),
@@ -75,56 +75,56 @@ void FileWindow::setupMenuBar()
     m_menuBar->addAction(menu_Bookmark->menuAction());
     m_menuBar->addAction(menu_Help->menuAction());
     menu_File->addAction(a_NewWindow);
-    menu_File->addAction(m_shellHost->shellAction(ArionShell::ACT_FILE_NEW_TAB));
+    menu_File->addAction(m_shellHost->shellAction(HWShell::ACT_FILE_NEW_TAB));
     menu_File->addSeparator();
-    menu_File->addAction(m_shellHost->shellAction(ArionShell::ACT_FILE_NEW_FOLDER));
-    menu_File->addAction(m_shellHost->shellAction(ArionShell::ACT_FILE_NEW_FILE));
+    menu_File->addAction(m_shellHost->shellAction(HWShell::ACT_FILE_NEW_FOLDER));
+    menu_File->addAction(m_shellHost->shellAction(HWShell::ACT_FILE_NEW_FILE));
     menu_File->addSeparator();
-    menu_File->addAction(m_shellHost->shellAction(ArionShell::ACT_FILE_OPEN));
-    menu_File->addAction(m_shellHost->shellAction(ArionShell::ACT_FILE_OPEN_WITH));
-    menu_File->addAction(m_shellHost->shellAction(ArionShell::ACT_FILE_GET_INFO));
-    menu_File->addAction(m_shellHost->shellAction(ArionShell::ACT_FILE_RENAME));
-    menu_File->addAction(m_shellHost->shellAction(ArionShell::ACT_FILE_ARCHIVE));
+    menu_File->addAction(m_shellHost->shellAction(HWShell::ACT_FILE_OPEN));
+    menu_File->addAction(m_shellHost->shellAction(HWShell::ACT_FILE_OPEN_WITH));
+    menu_File->addAction(m_shellHost->shellAction(HWShell::ACT_FILE_GET_INFO));
+    menu_File->addAction(m_shellHost->shellAction(HWShell::ACT_FILE_RENAME));
+    menu_File->addAction(m_shellHost->shellAction(HWShell::ACT_FILE_ARCHIVE));
     menu_File->addSeparator();
-    menu_File->addAction(m_shellHost->shellAction(ArionShell::ACT_FILE_TRASH));
+    menu_File->addAction(m_shellHost->shellAction(HWShell::ACT_FILE_TRASH));
     //menu_File->addAction(m_shellHost->shellAction(ArionShell::ACT_FILE_EJECT));
     menu_File->addSeparator();
     menu_File->addAction(a_Close_Window);
-    menu_Edit->addAction(m_shellHost->shellAction(ArionShell::ACT_EDIT_UNDO));
-    menu_Edit->addAction(m_shellHost->shellAction(ArionShell::ACT_EDIT_REDO));
+    menu_Edit->addAction(m_shellHost->shellAction(HWShell::ACT_EDIT_UNDO));
+    menu_Edit->addAction(m_shellHost->shellAction(HWShell::ACT_EDIT_REDO));
     menu_Edit->addSeparator();
-    menu_Edit->addAction(m_shellHost->shellAction(ArionShell::ACT_EDIT_CUT));
-    menu_Edit->addAction(m_shellHost->shellAction(ArionShell::ACT_EDIT_COPY));
-    menu_Edit->addAction(m_shellHost->shellAction(ArionShell::ACT_EDIT_PASTE));
+    menu_Edit->addAction(m_shellHost->shellAction(HWShell::ACT_EDIT_CUT));
+    menu_Edit->addAction(m_shellHost->shellAction(HWShell::ACT_EDIT_COPY));
+    menu_Edit->addAction(m_shellHost->shellAction(HWShell::ACT_EDIT_PASTE));
     menu_Edit->addSeparator();
-    menu_Edit->addAction(m_shellHost->shellAction(ArionShell::ACT_EDIT_SEL_ALL));
-    menu_Edit->addAction(m_shellHost->shellAction(ArionShell::ACT_EDIT_INV_SEL));
+    menu_Edit->addAction(m_shellHost->shellAction(HWShell::ACT_EDIT_SEL_ALL));
+    menu_Edit->addAction(m_shellHost->shellAction(HWShell::ACT_EDIT_INV_SEL));
 
-    menu_View->addAction(m_shellHost->shellAction(ArionShell::ACT_VIEW_ICONS));
-    menu_View->addAction(m_shellHost->shellAction(ArionShell::ACT_VIEW_LIST));
-    menu_View->addAction(m_shellHost->shellAction(ArionShell::ACT_VIEW_COLUMNS));
+    menu_View->addAction(m_shellHost->shellAction(HWShell::ACT_VIEW_ICONS));
+    menu_View->addAction(m_shellHost->shellAction(HWShell::ACT_VIEW_LIST));
+    menu_View->addAction(m_shellHost->shellAction(HWShell::ACT_VIEW_COLUMNS));
     menu_View->addSeparator();
     menu_View->addAction(menu_Sort->menuAction());
-    menu_Sort->addAction(m_shellHost->shellAction(ArionShell::ACT_VIEW_SORT_NONE));
-    menu_Sort->addAction(m_shellHost->shellAction(ArionShell::ACT_VIEW_SORT_NAME));
-    menu_Sort->addAction(m_shellHost->shellAction(ArionShell::ACT_VIEW_SORT_SIZE));
-    menu_Sort->addAction(m_shellHost->shellAction(ArionShell::ACT_VIEW_SORT_KIND));
-    menu_Sort->addAction(m_shellHost->shellAction(ArionShell::ACT_VIEW_SORT_MODIFIED));
-    menu_Sort->addAction(m_shellHost->shellAction(ArionShell::ACT_VIEW_SORT_OWNER));
-    menu_Sort->addAction(m_shellHost->shellAction(ArionShell::ACT_VIEW_SORT_GROUP));
-    menu_Sort->addAction(m_shellHost->shellAction(ArionShell::ACT_VIEW_SORT_COMMENT));
+    menu_Sort->addAction(m_shellHost->shellAction(HWShell::ACT_VIEW_SORT_NONE));
+    menu_Sort->addAction(m_shellHost->shellAction(HWShell::ACT_VIEW_SORT_NAME));
+    menu_Sort->addAction(m_shellHost->shellAction(HWShell::ACT_VIEW_SORT_SIZE));
+    menu_Sort->addAction(m_shellHost->shellAction(HWShell::ACT_VIEW_SORT_KIND));
+    menu_Sort->addAction(m_shellHost->shellAction(HWShell::ACT_VIEW_SORT_MODIFIED));
+    menu_Sort->addAction(m_shellHost->shellAction(HWShell::ACT_VIEW_SORT_OWNER));
+    menu_Sort->addAction(m_shellHost->shellAction(HWShell::ACT_VIEW_SORT_GROUP));
+    menu_Sort->addAction(m_shellHost->shellAction(HWShell::ACT_VIEW_SORT_COMMENT));
     menu_Sort->addSeparator();
-    menu_Sort->addAction(m_shellHost->shellAction(ArionShell::ACT_VIEW_SORT_ASC));
-    menu_Sort->addAction(m_shellHost->shellAction(ArionShell::ACT_VIEW_SORT_DESC));
+    menu_Sort->addAction(m_shellHost->shellAction(HWShell::ACT_VIEW_SORT_ASC));
+    menu_Sort->addAction(m_shellHost->shellAction(HWShell::ACT_VIEW_SORT_DESC));
 
     menu_View->addSeparator();
     menu_View->addAction(a_Toolbar);
     menu_View->addAction(a_StatusBar);
     menu_View->addSeparator();
-    menu_View->addAction(m_shellHost->shellAction(ArionShell::ACT_VIEW_OPTIONS));
-    menu_Go->addAction(m_shellHost->shellAction(ArionShell::ACT_GO_BACK));
-    menu_Go->addAction(m_shellHost->shellAction(ArionShell::ACT_GO_FORWARD));
-    menu_Go->addAction(m_shellHost->shellAction(ArionShell::ACT_GO_ENCLOSING_FOLDER));
+    menu_View->addAction(m_shellHost->shellAction(HWShell::ACT_VIEW_OPTIONS));
+    menu_Go->addAction(m_shellHost->shellAction(HWShell::ACT_GO_BACK));
+    menu_Go->addAction(m_shellHost->shellAction(HWShell::ACT_GO_FORWARD));
+    menu_Go->addAction(m_shellHost->shellAction(HWShell::ACT_GO_ENCLOSING_FOLDER));
     menu_Go->addSeparator();
     menu_Go->addAction(a_Home);
     menu_Go->addAction(a_Documents);
@@ -304,9 +304,9 @@ void FileWindow::setupMainView()
     m_statusBar->addPermanentWidget(m_statusLabel, 1);
     m_toolBar = new QToolBar(this);
     m_toolBar->setObjectName(QString::fromUtf8("ToolBar"));
-    m_toolBar->addAction(m_shellHost->shellAction(ArionShell::ACT_GO_BACK));
-    m_toolBar->addAction(m_shellHost->shellAction(ArionShell::ACT_GO_FORWARD));
-    m_toolBar->addAction(m_shellHost->shellAction(ArionShell::ACT_GO_ENCLOSING_FOLDER));
+    m_toolBar->addAction(m_shellHost->shellAction(HWShell::ACT_GO_BACK));
+    m_toolBar->addAction(m_shellHost->shellAction(HWShell::ACT_GO_FORWARD));
+    m_toolBar->addAction(m_shellHost->shellAction(HWShell::ACT_GO_ENCLOSING_FOLDER));
     m_toolBar->addWidget(m_shellHost->locationBar());
     m_toolBar->addWidget(m_search);
     m_search->setMaximumWidth(150);

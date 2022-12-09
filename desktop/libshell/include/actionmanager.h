@@ -9,7 +9,7 @@ class LSActionManager : public QObject
     Q_OBJECT
 public:
     explicit LSActionManager(QObject *parent = nullptr);
-    QAction* shellAction(ArionShell::ShellActions action);
+    QAction* shellAction(HWShell::ShellActions action);
 signals:
 private:
     void setupActions();

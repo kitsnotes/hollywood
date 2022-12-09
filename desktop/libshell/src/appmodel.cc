@@ -28,6 +28,7 @@ ApplicationModel::ApplicationModel(QObject *parent)
 
 QVariant ApplicationModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
+    Q_UNUSED(orientation)
     switch(role)
     {
     case Qt::DisplayRole:

@@ -11,36 +11,28 @@
 #include <QWidget>
 #include <QUrl>
 
-class QToolButton;
-class QScrollArea;
-class QPushButton;
-class QHBoxLayout;
-
-class PathEdit;
 class PathButton;
-
+class LSLocationBarPrivate;
 class LIBSHELL_EXPORT LSLocationBar: public QWidget {
     Q_OBJECT
 public:
     explicit LSLocationBar(QWidget* parent = nullptr);
 
-    const QUrl& path() {
-        return currentPath_;
-    }
+    const QUrl& path();
 
     void setPath(const QUrl& path);
 
-Q_SIGNALS:
+signals:
     void chdir(const QUrl& path);
     void middleClickChdir(const QUrl& path);
     void editingFinished();
 
-public Q_SLOTS:
+public slots:
     void openEditor();
     void closeEditor();
     void copyPath();
 
-private Q_SLOTS:
+private slots:
   void onButtonToggled(bool checked);
   void onScrollButtonClicked();
   void onReturnPressed();
@@ -59,15 +51,7 @@ private:
     QUrl pathForButton(PathButton* btn);
 
 private:
-    QToolButton* scrollToStart_;
-    QToolButton* scrollToEnd_;
-    QScrollArea* scrollArea_;
-    QWidget* buttonsWidget_;
-    QHBoxLayout* buttonsLayout_;
-    QLineEdit* tempPathEdit_;
-
-    QUrl currentPath_;   // currently active path
-    PathButton* toggledBtn_;
+    LSLocationBarPrivate *p;
 };
 
 #endif // LOCATIONBAR_H

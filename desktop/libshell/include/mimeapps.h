@@ -6,16 +6,11 @@
  */
 
 #include <QObject>
-#include <QMutex>
-#include <QMutexLocker>
-#include <QString>
-#include <QFileSystemWatcher>
-#include <QHash>
-#include <QMultiHash>
 
 #include "libshell_int.h"
 
 class LSDesktopEntry;
+class LSMimeApplicationsPrivate;
 class LIBSHELL_EXPORT LSMimeApplications : public QObject
 {
     Q_OBJECT
@@ -45,15 +40,7 @@ private slots:
     void processDefaults();
     void fileUpdated(const QString &file);
 private:
-    QMultiHash<QString,LSDesktopEntry*> m_globalMime;
-    QMultiHash<QString,LSDesktopEntry*> m_localMime;
-    QHash<QString,LSDesktopEntry*> m_defaults;
-
-    QList<LSDesktopEntry*> m_desktops;
-    QFileSystemWatcher *m_watch = nullptr;
-    QMutex m_mutex;
-    QString m_defaultsFile;
-    QString m_localMimeCacheFile;
+    LSMimeApplicationsPrivate *p;
 };
 
 #endif // LSMIMEAPPS_H

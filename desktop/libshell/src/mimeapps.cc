@@ -1,47 +1,55 @@
 #include "mimeapps.h"
+#include "mimeapps_p.h"
 #include "desktopentry.h"
 #include "directories.h"
 
 #include <QByteArray>
 #include <QString>
 
+LSMimeApplicationsPrivate::LSMimeApplicationsPrivate(LSMimeApplications *parent)
+    : d(parent)
+    , m_watch(new QFileSystemWatcher(parent)) {}
+
 LSMimeApplications::LSMimeApplications(QObject *parent)
-    : QObject(parent),
-      m_watch(new QFileSystemWatcher(this))
+    : QObject(parent)
+    , p(new LSMimeApplicationsPrivate(this))
 {
     // setup our inotify watcher and add our files
-    connect(m_watch, &QFileSystemWatcher::fileChanged,
+    connect(p->m_watch, &QFileSystemWatcher::fileChanged,
             this, &LSMimeApplications::fileUpdated);
     // watch for defaults changes ~/.config/mimeapps.list
     QFile file(QString("%1/%2").arg(LOCAL_CONFIG_FOLDER).arg(DEFAULTS_LIST));
-    m_defaultsFile = file.fileName();
+    p->m_defaultsFile = file.fileName();
     if(file.exists())
-        m_watch->addPath(file.fileName());
+        p->m_watch->addPath(file.fileName());
 
     // watch for global mime app assoication changes
     // from /usr/share/applications/mimeinfo.cache
     QFile mimedb(QString("%1/%2").arg(GLOBAL_APPS_FOLDER).arg(MIMEINFO_CACHE));
-    m_defaultsFile = file.fileName();
+    p->m_defaultsFile = file.fileName();
     if(file.exists())
-        m_watch->addPath(file.fileName());
+        p->m_watch->addPath(file.fileName());
 
     // from ~/.local/share/appliications/mimeinfo.cache
     // watch for local mime app assoication changes
     QFile lmimedb(QString("%1/%2").arg(LOCAL_APPS_FOLDER).arg(MIMEINFO_CACHE));
-    m_defaultsFile = file.fileName();
+    p->m_defaultsFile = file.fileName();
     if(file.exists())
-        m_watch->addPath(file.fileName());
+        p->m_watch->addPath(file.fileName());
 
 }
 
-LSMimeApplications::~LSMimeApplications() = default;
+LSMimeApplications::~LSMimeApplications()
+{
+    delete p;
+}
 
 bool LSMimeApplications::addSupport(const QString &mimeType, const LSDesktopEntry &app)
 {
     if (mimeType.isEmpty() || !app.isValid())
         return false;
 
-    QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&p->m_mutex);
     // TODO: fill out this function
     return false;
 }
@@ -49,8 +57,8 @@ bool LSMimeApplications::addSupport(const QString &mimeType, const LSDesktopEntr
 QList<LSDesktopEntry *> LSMimeApplications::allApps()
 {
     QList<LSDesktopEntry *> list;
-    QMutexLocker locker(&m_mutex);
-    list = m_desktops;
+    QMutexLocker locker(&p->m_mutex);
+    list = p->m_desktops;
     return list;
 }
 
@@ -60,7 +68,7 @@ QList<LSDesktopEntry *> LSMimeApplications::apps(const QString &mimeType)
         return QList<LSDesktopEntry *>();
 
     QList<LSDesktopEntry *> list;
-    QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&p->m_mutex);
     return list;
 }
 
@@ -89,7 +97,7 @@ QList<LSDesktopEntry *> LSMimeApplications::fallbackApps(const QString &mimeType
     if (mimeType.isEmpty())
         return QList<LSDesktopEntry *>();
 
-    QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&p->m_mutex);
     QList<LSDesktopEntry *> list;
     return list;
 }
@@ -99,7 +107,7 @@ QList<LSDesktopEntry *> LSMimeApplications::recommendedApps(const QString &mimeT
     if (mimeType.isEmpty())
         return QList<LSDesktopEntry *>();
 
-    QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&p->m_mutex);
     QList<LSDesktopEntry *> list;
     return list;
 }
@@ -109,17 +117,17 @@ LSDesktopEntry *LSMimeApplications::defaultApp(const QString &mimeType)
     if (mimeType.isEmpty())
         return nullptr;
 
-    QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&p->m_mutex);
 
     // return our user preference (if set)
-    if(m_defaults.contains(mimeType))
-        return m_defaults[mimeType];
+    if(p->m_defaults.contains(mimeType))
+        return p->m_defaults[mimeType];
 
     // no user preference? find the first global app
-    if(m_globalMime.contains(mimeType))
+    if(p->m_globalMime.contains(mimeType))
     {
-        qDebug() << "returning global value" << m_globalMime.values(mimeType).first()->fileName();
-        return m_globalMime.values(mimeType).first();
+        qDebug() << "returning global value" << p->m_globalMime.values(mimeType).first()->fileName();
+        return p->m_globalMime.values(mimeType).first();
     }
 
     return nullptr;
@@ -130,7 +138,7 @@ bool LSMimeApplications::removeSupport(const QString &mimeType, const LSDesktopE
     if (mimeType.isEmpty() || !app.isValid())
         return false;
 
-    QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&p->m_mutex);
     return false;
 }
 
@@ -139,7 +147,7 @@ bool LSMimeApplications::reset(const QString &mimeType)
     if (mimeType.isEmpty())
         return false;
 
-    QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&p->m_mutex);
     return false;
 }
 
@@ -151,7 +159,7 @@ bool LSMimeApplications::setDefaultApp(const QString &mimeType, const LSDesktopE
     if (LSDesktopEntry::id(app.fileName()).isEmpty())
         return false;
 
-    QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&p->m_mutex);
     return false;
 }
 
@@ -160,19 +168,19 @@ void LSMimeApplications::fileUpdated(const QString &file)
     if(file == QString("%1/%2").arg(GLOBAL_APPS_FOLDER).arg(MIMEINFO_CACHE))
         processGlobalMimeCache();
 
-    if(file == m_defaultsFile)
+    if(file == p->m_defaultsFile)
         processDefaults();
 }
 
 void LSMimeApplications::processGlobalMimeCache()
 {
-    for(auto ls : m_globalMime.values())
+    for(auto ls : p->m_globalMime.values())
     {
-        m_desktops.removeOne(ls);
+        p->m_desktops.removeOne(ls);
         delete ls;
     }
 
-    m_globalMime.clear();
+    p->m_globalMime.clear();
 
     QString fileName = QString("%1/%2")
             .arg(GLOBAL_APPS_FOLDER)
@@ -195,11 +203,11 @@ void LSMimeApplications::processGlobalMimeCache()
                 {
                     auto desktop = new LSDesktopEntry();
                     desktop->load(filename);
-                    m_globalMime.insert(mime, desktop);
-                    m_desktops.append(desktop);
+                    p->m_globalMime.insert(mime, desktop);
+                    p->m_desktops.append(desktop);
                 }
                 else
-                    m_globalMime.insert(mime, cache);
+                    p->m_globalMime.insert(mime, cache);
             }
         }
     }
@@ -207,13 +215,13 @@ void LSMimeApplications::processGlobalMimeCache()
 
 void LSMimeApplications::processDefaults()
 {
-    for(auto ls : m_defaults.values())
+    for(auto ls : p->m_defaults.values())
     {
-        m_desktops.removeOne(ls);
+        p->m_desktops.removeOne(ls);
         delete ls;
     }
 
-    m_defaults.clear();
+    p->m_defaults.clear();
 
     QString fileName = QString("%1/%2")
             .arg(GLOBAL_APPS_FOLDER)
@@ -237,11 +245,11 @@ void LSMimeApplications::processDefaults()
                 {
                     auto desktop = new LSDesktopEntry();
                     desktop->load(filename);
-                    m_defaults.insert(mime, desktop);
-                    m_desktops.append(desktop);
+                    p->m_defaults.insert(mime, desktop);
+                    p->m_desktops.append(desktop);
                 }
                 else
-                    m_defaults.insert(mime, cache);
+                    p->m_defaults.insert(mime, cache);
             }
         }
     }
@@ -249,7 +257,7 @@ void LSMimeApplications::processDefaults()
 
 LSDesktopEntry *LSMimeApplications::findDesktopForFile(const QString &file)
 {
-    for(auto desktop : m_desktops)
+    for(auto desktop : p->m_desktops)
     {
         if(desktop->fileName() == file)
             return desktop;
@@ -262,7 +270,7 @@ LSDesktopEntry *LSMimeApplications::findDesktopForExec(const QString &file)
 {
     // this function can pass either a full path or a binary name
     // this will check just for a binary name
-    for(auto desktop : m_desktops)
+    for(auto desktop : p->m_desktops)
     {
         if(desktop->value("Exec") == file)
             return desktop;
@@ -300,7 +308,7 @@ void LSMimeApplications::cacheAllDesktops()
                 auto entry = new LSDesktopEntry;
                 entry->load(file);
                 if(entry->isValid())
-                    m_desktops.append(entry);
+                    p->m_desktops.append(entry);
             }
         }
     }

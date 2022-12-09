@@ -1,4 +1,5 @@
 #include "fsitemdelegate.h"
+#include "fsitemdelegate_p.h"
 #include "fileinfo.h"
 
 #include <QSharedPointer>
@@ -12,21 +13,48 @@
 #include <QStyledItemDelegate>
 #include <QSvgRenderer>
 
+LSFSItemDelegatePrivate::LSFSItemDelegatePrivate(LSFSItemDelegate *parent)
+    : d(parent)
+    , m_symlinkIcon(QIcon(":/libshell/SymlinkOverlay"))
+    , m_iconSize(QSize(48,48))
+    , m_itemSize(QSize(96,96))
+    , m_margins(QSize(1, 1))
+    , m_shadowHidden(false)
+
+{}
+
 LSFSItemDelegate::LSFSItemDelegate(QObject* parent)
-    :QStyledItemDelegate(parent),
-    m_symlinkIcon(QIcon(":/libshell/SymlinkOverlay")),
-    m_iconSize(QSize(48,48)),
-    m_itemSize(QSize(96,96)),
-    m_margins(QSize(1, 1)),
-    m_shadowHidden(false)
+    : QStyledItemDelegate(parent)
+    , p(new LSFSItemDelegatePrivate(this)){}
+
+LSFSItemDelegate::~LSFSItemDelegate()
 {
-
-
+    delete p;
 }
+
+void LSFSItemDelegate::setItemSize(QSize size) {
+    p->m_itemSize = size;
+}
+
+QSize LSFSItemDelegate::itemSize() const {
+    return p->m_itemSize;
+}
+
+void LSFSItemDelegate::setIconSize(QSize size) {
+    p->m_iconSize = size;
+}
+
+QSize LSFSItemDelegate::iconSize() const {
+    return p->m_iconSize;
+}
+
+bool LSFSItemDelegate::shadowHidden() const { return p->m_shadowHidden; }
+
+void LSFSItemDelegate::setShadowHidden(bool hide) { p->m_shadowHidden = hide; }
 
 void LSFSItemDelegate::setShadowColor(const QColor &color)
 {
-    m_shadowColor = color;
+    p->m_shadowColor = color;
 }
 
 void LSFSItemDelegate::drawText(QPainter *painter, QStyleOptionViewItem &opt, QRectF &textRect) const
@@ -117,9 +145,9 @@ void LSFSItemDelegate::drawText(QPainter *painter, QStyleOptionViewItem &opt, QR
     }
 
     // draw shadow for text if the item is not selected and a shadow color is set
-    if(!(opt.state & QStyle::State_Selected) && m_shadowColor.isValid()) {
+    if(!(opt.state & QStyle::State_Selected) && p->m_shadowColor.isValid()) {
         QPen prevPen = painter->pen();
-        painter->setPen(QPen(m_shadowColor));
+        painter->setPen(QPen(p->m_shadowColor));
         for(int i = 0; i < visibleLines; ++i) {
             QTextLine line = layout.lineAt(i);
             if(i == (visibleLines - 1) && !elidedText.isEmpty()) { // the last line, draw elided text
@@ -183,7 +211,7 @@ QSize LSFSItemDelegate::sizeHint(const QStyleOptionViewItem &option, const QMode
     if(option.decorationPosition == QStyleOptionViewItem::Top ||
             option.decorationPosition == QStyleOptionViewItem::Bottom) {
         // we handle vertical layout just by returning our item size
-        return m_itemSize;
+        return p->m_itemSize;
     }
 
     // The default size hint of the horizontal layout isn't reliable
@@ -222,7 +250,7 @@ void LSFSItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
         QFont f(opt.font);
         f.setItalic(true);
         opt.font = f;
-        shadowIcon = m_shadowHidden;
+        shadowIcon = p->m_shadowHidden;
     }
 
     bool isSymlink = file && file->isSymLink();
@@ -244,7 +272,7 @@ void LSFSItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
         QIcon::Mode iconMode = shadowIcon ? QIcon::Disabled
                                           // in the icon and thumbnail modes, we select text, not icon
                                           : iconModeFromState(opt.state & ~QStyle::State_Selected);
-        QPoint iconPos(opt.rect.x() + (opt.rect.width() - option.decorationSize.width()) / 2, opt.rect.y() + m_margins.height());
+        QPoint iconPos(opt.rect.x() + (opt.rect.width() - option.decorationSize.width()) / 2, opt.rect.y() + p->m_margins.height());
         QRect iconRect(iconPos, option.decorationSize);
         if(isCut) {
             painter->save();
@@ -262,7 +290,7 @@ void LSFSItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
             sml.setSize(option.decorationSize / 3);
             sml.adjust(0, iconRect.height() - sml.height(), 0, iconRect.height() - sml.height());
             //sml.setTop(iconRect.bottom() - sml.height());
-            m_symlinkIcon.paint(painter, sml);
+            p->m_symlinkIcon.paint(painter, sml);
         }
 
         /* if(file && file->canUnmount()) {
@@ -312,10 +340,10 @@ void LSFSItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
         }
 
         // draw the text
-        QSize drawAreaSize = m_itemSize - 2 * m_margins;
+        QSize drawAreaSize = p->m_itemSize - 2 * p->m_margins;
         // The text rect dimensions should be exactly as they were in sizeHint()
         QRectF textRect(opt.rect.x() + (opt.rect.width() - drawAreaSize.width()) / 2,
-                        opt.rect.y() + m_margins.height() + option.decorationSize.height(),
+                        opt.rect.y() + p->m_margins.height() + option.decorationSize.height(),
                         drawAreaSize.width(),
                         drawAreaSize.height() - option.decorationSize.height());
         drawText(painter, opt, textRect);
@@ -363,7 +391,7 @@ void LSFSItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
         QRect iconRect = style->subElementRect(QStyle::SE_ItemViewItemDecoration, &opt, widget);
         iconRect.setSize(option.decorationSize / 2);
         if(isSymlink)
-            m_symlinkIcon.paint(painter, iconRect, Qt::AlignCenter, iconMode);
+            p->m_symlinkIcon.paint(painter, iconRect, Qt::AlignCenter, iconMode);
 /*
         if(file && file->canUnmount()) {
             mountedIcon_.paint(painter, iconRect.translated(option.decorationSize.width() / 2, 0), Qt::AlignCenter, iconMode);
@@ -375,3 +403,4 @@ void LSFSItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
         } */
     }
 }
+

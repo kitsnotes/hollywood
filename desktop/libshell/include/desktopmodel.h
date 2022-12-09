@@ -2,18 +2,9 @@
 #define LSDESKTOPMODEL_H
 
 #include <QAbstractListModel>
-#include <QFile>
-#include <QDir>
-#include <QFileIconProvider>
-#include <QBasicTimer>
-#include <QTimer>
-#include <QCollator>
-#include <QVector>
-#include <QHash>
-#include <QMimeData>
+#include <QFileInfo>
 
-#include "fsnode.h"
-
+class LSDesktopModelPrivate;
 class LSDesktopModel : public QAbstractListModel
 {
 public:
@@ -37,11 +28,7 @@ private slots:
     void fileSystemChanged(const QString &path, const QVector<QPair<QString,QFileInfo> >&items);
     void resolvedName(const QString &file, const QString &resolved);
 private:
-    QDir m_rootDir;
-    LSFSNode m_root;
-    //LSFSThread m_fileInfoGatherer;
-    bool m_readOnly = true;
-    QList<LSFSNode*> m_files;
+    LSDesktopModelPrivate *p;
 };
 
 #endif // LSDESKTOPMODEL_H

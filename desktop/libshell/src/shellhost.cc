@@ -1,4 +1,5 @@
 #include "shellhost.h"
+#include "shellhost_p.h"
 #include "viewoptionsdialog.h"
 #include "actionmanager.h"
 #include "locationbar.h"
@@ -13,141 +14,145 @@
 #include <QDBusInterface>
 #include <hollywood/hollywood.h>
 
+LSEmbeddedShellHostPrivate::LSEmbeddedShellHostPrivate(LSEmbeddedShellHost *parent)
+    : d(parent)
+    , m_actions(new LSActionManager(parent))
+    , m_filesList(new QListView(parent))
+    , m_model(new FilesystemModel(parent))
+    , m_apps(new ApplicationModel(parent))
+    , m_placeModel(new LSPlaceModel(parent))
+    , m_viewOptions(new LSViewOptionsDialog(parent))
+    , m_delegate(new LSFSItemDelegate(parent)) {}
+
 LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
-    : QWidget(parent),
-      m_actions(new LSActionManager(this)),
-      m_filesList(new QListView(this)),
-      m_model(new FilesystemModel(this)),
-      m_apps(new ApplicationModel(this)),
-      m_placeModel(new LSPlaceModel(this)),
-      m_viewOptions(new ViewOptionsDialog(this)),
-      m_delegate(new LSFSItemDelegate(this))
+    : QWidget(parent)
+    , p(new LSEmbeddedShellHostPrivate(this))
 {
     setContentsMargins(0,0,0,0);
     QSettings settings("originull", "hollywood");
-    m_model->setRootPath("/");
+    p->m_model->setRootPath("/");
 
     setupLocationBar();
 
     /* Setup the main window splitter */
-    m_mainSplitter = new QSplitter(this);
-    m_mainSplitter->setOrientation(Qt::Horizontal);
-    m_mainSplitter->setStretchFactor(1, 15);
+    p->m_mainSplitter = new QSplitter(this);
+    p->m_mainSplitter->setOrientation(Qt::Horizontal);
+    p->m_mainSplitter->setStretchFactor(1, 15);
 
-    /* Setup the places and directory trees (left side of m_mainSplitter) */
-    m_treeToolbox = new QTabWidget(m_mainSplitter);
-    m_treeToolbox->setObjectName(QString::fromUtf8("TreeToolbox"));
-    m_treeToolbox->setTabPosition(QTabWidget::North);
-    m_treeToolbox->setUsesScrollButtons(false);
-    m_treeToolbox->tabBar()->setDrawBase(false);
+    /* Setup the places and directory trees (left side of p->m_mainSplitter) */
+    p->m_treeToolbox = new QTabWidget(p->m_mainSplitter);
+    p->m_treeToolbox->setObjectName(QString::fromUtf8("TreeToolbox"));
+    p->m_treeToolbox->setTabPosition(QTabWidget::North);
+    p->m_treeToolbox->setUsesScrollButtons(false);
+    p->m_treeToolbox->tabBar()->setDrawBase(false);
 
-    m_treeFavorites = new LSPlaceView(this);
-    m_treeFavorites->setObjectName(QString::fromUtf8("PlacesTree"));
-    m_treeFavorites->setModel(m_placeModel);
-    m_treeFavorites->expandAll();
-    connect(m_treeFavorites, &QTreeView::clicked, this, &LSEmbeddedShellHost::placeClicked);
+    p->m_treeFavorites = new LSPlaceView(this);
+    p->m_treeFavorites->setObjectName(QString::fromUtf8("PlacesTree"));
+    p->m_treeFavorites->setModel(p->m_placeModel);
+    p->m_treeFavorites->expandAll();
+    connect(p->m_treeFavorites, &QTreeView::clicked, this, &LSEmbeddedShellHost::placeClicked);
 
-    //m_treeFavorites->setFirstColumnSpanned()
+    //p->m_treeFavorites->setFirstColumnSpanned()
 
-    m_treeDirs = new QTreeView(this);
-    m_treeDirs->setObjectName(QString::fromUtf8("DirectoryTree"));
+    p->m_treeDirs = new QTreeView(this);
+    p->m_treeDirs->setObjectName(QString::fromUtf8("DirectoryTree"));
 
-    m_treeToolbox->resize(m_treeToolbox->height(), 125);
+    p->m_treeToolbox->resize(p->m_treeToolbox->height(), 125);
 
-    m_treeToolbox->addTab(m_treeFavorites, tr("Places"));
-    m_treeToolbox->addTab(m_treeDirs, tr("Directories"));
-    m_treeToolbox->setMaximumWidth(155);
-    m_treeToolbox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    p->m_treeToolbox->addTab(p->m_treeFavorites, tr("Places"));
+    p->m_treeToolbox->addTab(p->m_treeDirs, tr("Directories"));
+    p->m_treeToolbox->setMaximumWidth(155);
+    p->m_treeToolbox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 
 
-    /* setup tab bar host (right side of m_mainSplitter) */
-    m_tabWndHost = new QWidget(m_mainSplitter);
+    /* setup tab bar host (right side of p->m_mainSplitter) */
+    p->m_tabWndHost = new QWidget(p->m_mainSplitter);
 
-    m_tabWndHostLayout = new QVBoxLayout(m_tabWndHost);
-    m_tabWndHostLayout->setSpacing(0);
-    m_tabWndHostLayout->setContentsMargins(0,0,0,0);
-    m_tabs = new QTabBar(m_tabWndHost);
-    m_tabs->setTabsClosable(true);
-    m_tabs->setMovable(true);
-    m_tabs->setAutoHide(settings.value("Preferences/AutoHideTabs", true).toBool());
-    connect(m_tabs, SIGNAL(currentChanged(int)),
+    p->m_tabWndHostLayout = new QVBoxLayout(p->m_tabWndHost);
+    p->m_tabWndHostLayout->setSpacing(0);
+    p->m_tabWndHostLayout->setContentsMargins(0,0,0,0);
+    p->m_tabs = new QTabBar(p->m_tabWndHost);
+    p->m_tabs->setTabsClosable(true);
+    p->m_tabs->setMovable(true);
+    p->m_tabs->setAutoHide(settings.value("Preferences/AutoHideTabs", true).toBool());
+    connect(p->m_tabs, SIGNAL(currentChanged(int)),
             this, SLOT(currentTabChanged(int)));
-    connect(m_tabs, SIGNAL(tabCloseRequested(int)),
+    connect(p->m_tabs, SIGNAL(tabCloseRequested(int)),
             this, SLOT(tabCloseRequested(int)));
 
-    m_tabWndHostLayout->addWidget(m_tabs);
+    p->m_tabWndHostLayout->addWidget(p->m_tabs);
 
     /* Setup our main right-side views */
 
-    m_filesColumn = new QColumnView(this);
-    m_filesColumn->setObjectName(QString::fromUtf8("FilesColumn"));
-    m_filesColumn->setAutoScroll(true);
+    p->m_filesColumn = new QColumnView(this);
+    p->m_filesColumn->setObjectName(QString::fromUtf8("FilesColumn"));
+    p->m_filesColumn->setAutoScroll(true);
 
-    m_columnPreview = new LSColumnPreview(this);
-    m_filesColumn->setPreviewWidget(m_columnPreview);
-    m_filesColumn->setContextMenuPolicy(Qt::CustomContextMenu);
+    p->m_columnPreview = new LSColumnPreview(this);
+    p->m_filesColumn->setPreviewWidget(p->m_columnPreview);
+    p->m_filesColumn->setContextMenuPolicy(Qt::CustomContextMenu);
 
     /* Setup Icon View */
-    m_filesList->setObjectName(QString::fromUtf8("FilesIcon"));
-    m_filesList->setIconSize(QSize(32,32));
-    m_filesList->setSpacing(6);
-    m_filesList->setViewMode(QListView::IconMode);
-    m_filesList->setFlow(QListView::LeftToRight);
-    m_filesList->setTextElideMode(Qt::ElideMiddle);
-    m_filesList->setWrapping(true);
-    m_filesList->setWordWrap(true);
-    m_filesList->setUniformItemSizes(false);
-    m_filesList->setItemDelegate(m_delegate);
-    m_filesList->setSelectionMode(QAbstractItemView::ContiguousSelection);
-    m_filesList->setContextMenuPolicy(Qt::CustomContextMenu);
+    p->m_filesList->setObjectName(QString::fromUtf8("FilesIcon"));
+    p->m_filesList->setIconSize(QSize(32,32));
+    p->m_filesList->setSpacing(6);
+    p->m_filesList->setViewMode(QListView::IconMode);
+    p->m_filesList->setFlow(QListView::LeftToRight);
+    p->m_filesList->setTextElideMode(Qt::ElideMiddle);
+    p->m_filesList->setWrapping(true);
+    p->m_filesList->setWordWrap(true);
+    p->m_filesList->setUniformItemSizes(false);
+    p->m_filesList->setItemDelegate(p->m_delegate);
+    p->m_filesList->setSelectionMode(QAbstractItemView::ContiguousSelection);
+    p->m_filesList->setContextMenuPolicy(Qt::CustomContextMenu);
 
     /* Setup List View */
-    m_filesTable = new QTreeView(this);
-    m_filesTable->setObjectName(QString::fromUtf8("FilesList"));
-    m_filesTable->setAlternatingRowColors(true);
-    m_filesTable->setAnimated(true);
-    m_filesTable->setExpandsOnDoubleClick(false);
-    m_filesTable->setContextMenuPolicy(Qt::CustomContextMenu);
-    m_filesTable->setSelectionMode(QAbstractItemView::ContiguousSelection);
-    m_filesTable->setSortingEnabled(true);
-    m_filesTable->header()->setFirstSectionMovable(false);
-    m_filesTable->header()->resizeSection(0,290);
+    p->m_filesTable = new QTreeView(this);
+    p->m_filesTable->setObjectName(QString::fromUtf8("FilesList"));
+    p->m_filesTable->setAlternatingRowColors(true);
+    p->m_filesTable->setAnimated(true);
+    p->m_filesTable->setExpandsOnDoubleClick(false);
+    p->m_filesTable->setContextMenuPolicy(Qt::CustomContextMenu);
+    p->m_filesTable->setSelectionMode(QAbstractItemView::ContiguousSelection);
+    p->m_filesTable->setSortingEnabled(true);
+    p->m_filesTable->header()->setFirstSectionMovable(false);
+    p->m_filesTable->header()->resizeSection(0,290);
     /* Only the icons is visible here - window setup
      * procedure will set the default where required */
-    m_filesColumn->setVisible(false);
-    m_filesTable->setVisible(false);
-    m_tabWndHostLayout->addWidget(m_filesList);
-    m_mainSplitter->addWidget(m_treeToolbox);
-    m_mainSplitter->addWidget(m_tabWndHost);
-    m_viewOptions->attachIconView(m_filesList);
+    p->m_filesColumn->setVisible(false);
+    p->m_filesTable->setVisible(false);
+    p->m_tabWndHostLayout->addWidget(p->m_filesList);
+    p->m_mainSplitter->addWidget(p->m_treeToolbox);
+    p->m_mainSplitter->addWidget(p->m_tabWndHost);
+    p->m_viewOptions->attachIconView(p->m_filesList);
 
     swapToModel(Filesystem);
 
-    connect(m_filesColumn, &QColumnView::updatePreviewWidget, this, &LSEmbeddedShellHost::updateColumnWidget);
+    connect(p->m_filesColumn, &QColumnView::updatePreviewWidget, this, &LSEmbeddedShellHost::updateColumnWidget);
 
-    connect(m_model, SIGNAL(rootPathChanged(const QString&)),
+    connect(p->m_model, SIGNAL(rootPathChanged(const QString&)),
             this, SLOT(modelRootPathChanged(const QString&)));
 
-    connect(m_actions->shellAction(ArionShell::ACT_VIEW_OPTIONS),
+    connect(p->m_actions->shellAction(HWShell::ACT_VIEW_OPTIONS),
             &QAction::triggered, this, &LSEmbeddedShellHost::toggleViewOptions);
-    connect(m_viewOptions, &ViewOptionsDialog::finished,
+    connect(p->m_viewOptions, &LSViewOptionsDialog::finished,
             this, &LSEmbeddedShellHost::viewOptionsFinished);
 
-    connect(m_actions->shellAction(ArionShell::ACT_VIEW_ICONS),
+    connect(p->m_actions->shellAction(HWShell::ACT_VIEW_ICONS),
             &QAction::triggered, this, &LSEmbeddedShellHost::setIconListView);
-    connect(m_actions->shellAction(ArionShell::ACT_VIEW_LIST),
+    connect(p->m_actions->shellAction(HWShell::ACT_VIEW_LIST),
             &QAction::triggered, this, &LSEmbeddedShellHost::setTableListView);
-    connect(m_actions->shellAction(ArionShell::ACT_VIEW_COLUMNS),
+    connect(p->m_actions->shellAction(HWShell::ACT_VIEW_COLUMNS),
             &QAction::triggered, this, &LSEmbeddedShellHost::setColumnView);
 
-    connect(m_actions->shellAction(ArionShell::ACT_FILE_NEW_TAB), &QAction::triggered,
+    connect(p->m_actions->shellAction(HWShell::ACT_FILE_NEW_TAB), &QAction::triggered,
              this, &LSEmbeddedShellHost::createNewTab);
-    connect(m_actions->shellAction(ArionShell::ACT_GO_BACK), SIGNAL(triggered()),
+    connect(p->m_actions->shellAction(HWShell::ACT_GO_BACK), SIGNAL(triggered()),
             this, SLOT(goBack()));
-    connect(m_actions->shellAction(ArionShell::ACT_GO_FORWARD), SIGNAL(triggered()),
+    connect(p->m_actions->shellAction(HWShell::ACT_GO_FORWARD), SIGNAL(triggered()),
             this, SLOT(goForward()));
 
-    connect(m_actions->shellAction(ArionShell::ACT_GO_ENCLOSING_FOLDER), SIGNAL(triggered()),
+    connect(p->m_actions->shellAction(HWShell::ACT_GO_ENCLOSING_FOLDER), SIGNAL(triggered()),
             this, SLOT(goEnclosingFolder()));
 
     restoreViewModeFromSettings();
@@ -156,7 +161,7 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
 void LSEmbeddedShellHost::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
-    m_mainSplitter->resize(event->size());
+    p->m_mainSplitter->resize(event->size());
 }
 
 void LSEmbeddedShellHost::locationBarEditingFinished()
@@ -168,18 +173,18 @@ void LSEmbeddedShellHost::setupLocationBar()
 {
     // we don't always use this so we provision it
     // only as needed to save on resources
-    if(m_location)
+    if(p->m_location)
         return;
 
-    m_location = new LSLocationBar(this);
-    connect(m_location, &LSLocationBar::chdir, this, &LSEmbeddedShellHost::navigateToUrl);
-    connect(m_location, &LSLocationBar::middleClickChdir, this, &LSEmbeddedShellHost::newTabWithPath);
-    connect(m_location, &LSLocationBar::editingFinished, this, &LSEmbeddedShellHost::locationBarEditingFinished);
+    p->m_location = new LSLocationBar(this);
+    connect(p->m_location, &LSLocationBar::chdir, this, &LSEmbeddedShellHost::navigateToUrl);
+    connect(p->m_location, &LSLocationBar::middleClickChdir, this, &LSEmbeddedShellHost::newTabWithPath);
+    connect(p->m_location, &LSLocationBar::editingFinished, this, &LSEmbeddedShellHost::locationBarEditingFinished);
 }
 
 LSLocationBar* LSEmbeddedShellHost::locationBar()
 {
-    return m_location;
+    return p->m_location;
 }
 
 void LSEmbeddedShellHost::restoreViewModeFromSettings()
@@ -187,16 +192,16 @@ void LSEmbeddedShellHost::restoreViewModeFromSettings()
     QSettings settings("originull", "hollywood");
 
     // restore our view mode from settings
-    m_viewMode = (ArionShell::ViewMode)settings.value("Preferences/DefaultView", ArionShell::VIEW_ICONS).toInt();
-    switch(m_viewMode)
+    p->m_viewMode = (HWShell::ViewMode)settings.value("Preferences/DefaultView", HWShell::VIEW_ICONS).toInt();
+    switch(p->m_viewMode)
     {
-    case ArionShell::VIEW_COLUMN:
+    case HWShell::VIEW_COLUMN:
         setColumnView();
         break;
-    case ArionShell::VIEW_LIST:
+    case HWShell::VIEW_LIST:
         setTableListView();
         break;
-    case ArionShell::VIEW_ICONS:
+    case HWShell::VIEW_ICONS:
     default:
         setIconListView();
     }
@@ -205,25 +210,25 @@ void LSEmbeddedShellHost::restoreViewModeFromSettings()
 void LSEmbeddedShellHost::toggleViewOptions(bool checked)
 {
     if(checked)
-        m_viewOptions->show();
+        p->m_viewOptions->show();
     else
-        m_viewOptions->hide();
+        p->m_viewOptions->hide();
 }
 
 void LSEmbeddedShellHost::viewOptionsFinished(int result)
 {
     Q_UNUSED(result);
-    if(!m_viewOptions->isVisible())
-        m_actions->shellAction(ArionShell::ACT_VIEW_OPTIONS)->setChecked(false);
+    if(!p->m_viewOptions->isVisible())
+        p->m_actions->shellAction(HWShell::ACT_VIEW_OPTIONS)->setChecked(false);
 }
 
 void LSEmbeddedShellHost::tabCloseRequested(int index)
 {
-    QUuid uuid = m_tabs->tabData(index).toUuid();
-    m_tabLocations.remove(uuid);
-    m_tabViewMode.remove(uuid);
-    m_tabs->removeTab(index);
-    if(m_tabs->count() == 0)
+    QUuid uuid = p->m_tabs->tabData(index).toUuid();
+    p->m_tabLocations.remove(uuid);
+    p->m_tabViewMode.remove(uuid);
+    p->m_tabs->removeTab(index);
+    if(p->m_tabs->count() == 0)
         close();
 }
 
@@ -250,23 +255,23 @@ bool LSEmbeddedShellHost::navigateToUrl(const QUrl &path)
     {
         QIcon ico = QIcon::fromTheme("folder-activities");
         emit updateWindowTitle(tr("Applications"));
-        m_tabs->setTabText(m_tabs->currentIndex(), tr("Applications"));
-        m_tabs->setTabIcon(m_tabs->currentIndex(), ico);
-        QUuid uuid = m_tabs->tabData(m_tabs->currentIndex()).toUuid();
+        p->m_tabs->setTabText(p->m_tabs->currentIndex(), tr("Applications"));
+        p->m_tabs->setTabIcon(p->m_tabs->currentIndex(), ico);
+        QUuid uuid = p->m_tabs->tabData(p->m_tabs->currentIndex()).toUuid();
 
-        m_tabLocations[uuid] = path;
+        p->m_tabLocations[uuid] = path;
         emit updateWindowIcon(ico);
-        m_location->setPath(path);
+        p->m_location->setPath(path);
 
         updatePlaceModelSelection(path);
-        m_actions->shellAction(ArionShell::ACT_GO_ENCLOSING_FOLDER)->setEnabled(false);
+        p->m_actions->shellAction(HWShell::ACT_GO_ENCLOSING_FOLDER)->setEnabled(false);
         return true;
     }
 
     if(path.isLocalFile())
     {
         QString file = path.toLocalFile();
-        QModelIndex idx = m_model->index(file);
+        QModelIndex idx = p->m_model->index(file);
         if(idx.isValid())
         {
             // TODO: back list append
@@ -287,14 +292,14 @@ void LSEmbeddedShellHost::newTabWithPath(const QUrl &path)
      QDir dir(localPath);
      if(dir.isReadable())
      {
-         int idx = m_tabs->addTab(localPath);
+         int idx = p->m_tabs->addTab(localPath);
          QUuid tabId = QUuid::createUuid();
-         m_tabs->setTabData(idx, tabId);
+         p->m_tabs->setTabData(idx, tabId);
          // just temporary to add the map entry
-         m_tabLocations.insert(tabId, QUrl::fromLocalFile("/"));
-         m_tabViewMode.insert(tabId, m_viewMode);
+         p->m_tabLocations.insert(tabId, QUrl::fromLocalFile("/"));
+         p->m_tabViewMode.insert(tabId, p->m_viewMode);
 
-         m_tabs->setCurrentIndex(idx);
+         p->m_tabs->setCurrentIndex(idx);
          navigateToPath(localPath);
      }
      // TODO: error out here
@@ -303,19 +308,19 @@ void LSEmbeddedShellHost::newTabWithPath(const QUrl &path)
 
 void LSEmbeddedShellHost::currentTabChanged(int index)
  {
-    QUuid uuid = m_tabs->tabData(index).toUuid();
-    QUrl path = m_tabLocations[uuid];
+    QUuid uuid = p->m_tabs->tabData(index).toUuid();
+    QUrl path = p->m_tabLocations[uuid];
     swapModelForUrl(path);
-    ArionShell::ViewMode mode = m_tabViewMode[uuid];
+    HWShell::ViewMode mode = p->m_tabViewMode[uuid];
     switch(mode)
     {
-    case ArionShell::VIEW_COLUMN:
+    case HWShell::VIEW_COLUMN:
         setColumnView(false);
         break;
-    case ArionShell::VIEW_LIST:
+    case HWShell::VIEW_LIST:
         setTableListView(false);
         break;
-    case ArionShell::VIEW_ICONS:
+    case HWShell::VIEW_ICONS:
     default:
         setIconListView(false);
     }
@@ -327,94 +332,94 @@ void LSEmbeddedShellHost::currentTabChanged(int index)
 
 void LSEmbeddedShellHost::setIconListView(bool updateSettings)
 {
-    if(m_curSelModel != nullptr)
-        m_curSelModel->clear();
+    if(p->m_curSelModel != nullptr)
+        p->m_curSelModel->clear();
 
-    m_curSelModel = nullptr;
+    p->m_curSelModel = nullptr;
     disconnectViewSlots();
 
-    m_tabWndHostLayout->replaceWidget(m_tabWndHostLayout->itemAt(1)->widget(), m_filesList);
-    m_filesColumn->setVisible(false);
-    m_filesList->setVisible(true);
-    m_filesTable->setVisible(false);
-    m_actions->shellAction(ArionShell::ACT_VIEW_ICONS)->setChecked(true);
-    connect(m_filesList, &QAbstractItemView::customContextMenuRequested, this, &LSEmbeddedShellHost::viewContextMenuRequested);
-    connect(m_filesList, &QListView::clicked, this, &LSEmbeddedShellHost::viewClicked);
-    connect(m_filesList, &QListView::activated, this, &LSEmbeddedShellHost::viewActivated);
-    connect(m_filesList->selectionModel(), &QItemSelectionModel::selectionChanged,
+    p->m_tabWndHostLayout->replaceWidget(p->m_tabWndHostLayout->itemAt(1)->widget(), p->m_filesList);
+    p->m_filesColumn->setVisible(false);
+    p->m_filesList->setVisible(true);
+    p->m_filesTable->setVisible(false);
+    p->m_actions->shellAction(HWShell::ACT_VIEW_ICONS)->setChecked(true);
+    connect(p->m_filesList, &QAbstractItemView::customContextMenuRequested, this, &LSEmbeddedShellHost::viewContextMenuRequested);
+    connect(p->m_filesList, &QListView::clicked, this, &LSEmbeddedShellHost::viewClicked);
+    connect(p->m_filesList, &QListView::activated, this, &LSEmbeddedShellHost::viewActivated);
+    connect(p->m_filesList->selectionModel(), &QItemSelectionModel::selectionChanged,
             this, &LSEmbeddedShellHost::viewSelectionChanged);
-    m_viewMode = ArionShell::VIEW_ICONS;
-    QUuid uuid = m_tabs->tabData(m_tabs->currentIndex()).toUuid();
-    m_tabViewMode[uuid] = m_viewMode;
-    m_viewOptions->setCurrentView(ArionShell::VIEW_ICONS);
+    p->m_viewMode = HWShell::VIEW_ICONS;
+    QUuid uuid = p->m_tabs->tabData(p->m_tabs->currentIndex()).toUuid();
+    p->m_tabViewMode[uuid] = p->m_viewMode;
+    p->m_viewOptions->setCurrentView(HWShell::VIEW_ICONS);
     if(updateSettings)
     {
         QSettings settings("originull", "hollywood");
-        settings.setValue("Preferences/DefaultView", m_viewMode);
+        settings.setValue("Preferences/DefaultView", p->m_viewMode);
     }
     disableActionsForNoSelection();
-    m_curSelModel = m_filesList->selectionModel();
+    p->m_curSelModel = p->m_filesList->selectionModel();
     emit updateStatusBar(generateStatusBarMsg());
 }
 
 void LSEmbeddedShellHost::setColumnView(bool updateSettings)
 {
-    if(m_curSelModel != nullptr)
-        m_curSelModel->clear();
+    if(p->m_curSelModel != nullptr)
+        p->m_curSelModel->clear();
 
-    m_curSelModel = nullptr;
+    p->m_curSelModel = nullptr;
 
     disconnectViewSlots();
-    m_tabWndHostLayout->replaceWidget(m_tabWndHostLayout->itemAt(1)->widget(), m_filesColumn);
-    m_filesColumn->setVisible(true);
-    m_filesList->setVisible(false);
-    m_filesTable->setVisible(false);
-    m_actions->shellAction(ArionShell::ACT_VIEW_COLUMNS)->setChecked(true);
-    connect(m_filesColumn, &QAbstractItemView::customContextMenuRequested, this, &LSEmbeddedShellHost::viewContextMenuRequested);
-    connect(m_filesColumn, &QColumnView::doubleClicked, this, &LSEmbeddedShellHost::viewActivated);
-    connect(m_filesColumn->selectionModel(), &QItemSelectionModel::selectionChanged,
+    p->m_tabWndHostLayout->replaceWidget(p->m_tabWndHostLayout->itemAt(1)->widget(), p->m_filesColumn);
+    p->m_filesColumn->setVisible(true);
+    p->m_filesList->setVisible(false);
+    p->m_filesTable->setVisible(false);
+    p->m_actions->shellAction(HWShell::ACT_VIEW_COLUMNS)->setChecked(true);
+    connect(p->m_filesColumn, &QAbstractItemView::customContextMenuRequested, this, &LSEmbeddedShellHost::viewContextMenuRequested);
+    connect(p->m_filesColumn, &QColumnView::doubleClicked, this, &LSEmbeddedShellHost::viewActivated);
+    connect(p->m_filesColumn->selectionModel(), &QItemSelectionModel::selectionChanged,
             this, &LSEmbeddedShellHost::viewSelectionChanged);
-    m_viewMode = ArionShell::VIEW_COLUMN;
-    QUuid uuid = m_tabs->tabData(m_tabs->currentIndex()).toUuid();
-    m_tabViewMode[uuid] = m_viewMode;
-    m_viewOptions->setCurrentView(ArionShell::VIEW_COLUMN);
+    p->m_viewMode = HWShell::VIEW_COLUMN;
+    QUuid uuid = p->m_tabs->tabData(p->m_tabs->currentIndex()).toUuid();
+    p->m_tabViewMode[uuid] = p->m_viewMode;
+    p->m_viewOptions->setCurrentView(HWShell::VIEW_COLUMN);
     if(updateSettings)
     {
         QSettings settings("originull", "hollywood");
-        settings.setValue("Preferences/DefaultView", m_viewMode);
+        settings.setValue("Preferences/DefaultView", p->m_viewMode);
     }
-    m_curSelModel = m_filesColumn->selectionModel();
+    p->m_curSelModel = p->m_filesColumn->selectionModel();
     disableActionsForNoSelection();
     emit updateStatusBar(generateStatusBarMsg());
 }
 
 void LSEmbeddedShellHost::setTableListView(bool updateSettings)
 {
-    if(m_curSelModel != nullptr)
-        m_curSelModel->clear();
+    if(p->m_curSelModel != nullptr)
+        p->m_curSelModel->clear();
 
     disconnectViewSlots();
-    m_curSelModel = nullptr;
-    m_tabWndHostLayout->replaceWidget(m_tabWndHostLayout->itemAt(1)->widget(), m_filesTable);
-    m_filesColumn->setVisible(false);
-    m_filesList->setVisible(false);
-    m_filesTable->setVisible(true);
-    m_actions->shellAction(ArionShell::ACT_VIEW_LIST)->setChecked(true);
-    m_viewMode = ArionShell::VIEW_LIST;
-    connect(m_filesTable, &QAbstractItemView::customContextMenuRequested, this, &LSEmbeddedShellHost::viewContextMenuRequested);
-    connect(m_filesTable, &QTreeView::clicked, this, &LSEmbeddedShellHost::viewClicked);
-    connect(m_filesTable, &QTreeView::activated, this, &LSEmbeddedShellHost::viewActivated);
-    connect(m_filesTable->selectionModel(), &QItemSelectionModel::selectionChanged,
+    p->m_curSelModel = nullptr;
+    p->m_tabWndHostLayout->replaceWidget(p->m_tabWndHostLayout->itemAt(1)->widget(), p->m_filesTable);
+    p->m_filesColumn->setVisible(false);
+    p->m_filesList->setVisible(false);
+    p->m_filesTable->setVisible(true);
+    p->m_actions->shellAction(HWShell::ACT_VIEW_LIST)->setChecked(true);
+    p->m_viewMode = HWShell::VIEW_LIST;
+    connect(p->m_filesTable, &QAbstractItemView::customContextMenuRequested, this, &LSEmbeddedShellHost::viewContextMenuRequested);
+    connect(p->m_filesTable, &QTreeView::clicked, this, &LSEmbeddedShellHost::viewClicked);
+    connect(p->m_filesTable, &QTreeView::activated, this, &LSEmbeddedShellHost::viewActivated);
+    connect(p->m_filesTable->selectionModel(), &QItemSelectionModel::selectionChanged,
             this, &LSEmbeddedShellHost::viewSelectionChanged);
-    QUuid uuid = m_tabs->tabData(m_tabs->currentIndex()).toUuid();
-    m_tabViewMode[uuid] = m_viewMode;
-    m_viewOptions->setCurrentView(ArionShell::VIEW_LIST);
+    QUuid uuid = p->m_tabs->tabData(p->m_tabs->currentIndex()).toUuid();
+    p->m_tabViewMode[uuid] = p->m_viewMode;
+    p->m_viewOptions->setCurrentView(HWShell::VIEW_LIST);
     if(updateSettings)
     {
         QSettings settings("originull", "hollywood");
-        settings.setValue("Preferences/DefaultView", m_viewMode);
+        settings.setValue("Preferences/DefaultView", p->m_viewMode);
     }
-    m_curSelModel = m_filesTable->selectionModel();
+    p->m_curSelModel = p->m_filesTable->selectionModel();
     disableActionsForNoSelection();
     emit updateStatusBar(generateStatusBarMsg());
 }
@@ -427,9 +432,9 @@ void LSEmbeddedShellHost::viewClicked(const QModelIndex &idx)
 
 void LSEmbeddedShellHost::viewActivated(const QModelIndex &idx)
 {
-    if(m_currentModel == Filesystem)
+    if(p->m_currentModel == Filesystem)
     {
-        QFileInfo fileInfo(m_model->fileInfo(idx));
+        QFileInfo fileInfo(p->m_model->fileInfo(idx));
         if(fileInfo.isDir())
         {
             // TODO: Handle a spacitial mode
@@ -443,9 +448,9 @@ void LSEmbeddedShellHost::viewActivated(const QModelIndex &idx)
         }
 
         // handle a .desktop file
-        if(m_model->isDesktop(idx))
+        if(p->m_model->isDesktop(idx))
         {
-            executeDesktopOverDBus(m_model->desktopFileForIndex(idx));
+            executeDesktopOverDBus(p->m_model->desktopFileForIndex(idx));
             return;
         }
 
@@ -453,9 +458,9 @@ void LSEmbeddedShellHost::viewActivated(const QModelIndex &idx)
         // TODO: handle executing an executable file???
     }
 
-    if(m_currentModel == Applications)
+    if(p->m_currentModel == Applications)
     {
-        auto da = m_apps->data(idx, Qt::UserRole+1);
+        auto da = p->m_apps->data(idx, Qt::UserRole+1);
         executeDesktopOverDBus(da.toString());
     }
 }
@@ -475,13 +480,13 @@ void LSEmbeddedShellHost::viewSelectionChanged(const QItemSelection &selected, c
 
 void LSEmbeddedShellHost::placeClicked(const QModelIndex &idx)
 {
-    navigateToUrl(m_placeModel->place(idx).location);
+    navigateToUrl(p->m_placeModel->place(idx).location);
 }
 
 void LSEmbeddedShellHost::updateColumnWidget(const QModelIndex &idx)
 {
-    m_columnPreview->updateFileInfo(m_model->fileInfo(idx));
-    m_columnPreview->show();
+    p->m_columnPreview->updateFileInfo(p->m_model->fileInfo(idx));
+    p->m_columnPreview->show();
 }
 
 void LSEmbeddedShellHost::modelRootPathChanged(const QString &path)
@@ -503,16 +508,16 @@ void LSEmbeddedShellHost::viewContextMenuRequested(const QPoint &pos)
     connect(menu, &QMenu::aboutToHide, menu, &QMenu::deleteLater);
 
     QModelIndex pointIndex;
-    switch(m_viewMode)
+    switch(p->m_viewMode)
     {
-    case ArionShell::VIEW_ICONS:
-        pointIndex = m_filesList->indexAt(pos);
+    case HWShell::VIEW_ICONS:
+        pointIndex = p->m_filesList->indexAt(pos);
         break;
-    case ArionShell::VIEW_LIST:
-        pointIndex = m_filesTable->indexAt(pos);
+    case HWShell::VIEW_LIST:
+        pointIndex = p->m_filesTable->indexAt(pos);
         break;
-    case ArionShell::VIEW_COLUMN:
-        pointIndex = m_filesColumn->indexAt(pos);
+    case HWShell::VIEW_COLUMN:
+        pointIndex = p->m_filesColumn->indexAt(pos);
         break;
     }
 
@@ -521,16 +526,16 @@ void LSEmbeddedShellHost::viewContextMenuRequested(const QPoint &pos)
     {
         // we rightclick on a valid index
 
-        if(m_curSelModel != nullptr)
+        if(p->m_curSelModel != nullptr)
         {
-            if(m_curSelModel->selectedIndexes().contains(pointIndex))
+            if(p->m_curSelModel->selectedIndexes().contains(pointIndex))
                 onSel = true;
             else
             {
                 // vald index, not part of selection though
                 // lets select it
-                m_curSelModel->clearSelection();
-                m_curSelModel->select(pointIndex, QItemSelectionModel::ClearAndSelect);
+                p->m_curSelModel->clearSelection();
+                p->m_curSelModel->select(pointIndex, QItemSelectionModel::ClearAndSelect);
                 onSel = true;
             }
         }
@@ -539,23 +544,23 @@ void LSEmbeddedShellHost::viewContextMenuRequested(const QPoint &pos)
     if(onSel)
     {
         // create our menu for a selection
-        //menu->addAction(m_actions->shellAction(ArionShell::ACT_FILE_OPEN_WITH));
-        menu->addAction(m_actions->shellAction(ArionShell::ACT_FILE_OPEN_WITH));
-        menu->addAction(m_actions->shellAction(ArionShell::ACT_FILE_ARCHIVE));
-        menu->addAction(m_actions->shellAction(ArionShell::ACT_FILE_RENAME));
-        menu->addAction(m_actions->shellAction(ArionShell::ACT_EDIT_COPY));
+        //menu->addAction(p->m_actions->shellAction(ArionShell::ACT_FILE_OPEN_WITH));
+        menu->addAction(p->m_actions->shellAction(HWShell::ACT_FILE_OPEN_WITH));
+        menu->addAction(p->m_actions->shellAction(HWShell::ACT_FILE_ARCHIVE));
+        menu->addAction(p->m_actions->shellAction(HWShell::ACT_FILE_RENAME));
+        menu->addAction(p->m_actions->shellAction(HWShell::ACT_EDIT_COPY));
         menu->addSeparator();
-        menu->addAction(m_actions->shellAction(ArionShell::ACT_FILE_TRASH));
+        menu->addAction(p->m_actions->shellAction(HWShell::ACT_FILE_TRASH));
         menu->addSeparator();
-        menu->addAction(m_actions->shellAction(ArionShell::ACT_FILE_GET_INFO));
+        menu->addAction(p->m_actions->shellAction(HWShell::ACT_FILE_GET_INFO));
     }
     else
     {
         // no selection - create menu for this folder
-        menu->addAction(m_actions->shellAction(ArionShell::ACT_FILE_NEW_FOLDER));
-        menu->addAction(m_actions->shellAction(ArionShell::ACT_EDIT_PASTE));
+        menu->addAction(p->m_actions->shellAction(HWShell::ACT_FILE_NEW_FOLDER));
+        menu->addAction(p->m_actions->shellAction(HWShell::ACT_EDIT_PASTE));
         menu->addSeparator();
-        menu->addAction(m_actions->shellAction(ArionShell::ACT_FILE_GET_INFO));
+        menu->addAction(p->m_actions->shellAction(HWShell::ACT_FILE_GET_INFO));
     }
 
     menu->popup(mapToGlobal(pos));
@@ -620,48 +625,48 @@ bool LSEmbeddedShellHost::openFileOverDBusWithDefault(const QString &file)
 
 void LSEmbeddedShellHost::disableActionsForNoSelection()
 {
-    m_actions->shellAction(ArionShell::ACT_FILE_RENAME)->setText(tr("&Rename"));
-    m_actions->shellAction(ArionShell::ACT_FILE_OPEN_WITH)->setDisabled(true);
-    m_actions->shellAction(ArionShell::ACT_FILE_GET_INFO)->setDisabled(true);
-    m_actions->shellAction(ArionShell::ACT_FILE_RENAME)->setDisabled(true);
-    m_actions->shellAction(ArionShell::ACT_FILE_ARCHIVE)->setDisabled(true);
-    m_actions->shellAction(ArionShell::ACT_FILE_TRASH)->setDisabled(true);
+    p->m_actions->shellAction(HWShell::ACT_FILE_RENAME)->setText(tr("&Rename"));
+    p->m_actions->shellAction(HWShell::ACT_FILE_OPEN_WITH)->setDisabled(true);
+    p->m_actions->shellAction(HWShell::ACT_FILE_GET_INFO)->setDisabled(true);
+    p->m_actions->shellAction(HWShell::ACT_FILE_RENAME)->setDisabled(true);
+    p->m_actions->shellAction(HWShell::ACT_FILE_ARCHIVE)->setDisabled(true);
+    p->m_actions->shellAction(HWShell::ACT_FILE_TRASH)->setDisabled(true);
 
-    m_actions->shellAction(ArionShell::ACT_EDIT_COPY)->setDisabled(true);
-    m_actions->shellAction(ArionShell::ACT_EDIT_CUT)->setDisabled(true);
-    m_actions->shellAction(ArionShell::ACT_EDIT_INV_SEL)->setDisabled(true);
+    p->m_actions->shellAction(HWShell::ACT_EDIT_COPY)->setDisabled(true);
+    p->m_actions->shellAction(HWShell::ACT_EDIT_CUT)->setDisabled(true);
+    p->m_actions->shellAction(HWShell::ACT_EDIT_INV_SEL)->setDisabled(true);
 }
 
 void LSEmbeddedShellHost::enableActionsForFileSelection(bool multiple)
 {
     if(!multiple)
-        m_actions->shellAction(ArionShell::ACT_FILE_RENAME)->setText(tr("&Rename"));
+        p->m_actions->shellAction(HWShell::ACT_FILE_RENAME)->setText(tr("&Rename"));
     else
-        m_actions->shellAction(ArionShell::ACT_FILE_RENAME)->setText(tr("&Rename..."));
+        p->m_actions->shellAction(HWShell::ACT_FILE_RENAME)->setText(tr("&Rename..."));
 
 
-    m_actions->shellAction(ArionShell::ACT_FILE_GET_INFO)->setEnabled(true);
-    m_actions->shellAction(ArionShell::ACT_FILE_RENAME)->setEnabled(true);
-    //m_actions->shellAction(ArionShell::ACT_FILE_ARCHIVE)->setEnabled(true);
-    m_actions->shellAction(ArionShell::ACT_FILE_TRASH)->setEnabled(true);
+    p->m_actions->shellAction(HWShell::ACT_FILE_GET_INFO)->setEnabled(true);
+    p->m_actions->shellAction(HWShell::ACT_FILE_RENAME)->setEnabled(true);
+    //p->m_actions->shellAction(ArionShell::ACT_FILE_ARCHIVE)->setEnabled(true);
+    p->m_actions->shellAction(HWShell::ACT_FILE_TRASH)->setEnabled(true);
 
-    m_actions->shellAction(ArionShell::ACT_EDIT_COPY)->setEnabled(true);
+    p->m_actions->shellAction(HWShell::ACT_EDIT_COPY)->setEnabled(true);
 
     // TODO: check if .desktop
-    m_actions->shellAction(ArionShell::ACT_FILE_OPEN_WITH)->setEnabled(true);
+    p->m_actions->shellAction(HWShell::ACT_FILE_OPEN_WITH)->setEnabled(true);
 
-    //m_actions->shellAction(ArionShell::ACT_EDIT_CUT)->setDisabled(true);
-    m_actions->shellAction(ArionShell::ACT_EDIT_INV_SEL)->setDisabled(true);
+    //p->m_actions->shellAction(ArionShell::ACT_EDIT_CUT)->setDisabled(true);
+    p->m_actions->shellAction(HWShell::ACT_EDIT_INV_SEL)->setDisabled(true);
 
 }
 
 void LSEmbeddedShellHost::updatePlaceModelSelection(const QUrl &place)
 {
-    m_treeFavorites->selectionModel()->clear();
-    if(m_placeModel->hasPlaceForUrl(place))
+    p->m_treeFavorites->selectionModel()->clear();
+    if(p->m_placeModel->hasPlaceForUrl(place))
     {
-        const QModelIndex idx = m_placeModel->indexForPlace(m_placeModel->place(place));
-        m_treeFavorites->selectionModel()->select(idx, QItemSelectionModel::Select);
+        const QModelIndex idx = p->m_placeModel->indexForPlace(p->m_placeModel->place(place));
+        p->m_treeFavorites->selectionModel()->select(idx, QItemSelectionModel::Select);
     }
 }
 
@@ -671,34 +676,34 @@ QString LSEmbeddedShellHost::generateStatusBarMsg() const
     QModelIndex current;
     bool selected = false;
     int count = 0;
-    switch(m_viewMode)
+    switch(p->m_viewMode)
     {
-    case ArionShell::VIEW_ICONS:
-        current = m_filesList->currentIndex();
-        selected = m_filesList->selectionModel()->hasSelection();
-        count = selected ? m_filesList->selectionModel()->selectedIndexes().count() : 0;
+    case HWShell::VIEW_ICONS:
+        current = p->m_filesList->currentIndex();
+        selected = p->m_filesList->selectionModel()->hasSelection();
+        count = selected ? p->m_filesList->selectionModel()->selectedIndexes().count() : 0;
         if(count == 1)
         {
-            if(m_currentModel == Filesystem)
+            if(p->m_currentModel == Filesystem)
             {
                 QFileInfo info =
-                        m_model->fileInfo(m_filesList->selectionModel()->selectedIndexes().first());
+                        p->m_model->fileInfo(p->m_filesList->selectionModel()->selectedIndexes().first());
                 fileName = info.fileName();
                 fileSize = tr("0KB");
                 fileType = info.fileName();
             }
         }
         break;
-    case ArionShell::VIEW_LIST:
-        current = m_filesTable->currentIndex();
-        selected = m_filesTable->selectionModel()->hasSelection();
-        count = selected ? m_filesTable->selectionModel()->selectedIndexes().count() : 0;
+    case HWShell::VIEW_LIST:
+        current = p->m_filesTable->currentIndex();
+        selected = p->m_filesTable->selectionModel()->hasSelection();
+        count = selected ? p->m_filesTable->selectionModel()->selectedIndexes().count() : 0;
         if(count == 1)
         {
-            if(m_currentModel == Filesystem)
+            if(p->m_currentModel == Filesystem)
             {
                 QFileInfo info =
-                        m_model->fileInfo(m_filesList->selectionModel()->selectedIndexes().first());
+                        p->m_model->fileInfo(p->m_filesList->selectionModel()->selectedIndexes().first());
                 fileName = info.fileName();
                 fileSize = tr("0KB");
                 fileType = info.fileName();
@@ -720,12 +725,12 @@ QString LSEmbeddedShellHost::generateStatusBarMsg() const
     {
         if(current.isValid())
         {
-            if(m_currentModel == Filesystem)
+            if(p->m_currentModel == Filesystem)
             {
-                if(m_model->rowCount(current) == 1)
-                    return tr("%1 item").arg(m_model->rowCount(current));
+                if(p->m_model->rowCount(current) == 1)
+                    return tr("%1 item").arg(p->m_model->rowCount(current));
                 else
-                    return tr("%1 items").arg(m_model->rowCount(current));
+                    return tr("%1 items").arg(p->m_model->rowCount(current));
             }
         }
     }
@@ -750,21 +755,21 @@ void LSEmbeddedShellHost::showFolderPermissionError(const QString &folder)
 
 void LSEmbeddedShellHost::disconnectViewSlots()
 {
-    disconnect(m_filesColumn, &QAbstractItemView::customContextMenuRequested, this, &LSEmbeddedShellHost::viewContextMenuRequested);
-    disconnect(m_filesList, &QAbstractItemView::customContextMenuRequested, this, &LSEmbeddedShellHost::viewContextMenuRequested);
-    disconnect(m_filesTable, &QAbstractItemView::customContextMenuRequested, this, &LSEmbeddedShellHost::viewContextMenuRequested);
+    disconnect(p->m_filesColumn, &QAbstractItemView::customContextMenuRequested, this, &LSEmbeddedShellHost::viewContextMenuRequested);
+    disconnect(p->m_filesList, &QAbstractItemView::customContextMenuRequested, this, &LSEmbeddedShellHost::viewContextMenuRequested);
+    disconnect(p->m_filesTable, &QAbstractItemView::customContextMenuRequested, this, &LSEmbeddedShellHost::viewContextMenuRequested);
 
-    disconnect(m_filesColumn, &QColumnView::activated, this, &LSEmbeddedShellHost::viewActivated);
-    disconnect(m_filesColumn->selectionModel(), &QItemSelectionModel::selectionChanged,
+    disconnect(p->m_filesColumn, &QColumnView::activated, this, &LSEmbeddedShellHost::viewActivated);
+    disconnect(p->m_filesColumn->selectionModel(), &QItemSelectionModel::selectionChanged,
             this, &LSEmbeddedShellHost::viewSelectionChanged);
-    disconnect(m_filesList, &QListView::clicked, this, &LSEmbeddedShellHost::viewClicked);
-    disconnect(m_filesList, &QListView::activated, this, &LSEmbeddedShellHost::viewActivated);
-    disconnect(m_filesList->selectionModel(), &QItemSelectionModel::selectionChanged,
+    disconnect(p->m_filesList, &QListView::clicked, this, &LSEmbeddedShellHost::viewClicked);
+    disconnect(p->m_filesList, &QListView::activated, this, &LSEmbeddedShellHost::viewActivated);
+    disconnect(p->m_filesList->selectionModel(), &QItemSelectionModel::selectionChanged,
             this, &LSEmbeddedShellHost::viewSelectionChanged);
 
-    disconnect(m_filesTable, &QTreeView::clicked, this, &LSEmbeddedShellHost::viewClicked);
-    disconnect(m_filesTable, &QTreeView::activated, this, &LSEmbeddedShellHost::viewActivated);
-    disconnect(m_filesTable->selectionModel(), &QItemSelectionModel::selectionChanged,
+    disconnect(p->m_filesTable, &QTreeView::clicked, this, &LSEmbeddedShellHost::viewClicked);
+    disconnect(p->m_filesTable, &QTreeView::activated, this, &LSEmbeddedShellHost::viewActivated);
+    disconnect(p->m_filesTable->selectionModel(), &QItemSelectionModel::selectionChanged,
             this, &LSEmbeddedShellHost::viewSelectionChanged);
 }
 
@@ -772,28 +777,28 @@ void LSEmbeddedShellHost::updateBackForwardList(const QUrl &url, bool goback)
 {
     if(!goback)
     {
-        QUuid uuid = m_tabs->tabData(m_tabs->currentIndex()).toUuid();
-        m_backLists[uuid].prepend(url);
-        m_forwardLists[uuid].clear();
+        QUuid uuid = p->m_tabs->tabData(p->m_tabs->currentIndex()).toUuid();
+        p->m_backLists[uuid].prepend(url);
+        p->m_forwardLists[uuid].clear();
     }
     updateNavigationButtonStatus();
 }
 
 void LSEmbeddedShellHost::updateNavigationButtonStatus()
 {
-    QUuid uuid = m_tabs->tabData(m_tabs->currentIndex()).toUuid();
-    auto bc = m_backLists[uuid].count();
-    auto fc = m_forwardLists[uuid].count();
+    QUuid uuid = p->m_tabs->tabData(p->m_tabs->currentIndex()).toUuid();
+    auto bc = p->m_backLists[uuid].count();
+    auto fc = p->m_forwardLists[uuid].count();
 
     if(bc == 0)
-        m_actions->shellAction(ArionShell::ACT_GO_BACK)->setEnabled(false);
+        p->m_actions->shellAction(HWShell::ACT_GO_BACK)->setEnabled(false);
     else
-        m_actions->shellAction(ArionShell::ACT_GO_BACK)->setEnabled(true);
+        p->m_actions->shellAction(HWShell::ACT_GO_BACK)->setEnabled(true);
 
     if(fc == 0)
-        m_actions->shellAction(ArionShell::ACT_GO_FORWARD)->setEnabled(false);
+        p->m_actions->shellAction(HWShell::ACT_GO_FORWARD)->setEnabled(false);
     else
-        m_actions->shellAction(ArionShell::ACT_GO_FORWARD)->setEnabled(true);
+        p->m_actions->shellAction(HWShell::ACT_GO_FORWARD)->setEnabled(true);
 
 }
 
@@ -802,17 +807,17 @@ void LSEmbeddedShellHost::swapToModel(ShellModel model)
     switch(model)
     {
     case Applications:
-        m_filesColumn->setModel(m_apps);
-        m_filesList->setModel(m_apps);
-        m_filesTable->setModel(m_apps);
-        m_currentModel = Applications;
+        p->m_filesColumn->setModel(p->m_apps);
+        p->m_filesList->setModel(p->m_apps);
+        p->m_filesTable->setModel(p->m_apps);
+        p->m_currentModel = Applications;
         break;
     case Filesystem:
     default:
-        m_filesColumn->setModel(m_model);
-        m_filesList->setModel(m_model);
-        m_filesTable->setModel(m_model);
-        m_currentModel = Filesystem;
+        p->m_filesColumn->setModel(p->m_model);
+        p->m_filesList->setModel(p->m_model);
+        p->m_filesTable->setModel(p->m_model);
+        p->m_currentModel = Filesystem;
         break;
     }
 }
@@ -821,7 +826,7 @@ void LSEmbeddedShellHost::swapModelForUrl(const QUrl &url)
 {
     if(url.isLocalFile())
     {
-        if(m_currentModel != Filesystem)
+        if(p->m_currentModel != Filesystem)
             swapToModel(Filesystem);
 
         return;
@@ -829,7 +834,7 @@ void LSEmbeddedShellHost::swapModelForUrl(const QUrl &url)
 
     if(url.scheme() == QLatin1String("applications"))
     {
-        if(m_currentModel != Applications)
+        if(p->m_currentModel != Applications)
             swapToModel(Applications);
 
         return;
@@ -842,12 +847,12 @@ void LSEmbeddedShellHost::updateRootIndex(const QModelIndex &idx, bool internal)
     QSettings settings("originull", "hollywood");
     bool showFullPath = settings.value("Preferences/ShowFullPathName", false).toBool();
     QFileIconProvider icons;
-    QFileInfo info(m_model->fileInfo(idx));
-    m_filesList->setRootIndex(idx);
+    QFileInfo info(p->m_model->fileInfo(idx));
+    p->m_filesList->setRootIndex(idx);
 
     // we shouldn't do the following two in desktop mode
-    m_filesColumn->setRootIndex(idx);
-    m_filesTable->setRootIndex(idx);
+    p->m_filesColumn->setRootIndex(idx);
+    p->m_filesTable->setRootIndex(idx);
 
     // update our tab and window title
     QString directory = info.canonicalFilePath();
@@ -856,7 +861,7 @@ void LSEmbeddedShellHost::updateRootIndex(const QModelIndex &idx, bool internal)
     if(showFullPath)
     {
         emit updateWindowTitle(directory);
-        m_tabs->setTabText(m_tabs->currentIndex(), directory);
+        p->m_tabs->setTabText(p->m_tabs->currentIndex(), directory);
     }
     else
     {
@@ -864,29 +869,29 @@ void LSEmbeddedShellHost::updateRootIndex(const QModelIndex &idx, bool internal)
         if(shortDir.isEmpty())
             shortDir = "/";
         emit updateWindowTitle(shortDir);
-        m_tabs->setTabText(m_tabs->currentIndex(), shortDir);
+        p->m_tabs->setTabText(p->m_tabs->currentIndex(), shortDir);
     }
-    m_tabs->setTabIcon(m_tabs->currentIndex(), ico);
-    QUuid uuid = m_tabs->tabData(m_tabs->currentIndex()).toUuid();
+    p->m_tabs->setTabIcon(p->m_tabs->currentIndex(), ico);
+    QUuid uuid = p->m_tabs->tabData(p->m_tabs->currentIndex()).toUuid();
 
-    m_tabLocations[uuid] = QUrl::fromLocalFile(info.canonicalFilePath());
+    p->m_tabLocations[uuid] = QUrl::fromLocalFile(info.canonicalFilePath());
     emit updateWindowIcon(ico);
     QUrl url = QUrl::fromLocalFile(directory);
-    m_location->setPath(url);
+    p->m_location->setPath(url);
 
     updatePlaceModelSelection(url);
     // update our up (enclosing folder) action
     if(idx.parent() != QModelIndex())
-        m_actions->shellAction(ArionShell::ACT_GO_ENCLOSING_FOLDER)->setEnabled(true);
+        p->m_actions->shellAction(HWShell::ACT_GO_ENCLOSING_FOLDER)->setEnabled(true);
     else
-        m_actions->shellAction(ArionShell::ACT_GO_ENCLOSING_FOLDER)->setEnabled(false);
+        p->m_actions->shellAction(HWShell::ACT_GO_ENCLOSING_FOLDER)->setEnabled(false);
 
     emit updateStatusBar(generateStatusBarMsg());
 }
 
-QAction* LSEmbeddedShellHost::shellAction(ArionShell::ShellActions shellAction)
+QAction* LSEmbeddedShellHost::shellAction(HWShell::ShellActions shellAction)
 {
-    return m_actions->shellAction(shellAction);
+    return p->m_actions->shellAction(shellAction);
 }
 
 void LSEmbeddedShellHost::goBack()
@@ -902,19 +907,19 @@ void LSEmbeddedShellHost::goForward()
 void LSEmbeddedShellHost::goEnclosingFolder()
 {
     QModelIndex currentIndex;
-    switch(m_viewMode)
+    switch(p->m_viewMode)
     {
-    case ArionShell::VIEW_COLUMN:
-        currentIndex = m_filesColumn->rootIndex();
+    case HWShell::VIEW_COLUMN:
+        currentIndex = p->m_filesColumn->rootIndex();
         break;
-    case ArionShell::VIEW_LIST:
-        currentIndex = m_filesTable->rootIndex();
+    case HWShell::VIEW_LIST:
+        currentIndex = p->m_filesTable->rootIndex();
         break;
-    case ArionShell::VIEW_ICONS:
+    case HWShell::VIEW_ICONS:
     default:
-        currentIndex = m_filesList->rootIndex();
+        currentIndex = p->m_filesList->rootIndex();
     }
-    updateBackForwardList(QUrl::fromLocalFile(m_model->fileInfo(currentIndex).canonicalFilePath()));
+    updateBackForwardList(QUrl::fromLocalFile(p->m_model->fileInfo(currentIndex).canonicalFilePath()));
     updateRootIndex(currentIndex.parent());
 }
 

@@ -4,18 +4,19 @@
 #include "libshell_int.h"
 
 class ApplicationModel;
-class LSLocationBar;
 class LSActionManager;
-class ViewOptionsDialog;
-class LSFSModel;
+class LSViewOptionsDialog;
 class LSPlaceModel;
 class LSPlaceView;
 class LSColumnPreview;
 class LSFSItemDelegate;
 
+class LSLocationBar;
+class LSFSModel;
 typedef LSFSModel FilesystemModel;
 typedef QList<QUrl> UrlList;
 
+class LSEmbeddedShellHostPrivate;
 class LIBSHELL_EXPORT LSEmbeddedShellHost : public QWidget
 {
     Q_OBJECT
@@ -28,7 +29,7 @@ public:
         Trash
     };
     explicit LSEmbeddedShellHost(QWidget *parent = nullptr);
-    QAction* shellAction(ArionShell::ShellActions shellAction);
+    QAction* shellAction(HWShell::ShellActions shellAction);
     LSLocationBar* locationBar();
 public slots:
     bool navigateToPath(const QString &path);
@@ -81,38 +82,7 @@ private:
     void swapToModel(ShellModel model);
     void swapModelForUrl(const QUrl &url);
 private:
-    ShellModel m_currentModel = ShellModel::Filesystem;
-    LSActionManager *m_actions;
-    LSLocationBar *m_location = nullptr;
-    QSplitter *m_mainSplitter;
-    QTabWidget *m_treeToolbox;
-    LSPlaceView *m_treeFavorites;
-    QTreeView *m_treeDirs;
-
-    QColumnView *m_filesColumn;
-    LSColumnPreview *m_columnPreview = nullptr;
-    QListView *m_filesList;
-    QTreeView *m_filesTable;
-
-    ArionShell::ViewMode m_viewMode;
-    FilesystemModel *m_model;
-
-    ApplicationModel *m_apps;
-
-    LSPlaceModel *m_placeModel;
-    QMap<QUuid, QUrl> m_tabLocations;
-    QMap<QUuid, ArionShell::ViewMode> m_tabViewMode;
-
-    QMap<QUuid, UrlList> m_backLists;
-    QMap<QUuid, UrlList> m_forwardLists;
-
-    QTabBar *m_tabs;
-    QVBoxLayout *m_tabWndHostLayout;
-    QWidget *m_tabWndHost;
-    ViewOptionsDialog *m_viewOptions;
-    LSFSItemDelegate *m_delegate = nullptr;
-
-    QItemSelectionModel *m_curSelModel = nullptr;
+    LSEmbeddedShellHostPrivate *p;
 };
 
 #endif // SHELLHOST_H
