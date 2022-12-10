@@ -34,7 +34,13 @@ HEADERS += \
     fmapplication.h
 
 
-unix {
-    target.path = /usr/bin
-}
-!isEmpty(target.path): INSTALLS += target
+# Default rules for deployment.
+QMAKE_SUBSTITUTES +=org.originull.hwsettings.shellfm.in
+desktop.path = $$PREFIX/share/applications
+desktop.files = org.originull.shellfm.desktop
+target.path = $$PREFIX/bin
+
+INSTALLS += target desktop
+
+DISTFILES += \
+    org.originull.shellfm.desktop.in

@@ -6,6 +6,7 @@
 #include <iostream>
 
 #include "filemanager1_adaptor.h"
+#include "getinfodialog.h"
 
 FMApplication::FMApplication(int &argc, char **argv)
     :QApplication(argc, argv)
@@ -139,12 +140,28 @@ void FMApplication::ShowFolders(const QStringList &urlList, const QString &start
 
 void FMApplication::ShowItems(const QStringList &urlList, const QString &startupId)
 {
+    Q_UNUSED(startupId)
 
 }
 
 void FMApplication::ShowItemProperties(const QStringList &urlList, const QString &startupId)
 {
+    Q_UNUSED(startupId)
+    for(auto &url : urlList)
+    {
+        if(url.isEmpty())
+            continue;
 
+        QUrl qurl(url);
+        // TODO: trash:// etc ???
+        if(qurl.scheme() != "file")
+            continue;
+
+        auto dlg = new LSGetInfoDialog(qurl, nullptr);
+        connect(dlg, &QDialog::accepted, dlg, &QWidget::deleteLater);
+        connect(dlg, &QDialog::rejected, dlg, &QWidget::deleteLater);
+        dlg->open();
+    }
 }
 
 void FMApplication::checkForSessionStartup()

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Exec=shellfm %U
+Icon=system-file-manager
+Terminal=false
+Name=Hollywood Shell
+Comment=Hollywood System Shell
+Categories=FileManager;Utility;Core;Hollywood;Qt
+MimeType=inode/directory;application/x-desktop;
+X-Hollywood-System=true
