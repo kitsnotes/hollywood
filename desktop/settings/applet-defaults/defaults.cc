@@ -1,7 +1,10 @@
 #include "defaults.h"
 #include "mimetypemodel.h"
+#include "desktopentry.h"
 #include <QTimer>
 #include <QHeaderView>
+
+#include <mimeapps.h>
 
 DefaultsApplet::DefaultsApplet(QObject *parent)
     : QObject(parent)
@@ -58,6 +61,8 @@ void DefaultsApplet::setupWidget()
     if (m_host->objectName().isEmpty())
         m_host->setObjectName(QString::fromUtf8("DefaultsAppletHost"));
 
+    m_mime = new LSMimeApplications(this);
+    m_mime->cacheAllDesktops();
     m_mainlayout = new QVBoxLayout(m_host);
     m_layout = new QFormLayout(0);
 
@@ -103,9 +108,16 @@ void DefaultsApplet::setupWidget()
     m_mainlayout->addItem(new QSpacerItem(150,1,QSizePolicy::Fixed, QSizePolicy::Preferred));
     m_mainlayout->addLayout(m_layout);
     m_mainlayout->addItem(new QSpacerItem(150,1,QSizePolicy::Fixed, QSizePolicy::Preferred));
+    // populate our terminal options
+    for(auto app : m_mime->categoryApps(QLatin1String("TerminalEmulator")))
+    {
+        if(app)
+            m_terminal->addItem(app->icon(), app->value("Name").toString());
+    }
 
     QTimer::singleShot(1, this, [this, subdesc] () {
-        m_model = new MimeTypeModel(this);
+
+        m_model = new MimeTypeModel(m_mime, this);
         m_proxy = new QSortFilterProxyModel(this);
         m_proxy->setSourceModel(m_model);
         m_mimes->setModel(m_proxy);

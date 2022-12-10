@@ -3,8 +3,8 @@ Type=Application
 Icon=utilities-terminal
 Exec=terminull
 Terminal=false
-Categories=Qt;System;Hollywood;TerminalEmulator;
+Categories=System;TerminalEmultaor;Hollywood;Qt;
 
 Name=Terminull
-Comment=Run system commands and scripts in Terminal
+Comment=Run system commands and scripts in Terminull
 GenericName=Terminal

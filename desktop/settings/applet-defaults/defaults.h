@@ -16,6 +16,7 @@
 #include <QLineEdit>
 #include <QSortFilterProxyModel>
 
+class LSMimeApplications;
 class MimeTypeModel;
 class DefaultsApplet : public QObject, SettingsAppletInterface
 {
@@ -38,6 +39,7 @@ public:
     Category category() const;
 private:
     void setupWidget();
+    LSMimeApplications *m_mime = nullptr;
     QWidget* m_host = nullptr;
     QVBoxLayout *m_mainlayout = nullptr;
     QFormLayout *m_layout = nullptr;

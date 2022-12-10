@@ -56,3 +56,6 @@ SUBDIRS = \
     style
 }
 
+SUBDIRS += \
+    appstub
+

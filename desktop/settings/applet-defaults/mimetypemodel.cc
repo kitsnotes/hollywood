@@ -4,11 +4,10 @@
 #include <QIcon>
 #include <desktopentry.h>
 
-MimeTypeModel::MimeTypeModel(QObject *parent)
+MimeTypeModel::MimeTypeModel(LSMimeApplications *mimes, QObject *parent)
     : QAbstractListModel(parent)
-    , m_mimeapps(new LSMimeApplications(this))
+    , m_mimeapps(mimes)
 {
-    m_mimeapps->processGlobalMimeCache();
     QMimeDatabase mimedb;
     for(auto &mime : mimedb.allMimeTypes())
     {

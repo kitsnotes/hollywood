@@ -19,7 +19,7 @@ class MimeTypeModel : public QAbstractListModel
     Q_OBJECT
 
 public:
-    explicit MimeTypeModel(QObject *parent = nullptr);
+    explicit MimeTypeModel(LSMimeApplications *mimes, QObject *parent = nullptr);
 
     // Header:
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
