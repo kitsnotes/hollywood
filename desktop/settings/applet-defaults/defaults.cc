@@ -73,6 +73,7 @@ void DefaultsApplet::setupWidget()
     m_mimes = new QTreeView(m_host);
     m_mimes->setMinimumHeight(250);
     m_mimes->setDisabled(true);
+    m_mimes->setRootIsDecorated(false);
     m_filter->setDisabled(true);
 
     m_filter->setPlaceholderText(tr("Search for a file type or URL scheme..."));
@@ -109,8 +110,9 @@ void DefaultsApplet::setupWidget()
         m_proxy->setSourceModel(m_model);
         m_mimes->setModel(m_proxy);
         m_mimes->setEnabled(true);
-        m_mimes->setSortingEnabled(true);
         m_filter->setEnabled(true);
+        m_mimes->setSortingEnabled(true);
+        m_proxy->sort(0, Qt::AscendingOrder);
         m_mimes->header()->setMinimumSectionSize(150);
         m_mimes->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
         m_mimes->header()->setSectionResizeMode(1, QHeaderView::Interactive);

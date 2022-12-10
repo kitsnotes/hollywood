@@ -1,5 +1,5 @@
 include(../../include/global.pri)
-
+CONFIG(debug): DESTDIR=$${OBJECTS_DIR}../../output/
 TARGET = hwsettings
 
 INCLUDEPATH += ../../libcommdlg

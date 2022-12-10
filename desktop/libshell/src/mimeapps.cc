@@ -125,10 +125,7 @@ LSDesktopEntry *LSMimeApplications::defaultApp(const QString &mimeType)
 
     // no user preference? find the first global app
     if(p->m_globalMime.contains(mimeType))
-    {
-        qDebug() << "returning global value" << p->m_globalMime.values(mimeType).first()->fileName();
         return p->m_globalMime.values(mimeType).first();
-    }
 
     return nullptr;
 }
@@ -196,7 +193,6 @@ void LSMimeApplications::processGlobalMimeCache()
             QStringList candidates = settings.value(mime).toStringList();
             for(auto candidate : candidates)
             {
-                qDebug() << mime << candidate;
                 auto filename = LSDesktopEntry::findDesktopFile(candidate);
                 auto cache = findDesktopForFile(filename);
                 if(cache == nullptr)

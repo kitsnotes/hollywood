@@ -54,15 +54,12 @@ int MimeTypeModel::rowCount(const QModelIndex &parent) const
     // other (valid) parents, rowCount() should return 0 so that it does not become a tree model.
     if (parent.isValid())
         return 0;
-
     return m_allMimes.count();
 }
 
 int MimeTypeModel::columnCount(const QModelIndex &parent) const
 {
-    if (!parent.isValid())
-        return 0;
-
+    Q_UNUSED(parent);
     return 3;
 }
 
@@ -77,7 +74,7 @@ QVariant MimeTypeModel::data(const QModelIndex &index, int role) const
     case Qt::DisplayRole:
         switch (index.column())
         {
-            case 0: qDebug() << mt.comment; return mt.comment;
+            case 0: return mt.comment;
             case 1: return mt.mimeType;
             case 2: return mt.defaultAppName;
         }
