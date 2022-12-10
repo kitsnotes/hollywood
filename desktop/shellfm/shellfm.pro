@@ -7,7 +7,7 @@ INCLUDEPATH += ../libshell/include
 INCLUDEPATH += include/
 INCLUDEPATH += ../libcommdlg
 INCLUDEPATH += ../libcompositor/include
-
+TARGET = shellfm
 DBUS_ADAPTORS += org.freedesktop.FileManager1.xml
 
 CONFIG(debug, debug|release) {
@@ -35,7 +35,7 @@ HEADERS += \
 
 
 # Default rules for deployment.
-QMAKE_SUBSTITUTES +=org.originull.hwsettings.shellfm.in
+QMAKE_SUBSTITUTES +=org.originull.shellfm.desktop.in
 desktop.path = $$PREFIX/share/applications
 desktop.files = org.originull.shellfm.desktop
 target.path = $$PREFIX/bin
