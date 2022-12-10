@@ -86,7 +86,6 @@ LSExecutor::~LSExecutor()
 
 bool LSExecutor::setDesktopFile(const QString &desktop)
 {
-    qDebug() << desktop;
     auto dt =
             LSDesktopEntry::findDesktopFile(desktop);
     if(dt.isEmpty())
@@ -122,7 +121,6 @@ bool LSExecutor::launch()
 
     auto exec = p->m_dt->value("Exec").toString();
 
-    qDebug() << exec;
     // deprecated params according to freedesktop
     exec.replace("%d", "");
     exec.replace("%D", "");
@@ -149,14 +147,14 @@ bool LSExecutor::launch()
     // replace our files and execute
     if(exec.contains("%u") || exec.contains("%U"))
     {
-        qDebug() << "starting url";
-
         // we support URL's
         if(exec.contains("%U"))
         {
             // handle our arguments
             if(!p->m_arguments.isEmpty())
                 exec.replace("%U", QString("%1 %U").arg(p->m_arguments.join(' ')));
+            else
+                exec.replace("%U", "");
 
             exec.replace("%f", "");
             exec.replace("%F", "");
@@ -169,12 +167,16 @@ bool LSExecutor::launch()
                 urlList.append(u.toString(QUrl::None));
             }
             exec.replace("%U", urlList.join(' '));
-
+            exec = exec.trimmed();
             // launch our process
-            auto args = exec.split(' ');
-            auto execBin = args.takeFirst();
-
-            return p->createProcess(execBin, args);
+            if(exec.contains(' '))
+            {
+                auto args = exec.split(' ');
+                auto execBin = args.takeFirst();
+                return p->createProcess(execBin, args);
+            }
+            else
+                return p->createProcess(exec, QStringList());
         }
         else
         {
@@ -182,6 +184,8 @@ bool LSExecutor::launch()
             // handle our arguments
             if(!p->m_arguments.isEmpty())
                 exec.replace("%u", QString("%1 %u").arg(p->m_arguments.join(' ')));
+            else
+                exec.replace("%u", "");
 
             exec.replace("%U", "");
             exec.replace("%f", "");
@@ -193,10 +197,19 @@ bool LSExecutor::launch()
                 QUrl u(fn);
                 auto execCopy = exec;
                 execCopy.replace("%u", u.toString(QUrl::None));
-                auto args = execCopy.split(' ');
-                auto execBin = args.takeFirst();
-                bool ret = p->createProcess(execBin, args);
-
+                execCopy = execCopy.trimmed();
+                // launch our process
+                bool ret = false;
+                if(execCopy.contains(' '))
+                {
+                    auto args = exec.split(' ');
+                    auto execBin = args.takeFirst();
+                    ret = p->createProcess(execBin, args);
+                }
+                else
+                    ret = p->createProcess(exec, QStringList());
+                if(ret)
+                    one_launched = ret;
                 if(ret)
                     one_launched = ret;
             }
@@ -205,25 +218,35 @@ bool LSExecutor::launch()
     }
     else if(exec.contains("%f") || exec.contains("%F"))
     {
-        qDebug() << "starting file";
         // we support just files
         if(exec.contains("%F"))
         {
             QStringList s;
-            for(QString fn : p->m_files)
-                s.append(QString("\"%1\"").arg(fn));
+            if(p->m_files.count() > 1)
+            {
+                for(QString fn : p->m_files)
+                    s.append(QString("\"%1\"").arg(fn));
 
-            exec.replace("%F", s.join(' '));
+                exec.replace("%F", s.join(' '));
+            }
+            else
+                exec.replace("%F", "");
+
             // replace extraneous things
             exec.replace("%u", "");
             exec.replace("%U", "");
             exec.replace("%f", "");
-            // launch our process
-            auto args = exec.split(' ');
-            auto execBin = args.takeFirst();
-            qDebug() << execBin << args;
 
-            return p->createProcess(execBin, args);
+            exec = exec.trimmed();
+            // launch our process
+            if(exec.contains(' '))
+            {
+                auto args = exec.split(' ');
+                auto execBin = args.takeFirst();
+                return p->createProcess(execBin, args);
+            }
+            else
+                return p->createProcess(exec, QStringList());
         }
         else
         {
@@ -238,14 +261,39 @@ bool LSExecutor::launch()
 
             // loop for launching processes
             bool one_launched = false;
+            if(p->m_files.count() == 0)
+            {
+                auto execCopy = exec;
+                execCopy.replace("%f", "");
+                execCopy = execCopy.trimmed();
+                // launch our process
+                bool ret = false;
+                if(execCopy.contains(' '))
+                {
+                    auto args = execCopy.split(' ');
+                    auto execBin = args.takeFirst();
+                    ret = p->createProcess(execBin, args);
+                }
+                else
+                    ret = p->createProcess(exec, QStringList());
+                if(ret)
+                    one_launched = ret;
+            }
             for(auto fn : p->m_files)
             {
                 auto execCopy = exec;
-                execCopy.replace("%u", QString("\"%1\"").arg(fn));
-                auto args = execCopy.split(' ');
-                auto execBin = args.takeFirst();
-                bool ret = p->createProcess(execBin, args);
-                qDebug() << execBin << args;
+                execCopy.replace("%f", QString("\"%1\"").arg(fn));
+                execCopy = execCopy.trimmed();
+                // launch our process
+                bool ret = false;
+                if(execCopy.contains(' '))
+                {
+                    auto args = execCopy.split(' ');
+                    auto execBin = args.takeFirst();
+                    ret = p->createProcess(execBin, args);
+                }
+                else
+                    ret = p->createProcess(exec, QStringList());
 
                 if(ret)
                     one_launched = ret;
@@ -255,7 +303,6 @@ bool LSExecutor::launch()
     }
     else
     {
-        qDebug() << "starting null";
         // we have no %uU or %fF so um...
         // i guess we can try and launch the thing with a single param as file
         if(!p->m_arguments.isEmpty())
@@ -280,10 +327,16 @@ bool LSExecutor::launch()
         }
         else
         {
-            auto execCopy = exec;
-            auto args = execCopy.split(' ');
-            auto execBin = args.takeFirst();
-            return p->createProcess(execBin, args);
+            exec = exec.trimmed();
+            // launch our process
+            if(exec.contains(' '))
+            {
+                auto args = exec.split(' ');
+                auto execBin = args.takeFirst();
+                return p->createProcess(execBin, args);
+            }
+            else
+                return p->createProcess(exec, QStringList());
         }
     }
 
