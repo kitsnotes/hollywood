@@ -229,6 +229,11 @@ bool Surface::isQtSurface() const
     return m_qt == nullptr ? false : true;
 }
 
+bool Surface::isLayerSurface() const
+{
+    return m_layerSurface == nullptr ? false : true;
+}
+
 QWaylandWlShellSurface *Surface::wlShellSurface() const { return m_wlShellSurface; }
 
 HWWaylandXdgSurface *Surface::xdgSurface() const { return m_xdgSurface; }
@@ -334,12 +339,12 @@ QSize Surface::renderSize() const
 
 QRectF Surface::windowRect() const
 {
-    return QRectF(m_surfacePosition, QSizeF(surfaceSize()));
+    return QRectF(surfacePosition(), QSizeF(surfaceSize()));
 }
 
 QRectF Surface::decoratedRect() const
 {
-    auto pos = m_surfacePosition;
+    auto pos = surfacePosition();
     if(m_ssd)
     {
         pos.setX(pos.x()-hwComp->borderSize());
@@ -531,7 +536,6 @@ QPointF Surface::renderPosition() const
 
 void Surface::addChildSurfaceObject(Surface *child)
 {
-     qDebug() << m_uuid.toString() << "add child" << child->uuid().toString();
     m_children.append(child);
 }
 
@@ -542,7 +546,6 @@ void Surface::addXdgChildSurfaceObject(Surface *child)
 
 void Surface::recycleChildSurfaceObject(Surface *child)
 {
-    qDebug() << m_uuid.toString() << "recycling child" << child->uuid().toString();
     m_children.removeOne(child);
 }
 
@@ -735,7 +738,6 @@ void Surface::setLayerShellParent(Surface *surface)
 
 void Surface::handleLayerShellPopupPositioning()
 {
-    qDebug() << "Surface::handleLayerShellPopupPositioning";
     auto popup = m_xdgPopup;
     auto parent = m_parentSurface->m_layerSurface;
     qDebug() << popup->positionerSize();
@@ -747,7 +749,6 @@ void Surface::handleLayerShellPopupPositioning()
         float xPos = popup->anchorRect().x();
         int height = popup->positionerSize().height();
         height = height - height - height;
-        qDebug() << height << xPos;
         setPosition(QPointF(xPos,height));
         return;
     }
@@ -1003,6 +1004,7 @@ void Surface::createXdgPopupSurface(HWWaylandXdgPopup *popup)
     if(popup->parentXdgSurface() == nullptr)
         return;
 
+
     auto rect = popup->anchorRect();
 
     float yPos = 0;
@@ -1255,8 +1257,6 @@ void Surface::onLayerShellSizeChanged()
 
 void Surface::onLayerShellXdgPopupParentChanged(HWWaylandXdgPopup *popup)
 {
-    qDebug() << m_uuid.toString() << "onLayerShellXdgPopupParentChanged";
-
     auto popupSurface = popup->xdgSurface()->surface();
     hwComp->findSurfaceObject(popupSurface)->setLayerShellParent(this);
     hwComp->findSurfaceObject(popupSurface)->handleLayerShellPopupPositioning();

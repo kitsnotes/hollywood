@@ -114,6 +114,7 @@ public:
     bool isXdgPopup() const;
     bool isGtkSurface() const;
     bool isQtSurface() const;
+    bool isLayerSurface() const;
     QWaylandWlShellSurface* wlShellSurface() const;
     HWWaylandXdgSurface* xdgSurface() const;
     HWWaylandXdgToplevel* xdgTopLevel() const;
