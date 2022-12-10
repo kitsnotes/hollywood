@@ -20,7 +20,8 @@ HEADERS += \
     messagebox.h \
     private/aboutdialog_p.h \
     private/messagebox_p.h \
-    preferencedialog.h
+    preferencedialog.h \
+    private/preferencedialog_p.h
 
 QMAKE_PKGCONFIG_DESCRIPTION = Hollywood Common Dialog Library
 !versionAtLeast(QT_VERSION, 6.0.0) {

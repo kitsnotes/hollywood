@@ -4,19 +4,16 @@
 #include "libcommdlg_global.h"
 
 #include <QDialog>
-#include <QWidget>
-#include <QList>
 
-class QToolBar;
-class QAction;
-class LIBCOMMDLG_EXPORT ADPreferenceDialog : public QDialog
+class HWPreferenceDialogPrivate;
+class LIBCOMMDLG_EXPORT HWPreferenceDialog : public QDialog
 {
     Q_OBJECT
     Q_PROPERTY(bool animated READ animated WRITE setAnimated NOTIFY animatedChanged)
     Q_PROPERTY(int currentIndex READ currentIndex WRITE setCurrentIndex NOTIFY currentIndexChanged)
 public:
-    ADPreferenceDialog(QWidget *parent = nullptr);
-    ~ADPreferenceDialog();
+    HWPreferenceDialog(QWidget *parent = nullptr);
+    ~HWPreferenceDialog();
     void addPage(QWidget *page, const QIcon &icon, const QString &title);
     bool animated();
     int currentIndex();
@@ -30,15 +27,7 @@ signals:
 private slots:
     void tabActionTriggered();
 private:
-    bool m_animate = true;
-    int m_index = 0;
-    QToolBar *m_tool = nullptr;
-    QWidget *m_placeholder = nullptr;
-    QWidget *m_current = nullptr;
-    QList<QAction*> m_tabs;
-    QList<QWidget*> m_tabcontent;
-    QAction *m_leftSpacerAct = nullptr;
-    QAction *m_rightSpacerAct = nullptr;
+    HWPreferenceDialogPrivate *p;
 };
 
 #endif // PREFERENCEDIALOG_H

@@ -43,7 +43,7 @@ private:
 };
 
 class ProfileTab;
-class PreferencesDialog : public ADPreferenceDialog
+class PreferencesDialog : public HWPreferenceDialog
 {
     Q_OBJECT
 public:

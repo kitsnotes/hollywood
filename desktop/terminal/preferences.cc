@@ -181,7 +181,7 @@ void GeneralTab::radioChanged(bool checked)
 
 
 PreferencesDialog::PreferencesDialog(QWidget *parent)
-    :ADPreferenceDialog(parent),
+    :HWPreferenceDialog(parent),
      m_general(new GeneralTab(this)),
      m_profile(new ProfileTab(this))
 {
