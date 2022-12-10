@@ -10,6 +10,7 @@
 #include "fsitemdelegate.h"
 #include "executor.h"
 #include "appmodel.h"
+#include "getinfodialog.h"
 
 #include <QDBusInterface>
 #include <hollywood/hollywood.h>
@@ -145,6 +146,9 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
     connect(p->m_actions->shellAction(HWShell::ACT_VIEW_COLUMNS),
             &QAction::triggered, this, &LSEmbeddedShellHost::setColumnView);
 
+    connect(p->m_actions->shellAction(HWShell::ACT_FILE_GET_INFO),
+            &QAction::triggered, this, &LSEmbeddedShellHost::getInformationRequested);
+
     connect(p->m_actions->shellAction(HWShell::ACT_FILE_NEW_TAB), &QAction::triggered,
              this, &LSEmbeddedShellHost::createNewTab);
     connect(p->m_actions->shellAction(HWShell::ACT_GO_BACK), SIGNAL(triggered()),
@@ -162,6 +166,35 @@ void LSEmbeddedShellHost::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
     p->m_mainSplitter->resize(event->size());
+}
+
+void LSEmbeddedShellHost::getInformationRequested()
+{
+    if(p->m_currentModel == Filesystem)
+    {
+        QItemSelectionModel *model = nullptr;
+        switch(p->m_viewMode)
+        {
+        case HWShell::VIEW_ICONS:
+            model = p->m_filesList->selectionModel();
+            break;
+        case HWShell::VIEW_LIST:
+            model = p->m_filesTable->selectionModel();
+            break;
+        case HWShell::VIEW_COLUMN:
+            model = p->m_filesColumn->selectionModel();
+        }
+
+        if(model)
+        {
+            if(model->selectedIndexes().count() == 1)
+            {
+                // show a dialog for our one file
+                auto url = QUrl(p->m_model->filePath(model->selectedIndexes().first()));
+                showGetInfoDialog(url);
+            }
+        }
+    }
 }
 
 void LSEmbeddedShellHost::locationBarEditingFinished()
@@ -564,6 +597,14 @@ void LSEmbeddedShellHost::viewContextMenuRequested(const QPoint &pos)
     }
 
     menu->popup(mapToGlobal(pos));
+}
+
+void LSEmbeddedShellHost::showGetInfoDialog(const QUrl &target)
+{
+    auto dlg = new LSGetInfoDialog(target, this);
+    connect(dlg, &QDialog::accepted, dlg, &QWidget::deleteLater);
+    connect(dlg, &QDialog::rejected, dlg, &QWidget::deleteLater);
+    dlg->open();
 }
 
 bool LSEmbeddedShellHost::executeDesktopOverDBus(const QString &desktop)

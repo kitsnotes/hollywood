@@ -50,6 +50,7 @@ signals:
 protected:
     void resizeEvent(QResizeEvent* event);
 private slots:
+    void getInformationRequested();
     void locationBarEditingFinished();
     // view options
     void viewOptionsFinished(int);
@@ -66,6 +67,7 @@ private slots:
     void createNewTab();
     void viewContextMenuRequested(const QPoint &pos);
 private:
+    void showGetInfoDialog(const QUrl &target);
     bool executeDesktopOverDBus(const QString &desktop);
     bool openFileOverDBusWithDefault(const QString &file);
     void disableActionsForNoSelection();

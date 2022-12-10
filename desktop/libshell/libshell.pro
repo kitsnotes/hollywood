@@ -17,10 +17,10 @@ INCLUDEPATH += include/private/
 INCLUDEPATH += ../libcompositor/include
 QMAKE_PKGCONFIG_DESCRIPTION = Hollywood Shell Library
 versionAtLeast(QT_VERSION, 6.0.0) {
-    LIBS += -I../libcompositor/include -L../output -lcompositor-$${HOLLYWOOD_APIVERSION}
+    LIBS += -L../output -lcommdlg-$${HOLLYWOOD_APIVERSION} -lcompositor-$${HOLLYWOOD_APIVERSION}
 } else {
     TARGET = shell5-$${HOLLYWOOD_APIVERSION}
-    LIBS += -I../libcompositor/include -L../output -lcompositor5-$${HOLLYWOOD_APIVERSION}
+    LIBS += -L../output -lcommdlg-$${HOLLYWOOD_APIVERSION} -lcompositor5-$${HOLLYWOOD_APIVERSION}
     QMAKE_PKGCONFIG_DESCRIPTION = Hollywood Shell Library (Qt5)
 }
 
@@ -37,6 +37,7 @@ SOURCES += \
     src/filesystemmodel.cc \
     src/fsitemdelegate.cc \
     src/fsnode.cc \
+    src/getinfodialog.cc \
     src/hwfileiconprovider.cc \
     src/locationbar.cpp \
     src/mdnsbrowser.cc \
@@ -50,6 +51,7 @@ SOURCES += \
     src/iconviewoptions.cc
 
 HEADERS += \
+    include/getinfodialog.h \
     include/private/fileinfo.h \
     include/private/actionmanager_p.h \
     include/private/appmodel_p.h \
@@ -59,6 +61,7 @@ HEADERS += \
     include/private/filesystemmodel_p.h \
     include/private/fsitemdelegate_p.h \
     include/private/fsnode.h \
+    include/private/getinfodialog_p.h \
     include/private/iconviewoptions_p.h \
     include/private/locationbar_p.h \
     include/private/locationbarbtn.h \
