@@ -13,7 +13,6 @@ class LSFSItemDelegate;
 
 class LSLocationBar;
 class LSFSModel;
-typedef LSFSModel FilesystemModel;
 typedef QList<QUrl> UrlList;
 
 class LSEmbeddedShellHostPrivate;
@@ -43,6 +42,7 @@ public slots:
     void goForward();
     void goEnclosingFolder();
     void toggleViewOptions(bool);
+    void doSort(int column, Qt::SortOrder order);
 signals:
     void updateWindowTitle(const QString &title);
     void updateWindowIcon(const QIcon &icon);
@@ -66,7 +66,12 @@ private slots:
     void modelRootPathChanged(const QString &path);
     void createNewTab();
     void viewContextMenuRequested(const QPoint &pos);
+    void filesystemSortingChanged();
 private:
+    void adjustColumnHeaders();
+    void enableNoSelectionWritableActions();
+    void actionSortRequested();
+    void actionSortOrderRequested();
     void showGetInfoDialog(const QUrl &target);
     bool executeDesktopOverDBus(const QString &desktop);
     bool openFileOverDBusWithDefault(const QString &file);

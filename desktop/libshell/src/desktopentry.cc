@@ -43,7 +43,7 @@ public:
     QStringList getListValue(const LSDesktopEntry *q, const QString &key, bool tryExtendPrefix) const;
 public:
     QString m_fileName;
-    bool m_valid;
+    bool m_valid = false;
     mutable bool m_validChecked;
     mutable QHash<QString, bool> m_isShown;
     QMap<QString, QVariant> m_items;
@@ -257,7 +257,13 @@ QString LSDesktopEntry::id(const QString &fileName, bool checkFileExists)
     return id;
 }
 
-QString LSDesktopEntry::fileName() const { return d->m_fileName; }
+QString LSDesktopEntry::fileName() const
+{
+    if(d != nullptr)
+        if(!d->m_fileName.isEmpty())
+            return d->m_fileName;
+    return QString();
+}
 
 void LSDesktopEntry::setValue(const QString &key, const QVariant &value)
 {

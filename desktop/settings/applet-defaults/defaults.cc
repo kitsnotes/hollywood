@@ -116,7 +116,7 @@ void DefaultsApplet::setupWidget()
     }
 
     QTimer::singleShot(1, this, [this, subdesc] () {
-
+        m_mime->processGlobalMimeCache();
         m_model = new MimeTypeModel(m_mime, this);
         m_proxy = new QSortFilterProxyModel(this);
         m_proxy->setSourceModel(m_model);

@@ -279,6 +279,20 @@ QString LSDirectories::userDirFallback(LSDirectories::UserDirectory dir)
         return QString::fromLatin1("/tmp");
     else if (dir == LSDirectories::Desktop)
         fallback = QString::fromLatin1("%1/%2").arg(home, QLatin1String("Desktop"));
+    else if (dir == LSDirectories::Documents)
+        fallback = QString::fromLatin1("%1/%2").arg(home, QLatin1String("Documents"));
+    else if (dir == LSDirectories::Downloads)
+        fallback = QString::fromLatin1("%1/%2").arg(home, QLatin1String("Downloads"));
+    else if (dir == LSDirectories::Templates)
+        fallback = QString::fromLatin1("%1/%2").arg(home, QLatin1String("Templates"));
+    else if (dir == LSDirectories::PublicShare)
+        fallback = QString::fromLatin1("%1/%2").arg(home, QLatin1String("Public"));
+    else if (dir == LSDirectories::Music)
+        fallback = QString::fromLatin1("%1/%2").arg(home, QLatin1String("Music"));
+    else if (dir == LSDirectories::Pictures)
+        fallback = QString::fromLatin1("%1/%2").arg(home, QLatin1String("Photos"));
+    else if (dir == LSDirectories::Videos)
+        fallback = QString::fromLatin1("%1/%2").arg(home, QLatin1String("Videos"));
     else
         fallback = home;
 

@@ -79,6 +79,11 @@ void FMApplication::showWallpaperSettings()
     }
 }
 
+void FMApplication::showPermissionError(const QUrl &path)
+{
+
+}
+
 void FMApplication::openFolderFromDesktop(const QUrl &path)
 {
     newFileWindow(path);
@@ -88,7 +93,6 @@ void FMApplication::createDBusInterfaces()
 {
     if(m_dbusStarted)
         return;
-
 
     QDBusConnection dbus = QDBusConnection::sessionBus();
     connect(dbus.interface(), &QDBusConnectionInterface::serviceRegistered, this, [this](const QString &service) {
@@ -135,6 +139,9 @@ void FMApplication::ShowFolders(const QStringList &urlList, const QString &start
         auto qurl = QUrl(url);
         if(qurl.scheme() == "file")
             newFileWindow(url);
+
+        if(qurl.scheme() == "applications")
+            newFileWindow(QUrl("applications://"));
     }
 }
 
@@ -162,6 +169,34 @@ void FMApplication::ShowItemProperties(const QStringList &urlList, const QString
         connect(dlg, &QDialog::rejected, dlg, &QWidget::deleteLater);
         dlg->open();
     }
+}
+
+bool FMApplication::executeDesktopOverDBus(const QString &desktop)
+{
+    QDBusInterface ldb(HOLLYWOOD_SESSION_DBUS, HOLLYWOOD_SESSION_DBUSOBJ, HOLLYWOOD_SESSION_DBUSPATH);
+    if(!ldb.isValid())
+    {
+        qDebug() << QString("Could not call session DBUS interface. Command: executeDesktop");
+        return false;
+    }
+
+    QDBusMessage msg = ldb.call("executeDesktop", desktop, QStringList(), QStringList());
+
+    if(msg.arguments().isEmpty() || msg.arguments().constFirst().isNull())
+        return true;
+
+    auto response = msg.arguments().constFirst();
+
+    if(msg.arguments().isEmpty())
+        return true;
+
+    if(response.isNull())
+        return true;
+
+    if(response.toBool())
+        return true;
+
+    return false;
 }
 
 void FMApplication::checkForSessionStartup()

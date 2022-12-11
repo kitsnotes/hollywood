@@ -25,7 +25,6 @@ class LSPlaceView;
 class LSColumnPreview;
 class LSFSItemDelegate;
 
-typedef LSFSModel FilesystemModel;
 typedef QList<QUrl> UrlList;
 
 class LSEmbeddedShellHost;
@@ -51,8 +50,7 @@ private:
     QTreeView *m_filesTable;
 
     HWShell::ViewMode m_viewMode;
-    FilesystemModel *m_model;
-
+    LSFSModel *m_model;
     ApplicationModel *m_apps;
 
     LSPlaceModel *m_placeModel;

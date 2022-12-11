@@ -2,24 +2,44 @@
 #include "desktopmodel_p.h"
 #include "fsnode.h"
 #include "fileinfo.h"
+#include <QFileSystemWatcher>
 
 LSDesktopModelPrivate::LSDesktopModelPrivate(LSDesktopModel *parent)
     : d(parent)
+    , m_fileInfoGatherer(new QFileSystemWatcher(parent))
 {
 
+}
+
+bool LSDesktopModelPrivate::hasFile(const QString &file)
+{
+    for(auto f : m_files)
+    {
+        if(f->fileName == file)
+            return true;
+    }
+    return false;
+}
+
+int LSDesktopModelPrivate::rowForFile(const QString &file)
+{
+    for(auto f : m_files)
+    {
+        if(f->fileName == file)
+            return m_files.indexOf(f);
+    }
+    return -1;
 }
 
 LSDesktopModel::LSDesktopModel(QObject *parent)
     : QAbstractListModel(parent)
     , p(new LSDesktopModelPrivate(this))
 {
-    /* connect(&m_fileInfoGatherer, &LSFSThread::newListOfFiles, this, &LSDesktopModel::directoryChanged);
-    connect(&m_fileInfoGatherer, &LSFSThread::updates, this, &LSDesktopModel::fileSystemChanged);
-    connect(&m_fileInfoGatherer, &LSFSThread::nameResolved, this, &LSDesktopModel::resolvedName);
-    //connect(&m_fileInfoGatherer, &LSFSThread::directoryLoaded, this, &LSDesktopModel::directoryLoaded); */
-
-    /*m_fileInfoGatherer.watchPaths(QStandardPaths::standardLocations(QStandardPaths::DesktopLocation));
-    m_fileInfoGatherer.setWatching(true);*/
+    p->m_rootDir = QDir(QStandardPaths::standardLocations(QStandardPaths::DesktopLocation).first());
+    p->m_fileInfoGatherer->addPath(QStandardPaths::standardLocations(QStandardPaths::DesktopLocation).first());
+    refreshDesktopFolder();
+    connect(p->m_fileInfoGatherer, &QFileSystemWatcher::directoryChanged, this, &LSDesktopModel::refreshDesktopFolder);
+    connect(p->m_fileInfoGatherer, &QFileSystemWatcher::fileChanged, this, &LSDesktopModel::refreshDesktopFolder);
 }
 
 int LSDesktopModel::rowCount(const QModelIndex &parent) const
@@ -53,6 +73,8 @@ QVariant LSDesktopModel::data(const QModelIndex &index, int role) const
         if (index.column() == 1)
             return QVariant(Qt::AlignTrailing | Qt::AlignVCenter);
         break;
+    case Qt::UserRole+4:
+        return QVariant::fromValue(p->m_files.at(index.row())->info);
     }
 
     return QVariant();
@@ -68,7 +90,8 @@ QString LSDesktopModel::name(const QModelIndex &index) const
     if(p->m_files.at(index.row())->isDesktopFile())
         return p->m_files.at(index.row())->desktopFileNameEntry();
 
-    return name(index);
+    return p->m_files.at(index.row())->fileName;
+    return QString("");
 }
 
 QString LSDesktopModel::description(const QModelIndex &index) const
@@ -77,28 +100,65 @@ QString LSDesktopModel::description(const QModelIndex &index) const
     return QString("");
 }
 
-
-void LSDesktopModel::directoryChanged(const QString &directory, const QStringList &list)
+QFileInfo LSDesktopModel::fileInfo(const QModelIndex &index) const
 {
-    qDebug() << "LSDesktopModel::directoryChanged:" << directory << "files:" << list.join(',');
+    return p->m_files.at(index.row())->fileInfo();
 }
 
-void LSDesktopModel::fileSystemChanged(const QString &path, const QVector<QPair<QString, QFileInfo> > &items)
+bool LSDesktopModel::isDesktop(const QModelIndex &index) const
 {
-    qDebug() << "LSDesktopModel::fileSystemChanged:" << path;
+    if(p->m_files.at(index.row())->isDesktopFile())
+        return true;
+
+    return false;
+}
+
+LSDesktopEntry *LSDesktopModel::desktopFileForIndex(const QModelIndex &index)
+{
+    if(p->m_files.at(index.row())->isDesktopFile())
+        return p->m_files.at(index.row())->m_desktop;
+
+    return nullptr;
+}
+
+void LSDesktopModel::refreshDesktopFolder()
+{
+    auto olditems = p->m_files;
+    QList<LSFSNode*> newFiles;
+    QDir dir(QStandardPaths::standardLocations(QStandardPaths::DesktopLocation).first());
+    auto items = dir.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot);
     for (const auto &i : items)
     {
-        QString fileName = i.first;
+        QString fileName = i.fileName();
+        qDebug() << fileName;
         Q_ASSERT(!fileName.isEmpty());
-        //LSExtendedFileInfo info = m_fileInfoGatherer.getInfo(i.second);
-        //LSFSNode *node = new LSFSNode(i.first, &m_root);
-        //node->populate(info);
-        //p->m_files.append(node);
+        int row = p->rowForFile(fileName);
+        if(!p->hasFile(fileName))
+        {
+            LSExtendedFileInfo info(i);
+            LSFSNode *node = new LSFSNode(fileName, &p->m_root);
+            node->populate(info);
+            int row = p->m_files.count()-1;
+            beginInsertRows(QModelIndex(), row,row);
+            newFiles.append(node);
+            endInsertRows();
+        }
+        else
+        {
+            newFiles.append(olditems[row]);
+            emit dataChanged(index(row, 0), index(row, columnCount()-1));
+        }
     }
+    for(auto &mp : olditems)
+    {
+        if(!p->m_files.contains(mp))
+        {
+            int row = p->rowForFile(mp->fileName);
+            beginRemoveRows({}, row, row);
+            delete mp;
+            endRemoveRows();
+        }
+    }
+    p->m_files = newFiles;
 }
 
-void LSDesktopModel::resolvedName(const QString &file, const QString &resolved)
-{
-    Q_UNUSED(file);
-    Q_UNUSED(resolved);
-}

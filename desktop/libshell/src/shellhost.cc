@@ -19,7 +19,7 @@ LSEmbeddedShellHostPrivate::LSEmbeddedShellHostPrivate(LSEmbeddedShellHost *pare
     : d(parent)
     , m_actions(new LSActionManager(parent))
     , m_filesList(new QListView(parent))
-    , m_model(new FilesystemModel(parent))
+    , m_model(new LSFSModel(parent))
     , m_apps(new ApplicationModel(parent))
     , m_placeModel(new LSPlaceModel(parent))
     , m_viewOptions(new LSViewOptionsDialog(parent))
@@ -128,8 +128,12 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
     p->m_viewOptions->attachIconView(p->m_filesList);
 
     swapToModel(Filesystem);
+    connect(p->m_model, &LSFSModel::sortingChanged,
+            this, &LSEmbeddedShellHost::filesystemSortingChanged);
+    filesystemSortingChanged();
 
-    connect(p->m_filesColumn, &QColumnView::updatePreviewWidget, this, &LSEmbeddedShellHost::updateColumnWidget);
+    connect(p->m_filesColumn, &QColumnView::updatePreviewWidget,
+            this, &LSEmbeddedShellHost::updateColumnWidget);
 
     connect(p->m_model, SIGNAL(rootPathChanged(const QString&)),
             this, SLOT(modelRootPathChanged(const QString&)));
@@ -158,6 +162,28 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
 
     connect(p->m_actions->shellAction(HWShell::ACT_GO_ENCLOSING_FOLDER), SIGNAL(triggered()),
             this, SLOT(goEnclosingFolder()));
+
+    connect(p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_NONE),
+            &QAction::triggered, this, &LSEmbeddedShellHost::actionSortRequested);
+    connect(p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_NAME),
+            &QAction::triggered, this, &LSEmbeddedShellHost::actionSortRequested);
+    connect(p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_SIZE),
+            &QAction::triggered, this, &LSEmbeddedShellHost::actionSortRequested);
+    connect(p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_KIND),
+            &QAction::triggered, this, &LSEmbeddedShellHost::actionSortRequested);
+    connect(p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_MODIFIED),
+            &QAction::triggered, this, &LSEmbeddedShellHost::actionSortRequested);
+    connect(p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_OWNER),
+            &QAction::triggered, this, &LSEmbeddedShellHost::actionSortRequested);
+    connect(p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_GROUP),
+            &QAction::triggered, this, &LSEmbeddedShellHost::actionSortRequested);
+    connect(p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_COMMENT),
+            &QAction::triggered, this, &LSEmbeddedShellHost::actionSortRequested);
+
+    connect(p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_ASC),
+            &QAction::triggered, this, &LSEmbeddedShellHost::actionSortOrderRequested);
+    connect(p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_DESC),
+            &QAction::triggered, this, &LSEmbeddedShellHost::actionSortOrderRequested);
 
     restoreViewModeFromSettings();
 }
@@ -248,6 +274,16 @@ void LSEmbeddedShellHost::toggleViewOptions(bool checked)
         p->m_viewOptions->hide();
 }
 
+void LSEmbeddedShellHost::doSort(int column, Qt::SortOrder order)
+{
+    if(p->m_currentModel == Filesystem)
+    {
+        p->m_model->sort(column, order);
+        if(p->m_viewMode == HWShell::VIEW_LIST)
+            p->m_filesTable->header()->setSortIndicator(column, order);
+    }
+}
+
 void LSEmbeddedShellHost::viewOptionsFinished(int result)
 {
     Q_UNUSED(result);
@@ -297,6 +333,7 @@ bool LSEmbeddedShellHost::navigateToUrl(const QUrl &path)
         p->m_location->setPath(path);
 
         updatePlaceModelSelection(path);
+        disableActionsForNoSelection();
         p->m_actions->shellAction(HWShell::ACT_GO_ENCLOSING_FOLDER)->setEnabled(false);
         return true;
     }
@@ -309,6 +346,7 @@ bool LSEmbeddedShellHost::navigateToUrl(const QUrl &path)
         {
             // TODO: back list append
             updateRootIndex(idx);
+            disableActionsForNoSelection();
             return true;
         }
     }
@@ -319,7 +357,7 @@ bool LSEmbeddedShellHost::navigateToUrl(const QUrl &path)
 
 void LSEmbeddedShellHost::newTabWithPath(const QUrl &path)
 {
-    if(path.isLocalFile())
+    if(path.scheme() == "file")
     {
      const QString localPath = path.toLocalFile();
      QDir dir(localPath);
@@ -336,6 +374,18 @@ void LSEmbeddedShellHost::newTabWithPath(const QUrl &path)
          navigateToPath(localPath);
      }
      // TODO: error out here
+    }
+    if(path.scheme() == "applications")
+    {
+        QUrl url = QUrl("applications://");
+        int idx = p->m_tabs->addTab(QApplication::tr("Applications"));
+        QUuid tabId = QUuid::createUuid();
+        p->m_tabs->setTabData(idx, tabId);
+        // just temporary to add the map entry
+        p->m_tabLocations.insert(tabId, url);
+        p->m_tabViewMode.insert(tabId, p->m_viewMode);
+        p->m_tabs->setCurrentIndex(idx);
+        navigateToUrl(url);
     }
 }
 
@@ -376,6 +426,7 @@ void LSEmbeddedShellHost::setIconListView(bool updateSettings)
     p->m_filesList->setVisible(true);
     p->m_filesTable->setVisible(false);
     p->m_actions->shellAction(HWShell::ACT_VIEW_ICONS)->setChecked(true);
+    p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_NONE)->setEnabled(true);
     connect(p->m_filesList, &QAbstractItemView::customContextMenuRequested, this, &LSEmbeddedShellHost::viewContextMenuRequested);
     connect(p->m_filesList, &QListView::clicked, this, &LSEmbeddedShellHost::viewClicked);
     connect(p->m_filesList, &QListView::activated, this, &LSEmbeddedShellHost::viewActivated);
@@ -407,6 +458,7 @@ void LSEmbeddedShellHost::setColumnView(bool updateSettings)
     p->m_filesColumn->setVisible(true);
     p->m_filesList->setVisible(false);
     p->m_filesTable->setVisible(false);
+    p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_NONE)->setEnabled(false);
     p->m_actions->shellAction(HWShell::ACT_VIEW_COLUMNS)->setChecked(true);
     connect(p->m_filesColumn, &QAbstractItemView::customContextMenuRequested, this, &LSEmbeddedShellHost::viewContextMenuRequested);
     connect(p->m_filesColumn, &QColumnView::doubleClicked, this, &LSEmbeddedShellHost::viewActivated);
@@ -436,8 +488,10 @@ void LSEmbeddedShellHost::setTableListView(bool updateSettings)
     p->m_tabWndHostLayout->replaceWidget(p->m_tabWndHostLayout->itemAt(1)->widget(), p->m_filesTable);
     p->m_filesColumn->setVisible(false);
     p->m_filesList->setVisible(false);
+    adjustColumnHeaders();
     p->m_filesTable->setVisible(true);
     p->m_actions->shellAction(HWShell::ACT_VIEW_LIST)->setChecked(true);
+    p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_NONE)->setEnabled(false);
     p->m_viewMode = HWShell::VIEW_LIST;
     connect(p->m_filesTable, &QAbstractItemView::customContextMenuRequested, this, &LSEmbeddedShellHost::viewContextMenuRequested);
     connect(p->m_filesTable, &QTreeView::clicked, this, &LSEmbeddedShellHost::viewClicked);
@@ -599,6 +653,137 @@ void LSEmbeddedShellHost::viewContextMenuRequested(const QPoint &pos)
     menu->popup(mapToGlobal(pos));
 }
 
+void LSEmbeddedShellHost::filesystemSortingChanged()
+{
+    if(p->m_currentModel == Filesystem)
+    {
+        switch(p->m_model->sortColumn())
+        {
+        case LSFSModel::Comment:
+            p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_COMMENT)->setChecked(true);
+            break;
+        case LSFSModel::Group:
+            p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_GROUP)->setChecked(true);
+            break;
+        case LSFSModel::Owner:
+            p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_OWNER)->setChecked(true);
+            break;
+        case LSFSModel::ModificationDate:
+            p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_MODIFIED)->setChecked(true);
+            break;
+        case LSFSModel::Kind:
+            p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_KIND)->setChecked(true);
+            break;
+        case LSFSModel::Size:
+            p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_SIZE)->setChecked(true);
+            break;
+        case LSFSModel::Name:
+            p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_NAME)->setChecked(true);
+            break;
+        case -1:
+        default:
+            p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_NONE)->setChecked(true);
+            break;
+        }
+
+        switch(p->m_model->sortOrder())
+        {
+        case Qt::AscendingOrder:
+            p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_ASC)->setChecked(true);
+            break;
+        case Qt::DescendingOrder:
+        default:
+            p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_DESC)->setChecked(true);
+            break;
+        }
+    }
+
+}
+
+void LSEmbeddedShellHost::adjustColumnHeaders()
+{
+    if(p->m_currentModel == Filesystem)
+    {
+        p->m_filesTable->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+        p->m_filesTable->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+        p->m_filesTable->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+        p->m_filesTable->header()->setSectionResizeMode(3, QHeaderView::Interactive);
+        p->m_filesTable->header()->setSectionResizeMode(4, QHeaderView::ResizeToContents);
+        p->m_filesTable->header()->setSectionResizeMode(5, QHeaderView::ResizeToContents);
+        p->m_filesTable->header()->setSectionResizeMode(6, QHeaderView::Interactive);
+    }
+}
+
+void LSEmbeddedShellHost::enableNoSelectionWritableActions()
+{
+    QUuid uuid = p->m_tabs->tabData(p->m_tabs->currentIndex()).toUuid();
+    auto url = p->m_tabLocations[uuid];
+
+    if(url.isEmpty())
+        return;
+\
+    if(p->m_currentModel == Filesystem)
+    {
+        if(url.scheme() == "file")
+        {
+            auto file = url.toLocalFile();
+            QFileInfo f(file);
+            if(f.isWritable())
+            {
+                p->m_actions->shellAction(HWShell::ACT_FILE_NEW_FOLDER)->setEnabled(true);
+                p->m_actions->shellAction(HWShell::ACT_FILE_NEW_FILE)->setEnabled(true);
+            }
+            else
+            {
+                p->m_actions->shellAction(HWShell::ACT_FILE_NEW_FOLDER)->setDisabled(true);
+                p->m_actions->shellAction(HWShell::ACT_FILE_NEW_FILE)->setDisabled(true);
+
+            }
+        }
+    }
+}
+
+void LSEmbeddedShellHost::actionSortRequested()
+{
+    auto act = qobject_cast<QAction*>(sender());
+    int column = -1;
+
+    if(act == p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_NAME))
+        column = LSFSModel::Name;
+    if(p->m_currentModel == Filesystem)
+    {
+        if(act == p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_SIZE))
+            column = LSFSModel::Size;
+        if(act == p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_KIND))
+            column = LSFSModel::Kind;
+        if(act == p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_MODIFIED))
+            column = LSFSModel::ModificationDate;
+        if(act == p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_OWNER))
+            column = LSFSModel::Owner;
+        if(act == p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_GROUP))
+            column = LSFSModel::Group;
+        if(act == p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_COMMENT))
+            column = LSFSModel::Comment;
+
+        if(column != -1)
+            doSort(column, p->m_model->sortOrder());
+    }
+}
+
+void LSEmbeddedShellHost::actionSortOrderRequested()
+{
+    auto act = qobject_cast<QAction*>(sender());
+    Qt::SortOrder order = Qt::AscendingOrder;
+
+    if(act == p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_ASC))
+        order = Qt::AscendingOrder;
+    if(act == p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_DESC))
+        order = Qt::DescendingOrder;
+    if(p->m_currentModel == Filesystem)
+        doSort(p->m_model->sortColumn(), order);
+
+}
+
 void LSEmbeddedShellHost::showGetInfoDialog(const QUrl &target)
 {
     auto dlg = new LSGetInfoDialog(target, this);
@@ -637,7 +822,6 @@ bool LSEmbeddedShellHost::executeDesktopOverDBus(const QString &desktop)
 
 bool LSEmbeddedShellHost::openFileOverDBusWithDefault(const QString &file)
 {
-    qDebug() << file;
     QDBusInterface ldb(HOLLYWOOD_SESSION_DBUS, HOLLYWOOD_SESSION_DBUSOBJ, HOLLYWOOD_SESSION_DBUSPATH);
     if(!ldb.isValid())
     {
@@ -676,6 +860,16 @@ void LSEmbeddedShellHost::disableActionsForNoSelection()
     p->m_actions->shellAction(HWShell::ACT_EDIT_COPY)->setDisabled(true);
     p->m_actions->shellAction(HWShell::ACT_EDIT_CUT)->setDisabled(true);
     p->m_actions->shellAction(HWShell::ACT_EDIT_INV_SEL)->setDisabled(true);
+
+    if(p->m_currentModel != Filesystem)
+    {
+        p->m_actions->shellAction(HWShell::ACT_FILE_NEW_FOLDER)->setEnabled(false);
+        p->m_actions->shellAction(HWShell::ACT_FILE_NEW_FILE)->setDisabled(true);
+    }
+    else
+    {
+        enableNoSelectionWritableActions();
+    }
 }
 
 void LSEmbeddedShellHost::enableActionsForFileSelection(bool multiple)
@@ -852,6 +1046,8 @@ void LSEmbeddedShellHost::swapToModel(ShellModel model)
         p->m_filesList->setModel(p->m_apps);
         p->m_filesTable->setModel(p->m_apps);
         p->m_currentModel = Applications;
+        disableActionsForNoSelection();
+        adjustColumnHeaders();
         break;
     case Filesystem:
     default:
@@ -859,6 +1055,9 @@ void LSEmbeddedShellHost::swapToModel(ShellModel model)
         p->m_filesList->setModel(p->m_model);
         p->m_filesTable->setModel(p->m_model);
         p->m_currentModel = Filesystem;
+        disableActionsForNoSelection();
+        filesystemSortingChanged();
+        adjustColumnHeaders();
         break;
     }
 }

@@ -3,9 +3,10 @@
 
 #include <QAbstractListModel>
 #include <QFileInfo>
-
+#include "libshell_int.h"
+class LSDesktopEntry;
 class LSDesktopModelPrivate;
-class LSDesktopModel : public QAbstractListModel
+class LIBSHELL_EXPORT LSDesktopModel : public QAbstractListModel
 {
 public:
     enum Roles {
@@ -23,10 +24,11 @@ public:
     QIcon icon(const QModelIndex &index) const;
     QString name(const QModelIndex &index) const;
     QString description(const QModelIndex &index) const;
+    QFileInfo fileInfo(const QModelIndex &index) const;
+    bool isDesktop(const QModelIndex &index) const;
+    LSDesktopEntry *desktopFileForIndex(const QModelIndex &index);
 private slots:
-    void directoryChanged(const QString &directory, const QStringList &list);
-    void fileSystemChanged(const QString &path, const QVector<QPair<QString,QFileInfo> >&items);
-    void resolvedName(const QString &file, const QString &resolved);
+    void refreshDesktopFolder();
 private:
     LSDesktopModelPrivate *p;
 };

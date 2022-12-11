@@ -231,15 +231,8 @@ void LSFSItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
     if(!index.isValid())
         return;
 
-    // get emblems for this icon
-    //std::forward_list<std::shared_ptr<const Fm::IconInfo>> icon_emblems;
-    /*auto fmicon = index.data(iconInfoRole_).value<std::shared_ptr<const Fm::IconInfo>>();
-    if(fmicon) {
-        icon_emblems = fmicon->emblems();
-    }*/
     // get file info for the item
-    auto file = index.data(Qt::UserRole + 6).value<QSharedPointer<const LSExtendedFileInfo>>();
-    //const auto& emblems = file ? file->emblems() : icon_emblems;
+    auto file = index.data(Qt::UserRole + 4).value<QSharedPointer<LSExtendedFileInfo>>();
 
     QStyleOptionViewItem opt = option;
     initStyleOption(&opt, index);
@@ -254,7 +247,11 @@ void LSFSItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
     }
 
     bool isSymlink = file && file->isSymLink();
-
+    if(file && file->isSymLink()) {
+        QFont f(opt.font);
+        f.setItalic(true);
+        opt.font = f;
+    }
     // TODO: fix this
     bool isCut = false;
     //bool isCut = index.data(FolderModel::FileIsCutRole).toBool();

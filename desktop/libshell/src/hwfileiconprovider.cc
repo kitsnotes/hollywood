@@ -1,6 +1,7 @@
 #include "hwfileiconprovider.h"
 #include <QMimeDatabase>
 #include <QMimeType>
+#include "directories.h"
 
 HWFileIconProvider::HWFileIconProvider()
     : QFileIconProvider() { }
@@ -39,6 +40,30 @@ QIcon HWFileIconProvider::icon(const QFileInfo &info) const
     QMimeType type = db.mimeTypeForFile(info);
     auto mtname = type.name();
     mtname.replace('/', '-');
+    if(mtname == "inode-directory")
+    {
+        // see if we are a freedesktop directory
+        LSDirectories d;
+        if(info.canonicalFilePath() == d.userDir(LSDirectories::Desktop))
+            return QIcon::fromTheme("user-desktop");
+        if(info.canonicalFilePath() == d.userDir(LSDirectories::Documents))
+            return QIcon::fromTheme("folder-documents");
+        if(info.canonicalFilePath() == d.userDir(LSDirectories::Downloads))
+            return QIcon::fromTheme("folder-downloads");
+        if(info.canonicalFilePath() == d.userDir(LSDirectories::Pictures))
+            return QIcon::fromTheme("folder-pictures");
+        if(info.canonicalFilePath() == d.userDir(LSDirectories::Music))
+            return QIcon::fromTheme("folder-music");
+        if(info.canonicalFilePath() == d.userDir(LSDirectories::Videos))
+            return QIcon::fromTheme("folder-videos");
+        if(info.canonicalFilePath() == d.userDir(LSDirectories::Templates))
+            return QIcon::fromTheme("folder-templates");
+        if(info.canonicalFilePath() == d.userDir(LSDirectories::PublicShare))
+            return QIcon::fromTheme("folder-publicshare");
+
+        if(info.canonicalFilePath() == qgetenv("HOME"))
+            return QIcon::fromTheme("user-home");
+    }
     return QIcon::fromTheme(mtname);
 }
 

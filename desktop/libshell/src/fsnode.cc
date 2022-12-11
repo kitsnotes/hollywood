@@ -3,6 +3,7 @@
 #include "desktopentry.h"
 #include "hwfileiconprovider.h"
 #include <QDateTime>
+#include <errno.h>
 
 LSFSNode::LSFSNode(const QString &filename, LSFSNode *p)
     : fileName(filename), m_parent(p) {}
@@ -31,6 +32,11 @@ QString LSFSNode::type() const
         }
     }
 
+    if(info.data()->isDir())
+    {
+
+        return QApplication::tr("Folder");
+    }
     if (info)
         return info.data()->displayType;
 
@@ -64,10 +70,26 @@ QString LSFSNode::desktopFileNameEntry() const
 
 QString LSFSNode::xattrComment() const
 {
-    char value[10000];
-    getxattr(fileInfo().filePath().toUtf8().data(), "user.xdg.comment\0", value, 10000);
-    QString xattrComment(value);
-    return xattrComment;
+    char *val;
+    int size;
+
+    auto file = fileInfo().filePath().toLatin1().data();
+    size = getxattr(file, "user.xdg.comment", NULL, 0);
+    if(size < 0)
+    {
+        return QString();
+    }
+    val = (char*)malloc(size+1);
+
+    if(getxattr(fileInfo().filePath().toUtf8().data(), "user.xdg.comment", val, size) == -1)
+    {
+        qDebug() << "LSFSNode::xattrComment: getxattr failed";
+        return QString();
+    }
+
+    QString xttr(val);
+    free(val);
+    return xttr;
 }
 
 QFileDevice::Permissions LSFSNode::permissions() const
@@ -93,9 +115,9 @@ bool LSFSNode::isFile() const { if (info) return info.data()->isFile(); return t
 
 bool LSFSNode::isSystem() const { if (info) return info.data()->isSystem(); return true; }
 
-bool LSFSNode::isHidden() const { if (info) return info.data()->isHidden(); return false; }
+bool LSFSNode::isHidden() const { return fileInfo().isHidden(); }
 
-bool LSFSNode::isSymLink() const { if(info) return info.data()->isSymLink(); return false; }
+bool LSFSNode::isSymLink() const { return fileInfo().isSymLink(); }
 
 /* TODO: fix this */
 bool LSFSNode::caseSensitive() const { /* if (info) return info.data()->isCaseSensitive(); */ return true; }

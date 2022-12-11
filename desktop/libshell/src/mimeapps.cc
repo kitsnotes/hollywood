@@ -194,16 +194,9 @@ void LSMimeApplications::processGlobalMimeCache()
             for(auto candidate : candidates)
             {
                 auto filename = LSDesktopEntry::findDesktopFile(candidate);
-                auto cache = findDesktopForFile(filename);
-                if(cache == nullptr)
-                {
-                    auto desktop = new LSDesktopEntry();
-                    desktop->load(filename);
-                    p->m_globalMime.insert(mime, desktop);
-                    p->m_desktops.append(desktop);
-                }
-                else
-                    p->m_globalMime.insert(mime, cache);
+                auto desktop = new LSDesktopEntry();
+                desktop->load(filename);
+                p->m_globalMime.insert(mime, desktop);
             }
         }
     }
@@ -255,6 +248,9 @@ LSDesktopEntry *LSMimeApplications::findDesktopForFile(const QString &file)
 {
     for(auto desktop : p->m_desktops)
     {
+        if(desktop == nullptr)
+            continue;
+
         if(desktop->fileName() == file)
             return desktop;
     }

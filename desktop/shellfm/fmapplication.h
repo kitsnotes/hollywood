@@ -25,6 +25,7 @@ public:
     void createDBusInterfaces();
     bool checkSocket();
 public slots:
+    bool executeDesktopOverDBus(const QString &desktop);
     void ShowFolders(const QStringList& urlList, const QString& startupId);
     void ShowItems(const QStringList& urlList, const QString& startupId);
     void ShowItemProperties(const QStringList& urlList, const QString& startupId);
@@ -33,6 +34,7 @@ public slots:
     void newFileWindow(const QUrl &path);
     void createDesktop();
     void showWallpaperSettings();
+    void showPermissionError(const QUrl &path);
 private slots:
     void openFolderFromDesktop(const QUrl &path);
 private:

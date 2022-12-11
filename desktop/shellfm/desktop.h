@@ -4,7 +4,7 @@
 #include <QMainWindow>
 #include <actionmanager.h>
 
-class LSFSModel;
+class LSDesktopModel;
 class LSFSItemDelegate;
 class LSActionManager;
 class DesktopWindow : public QMainWindow
@@ -25,7 +25,7 @@ private:
     void contextMenu(const QPoint &pos);
 private:
     QListView *m_view = nullptr;
-    LSFSModel *m_model = nullptr;
+    LSDesktopModel *m_model = nullptr;
     LSFSItemDelegate *m_delegate = nullptr;
     LSActionManager *m_actions = nullptr;
     QMenu *m_rightclick = nullptr;

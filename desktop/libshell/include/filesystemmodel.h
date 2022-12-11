@@ -39,7 +39,8 @@ public:
         FileIconRole = Qt::DecorationRole,
         FilePathRole = Qt::UserRole + 1,
         FileNameRole = Qt::UserRole + 2,
-        FilePermissions = Qt::UserRole + 3
+        FilePermissions = Qt::UserRole + 3,
+        FileInfoRole = Qt::UserRole + 4
     };
 
     enum Column
@@ -88,7 +89,7 @@ public:
     Qt::ItemFlags flags(const QModelIndex &index) const Q_DECL_OVERRIDE;
 
     void sort(int column, Qt::SortOrder order = Qt::AscendingOrder) Q_DECL_OVERRIDE;
-    Column sortColumn() const;
+    int sortColumn() const;
     Qt::SortOrder sortOrder() const;
 
     QHash<int, QByteArray> roleNames() const Q_DECL_OVERRIDE;

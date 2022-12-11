@@ -378,7 +378,6 @@ QVariant LSFSModel::data(const QModelIndex &index, int role) const
     case Qt::EditRole:
         if (index.column() == 0)
             return d->name(index);
-        Q_FALLTHROUGH();
     case Qt::DisplayRole:
         switch (index.column()) {
         case 0: return d->displayName(index);
@@ -390,7 +389,6 @@ QVariant LSFSModel::data(const QModelIndex &index, int role) const
         case 6: return d->comment(index);
         default:
             qWarning("data: invalid display value column %d", index.column());
-            break;
         }
         break;
     case FilePathRole:
@@ -415,8 +413,9 @@ QVariant LSFSModel::data(const QModelIndex &index, int role) const
             return QVariant(Qt::AlignTrailing | Qt::AlignVCenter);
         break;
     case FilePermissions:
-        int p = permissions(index);
-        return p;
+        return (int)permissions(index);
+    case FileInfoRole:
+        return QVariant::fromValue(d->node(index)->info);
     }
 
     return QVariant();
@@ -693,6 +692,30 @@ public:
 
             return l->lastModified() < r->lastModified();
         }
+        case 4:
+        {
+            int compare = naturalCompare.compare(l->owner(), r->owner());
+            if (compare == 0)
+                return naturalCompare.compare(l->fileName, r->fileName) < 0;
+
+            return compare < 0;
+        }
+        case 5:
+        {
+            int compare = naturalCompare.compare(l->group(), r->group());
+            if (compare == 0)
+                return naturalCompare.compare(l->fileName, r->fileName) < 0;
+
+            return compare < 0;
+        }
+        case 6:
+        {
+            int compare = naturalCompare.compare(l->xattrComment(), r->xattrComment());
+            if (compare == 0)
+                return naturalCompare.compare(l->fileName, r->fileName) < 0;
+
+            return compare < 0;
+        }
         }
         Q_ASSERT(false);
         return false;
@@ -786,10 +809,10 @@ void LSFSModel::sort(int column, Qt::SortOrder order)
     emit layoutChanged();
 }
 
-LSFSModel::Column LSFSModel::sortColumn() const
+int LSFSModel::sortColumn() const
 {
     Q_D(const LSFSModel);
-    return (LSFSModel::Column)d->sortColumn;
+    return d->sortColumn;
 }
 
 Qt::SortOrder LSFSModel::sortOrder() const

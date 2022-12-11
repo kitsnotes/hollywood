@@ -4,11 +4,13 @@
 #include <filesystemmodel.h>
 #include <fsitemdelegate.h>
 #include <executor.h>
+#include <desktopmodel.h>
+#include <desktopentry.h>
 
 DesktopWindow::DesktopWindow(QWidget *parent)
     : QMainWindow(parent)
     , m_view(new QListView(this))
-    , m_model(new LSFSModel(this))
+    , m_model(new LSDesktopModel(this))
     , m_delegate(new LSFSItemDelegate(this))
     , m_actions(new LSActionManager(this))
     , m_rightclick(new QMenu(this))
@@ -17,11 +19,6 @@ DesktopWindow::DesktopWindow(QWidget *parent)
     setObjectName("DesktopWindow");
     setCentralWidget(m_view);
     m_view->setModel(m_model);
-    QString desktopPath = QStandardPaths::standardLocations(QStandardPaths::DesktopLocation).first();
-    m_model->setRootPath(desktopPath);
-    QModelIndex idx = m_model->index(desktopPath);
-
-    m_view->setRootIndex(idx);
 
     setAttribute(Qt::WA_NoSystemBackground);
     setAttribute(Qt::WA_TranslucentBackground);
@@ -46,7 +43,6 @@ DesktopWindow::DesktopWindow(QWidget *parent)
     m_view->setFont(font);
     m_view->setItemAlignment(Qt::AlignHCenter);
     m_view->setFrameShape(QFrame::NoFrame);
-    m_view->setItemDelegate(m_delegate);
     m_view->setItemDelegate(m_delegate);
     m_delegate->setShadowHidden(false);
 
@@ -79,16 +75,22 @@ void DesktopWindow::activated(const QModelIndex &idx)
     if(fileInfo.isDir())
     {
         if(fileInfo.isReadable() && fileInfo.isExecutable())
-            emit openFolder(QUrl::fromLocalFile(fileInfo.absoluteFilePath()));
-//        else
-  //          showFolderPermissionError(fileInfo.fileName());
+            FMApplication::instance()->newFileWindow(QUrl::fromLocalFile(fileInfo.canonicalFilePath()));
+        else
+            FMApplication::instance()->showPermissionError(QUrl(fileInfo.canonicalFilePath()));
     }
+
+    // handle a .desktop file
     if(m_model->isDesktop(idx))
     {
-        LSExecutor *exec = new LSExecutor(this);
-        exec->setDesktopFile(m_model->desktopFileForIndex(idx));
-        exec->launch();
+        FMApplication::instance()->executeDesktopOverDBus(m_model->desktopFileForIndex(idx)->fileName());
+        return;
     }
+
+    // TODO: handle an appimage
+    //openFileOverDBusWithDefault(fileInfo.canonicalFilePath());
+
+    // TODO: handle executing an executable file???
 }
 
 void DesktopWindow::contextMenu(const QPoint &pos)

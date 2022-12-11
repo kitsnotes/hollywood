@@ -135,6 +135,7 @@ bool LSFileInfoGatherer::isWatching() const
 void LSFileInfoGatherer::setWatching(bool v)
 {
     QMutexLocker locker(&mutex);
+    Q_UNUSED(v)
     /* if (v != m_watching) {
         if (!v) {
             delete watcher;

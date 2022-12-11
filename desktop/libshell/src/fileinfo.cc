@@ -1,12 +1,14 @@
 #include "fileinfo.h"
 #include "desktopentry.h"
 #include <QDateTime>
-
+#include <QMimeDatabase>
 LSExtendedFileInfo::LSExtendedFileInfo() {}
 
 LSExtendedFileInfo::LSExtendedFileInfo(const QFileInfo &info)
 {
     m_info = info;
+    QMimeDatabase db;
+    displayType = db.mimeTypeForFile(info.fileName()).comment();
 }
 
 bool LSExtendedFileInfo::operator ==(const LSExtendedFileInfo &fileInfo) const
@@ -38,7 +40,6 @@ QFileDevice::Permissions LSExtendedFileInfo::permissions() const
 
 bool LSExtendedFileInfo::isSymLink() const
 {
-    qDebug() << "isSymlink on " << m_info.canonicalFilePath() << "is" << m_info.isSymbolicLink();
     return m_info.isSymbolicLink();
 }
 
