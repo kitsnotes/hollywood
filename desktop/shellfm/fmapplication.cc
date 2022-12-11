@@ -140,6 +140,9 @@ void FMApplication::ShowFolders(const QStringList &urlList, const QString &start
         if(qurl.scheme() == "file")
             newFileWindow(url);
 
+        if(qurl.scheme() == "trash")
+            newFileWindow(QUrl("trash://"));
+
         if(qurl.scheme() == "applications")
             newFileWindow(QUrl("applications://"));
     }

@@ -11,9 +11,12 @@
 #include "executor.h"
 #include "appmodel.h"
 #include "getinfodialog.h"
+#include "trashmodel.h"
 
 #include <QDBusInterface>
 #include <hollywood/hollywood.h>
+#include <QAbstractItemModel>
+#include <QMimeDatabase>
 
 LSEmbeddedShellHostPrivate::LSEmbeddedShellHostPrivate(LSEmbeddedShellHost *parent)
     : d(parent)
@@ -21,6 +24,7 @@ LSEmbeddedShellHostPrivate::LSEmbeddedShellHostPrivate(LSEmbeddedShellHost *pare
     , m_filesList(new QListView(parent))
     , m_model(new LSFSModel(parent))
     , m_apps(new ApplicationModel(parent))
+    , m_trash(new LSTrashModel(parent))
     , m_placeModel(new LSPlaceModel(parent))
     , m_viewOptions(new LSViewOptionsDialog(parent))
     , m_delegate(new LSFSItemDelegate(parent)) {}
@@ -320,6 +324,24 @@ bool LSEmbeddedShellHost::navigateToUrl(const QUrl &path)
 
     swapModelForUrl(path);
 
+    if(path.scheme() == "trash")
+    {
+        QIcon ico = QIcon::fromTheme("folder-activities");
+        emit updateWindowTitle(tr("Trash"));
+        p->m_tabs->setTabText(p->m_tabs->currentIndex(), tr("Trash"));
+        p->m_tabs->setTabIcon(p->m_tabs->currentIndex(), ico);
+        QUuid uuid = p->m_tabs->tabData(p->m_tabs->currentIndex()).toUuid();
+
+        p->m_tabLocations[uuid] = path;
+        emit updateWindowIcon(ico);
+        p->m_location->setPath(path);
+
+        updatePlaceModelSelection(path);
+        disableActionsForNoSelection();
+        p->m_actions->shellAction(HWShell::ACT_GO_ENCLOSING_FOLDER)->setEnabled(false);
+        return true;
+    }
+
     if(path.scheme() == "applications")
     {
         QIcon ico = QIcon::fromTheme("folder-activities");
@@ -374,6 +396,18 @@ void LSEmbeddedShellHost::newTabWithPath(const QUrl &path)
          navigateToPath(localPath);
      }
      // TODO: error out here
+    }
+    if(path.scheme() == "trash")
+    {
+        QUrl url = QUrl("trash://");
+        int idx = p->m_tabs->addTab(QApplication::tr("Trash"));
+        QUuid tabId = QUuid::createUuid();
+        p->m_tabs->setTabData(idx, tabId);
+        // just temporary to add the map entry
+        p->m_tabLocations.insert(tabId, url);
+        p->m_tabViewMode.insert(tabId, p->m_viewMode);
+        p->m_tabs->setCurrentIndex(idx);
+        navigateToUrl(url);
     }
     if(path.scheme() == "applications")
     {
@@ -461,7 +495,7 @@ void LSEmbeddedShellHost::setColumnView(bool updateSettings)
     p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_NONE)->setEnabled(false);
     p->m_actions->shellAction(HWShell::ACT_VIEW_COLUMNS)->setChecked(true);
     connect(p->m_filesColumn, &QAbstractItemView::customContextMenuRequested, this, &LSEmbeddedShellHost::viewContextMenuRequested);
-    connect(p->m_filesColumn, &QColumnView::doubleClicked, this, &LSEmbeddedShellHost::viewActivated);
+    connect(p->m_filesColumn, &QColumnView::activated, this, &LSEmbeddedShellHost::viewActivated);
     connect(p->m_filesColumn->selectionModel(), &QItemSelectionModel::selectionChanged,
             this, &LSEmbeddedShellHost::viewSelectionChanged);
     p->m_viewMode = HWShell::VIEW_COLUMN;
@@ -550,6 +584,11 @@ void LSEmbeddedShellHost::viewActivated(const QModelIndex &idx)
         auto da = p->m_apps->data(idx, Qt::UserRole+1);
         executeDesktopOverDBus(da.toString());
     }
+
+    if(p->m_currentModel == Trash)
+    {
+        // just show properties for a trashed item
+    }
 }
 
 void LSEmbeddedShellHost::viewSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected)
@@ -561,8 +600,8 @@ void LSEmbeddedShellHost::viewSelectionChanged(const QItemSelection &selected, c
     else
         disableActionsForNoSelection();
 
-    Q_UNUSED(deselected);
     emit updateStatusBar(generateStatusBarMsg());
+    Q_UNUSED(deselected);
 }
 
 void LSEmbeddedShellHost::placeClicked(const QModelIndex &idx)
@@ -911,63 +950,47 @@ QString LSEmbeddedShellHost::generateStatusBarMsg() const
     QModelIndex current;
     bool selected = false;
     int count = 0;
+    QLocale l;
     switch(p->m_viewMode)
     {
     case HWShell::VIEW_ICONS:
         current = p->m_filesList->currentIndex();
         selected = p->m_filesList->selectionModel()->hasSelection();
         count = selected ? p->m_filesList->selectionModel()->selectedIndexes().count() : 0;
-        if(count == 1)
-        {
-            if(p->m_currentModel == Filesystem)
-            {
-                QFileInfo info =
-                        p->m_model->fileInfo(p->m_filesList->selectionModel()->selectedIndexes().first());
-                fileName = info.fileName();
-                fileSize = tr("0KB");
-                fileType = info.fileName();
-            }
-        }
         break;
     case HWShell::VIEW_LIST:
         current = p->m_filesTable->currentIndex();
         selected = p->m_filesTable->selectionModel()->hasSelection();
         count = selected ? p->m_filesTable->selectionModel()->selectedIndexes().count() : 0;
-        if(count == 1)
-        {
-            if(p->m_currentModel == Filesystem)
-            {
-                QFileInfo info =
-                        p->m_model->fileInfo(p->m_filesList->selectionModel()->selectedIndexes().first());
-                fileName = info.fileName();
-                fileSize = tr("0KB");
-                fileType = info.fileName();
-            }
-        }
+        break;
+    case HWShell::VIEW_COLUMN:
+        current = p->m_filesColumn->currentIndex();
+        selected = p->m_filesColumn->selectionModel()->hasSelection();
+        count = selected ? p->m_filesColumn->selectionModel()->selectedIndexes().count() : 0;
         break;
     default:
         break;
     }
 
-    if(selected)
+    if(count == 1)
     {
-        if(count > 1)
-            return tr("%1 items (%2)").arg(count).arg(count);
-        else
+        if(p->m_currentModel == Filesystem)
+        {
+            QMimeDatabase db;
+            QFileInfo info =
+                    p->m_model->fileInfo(p->m_filesList->selectionModel()->selectedIndexes().first());
+            fileName = info.fileName();
+            fileSize = l.formattedDataSize(info.size());
+            fileType = db.mimeTypeForFile(info.fileName()).comment();
             return tr("\"%1\" (%2) - %3").arg(fileName).arg(fileSize).arg(fileType);
+        }
     }
+    else if(count > 1)
+        return tr("%1 items selected").arg(count);
     else
     {
-        if(current.isValid())
-        {
-            if(p->m_currentModel == Filesystem)
-            {
-                if(p->m_model->rowCount(current) == 1)
-                    return tr("%1 item").arg(p->m_model->rowCount(current));
-                else
-                    return tr("%1 items").arg(p->m_model->rowCount(current));
-            }
-        }
+        if(p->m_currentModel == Filesystem)
+            return tr("%1 item").arg(p->m_model->rowCount(current));
     }
     return QString();
 }
@@ -1049,6 +1072,14 @@ void LSEmbeddedShellHost::swapToModel(ShellModel model)
         disableActionsForNoSelection();
         adjustColumnHeaders();
         break;
+    case Trash:
+        p->m_filesColumn->setModel(p->m_trash);
+        p->m_filesList->setModel(p->m_trash);
+        p->m_filesTable->setModel(p->m_trash);
+        p->m_currentModel = Trash;
+        disableActionsForNoSelection();
+        adjustColumnHeaders();
+        break;
     case Filesystem:
     default:
         p->m_filesColumn->setModel(p->m_model);
@@ -1076,6 +1107,14 @@ void LSEmbeddedShellHost::swapModelForUrl(const QUrl &url)
     {
         if(p->m_currentModel != Applications)
             swapToModel(Applications);
+
+        return;
+    }
+
+    if(url.scheme() == QLatin1String("trash"))
+    {
+        if(p->m_currentModel != Trash)
+            swapToModel(Trash);
 
         return;
     }

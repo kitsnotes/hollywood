@@ -182,6 +182,9 @@ QUrl LSLocationBar::pathForButton(PathButton* btn)
     if(p->m_currentPath.scheme() == "applications")
         return QUrl("applications://");
 
+    if(p->m_currentPath.scheme() == "trash")
+        return QUrl("trash://");
+
     std::string fullPath;
     int buttonCount = p->m_buttonsLayout->count() - 1; // the last item is a spacer
     for(int i = 0; i < buttonCount; ++i) {
@@ -199,6 +202,8 @@ QUrl LSLocationBar::pathForButton(PathButton* btn)
 void LSLocationBar::onButtonToggled(bool checked)
 {
     if(p->m_currentPath.scheme() == "applications")
+        return;
+    if(p->m_currentPath.scheme() == "trash")
         return;
 
     if(checked) {
@@ -279,8 +284,15 @@ void LSLocationBar::setPath(const QUrl &path)
         btn->show();
         connect(btn, &QAbstractButton::toggled, this, &LSLocationBar::onButtonToggled);
         p->m_buttonsLayout->insertWidget(0, btn);
-
     }
+    if(p->m_currentPath.scheme() == "trash")
+    {
+        auto btn = new PathButton("trash://", "Trash", true, p->m_buttonsWidget);
+        btn->show();
+        connect(btn, &QAbstractButton::toggled, this, &LSLocationBar::onButtonToggled);
+        p->m_buttonsLayout->insertWidget(0, btn);
+    }
+
     if(p->m_currentPath.scheme() == "file")
     {
         // create new buttons for the new path

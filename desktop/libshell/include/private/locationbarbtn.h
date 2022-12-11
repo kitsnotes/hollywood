@@ -47,7 +47,9 @@ public:
         if(isRoot) { /* this element is root */
             QIcon icon;
             if(name == "applications://")
-                icon = QIcon::fromTheme(QStringLiteral("folder-activities"));
+                icon = QIcon::fromTheme(QStringLiteral("applications-all"));
+            else if(name == "trash://")
+                icon = QIcon::fromTheme(QStringLiteral("user-trash"));
             else
                 icon = QIcon::fromTheme(QStringLiteral("drive-harddisk"));
             setIcon(icon);

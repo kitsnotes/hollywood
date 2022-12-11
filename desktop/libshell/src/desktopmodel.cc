@@ -45,7 +45,7 @@ LSDesktopModel::LSDesktopModel(QObject *parent)
 int LSDesktopModel::rowCount(const QModelIndex &parent) const
 {
     Q_UNUSED(parent);
-    return p->m_files.count();
+    return p->m_files.count()+1;
 }
 
 int LSDesktopModel::columnCount(const QModelIndex &parent) const
@@ -60,10 +60,7 @@ QVariant LSDesktopModel::data(const QModelIndex &index, int role) const
     {
     case Qt::DisplayRole:
         switch (index.column())
-        {
             case 0: return name(index);
-            case 1: return description(index);
-        }
         break;
     case Qt::DecorationRole:
         if (index.column() == 0)
@@ -74,7 +71,9 @@ QVariant LSDesktopModel::data(const QModelIndex &index, int role) const
             return QVariant(Qt::AlignTrailing | Qt::AlignVCenter);
         break;
     case Qt::UserRole+4:
-        return QVariant::fromValue(p->m_files.at(index.row())->info);
+            if(index.row() > p->m_files.count()-1)
+                return QVariant();
+            return QVariant::fromValue(p->m_files.at(index.row())->info);
     }
 
     return QVariant();
@@ -82,11 +81,17 @@ QVariant LSDesktopModel::data(const QModelIndex &index, int role) const
 
 QIcon LSDesktopModel::icon(const QModelIndex &index) const
 {
+    if(index.row() > p->m_files.count()-1)
+        return QIcon::fromTheme("user-trash");
+
     return p->m_files.at(index.row())->icon();
 }
 
 QString LSDesktopModel::name(const QModelIndex &index) const
 {
+    if(index.row() > p->m_files.count()-1)
+        return tr("Trash");
+
     if(p->m_files.at(index.row())->isDesktopFile())
         return p->m_files.at(index.row())->desktopFileNameEntry();
 
@@ -103,6 +108,14 @@ QString LSDesktopModel::description(const QModelIndex &index) const
 QFileInfo LSDesktopModel::fileInfo(const QModelIndex &index) const
 {
     return p->m_files.at(index.row())->fileInfo();
+}
+
+bool LSDesktopModel::isTrash(const QModelIndex &index) const
+{
+    if(index.row() == p->m_files.count())
+        return true;
+
+    return false;
 }
 
 bool LSDesktopModel::isDesktop(const QModelIndex &index) const

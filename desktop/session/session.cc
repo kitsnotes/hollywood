@@ -91,6 +91,7 @@ SMApplication::SMApplication(int &argc, char **argv)
     if(m_startedDisplayManager)
         qCInfo(lcSession) << "Session started via display manager.";
 
+    verifyTrashFolder();
     m_mime->processGlobalMimeCache();
 }
 
@@ -383,6 +384,19 @@ void SMApplication::restartCompositorReliantProcesses()
     m_elevatorProcess->setAutoRestart(true);
     m_stageProcess->setAutoRestart(true);
     m_desktopProcess->setAutoRestart(true);
+}
+
+void SMApplication::verifyTrashFolder()
+{
+    auto xdg_data = qgetenv("XDG_DATA_HOME");
+    if(xdg_data.isEmpty())
+        xdg_data = qgetenv("HOME")+"/.local/share/";
+    QDir dir(xdg_data+"Trash");
+    if(!dir.exists())
+        dir.mkpath(xdg_data+"Trash");
+
+    dir.mkpath(xdg_data+"Trash"+"/files");
+    dir.mkpath(xdg_data+"Trash"+"/info");
 }
 
 void SMApplication::compositorDied()

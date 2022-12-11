@@ -65,6 +65,7 @@ private:
     bool callLogindDbus(const QString &command);
     void disconnectProcessWatchers();
     void restartCompositorReliantProcesses();
+    void verifyTrashFolder();
 private slots:
     void compositorDied();
     void userProcessTerminated(int result);

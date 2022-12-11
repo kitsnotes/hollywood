@@ -99,5 +99,12 @@ void LSPlaceModel::populateFavorites()
     pi.displayIcon = QIcon::fromTheme("user-home");
     m_favorites.append(pi);
 
+    PlaceItem pit;
+    pit.location = QUrl("trash://");
+    pit.type = Trash;
+    pit.displayName = tr("Trash");
+    pit.displayIcon = QIcon::fromTheme("user-trash");
+
+    m_favorites.append(pit);
 
 }

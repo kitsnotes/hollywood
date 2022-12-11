@@ -10,7 +10,7 @@ class LSPlaceModel;
 class LSPlaceView;
 class LSColumnPreview;
 class LSFSItemDelegate;
-
+class LSTrashModel;
 class LSLocationBar;
 class LSFSModel;
 typedef QList<QUrl> UrlList;

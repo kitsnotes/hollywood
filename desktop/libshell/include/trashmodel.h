@@ -2,36 +2,32 @@
 #define LSDESKTOPMODEL_H
 
 #include <QAbstractListModel>
+
 #include <QFileInfo>
 #include "libshell_int.h"
-class LSDesktopEntry;
-class LSDesktopModelPrivate;
-class LIBSHELL_EXPORT LSDesktopModel : public QAbstractListModel
+
+class LSTrashModelItem;
+class LSTrashModelPrivate;
+class LIBSHELL_EXPORT LSTrashModel : public QAbstractListModel
 {
 public:
     enum Roles {
         FileIconRole = Qt::DecorationRole,
         FilePathRole = Qt::UserRole + 1,
         FileNameRole = Qt::UserRole + 2,
-        FilePermissions = Qt::UserRole + 3,
-        FileOwner = Qt::UserRole + 4,
-        FileGroup = Qt::UserRole + 5
     };
-    explicit LSDesktopModel(QObject *parent = nullptr);
+    explicit LSTrashModel(QObject *parent = nullptr);
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
+    QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QIcon icon(const QModelIndex &index) const;
     QString name(const QModelIndex &index) const;
     QString description(const QModelIndex &index) const;
-    QFileInfo fileInfo(const QModelIndex &index) const;
-    bool isTrash(const QModelIndex &index) const;
-    bool isDesktop(const QModelIndex &index) const;
-    LSDesktopEntry *desktopFileForIndex(const QModelIndex &index);
 private slots:
-    void refreshDesktopFolder();
+    void refreshTrashFolder();
 private:
-    LSDesktopModelPrivate *p;
+    LSTrashModelPrivate *p;
 };
 
 #endif // LSDESKTOPMODEL_H

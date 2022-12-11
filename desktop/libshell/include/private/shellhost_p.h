@@ -11,9 +11,11 @@
 #include <QTabBar>
 #include <QVBoxLayout>
 #include <QItemSelectionModel>
+#include <QAbstractItemModel>
 
 #include "libshell_int.h"
 #include "shellhost.h"
+#include "trashmodel.h"
 
 class ApplicationModel;
 class LSLocationBar;
@@ -52,6 +54,7 @@ private:
     HWShell::ViewMode m_viewMode;
     LSFSModel *m_model;
     ApplicationModel *m_apps;
+    LSTrashModel *m_trash;
 
     LSPlaceModel *m_placeModel;
     QMap<QUuid, QUrl> m_tabLocations;

@@ -48,6 +48,7 @@ SOURCES += \
     src/progresswidget.cc \
     src/shellhost.cc \
     src/viewoptionsdialog.cc \
+    src/trashmodel.cc \
     src/iconviewoptions.cc
 
 HEADERS += \
@@ -73,6 +74,7 @@ HEADERS += \
     include/private/placeview.h \
     include/private/executor_p.h \
     include/private/progresswidget.h \
+    include/private/trashmodel_p.h \
     include/appmodel.h \
     include/actionmanager.h \
     include/columnpreview.h \
@@ -90,6 +92,7 @@ HEADERS += \
     include/shellhost.h \
     include/viewoptionsdialog.h \
     include/iconviewoptions.h \
+    include/trashmodel.h \
     include/executor.h
 
 LIBS += -ldns_sd

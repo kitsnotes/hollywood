@@ -33,8 +33,8 @@ DesktopWindow::DesktopWindow(QWidget *parent)
     m_view->setContextMenuPolicy(Qt::CustomContextMenu);
     m_view->setViewMode(QListView::IconMode);
     //m_view->setModel(m_model);
-    m_view->setIconSize(QSize(48,48));
-    m_view->setSpacing(15);
+    m_view->setIconSize(QSize(32,32));
+    m_view->setSpacing(8);
     m_view->setFlow(QListView::TopToBottom);
     m_view->setUniformItemSizes(false);
     m_view->setWordWrap(true);
@@ -71,6 +71,13 @@ QAction* DesktopWindow::shellAction(HWShell::ShellActions shellAction)
 
 void DesktopWindow::activated(const QModelIndex &idx)
 {
+    if(m_model->isTrash(idx))
+    {
+        FMApplication::instance()->newFileWindow(QUrl("trash://"));
+
+        return;
+    }
+
     QFileInfo fileInfo(m_model->fileInfo(idx));
     if(fileInfo.isDir())
     {
@@ -78,6 +85,8 @@ void DesktopWindow::activated(const QModelIndex &idx)
             FMApplication::instance()->newFileWindow(QUrl::fromLocalFile(fileInfo.canonicalFilePath()));
         else
             FMApplication::instance()->showPermissionError(QUrl(fileInfo.canonicalFilePath()));
+
+        return;
     }
 
     // handle a .desktop file

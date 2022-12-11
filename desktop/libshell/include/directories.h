@@ -3,7 +3,7 @@
 
 #include "libshell_int.h"
 
-class LSDirectories
+class LIBSHELL_EXPORT LSDirectories
 {
 public:
     enum UserDirectory
