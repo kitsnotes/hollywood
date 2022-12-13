@@ -19,7 +19,7 @@ StageHost::StageHost(QScreen *screen, QWidget *parent)
     auto app = StageApplication::instance();
     connect(app, &StageApplication::clockSettingsChanged, m_clock, &StageClock::clockSettingsChanged);
     setWindowFlag(Qt::FramelessWindowHint, true);
-    m_menu->setIcon(QIcon::fromTheme("food-cake"));
+    m_menu->setIcon(QIcon::fromTheme("hollywood-logo"));
     m_menu->setAutoRaise(true);
     m_menu->setPopupMode(QToolButton::InstantPopup);
     m_menu->setToolTip(tr("Launch applications and control your system."));

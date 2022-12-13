@@ -29,11 +29,11 @@ private:
     bool m_ready = false;
     LayerShellQt::Window *m_lswnd;
     QScreen *m_screen;
+    NotifierHost *m_notifier = nullptr;
     QHBoxLayout *m_layout;
     QMenuBar *m_menuBar;
     QSpacerItem *m_spacer;
 
-    NotifierHost *m_notifier = nullptr;
     StageClock *m_clock = nullptr;
 
     QWidget *m_opposite = nullptr;

@@ -47,7 +47,7 @@ StageApplication::StageApplication(int &argc, char **argv)
     m_clock->setFont(font);
 
     m_context->menuAction()->setData(9195521);
-    m_context->menuAction()->setIcon(QIcon::fromTheme("food-cake"));
+    m_context->menuAction()->setIcon(QIcon::fromTheme("hollywood-logo"));
 
     if(callSessionDBus("startedByDisplayManager"))
         m_started_dm = true;
