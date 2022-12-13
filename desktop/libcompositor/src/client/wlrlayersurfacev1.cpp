@@ -5,8 +5,6 @@
 #include "client/wlrlayersurfacev1_p.h"
 #include "client/wlrlayersurfacev1.h"
 
-namespace ArionWaylandClient {
-
 // Both shell integration and QML plugins will share this global
 // since the interface is in a dynamic library
 static QMap<QWindow *, WlrLayerSurfaceV1 *> layerSurfaces;
@@ -55,13 +53,13 @@ void WlrLayerSurfaceV1::setWindow(QWindow *window)
         layerSurfaces.insert(d->window, this);
 }
 
-ArionWaylandClient::WlrLayerSurfaceV1::Layer WlrLayerSurfaceV1::layer() const
+WlrLayerSurfaceV1::Layer WlrLayerSurfaceV1::layer() const
 {
     Q_D(const WlrLayerSurfaceV1);
     return d->layer;
 }
 
-void WlrLayerSurfaceV1::setLayer(ArionWaylandClient::WlrLayerSurfaceV1::Layer layer)
+void WlrLayerSurfaceV1::setLayer(WlrLayerSurfaceV1::Layer layer)
 {
     Q_D(WlrLayerSurfaceV1);
 
@@ -99,13 +97,13 @@ void WlrLayerSurfaceV1::setRole(const QString &role)
     Q_EMIT roleChanged(d->role);
 }
 
-ArionWaylandClient::WlrLayerSurfaceV1::Anchors WlrLayerSurfaceV1::anchors() const
+WlrLayerSurfaceV1::Anchors WlrLayerSurfaceV1::anchors() const
 {
     Q_D(const WlrLayerSurfaceV1);
     return d->anchors;
 }
 
-void WlrLayerSurfaceV1::setAnchors(ArionWaylandClient::WlrLayerSurfaceV1::Anchors anchors)
+void WlrLayerSurfaceV1::setAnchors(WlrLayerSurfaceV1::Anchors anchors)
 {
     Q_D(WlrLayerSurfaceV1);
 
@@ -211,13 +209,13 @@ void WlrLayerSurfaceV1::setBottomMargin(qint32 margin)
     Q_EMIT marginsChanged(d->margins);
 }
 
-ArionWaylandClient::WlrLayerSurfaceV1::KeyboardInteractivity WlrLayerSurfaceV1::keyboardInteractivity() const
+WlrLayerSurfaceV1::KeyboardInteractivity WlrLayerSurfaceV1::keyboardInteractivity() const
 {
     Q_D(const WlrLayerSurfaceV1);
     return d->keyboardInteractivity;
 }
 
-void WlrLayerSurfaceV1::setKeyboardInteractivity(ArionWaylandClient::WlrLayerSurfaceV1::KeyboardInteractivity keyboardInteractivity)
+void WlrLayerSurfaceV1::setKeyboardInteractivity(WlrLayerSurfaceV1::KeyboardInteractivity keyboardInteractivity)
 {
     Q_D(WlrLayerSurfaceV1);
 
@@ -253,5 +251,3 @@ WlrLayerSurfaceV1 *WlrLayerSurfaceV1::get(QWindow *window)
 {
     return layerSurfaces.value(window, nullptr);
 }
-
-} // namespace WaylandClient

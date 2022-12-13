@@ -158,10 +158,6 @@ void OutputWindow::paintGL()
     for(Surface *obj : hwComp->overlayLayerSurfaces())
         recursiveDrawTextureForObject(obj);
 
-    // draw menu server (top most)
-    if(hwComp->menuServerSurfaceObject())
-        recursiveDrawTextureForObject(hwComp->menuServerSurfaceObject());
-
     hwComp->endRender();
 }
 
@@ -368,6 +364,7 @@ void OutputWindow::drawShadowForObject(uint shadowOffset, Surface *obj)
 
 void OutputWindow::drawDesktopInfoString()
 {
+    return;
     QImage* img = hwComp->desktopLabelImage();
 
     QOpenGLFunctions *functions = context()->functions();
@@ -690,6 +687,9 @@ void OutputWindow::mousePressEvent(QMouseEvent *e)
             }
             if(m_mouseSelectedSurfaceObject->surfaceType() == Surface::TopLevel)
                 hwComp->raise(m_mouseSelectedSurfaceObject);
+
+            if(m_mouseSelectedSurfaceObject->surfaceType() == Surface::Desktop)
+                hwComp->activate(m_mouseSelectedSurfaceObject);
         }
         else
         {

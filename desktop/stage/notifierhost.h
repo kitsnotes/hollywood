@@ -9,7 +9,7 @@ class NotifierHost : public QObject
 {
     Q_OBJECT
 public:
-    explicit NotifierHost(StageHost *parent = nullptr);
+    explicit NotifierHost(QWidget *parent = nullptr);
 signals:
     void buttonAdded(StatusNotifierButton *btn);
     void buttonRemoved(StatusNotifierButton *btn);
@@ -18,7 +18,7 @@ private slots:
     void itemRemoved(const QString &serviceAndPath);
 private:
     QHash<QString,StatusNotifierButton*> m_services;
-    StageHost *m_parent;
+    QWidget *m_parent;
 };
 
 #endif // NOTIFIERHOST_H

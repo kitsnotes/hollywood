@@ -12,8 +12,6 @@ StageHost::StageHost(QScreen *screen, QWidget *parent)
     , m_screen(screen)
     , m_menu(new QToolButton(this))
     , m_sm(new SurfaceManager(this))
-    , m_notifier(new NotifierHost(this))
-    , m_clock(new StageClock(this))
 {
     connect(m_sm, &SurfaceManager::windowCreated, this, &StageHost::createWindowButton);
     connect(m_sm, &SurfaceManager::windowDestroyed, this, &StageHost::windowClosed);
@@ -32,10 +30,11 @@ StageHost::StageHost(QScreen *screen, QWidget *parent)
 
     QFont font = m_menu->font();
     font.setPointSize(font.pointSize()+1);
-    m_clock->setFont(font);
+    if(m_clock)
+        m_clock->setFont(font);
     m_menu->setFont(font);
-    connect(m_notifier, &NotifierHost::buttonAdded, this, &StageHost::createStatusButton);
-    connect(m_notifier, &NotifierHost::buttonRemoved, this, &StageHost::statusButtonRemoved);
+    //connect(m_notifier, &NotifierHost::buttonAdded, this, &StageHost::createStatusButton);
+    //connect(m_notifier, &NotifierHost::buttonRemoved, this, &StageHost::statusButtonRemoved);
 }
 
 void StageHost::setAlignment(Alignment align)
@@ -49,7 +48,8 @@ void StageHost::setAlignment(Alignment align)
         m_align = align;
         m_vbox = new QVBoxLayout(this);
         setLayout(m_vbox);
-        m_vbox->addWidget(m_menu);
+        if(!StageApplication::instance()->isSouthernMode())
+            m_vbox->addWidget(m_menu);
         setMaximumWidth(160);
         setMaximumHeight(99999);
         resize(150, m_screen->availableSize().height());
@@ -63,10 +63,19 @@ void StageHost::setAlignment(Alignment align)
         m_align = align;
         m_hbox = new QHBoxLayout(this);
         m_hbox->setContentsMargins(0,0,0,0);
-        m_hbox->addWidget(m_menu);
-        m_spacer = new QSpacerItem(1,1,QSizePolicy::Expanding);
-        m_hbox->addItem(m_spacer);
-        m_hbox->addWidget(m_clock);
+        m_spacer = new QSpacerItem(1,20,QSizePolicy::Expanding);
+        if(!StageApplication::instance()->isSouthernMode())
+        {
+            m_hbox->addWidget(m_menu);
+            m_hbox->addItem(m_spacer);
+            if(m_clock)
+                m_hbox->addWidget(m_clock);
+        }
+        else
+        {
+            m_hbox->addItem(m_spacer);
+            m_menu->setVisible(false);
+        }
         //m_hbox->addWidget(m_shutdown);
         setLayout(m_hbox);
         setMinimumHeight(1);
@@ -75,6 +84,11 @@ void StageHost::setAlignment(Alignment align)
         setMinimumWidth(300);
         break;
     }
+}
+
+void StageHost::setClock(StageClock *clock)
+{
+    m_clock = clock;
 }
 
 void StageHost::createWindowButton(TaskButton *btn)

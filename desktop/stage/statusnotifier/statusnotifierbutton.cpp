@@ -52,7 +52,7 @@ namespace
     };
 }
 
-StatusNotifierButton::StatusNotifierButton(QString service, QString objectPath, StageHost *parent)
+StatusNotifierButton::StatusNotifierButton(QString service, QString objectPath, QWidget *parent)
     : QToolButton(parent),
     mMenu(nullptr),
     mStatus(Passive),

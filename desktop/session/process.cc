@@ -146,7 +146,7 @@ void ManagedProcess::logStdOut()
 
 void ManagedProcess::logStdErr()
 {
-    auto lines = readAllStandardOutput().split('\n');
+    auto lines = readAllStandardError().split('\n');
     for(auto line : lines)
     {
         if(line.isEmpty())

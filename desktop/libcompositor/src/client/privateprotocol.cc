@@ -16,43 +16,22 @@ static inline struct ::wl_surface *getWlSurface(QWindow *window)
     return static_cast<struct ::wl_surface *>(surf);
 }
 
-OriginullMenuServerClient* AIPrivateWaylandProtocol::setMenuServerForWindow(QWindow *window)
+OriginullMenuServerClient* AIPrivateWaylandProtocol::createMenuServerResponder()
 {
     if(!isActive())
         return nullptr;
-    if (window->handle())
-    {
-        qDebug() << "set MenuServer";
-        wl_surface *nativeSurface = getWlSurface(window);
-        auto wlms = QtWayland::org_originull_privateapi::provision_menu_server(nativeSurface);
-        auto mp = new OriginullMenuServerClient(wlms);
-        return mp;
-    }
-
-    return nullptr;
+    qDebug() << "provisioning menu server";
+    auto obj = provision_menu_server();
+    auto mp = new OriginullMenuServerClient(obj);
+    return mp;
 }
 
-void AIPrivateWaylandProtocol::setDesktopForWindow(QWindow *window)
-{
-    if(!isActive())
-        return;
-    if (window->handle())
-    {
-        wl_surface *nativeSurface = getWlSurface(window);
-        QtWayland::org_originull_privateapi::provision_desktop_surface(nativeSurface);
-    }
-}
-
-OriginullMenuServerClient::OriginullMenuServerClient(struct ::org_originull_menuserver *window)
+OriginullMenuServerClient::OriginullMenuServerClient(struct ::org_originull_menuserver *menu)
     : QWaylandClientExtensionTemplate(1)
-    , QtWayland::org_originull_menuserver(window)
-{
+    , QtWayland::org_originull_menuserver(menu) {}
 
-}
-
-void OriginullMenuServerClient::org_originull_menuserver_appmenu_top_level_window_changed(wl_surface *surface, const QString &service_name, const QString &object_path)
+void OriginullMenuServerClient::org_originull_menuserver_appmenu_top_level_window_changed(const QString &service_name, const QString &object_path)
 {
-    Q_UNUSED(surface);
     qDebug() << "menuChanged" << service_name << object_path;
     emit menuChanged(service_name, object_path);
 }

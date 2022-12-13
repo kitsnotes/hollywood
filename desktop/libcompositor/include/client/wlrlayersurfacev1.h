@@ -8,8 +8,6 @@
 #include <QWindow>
 #include "libcompositor_global.h"
 
-namespace ArionWaylandClient {
-
 class WlrLayerSurfaceV1Private;
 
 class LIBCOMPOSITOR_EXPORT WlrLayerSurfaceV1 : public QObject
@@ -17,16 +15,16 @@ class LIBCOMPOSITOR_EXPORT WlrLayerSurfaceV1 : public QObject
     Q_OBJECT
     Q_DECLARE_PRIVATE(WlrLayerSurfaceV1)
     Q_PROPERTY(QWindow *window READ window WRITE setWindow NOTIFY windowChanged)
-    Q_PROPERTY(ArionWaylandClient::WlrLayerSurfaceV1::Layer layer READ layer WRITE setLayer NOTIFY layerChanged)
+    Q_PROPERTY(WlrLayerSurfaceV1::Layer layer READ layer WRITE setLayer NOTIFY layerChanged)
     Q_PROPERTY(QString role READ role WRITE setRole NOTIFY roleChanged)
-    Q_PROPERTY(ArionWaylandClient::WlrLayerSurfaceV1::Anchors anchors READ anchors WRITE setAnchors NOTIFY anchorsChanged)
+    Q_PROPERTY(WlrLayerSurfaceV1::Anchors anchors READ anchors WRITE setAnchors NOTIFY anchorsChanged)
     Q_PROPERTY(qint32 exclusiveZone READ exclusiveZone WRITE setExclusiveZone NOTIFY exclusiveZoneChanged)
     Q_PROPERTY(QMargins margins READ margins NOTIFY marginsChanged)
     Q_PROPERTY(qint32 leftMargin READ leftMargin WRITE setLeftMargin NOTIFY leftMarginChanged)
     Q_PROPERTY(qint32 rightMargin READ rightMargin WRITE setRightMargin NOTIFY rightMarginChanged)
     Q_PROPERTY(qint32 topMargin READ topMargin WRITE setTopMargin NOTIFY topMarginChanged)
     Q_PROPERTY(qint32 bottomMargin READ bottomMargin WRITE setBottomMargin NOTIFY bottomMarginChanged)
-    Q_PROPERTY(ArionWaylandClient::WlrLayerSurfaceV1::KeyboardInteractivity keyboardInteractivity READ keyboardInteractivity WRITE setKeyboardInteractivity NOTIFY keyboardInteractivityChanged)
+    Q_PROPERTY(WlrLayerSurfaceV1::KeyboardInteractivity keyboardInteractivity READ keyboardInteractivity WRITE setKeyboardInteractivity NOTIFY keyboardInteractivityChanged)
 public:
     enum Layer {
         BackgroundLayer = 0,
@@ -61,14 +59,14 @@ public:
     QWindow *window() const;
     void setWindow(QWindow *window);
 
-    ArionWaylandClient::WlrLayerSurfaceV1::Layer layer() const;
-    void setLayer(ArionWaylandClient::WlrLayerSurfaceV1::Layer layer);
+    WlrLayerSurfaceV1::Layer layer() const;
+    void setLayer(WlrLayerSurfaceV1::Layer layer);
 
     QString role() const;
     void setRole(const QString &role);
 
-    ArionWaylandClient::WlrLayerSurfaceV1::Anchors anchors() const;
-    void setAnchors(ArionWaylandClient::WlrLayerSurfaceV1::Anchors anchors);
+    WlrLayerSurfaceV1::Anchors anchors() const;
+    void setAnchors(WlrLayerSurfaceV1::Anchors anchors);
 
     qint32 exclusiveZone() const;
     void setExclusiveZone(qint32 zone);
@@ -87,8 +85,8 @@ public:
     qint32 bottomMargin() const;
     void setBottomMargin(qint32 margin);
 
-    ArionWaylandClient::WlrLayerSurfaceV1::KeyboardInteractivity keyboardInteractivity() const;
-    void setKeyboardInteractivity(ArionWaylandClient::WlrLayerSurfaceV1::KeyboardInteractivity keyboardInteractivity);
+    WlrLayerSurfaceV1::KeyboardInteractivity keyboardInteractivity() const;
+    void setKeyboardInteractivity(WlrLayerSurfaceV1::KeyboardInteractivity keyboardInteractivity);
 
     void initialize();
 
@@ -107,14 +105,12 @@ Q_SIGNALS:
     void rightMarginChanged(qint32 margin);
     void topMarginChanged(qint32 margin);
     void bottomMarginChanged(qint32 margin);
-    void keyboardInteractivityChanged(ArionWaylandClient::WlrLayerSurfaceV1::KeyboardInteractivity keyboardInteractivity);
+    void keyboardInteractivityChanged(WlrLayerSurfaceV1::KeyboardInteractivity keyboardInteractivity);
 
 private:
     WlrLayerSurfaceV1Private *const d_ptr = nullptr;
 };
 
-} // WaylandClient
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(ArionWaylandClient::WlrLayerSurfaceV1::Anchors)
+Q_DECLARE_OPERATORS_FOR_FLAGS(WlrLayerSurfaceV1::Anchors)
 
 #endif // LIRI_WLRLAYERSURFACEV1_CLIENT_H

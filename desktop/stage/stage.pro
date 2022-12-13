@@ -7,7 +7,7 @@ TARGET = stage
 INCLUDEPATH += ../include/
 INCLUDEPATH += ../libshell/include
 INCLUDEPATH += ../libcommdlg/
-INCLUDEPATH += ../libcompositor/
+INCLUDEPATH += ../libcompositor/include/
 INCLUDEPATH += ../shellintegration/
 
 # TODO: prefix with -APIVERSION
@@ -23,10 +23,13 @@ DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000
 
 SOURCES += \
     app.cc \
-    dbusmenu/dbusmenuimporter.cpp \
+    dbusmenu/dbusmenu_interface.cc \
+    dbusmenu/dbusmenuimporter.cc \
     dbusmenu/dbusmenushortcut.cc \
     dbusmenu/dbusmenutypes.cc \
+    dbusmenu/menuimporter.cc \
     dbusmenu/utils.cc \
+    menuserver.cc \
     notifierhost.cc \
     stageclock.cc \
     stagehost.cc \
@@ -47,7 +50,9 @@ HEADERS += \
     dbusmenu/dbusmenuimporter_p.h \
     dbusmenu/dbusmenushortcut_p.h \
     dbusmenu/dbusmenutypes_p.h \
+    dbusmenu/menuimporter.h \
     dbusmenu/utils.h \
+    menuserver.h \
     notifierhost.h \
     stageclock.h \
     stagehost.h \

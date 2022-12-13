@@ -1,6 +1,0 @@
-<RCC>
-    <qresource prefix="/Std">
-        <file alias="StarIconSVG">draw-star.svg</file>
-        <file alias="StarIcon">star.png</file>
-    </qresource>
-</RCC>

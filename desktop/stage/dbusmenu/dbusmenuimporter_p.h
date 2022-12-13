@@ -5,9 +5,9 @@
 #include <QDBusPendingCallWatcher>
 #include <QMenu>
 #include "dbusmenutypes_p.h"
+#include "dbusmenu_interface.h"
 
 class DBusMenuImporter;
-class DBusMenuInterface;
 class DBusMenuImporterPrivate
 {
 public:

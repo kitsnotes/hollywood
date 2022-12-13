@@ -1,6 +1,0 @@
-[Desktop Entry]
-Type=Application
-Exec=/usr/libexec/hollywood/menuserver
-Name=Menu Server
-Icon=openbox
-NoDisplay=true

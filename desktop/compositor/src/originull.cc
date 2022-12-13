@@ -22,49 +22,25 @@ void OriginullProtocol::initialize()
     init(compositor->display(), 1);
 }
 
-void OriginullProtocol::org_originull_privateapi_provision_menu_server(QtWaylandServer::org_originull_privateapi::Resource *resource, uint32_t id, wl_resource *wl_surface)
+void OriginullProtocol::org_originull_privateapi_provision_menu_server(Resource *resource, uint32_t id)
 {
-    Q_UNUSED(id);
-    auto surface = QWaylandSurface::fromResource(wl_surface);
-    Surface *s  = nullptr;
-    for(auto i : m_compositor->surfaces())
+    /*if(m_compositor->hasMenuServer())
     {
-        if(i->surface() == surface)
-        {
-            s=i;
-            break;
-        }
-    }
-    if (!s) {
-        wl_resource_post_error(resource->handle, 0, "Invalid surface");
+        wl_resource_post_error(resource->handle, 0, "Menu server already provisioned.");
         return;
-    }
-
-    wl_resource *msr = wl_resource_create(resource->client(),
-                &org_originull_menuserver_interface, resource->version(), id);
-    if (!msr) {
-        wl_client_post_no_memory(resource->client());
-        return;
-    }
-
-    /* QObject::connect(appmenu, &QObject::destroyed, this,[=]() {
-
-    }); */
-    Q_EMIT menuServerSet(surface);
+    }*/
+    OriginullMenuServer* menu = new OriginullMenuServer(resource->client(), id, this, m_compositor);
+    m_menu = menu;
+    emit menuServerSet(menu);
 }
 
-void OriginullProtocol::org_originull_privateapi_provision_desktop_surface(QtWaylandServer::org_originull_privateapi::Resource *resource, wl_resource *wl_surface)
-{
-    Q_UNUSED(resource);
-    auto surface = QWaylandSurface::fromResource(wl_surface);
-    Q_EMIT desktopSet(surface);
-}
-
-OriginullMenuServer::OriginullMenuServer(Compositor *c, Surface *s, wl_resource *resource)
+OriginullMenuServer::OriginullMenuServer(struct ::wl_client *client, uint32_t id, OriginullProtocol *proto, Compositor *c)
                    : QObject(nullptr)
-                   , QtWaylandServer::org_originull_menuserver(resource)
+                   , QtWaylandServer::org_originull_menuserver(client, id, 1)
                    , m_compositor(c)
-                   , m_parent(s) {}
+{
+    Q_UNUSED(proto)
+}
 
 void OriginullMenuServer::setTopWindowForMenuServer(Surface *surface)
 {
@@ -77,11 +53,17 @@ void OriginullMenuServer::setTopWindowForMenuServer(Surface *surface)
     if(!m_compositor->hasMenuServer())
         return;
 
-    qDebug() << "setTopWindowForMenuServer";
-    auto wlSurface = surface->surface()->resource();
     auto serviceName = surface->appMenu()->serviceName();
     auto objectPath = surface->appMenu()->objectPath();
 
-    QtWaylandServer::org_originull_menuserver::
-            send_appmenu_top_level_window_changed(wlSurface, serviceName, objectPath);
+    qDebug() << "sending topLevelWindowChanged" << serviceName << objectPath;
+    send_appmenu_top_level_window_changed(serviceName, objectPath);
+    for (auto r : resourceMap())
+        send_appmenu_top_level_window_changed(r->handle, serviceName, objectPath);
+}
+
+void OriginullMenuServer::org_originull_menuserver_destroy_resource(Resource *resource)
+{
+    Q_UNUSED(resource)
+    emit menuServerDestroyed();
 }

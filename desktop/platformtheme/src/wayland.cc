@@ -28,7 +28,6 @@ WaylandIntegration::WaylandIntegration(HollywoodPlatformTheme *platformTheme)
     //, m_paletteManager(new ServerSideDecorationPaletteManager)
     , m_platformTheme(platformTheme)
 {
-    qDebug() << "QPlatformTheme: Created WaylandIntegration";
     QCoreApplication::instance()->installEventFilter(this);
 }
 
@@ -94,7 +93,6 @@ bool WaylandIntegration::eventFilter(QObject *watched, QEvent *event)
 
 void WaylandIntegration::shellSurfaceCreated(QWindow *w)
 {
-    qDebug() << "org.kde.plasma.integration.shellSurfaceCreated";
     // set colorscheme hint
     /* if (qApp->property(s_schemePropertyName.constData()).isValid())
         installColorScheme(w);

@@ -9,9 +9,11 @@
 #include <QtWaylandCompositor/QWaylandCompositor>
 
 #include "qwayland-server-originull-privateapi.h"
+#include <QWaylandResource>
 
 class Compositor;
 class Surface;
+class OriginullMenuServer;
 class OriginullProtocol : public QWaylandCompositorExtensionTemplate<OriginullProtocol>,
                           public QtWaylandServer::org_originull_privateapi
 {
@@ -19,15 +21,13 @@ class OriginullProtocol : public QWaylandCompositorExtensionTemplate<OriginullPr
 public:
     OriginullProtocol(Compositor *compositor);
     void initialize();
-    //void setTopWindowForMenuServer(Surface* surface);
 signals:
-    void menuServerSet(QWaylandSurface *surface);
-    void desktopSet(QWaylandSurface *surface);
+    void menuServerSet(OriginullMenuServer *menu);
 protected:
-    void org_originull_privateapi_provision_desktop_surface(QtWaylandServer::org_originull_privateapi::Resource *resource, wl_resource *wl_surface);
-    void org_originull_privateapi_provision_menu_server(QtWaylandServer::org_originull_privateapi::Resource *resource, uint32_t id, wl_resource *wl_surface);
+    void org_originull_privateapi_provision_menu_server(Resource *resource, uint32_t id) override;
 private:
-    Compositor *m_compositor;
+    Compositor *m_compositor = nullptr;
+    OriginullMenuServer *m_menu = nullptr;
 };
 
 class OriginullMenuServer : public QObject
@@ -35,9 +35,13 @@ class OriginullMenuServer : public QObject
 {
     Q_OBJECT
 public:
-    OriginullMenuServer(Compositor *c, Surface *s, wl_resource *resource);
+    OriginullMenuServer(struct ::wl_client *client, uint32_t id, OriginullProtocol *proto, Compositor *c);
     void initialize();
     void setTopWindowForMenuServer(Surface* surface);
+signals:
+    void menuServerDestroyed();
+protected:
+    void org_originull_menuserver_destroy_resource(Resource *resource) override;
 private:
     Compositor *m_compositor;
     Surface *m_parent;

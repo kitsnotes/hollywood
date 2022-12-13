@@ -2,7 +2,7 @@
 #include "statusnotifier/statusnotifierproxy.h"
 #include "statusnotifier/statusnotifierbutton.h"
 
-NotifierHost::NotifierHost(StageHost *parent)
+NotifierHost::NotifierHost(QWidget *parent)
     : QObject(0)
     , m_parent(parent)
 {

@@ -26,7 +26,7 @@ public:
     explicit StageHost(QScreen *screen, QWidget *parent = nullptr);
 
     void setAlignment(Alignment align);
-
+    void setClock(StageClock *clock);
 public slots:
     void show();
 protected:
@@ -48,7 +48,6 @@ private:
     QToolButton *m_showdesktop = nullptr;
 
     SurfaceManager *m_sm = nullptr;
-    NotifierHost *m_notifier = nullptr;
     StageClock *m_clock = nullptr;
 };
 

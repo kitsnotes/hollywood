@@ -320,7 +320,7 @@ void StageApplet::setupWidget()
     m_24hour->setText(QCoreApplication::translate("StageSettings", "Use a 24 hour clock.", nullptr));
 
     // TODO: remove when fixed
-    m_southern->setDisabled(true);
+    //m_southern->setDisabled(true);
     m_position->setDisabled(true);
 }
 

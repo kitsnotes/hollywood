@@ -58,7 +58,7 @@ PlasmaWindow::PlasmaWindow(struct ::org_kde_plasma_window *window, PlasmaWindowM
 
 void PlasmaWindow::org_kde_plasma_window_initial_state()
 {
-    qDebug() << "org_kde_plasma_window_initial_state";
+
 }
 
 QUuid PlasmaWindow::uuid() const
@@ -171,7 +171,6 @@ void PlasmaWindow::org_kde_plasma_window_icon_changed()
         } else {
             m_icon = QIcon::fromTheme(QStringLiteral("wayland"));
         }
-        qDebug() << "plasma-wm iconChanged()";
         Q_EMIT iconChanged();
     });
     watcher->setFuture(QtConcurrent::run(readIcon));
@@ -180,13 +179,11 @@ void PlasmaWindow::org_kde_plasma_window_icon_changed()
 void PlasmaWindow::org_kde_plasma_window_themed_icon_name_changed(const QString &name)
 {
     m_themedicon = name;
-    qDebug() << "themeIconChnged" << name;
     emit themeIconChanged(name);
 }
 
 void PlasmaWindow::org_kde_plasma_window_unmapped()
 {
-    qDebug() << "unmapped";
     m_parent->removeWindow(this);
     Q_EMIT windowClosed();
 }

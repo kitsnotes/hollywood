@@ -1,6 +1,13 @@
 #include "app.h"
 #include "stagehost.h"
+#include "menuserver.h"
 #include "wndmgmt.h"
+#include "stageclock.h"
+
+#include "menuserver.h"
+#include "dbusmenu/dbusmenuimporter.h"
+#include "dbusmenu/menuimporter.h"
+#include "notifierhost.h"
 
 #include <hollywood/hollywood.h>
 #include <hollywood/layershellwindow.h>
@@ -13,6 +20,7 @@
 #include <sys/types.h>
 #include <pwd.h>
 #include <unistd.h>
+#include "client/privateprotocol.h"
 
 #define HWSETTINGS_APP      "org.originull.hwsettings.desktop"
 #define HWSYSMON_APP        "org.originull.sysmon.desktop"
@@ -23,12 +31,23 @@ StageApplication::StageApplication(int &argc, char **argv)
     : QApplication(argc, argv)
     , m_cfgwatch(new QFileSystemWatcher(this))
     , m_context(new QMenu(0))
+    , m_notifier(new NotifierHost(0))
+    , m_menuViewWatcher(new QDBusServiceWatcher(this))
+    , m_protocol(new AIPrivateWaylandProtocol())
+    , m_clock(new StageClock(0))
 {
     setApplicationVersion(HOLLYWOOD_OS_VERSION);
     setOrganizationDomain(HOLLYWOOD_OS_DOMAIN);
     setOrganizationName(HOLLYWOOD_OS_ORGNAME);
     setApplicationName("Stage");
     setWindowIcon(QIcon::fromTheme("system-file-manager"));
+
+    QFont font = m_clock->font();
+    font.setPointSize(font.pointSize()+1);
+    m_clock->setFont(font);
+
+    m_context->menuAction()->setData(9195521);
+    m_context->menuAction()->setIcon(QIcon::fromTheme("food-cake"));
 
     if(callSessionDBus("startedByDisplayManager"))
         m_started_dm = true;
@@ -39,6 +58,10 @@ StageApplication::StageApplication(int &argc, char **argv)
     connect(m_cfgwatch, &QFileSystemWatcher::fileChanged,
             this, &StageApplication::configChanged);
 
+    connect(m_protocol, &AIPrivateWaylandProtocol::activeChanged,
+            this, &StageApplication::privateProtocolReady);
+
+    setupNotifierHost();
     auto aboutSys = m_context->addAction(tr("&About This Computer..."));
     m_context->addSeparator();
     auto settings = m_context->addAction(tr("System &Settings"));
@@ -76,12 +99,22 @@ StageApplication::StageApplication(int &argc, char **argv)
         logoff->setDisabled(true);
     }
     connect(logoff, &QAction::triggered, this, &StageApplication::logoffSession);
+
+    if(m_southern)
+        setupMenuServer();
 }
 
 void StageApplication::createWindows()
 {
     m_host = new StageHost(primaryScreen());
+    m_host->setClock(m_clock);
     m_host->show();
+    if(m_southern)
+    {
+        m_menu = new MenuServer(m_notifier, primaryScreen());
+        m_menu->setClock(m_clock);
+        m_menu->show();
+    }
 }
 
 bool StageApplication::executeDesktop(const QString &desktop)
@@ -136,7 +169,19 @@ void StageApplication::shutdownSystem()
 
 void StageApplication::privateProtocolReady()
 {
+    if(!m_protocol)
+        return;
 
+    if(m_protocol->isActive())
+    {
+        auto ms = m_protocol->createMenuServerResponder();
+        if(ms)
+        {
+            m_ms = ms;
+            connect(ms, &OriginullMenuServerClient::menuChanged,
+                    this, &StageApplication::menuChanged);
+        }
+    }
 }
 
 void StageApplication::launchSysmon()
@@ -177,6 +222,11 @@ void StageApplication::logoffSession()
 void StageApplication::configChanged()
 {
     loadSettings();
+}
+
+void StageApplication::slotWindowRegistered(WId id, const QString &serviceName, const QDBusObjectPath &menuObjectPath)
+{
+    //menuChanged(serviceName, menuObjectPath.path());
 }
 
 bool StageApplication::callSessionDBus(const QString &exec)
@@ -225,6 +275,7 @@ void StageApplication::loadSettings()
     m_bell.setSource(QUrl::fromLocalFile(bell));
     settings.endGroup();
     settings.beginGroup("Stage");
+    m_southern = settings.value("UseSouthernMode", true).toBool();
     auto show_clock = settings.value("ShowClock", HOLLYWOOD_STCLK_SHOW).toBool();
     auto show_date = settings.value("ShowDateInClock", HOLLYWOOD_STCLK_USEDATE).toBool();
     auto show_seconds = settings.value("ShowSecondsInClock", HOLLYWOOD_STCLK_USESECONDS).toBool();
@@ -236,8 +287,94 @@ void StageApplication::loadSettings()
     emit clockSettingsChanged(show_clock, show_date, show_seconds, clock_24hr, clock_ampm);
 }
 
+void StageApplication::setupNotifierHost()
+{
+
+}
+
+void StageApplication::setupMenuServer()
+{
+    // Setup a menu importer if needed
+    if (!m_menuImporter) {
+        QDBusConnection::sessionBus().connect({}, {},
+                                          QStringLiteral("com.canonical.dbusmenu"),
+                                          QStringLiteral("ItemActivationRequested"),
+                                          this,
+                                          SLOT(itemActivationRequested(int, uint)));
+
+        m_menuImporter = new MenuImporter(this);
+        connect(m_menuImporter, &MenuImporter::WindowRegistered, this, &StageApplication::slotWindowRegistered);
+        m_menuImporter->connectToBus();
+    }
+}
+
+void StageApplication::menuChanged(const QString &serviceName, const QString &objectPath)
+{
+    m_menu->cleanMenu();
+    qDebug() << "privateProtocol: menuChanged" << serviceName << objectPath;
+    if (m_serviceName == serviceName && m_menuObjectPath == objectPath)
+    {
+        if (m_importer)
+            QMetaObject::invokeMethod(m_importer, "updateMenu", Qt::QueuedConnection);
+
+        return;
+    }
+    if(serviceName.isEmpty() || objectPath.isEmpty())
+    {
+        //todo: generic menu
+        return;
+    }
+
+    m_serviceName = serviceName;
+    m_menuViewWatcher->setWatchedServices(QStringList({serviceName}));
+    m_menuObjectPath = objectPath;
+
+    if(m_importer != nullptr)
+        m_importer->deleteLater();
+
+    m_importer = new DBusMenuImporter(serviceName, objectPath, this);
+    QMetaObject::invokeMethod(m_importer, "updateMenu", Qt::QueuedConnection);
+
+    connect(m_importer.data(), &DBusMenuImporter::menuUpdated, this, [=](QMenu *menu) {
+        m_menubar = m_importer->menu();
+        if(m_menubar.isNull() || m_menubar != menu)
+            return;
+
+        for(QAction *a : menu->actions())
+        {
+            //if(a->associatedObjects().count() > 0)
+            //m_importer->updateMenu();
+            //auto menu = qobject_cast<QMenu*>(a->associatedObjects().first());
+            //m_menu->menuBar()->addAction(a);
+        }
+
+        m_menu->installMenu(m_menubar);
+    });
+
+    /*connect(m_importer.data(), &DBusMenuImporter::actionActivationRequested, this, [this](QAction * action) {
+        // TODO submenus
+        if (/* !m_wm || !m_wm->menuAvailable() ||  !m_menubar) {
+            return;
+        }
+
+        const auto actions = m_menubar->actions();
+        auto it = std::find(actions.begin(), actions.end(), action);
+
+        /*if (it != actions.end()) {
+            requestActivateIndex(it - actions.begin());
+        }
+    });*/
+}
+
+void StageApplication::dbusMenuUpdated(QMenu *menu)
+{
+    Q_UNUSED(menu);
+}
+
+
 int main(int argc, char *argv[])
 {
+    QCoreApplication::setAttribute(Qt::AA_DontUseNativeMenuBar, true);
     StageApplication a(argc, argv);
     a.createWindows();
     return a.exec();

@@ -2,14 +2,22 @@
 
 #include <QTimer>
 #include <QDateTime>
+#include <QFont>
 #include <QSettings>
+#include <QMenu>
 #include <hollywood/hollywood.h>
 
 StageClock::StageClock(QWidget *parent)
     : QToolButton(parent)
     , m_timer(new QTimer(this))
 {
+    QMenu *menu = new QMenu(this);
+    this->setMenu(menu);
+    menu->addAction(tr("Date && Time Settings..."));
+    setStyleSheet("QToolButton::menu-indicator { image: none; }");
     setAutoRaise(true);
+
+    setPopupMode(QToolButton::InstantPopup);
     QSettings settings(QSettings::UserScope,
        QLatin1String("originull"), QLatin1String("hollywood"));
     settings.beginGroup("Stage");

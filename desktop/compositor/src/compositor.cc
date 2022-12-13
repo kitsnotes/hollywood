@@ -31,7 +31,7 @@ Compositor::Compositor(bool sddm)
     : m_wlShell(new QWaylandWlShell(this)),
     m_xdgShell(new HWWaylandXdgShell(this)),
     m_xdgDecoration(new QWaylandXdgDecorationManagerV1()),
-    m_arionPrivate(new OriginullProtocol(this)),
+    m_hwPrivate(new OriginullProtocol(this)),
     m_layerShell(new WlrLayerShellV1(this)),
     m_wndmgr(new PlasmaWindowManagement(this)),
     m_appMenu(new AppMenuManager(this)),
@@ -47,8 +47,8 @@ Compositor::Compositor(bool sddm)
     connect(m_cfgwatch, &QFileSystemWatcher::fileChanged,
             this, &Compositor::configChanged);
 
-    m_arionPrivate->setExtensionContainer(this);
-    m_arionPrivate->initialize();
+    m_hwPrivate->setExtensionContainer(this);
+    m_hwPrivate->initialize();
     m_appMenu->initialize();
     m_wndmgr->setExtensionContainer(this);
     m_wndmgr->initialize();
@@ -56,8 +56,7 @@ Compositor::Compositor(bool sddm)
     m_xdgDecoration->initialize();
     m_xdgDecoration->setPreferredMode(QWaylandXdgToplevel::ServerSideDecoration);
     connect(m_appMenu, &AppMenuManager::appMenuCreated, this, &Compositor::appMenuCreated);
-    connect(m_arionPrivate, &OriginullProtocol::menuServerSet, this, &Compositor::onMenuServerRequest);
-    connect(m_arionPrivate, &OriginullProtocol::desktopSet, this, &Compositor::onDesktopRequest);
+    connect(m_hwPrivate, &OriginullProtocol::menuServerSet, this, &Compositor::onMenuServerRequest);
     connect(m_wlShell, &QWaylandWlShell::wlShellSurfaceCreated, this, &Compositor::onWlShellSurfaceCreated);
     connect(m_xdgShell, &HWWaylandXdgShell::xdgSurfaceCreated, this, &Compositor::onXdgSurfaceCreated);
     connect(m_xdgShell, &HWWaylandXdgShell::toplevelCreated, this, &Compositor::onXdgTopLevelCreated);
@@ -246,6 +245,26 @@ bool Compositor::processHasTwilightMode(quint64 pid) const
     return false;
 }
 
+QPointF Compositor::correctedPosition(const QPointF &point)
+{
+    QPointF returnPoint = point;
+    for(auto *obj : m_layer_top)
+    {
+        // TODO: reserved right/left
+        if(obj->layerSurface()->anchors() & WlrLayerSurfaceV1::anchor_top
+                && obj->layerSurface()->exclusiveZone() > 0)
+        {
+            QPoint screenTop = obj->primaryView()->output()->position();
+            int reserved = screenTop.y()+obj->layerSurface()->exclusiveZone();
+            // see if our point y conflicts
+            if(point.y() >= screenTop.y() && point.y() <= reserved)
+                returnPoint.setY(reserved+1);
+        }
+    }
+
+    return returnPoint;
+}
+
 QList<SurfaceView*> Compositor::views() const
 {
     QList<SurfaceView*> returnList;
@@ -290,9 +309,6 @@ void Compositor::recycleSurfaceObject(Surface *obj)
     m_layer_bottom.removeOne(obj);
     m_layer_top.removeOne(obj);
     m_layer_overlay.removeOne(obj);
-
-    if(m_menuServer == obj)
-        m_menuServer = nullptr;
 
     // if we delete a popup object lets raise our parent
     // and set keyboard focus
@@ -342,9 +358,12 @@ Surface* Compositor::findSurfaceObject(const QWaylandSurface *s) const
     return nullptr;
 }
 
-void Compositor::onMenuServerRequest(QWaylandSurface *surface)
+void Compositor::onMenuServerRequest(OriginullMenuServer *menu)
 {
-    Q_UNUSED(surface);
+    qDebug() << "setting menu server";
+    m_menuServer = menu;
+    connect(m_menuServer, &OriginullMenuServer::menuServerDestroyed,
+               this, &Compositor::menuServerDestroyed);
 }
 
 void Compositor::onDesktopRequest(QWaylandSurface *surface)
@@ -490,7 +509,7 @@ void Compositor::onXdgTopLevelCreated(HWWaylandXdgToplevel *topLevel, HWWaylandX
     Q_ASSERT(mySurface);
     mySurface->createXdgTopLevelSurface(topLevel);
     // this is temporary and will be better calculated in onXdgWindowGeometryChanged
-    mySurface->setPosition(QPointF(5,35));
+    mySurface->setPosition(QPointF(35,50));
 }
 
 void Compositor::onStartMove(QWaylandSeat *seat)
@@ -605,6 +624,15 @@ void Compositor::updateCursor()
 void Compositor::appMenuCreated(AppMenu *m)
 {
     m->surface()->setAppMenu(m);
+}
+
+void Compositor::menuServerDestroyed()
+{
+    qDebug() << "menuserver object destroyed";
+    disconnect(m_menuServer, &OriginullMenuServer::menuServerDestroyed,
+               this, &Compositor::menuServerDestroyed);
+    delete m_menuServer;
+    m_menuServer = nullptr;
 }
 
 void Compositor::configChanged()
@@ -786,11 +814,17 @@ void Compositor::raise(Surface *obj)
     }
     // Since the compositor is only tracking unparented objects
     // we leave the ordering of children to SurfaceObject
-    if(obj->m_xdgTopLevel && !obj->isSpecialShellObject())
+    if((obj->m_xdgTopLevel ||
+       obj->m_gtk ||
+       obj->m_qt)&& !obj->isSpecialShellObject())
     {
+        qDebug() << "checking for menu server";
         // TODO: handle popups??
-        /*if(m_menuServer)
-            m_menuServer->menuServer()->setTopWindowForMenuServer(obj);*/
+        if(m_menuServer)
+        {
+            qDebug() << "menuserver exists: raising";
+            m_menuServer->setTopWindowForMenuServer(obj);
+        }
     }
 
     if(!m_zorder.contains(obj))
@@ -800,11 +834,36 @@ void Compositor::raise(Surface *obj)
     m_zorder.push_back(obj);
 
     obj->activate();
+    defaultSeat()->setKeyboardFocus(obj->surface());
+    defaultSeat()->setMouseFocus(obj->surface()->primaryView());
+
     if(m_wndmgr)
     {
         if(m_wndmgr->isInitialized())
            m_wndmgr->updateZOrder(surfaceZOrderByUUID());
     }
+}
+
+void Compositor::activate(Surface *obj)
+{
+    qDebug() << "Compositor::activate on " << obj->m_uuid;
+
+    // Since the compositor is only tracking unparented objects
+    // we leave the ordering of children to SurfaceObject
+    if((obj->m_xdgTopLevel ||
+       obj->m_qt))
+    {
+        qDebug() << "checking for menu server";
+        // TODO: handle popups??
+        if(m_menuServer)
+        {
+            qDebug() << "menuserver exists: raising";
+            m_menuServer->setTopWindowForMenuServer(obj);
+        }
+    }
+    defaultSeat()->setKeyboardFocus(obj->surface());
+    defaultSeat()->setMouseFocus(obj->surface()->primaryView());
+    obj->activate();
 }
 
 void Compositor::addOutput(Output *output)

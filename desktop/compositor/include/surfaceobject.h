@@ -123,6 +123,7 @@ public:
     AppMenu* appMenu() const;
     GtkSurface* gtkSurface() const;
     QtSurface* qtSurface() const;
+    OriginullMenuServer* menuServer() const;
     void startMove();
     void startResize();
     void endResize();
@@ -148,6 +149,7 @@ protected:
     void createLayerShellSurface(WlrLayerSurfaceV1 *surface);
     void createGtkSurface(GtkSurface *gtk);
     void createQtSurface(QtSurface *qt);
+    void createMenuServer(OriginullMenuServer *menu);
     void addChildSurfaceObject(Surface* child);
     void addXdgChildSurfaceObject(Surface* child);
     void recycleChildSurfaceObject(Surface* child);

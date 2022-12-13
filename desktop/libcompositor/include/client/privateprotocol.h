@@ -21,8 +21,7 @@ class LIBCOMPOSITOR_EXPORT AIPrivateWaylandProtocol
     Q_OBJECT
 public:
     AIPrivateWaylandProtocol();
-    Q_INVOKABLE OriginullMenuServerClient* setMenuServerForWindow(QWindow *window);
-    Q_INVOKABLE void setDesktopForWindow(QWindow *window);
+    Q_INVOKABLE OriginullMenuServerClient* createMenuServerResponder();
 private:
     void windowForSurface();
 };
@@ -33,9 +32,9 @@ class LIBCOMPOSITOR_EXPORT OriginullMenuServerClient
 {
     Q_OBJECT
 public:
-    OriginullMenuServerClient(struct ::org_originull_menuserver *window);
+    OriginullMenuServerClient(struct ::org_originull_menuserver *menu);
 protected:
-    void org_originull_menuserver_appmenu_top_level_window_changed(struct ::wl_surface *surface, const QString &service_name, const QString &object_path);
+    void org_originull_menuserver_appmenu_top_level_window_changed(const QString &service_name, const QString &object_path) override;
 signals:
     void menuChanged(const QString &serviceName, const QString &objectPath);
 private:

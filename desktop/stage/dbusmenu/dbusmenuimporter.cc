@@ -41,6 +41,7 @@
 // Local
 #include "dbusmenushortcut_p.h"
 #include "dbusmenutypes_p.h"
+#include "dbusmenu_interface.h"
 #include "utils.h"
 #include "dbusmenuimporter_p.h"
 
@@ -61,19 +62,6 @@ static QTime sChrono;
 static const char *DBUSMENU_PROPERTY_ID = "_dbusmenu_id";
 static const char *DBUSMENU_PROPERTY_ICON_NAME = "_dbusmenu_icon_name";
 static const char *DBUSMENU_PROPERTY_ICON_DATA_HASH = "_dbusmenu_icon_data_hash";
-
-
-
-DBusMenuInterface::DBusMenuInterface(const QString &service, const QString &path, const QDBusConnection &connection, QObject *parent)
-    : QDBusAbstractInterface(service, path, staticInterfaceName(), connection, parent)
-{
-}
-
-DBusMenuInterface::~DBusMenuInterface()
-{
-}
-
-
 
 DBusMenuImporter::DBusMenuImporter(const QString &service, const QString &path, QObject *parent)
     : QObject(parent)
@@ -363,7 +351,6 @@ QDBusPendingCallWatcher *DBusMenuImporterPrivate::refresh(int id)
 QMenu *DBusMenuImporterPrivate::createMenu(QWidget *parent)
 {
     QMenu *menu = q->createMenu(parent);
-    qDebug() << menu->actions().count();
     return menu;
 }
 
@@ -377,6 +364,7 @@ QMenu *DBusMenuImporterPrivate::createMenu(QWidget *parent)
  */
 QAction *DBusMenuImporterPrivate::createAction(int id, const QVariantMap &_map, QWidget *parent)
 {
+    // TODO: flesh me out more
     QVariantMap map = _map;
     QAction *action = new QAction(parent);
     action->setProperty(DBUSMENU_PROPERTY_ID, id);
@@ -388,6 +376,10 @@ QAction *DBusMenuImporterPrivate::createAction(int id, const QVariantMap &_map, 
 
     if (map.take(QStringLiteral("children-display")).toString() == QLatin1String("submenu")) {
         QMenu *menu = createMenu(parent);
+        auto title = map.find("label").value().toString();
+        if(title.startsWith('_'))
+            title = title.remove(0, 1);
+        menu->setTitle(title);
         action->deleteLater();
         action = menu->menuAction();
     }
@@ -512,6 +504,7 @@ QMenu *DBusMenuImporterPrivate::menuForId(int id) const
         return q->menu();
     }
     QAction *action = m_actionForId.value(id);
+    qDebug() << action->text();
     if (!action) {
         return nullptr;
     }

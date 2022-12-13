@@ -32,6 +32,7 @@ class FullscreenShell;
 class QWaylandWlShell;
 class QWaylandWlShellSurface;
 class QWaylandXdgShell;
+class OriginullMenuServer;
 class QOpenGLTexture;
 class SurfaceView;
 class Surface;
@@ -69,7 +70,8 @@ public:
     QList<Surface*> surfaces() { return m_surfaces; }
 
     void raise(Surface *surface);
-    Surface* menuServerSurfaceObject() { return m_menuServer; }
+    void activate(Surface *surface);
+    OriginullMenuServer* menuServerSurfaceObject() { return m_menuServer; }
     void handleMouseEvent(QWaylandView *target, QMouseEvent *me);
     void handleResize(SurfaceView *target, const QSize &initialSize, const QPoint &delta, int edge);
     void handleDrag(SurfaceView *target, QMouseEvent *me);
@@ -98,6 +100,7 @@ public:
     bool hasFullscreenSurface() const { return m_hasFullscreenSurface; }
     bool processHasTwilightMode(quint64 pid) const;
     bool isRunningLoginManager() const { return m_sddm; }
+    QPointF correctedPosition(const QPointF &point);
 protected:
     void adjustCursorSurface(QWaylandSurface *surface, int hotspotX, int hotspotY);
     void recycleSurfaceObject(Surface *obj);
@@ -118,7 +121,7 @@ protected slots:
     void startDrag();
 
     void onSurfaceCreated(QWaylandSurface *surface);
-    void onMenuServerRequest(QWaylandSurface *surface);
+    void onMenuServerRequest(OriginullMenuServer *menu);
     void onDesktopRequest(QWaylandSurface *surface);
     void onWlShellSurfaceCreated(QWaylandWlShellSurface *wlShellSurface);
     void onXdgSurfaceCreated(HWWaylandXdgSurface *xdgSurface);
@@ -136,6 +139,7 @@ protected slots:
     void updateCursor();
 private slots:
     void appMenuCreated(AppMenu *m);
+    void menuServerDestroyed();
     void configChanged();
     void loadSettings();
 private:
@@ -170,7 +174,7 @@ private:
     // Our decoration protocol support
     QWaylandXdgDecorationManagerV1 *m_xdgDecoration = nullptr;
     // Hollywood Private UI Protocol support
-    OriginullProtocol *m_arionPrivate = nullptr;
+    OriginullProtocol *m_hwPrivate = nullptr;
     // wlroots layer shell support
     WlrLayerShellV1 *m_layerShell = nullptr;
     // KDE Plasma window-management protocol
@@ -191,7 +195,7 @@ private:
     int m_cursorHotspotX;
     int m_cursorHotspotY;
 
-    Surface *m_menuServer = nullptr;
+    OriginullMenuServer *m_menuServer = nullptr;
     uint m_menuServerReserved = 0;
     QList<Surface*> m_desktops;
     QColor m_accent;

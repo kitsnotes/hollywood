@@ -256,10 +256,14 @@ QtSurface *Surface::qtSurface() const
     return m_qt;
 }
 
+OriginullMenuServer *Surface::menuServer() const
+{
+    return m_menuServer;
+}
+
 void Surface::setPosition(const QPointF &pos)
 {
-    // TODO: check for bounds of layer-shell items
-    m_surfacePosition = pos;
+    m_surfacePosition = hwComp->correctedPosition(pos);
 
     if(m_qt != nullptr && m_qt_moveserial != 0)
     {
@@ -466,9 +470,17 @@ bool Surface::serverDecorated() const
 QPointF Surface::surfacePosition() const
 {
     if(m_parentSurface == nullptr)
-        return m_surfacePosition;
+    {
+        if(m_layerSurface != nullptr)
+            return m_surfacePosition;
+        else
+            return hwComp->correctedPosition(m_surfacePosition);
+    }
 
-     return m_parentSurface->surfacePosition() + m_surfacePosition;
+    if(m_parentSurface->layerSurface())
+         return m_parentSurface->surfacePosition() + m_surfacePosition;
+
+    return hwComp->correctedPosition(m_parentSurface->surfacePosition() + m_surfacePosition);
 }
 
 QPointF Surface::decorationPosition() const
@@ -740,9 +752,13 @@ void Surface::handleLayerShellPopupPositioning()
 {
     auto popup = m_xdgPopup;
     auto parent = m_parentSurface->m_layerSurface;
-    qDebug() << popup->positionerSize();
-    qDebug() << popup->gravityEdges();
-    qDebug() << popup->anchorRect();
+    if (parent->anchors() & WlrLayerSurfaceV1::TopAnchor)
+    {
+        float xPos = popup->anchorRect().x();
+        int yPos = popup->anchorRect().y();
+        setPosition(QPointF(xPos,yPos));
+        return;
+    }
 
     if (parent->anchors() & WlrLayerSurfaceV1::BottomAnchor)
     {
@@ -1044,6 +1060,11 @@ void Surface::createQtSurface(QtSurface *qt)
     connect(m_qt, &QtSurface::windowFlagsChanged, this, &Surface::onQtWindowFlagsChanged);
 
     m_surfaceType = TopLevel;
+}
+
+void Surface::createMenuServer(OriginullMenuServer *menu)
+{
+    m_menuServer = menu;
 }
 
 void Surface::surfaceDestroyed()

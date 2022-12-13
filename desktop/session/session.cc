@@ -278,8 +278,8 @@ void SMApplication::startDBusReliantServices()
     m_elevatorProcess->initialize();
 
     m_wireplumberProcess->initialize();
-    m_desktopProcess->initialize();
     m_stageProcess->initialize();
+    m_desktopProcess->initialize();
 
     m_pipewirePulseProcess->initialize();
     m_sessionStarted = true;

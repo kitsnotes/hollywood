@@ -12,6 +12,8 @@
 #include <QProcess>
 #include <QFileSystemWatcher>
 #include <QSoundEffect>
+#include <QDBusObjectPath>
+#include <QPointer>
 
 #include <hollywood/layershellinterface.h>
 
@@ -19,7 +21,14 @@ class AIPrivateWaylandProtocol;
 class PlasmaWindowManagement;
 class PlasmaWindow;
 class StageHost;
+class MenuServer;
 class LSDesktopEntry;
+class QDBusServiceWatcher;
+class DBusMenuImporter;
+class MenuImporter;
+class OriginullMenuServerClient;
+class NotifierHost;
+class StageClock;
 class StageApplication : public QApplication
 {
     Q_OBJECT
@@ -32,6 +41,8 @@ public:
     bool displayManagerStart() { return m_started_dm; }
     QMenu* systemMenu() { return m_context; }
     void playBell();
+    AIPrivateWaylandProtocol* privateProtocol() { return m_protocol; }
+    bool isSouthernMode() const { return m_southern; }
 public slots:
     void launchSysmon();
     void launchSettings();
@@ -41,24 +52,44 @@ public slots:
     void logoffSession();
     void restartSystem();
     void shutdownSystem();
-private slots:
+protected slots:
+    friend class MenuServer;
     void privateProtocolReady();
+private slots:
+    void dbusMenuUpdated(QMenu *menu);
     void configChanged();
+    void slotWindowRegistered(WId id, const QString &serviceName, const QDBusObjectPath &menuObjectPath);
+    void menuChanged(const QString &serviceName, const QString &objectPath);
 Q_SIGNALS:
     void clockSettingsChanged(bool showClock, bool showDate, bool showSeconds, bool use24hr, bool ampm);
-    void settingsChanged();
+    void settingsChanged();    
 private:
     void loadSettings();
+    void setupNotifierHost();
+    void setupMenuServer();
+    void destroyMenuServer();
 private:
     QFileSystemWatcher *m_cfgwatch = nullptr;
     StageHost *m_host = nullptr;
+    MenuServer *m_menu = nullptr;
+    QPointer<QMenu> m_menubar;
     QList<QProcess*> m_processes;
-    AIPrivateWaylandProtocol *m_protocol = nullptr;
     QString m_configfile;
     QMenu *m_context = nullptr;
 
     QSoundEffect m_bell;
     bool m_started_dm = false;
+    bool m_southern = false;
+    NotifierHost *m_notifier = nullptr;
+    AIPrivateWaylandProtocol *m_protocol = nullptr;
+    MenuImporter* m_menuImporter = nullptr;
+    QPointer<DBusMenuImporter> m_importer;
+    QString m_serviceName;
+    QString m_menuObjectPath;
+    DBusMenuImporter *getImporter(const QString &service, const QString &path);
+    QDBusServiceWatcher *m_menuViewWatcher;
+    OriginullMenuServerClient *m_ms = nullptr;
+    StageClock *m_clock = nullptr;
 };
 
 #endif // CSAPPLICATION_H

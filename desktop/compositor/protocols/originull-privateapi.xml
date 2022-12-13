@@ -4,18 +4,14 @@
  License: LGPL2
     </copyright>
     <interface name="org_originull_privateapi" version="1">
+        <enum name="error">
+            <entry name="already_bound" value="0" summary="An interface is already bound to the menuserver system." />
+        </enum>
         <request name="provision_menu_server">
           <description summary="Provision Menu Server">
-            Provision the client surface as the system MenuServer.
+            Provision a responder for the system MenuServer.
           </description>
           <arg name="id" type="new_id" interface="org_originull_menuserver"/>
-          <arg name="surface" type="object" interface="wl_surface"/>
-        </request>
-        <request name="provision_desktop_surface">
-          <description summary="Provision Menu Server">
-            Provision the client surface as a screen desktop.
-          </description>
-          <arg name="surface" type="object" interface="wl_surface"/>
         </request>
     </interface>
     <interface name="org_originull_menuserver" version="1">
@@ -24,7 +20,6 @@
              The top level window has been changed and the menuserver should adjust.
           </description>
 
-          <arg name="surface" type="object" interface="wl_surface"/>
           <arg name="service_name" type="string" />
           <arg name="object_path" type="string" />
         </event>

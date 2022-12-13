@@ -9,8 +9,6 @@
 #include "wlrlayersurfacev1.h"
 #include "libcompositor_global.h"
 
-namespace ArionWaylandClient {
-
 class WlrLayerSurfaceV1Private
 {
 public:
@@ -26,7 +24,5 @@ public:
     QMargins margins;
     WlrLayerSurfaceV1::KeyboardInteractivity keyboardInteractivity = WlrLayerSurfaceV1::ExclusiveKeyboardInteractivity;
 };
-
-} // namespace ArionWaylandClient
 
 #endif // LIRI_WLRLAYERSURFACEV1_P_CLIENT_H
