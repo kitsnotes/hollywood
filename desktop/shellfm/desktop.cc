@@ -231,8 +231,7 @@ void DesktopWindow::setupMenuBar()
     /* We do the menu bar separate because it can be used
      * by both a browser window and the root desktop window
      * over dbusmenu */
-    m_menuBar = new QMenuBar(this);
-    setMenuBar(m_menuBar);
+    m_menuBar = new QMenuBar(0);
     m_menuBar->setObjectName(QString::fromUtf8("m_menuBar"));
     menu_File = new QMenu(m_menuBar);
     menu_Edit = new QMenu(m_menuBar);
@@ -317,7 +316,7 @@ void DesktopWindow::setupMenuBar()
     menu_Bookmark->addAction(a_Add_Bookmark);
     menu_Help->addAction(actionGet_System_Help);
     menu_Help->addAction(a_About);
-    //setMenuBar(m_menuBar);
+
 
     m_rightclick->addAction(tr("Paste"));
     m_rightclick->addAction(tr("Paste Symbolic Links"));

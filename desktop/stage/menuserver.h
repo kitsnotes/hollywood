@@ -14,14 +14,12 @@ class MenuServer : public QWidget
 {
     Q_OBJECT
 public:
-    explicit MenuServer(NotifierHost *notifier, QScreen *screen, QWidget *parent = nullptr);
+    explicit MenuServer(StageClock *clock, QScreen *screen, QWidget *parent = nullptr);
     QMenuBar* menuBar() { return m_menuBar; }
     void installMenu(QMenu *menu);
     void cleanMenu();
-    void setClock(StageClock *clock);
 public slots:
     void show();
-private slots:
     void createStatusButton(StatusNotifierButton *btn);
     void statusButtonRemoved(StatusNotifierButton *btn);
 signals:
@@ -29,7 +27,6 @@ private:
     bool m_ready = false;
     LayerShellQt::Window *m_lswnd;
     QScreen *m_screen;
-    NotifierHost *m_notifier = nullptr;
     QHBoxLayout *m_layout;
     QMenuBar *m_menuBar;
     QSpacerItem *m_spacer;

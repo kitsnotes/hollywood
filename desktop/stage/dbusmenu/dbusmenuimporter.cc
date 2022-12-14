@@ -269,6 +269,7 @@ void DBusMenuImporter::updateMenu(QMenu *menu)
     QAction *action = menu->menuAction();
     Q_ASSERT(action);
 
+    qDebug() << "updateMenu" << menu;
     int id = action->property(DBUSMENU_PROPERTY_ID).toInt();
 
     auto call = d->m_interface->AboutToShow(id);
@@ -290,12 +291,15 @@ void DBusMenuImporter::slotAboutToShowDBusCallFinished(QDBusPendingCallWatcher *
         return;
     }
 
+    qDebug() << "slotAboutToShowDBusCallFinished" << menu;
     QDBusPendingReply<bool> reply = *watcher;
     if (reply.isError()) {
         qDebug() << "Call to AboutToShow() failed:" << reply.error().message();
         Q_EMIT menuUpdated(menu);
         return;
     }
+
+    qDebug() << menu->actions().count();
     // Note, this isn't used by Qt's QPT - but we get a LayoutChanged emitted before
     // this returns, which equates to the same thing
     bool needRefresh = reply.argumentAt<0>();
@@ -324,7 +328,6 @@ void DBusMenuImporter::slotMenuAboutToShow()
 {
     QMenu *menu = qobject_cast<QMenu *>(sender());
     Q_ASSERT(menu);
-
     updateMenu(menu);
 }
 

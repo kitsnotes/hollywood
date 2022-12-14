@@ -19,7 +19,7 @@ bool StageApplet::loadSettings()
 {
     QSettings settings("originull","hollywood");
     settings.beginGroup("Stage");
-    auto layout = settings.value("Layout", HOLLYWOOD_STAGE_LAYOUT).toUInt();
+    auto layout = settings.value("UseSouthernMode", HOLLYWOOD_STAGE_LAYOUT).toBool();
     if(layout == 0)
         m_northern->setChecked(true);
     else
@@ -49,8 +49,6 @@ bool StageApplet::loadSettings()
     m_24hour->setChecked(clock_24hr);
     showClockChecked();
 
-    // TODO: remove when fixed
-    m_northern->setChecked(true);
     return true;
 }
 
@@ -63,8 +61,12 @@ bool StageApplet::saveSettings()
     settings.setValue("ShowDateInClock", m_showdate->isChecked());
     settings.setValue("ShowSecondsInClock", m_seconds->isChecked());
     settings.setValue("Use24HourClock", m_24hour->isChecked());
-    //settings.setValue("ShowAMPMInClock", m_seconds->isChecked());
+    settings.setValue("ShowAMPMInClock", m_seconds->isChecked());
 
+    if(m_southern->isChecked())
+        settings.setValue("UseSouthernMode", true);
+    else
+        settings.setValue("UseSouthernMode", false);
     return true;
 }
 
@@ -115,6 +117,7 @@ void StageApplet::layoutSelectionChanged()
         m_layoutdesc->setText(tr("A desktop layout from Cupertino, California."));
     }
     updatePositionOptions();
+    saveSettings();
 }
 
 void StageApplet::stageSizeChanged()
@@ -255,6 +258,8 @@ void StageApplet::setupWidget()
     auto hl_stage_size = new QHBoxLayout();
     m_small = new QRadioButton(m_host);
     m_large = new QRadioButton(m_host);
+    connect(m_small, &QPushButton::pressed, this, &StageApplet::saveSettings);
+    connect(m_large, &QPushButton::pressed, this, &StageApplet::saveSettings);
 
     m_stagesize->addButton(m_small);
     m_stagesize->addButton(m_large);
@@ -319,8 +324,5 @@ void StageApplet::setupWidget()
     m_seconds->setText(QCoreApplication::translate("StageSettings", "Show time with seconds.", nullptr));
     m_24hour->setText(QCoreApplication::translate("StageSettings", "Use a 24 hour clock.", nullptr));
 
-    // TODO: remove when fixed
-    //m_southern->setDisabled(true);
-    m_position->setDisabled(true);
 }
 

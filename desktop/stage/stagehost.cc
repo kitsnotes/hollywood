@@ -17,7 +17,6 @@ StageHost::StageHost(QScreen *screen, QWidget *parent)
     connect(m_sm, &SurfaceManager::windowDestroyed, this, &StageHost::windowClosed);
 
     auto app = StageApplication::instance();
-    connect(app, &StageApplication::clockSettingsChanged, m_clock, &StageClock::clockSettingsChanged);
     setWindowFlag(Qt::FramelessWindowHint, true);
     m_menu->setIcon(QIcon::fromTheme("hollywood-logo"));
     m_menu->setAutoRaise(true);
@@ -33,8 +32,6 @@ StageHost::StageHost(QScreen *screen, QWidget *parent)
     if(m_clock)
         m_clock->setFont(font);
     m_menu->setFont(font);
-    //connect(m_notifier, &NotifierHost::buttonAdded, this, &StageHost::createStatusButton);
-    //connect(m_notifier, &NotifierHost::buttonRemoved, this, &StageHost::statusButtonRemoved);
 }
 
 void StageHost::setAlignment(Alignment align)
@@ -68,11 +65,12 @@ void StageHost::setAlignment(Alignment align)
         {
             m_hbox->addWidget(m_menu);
             m_hbox->addItem(m_spacer);
-            if(m_clock)
-                m_hbox->addWidget(m_clock);
+            m_hbox->addWidget(m_clock);
+            m_menu->setVisible(true);
         }
         else
         {
+            m_hbox->addWidget(m_menu);
             m_hbox->addItem(m_spacer);
             m_menu->setVisible(false);
         }
@@ -89,6 +87,21 @@ void StageHost::setAlignment(Alignment align)
 void StageHost::setClock(StageClock *clock)
 {
     m_clock = clock;
+}
+
+void StageHost::takeClock()
+{
+    m_clock->setParent(this);
+    if(m_align == Horizontal)
+        m_hbox->addWidget(m_clock);
+    else
+        m_vbox->addWidget(m_clock);
+}
+
+void StageHost::setMainEnabled(bool enabled)
+{
+    if(m_menu)
+        m_menu->setVisible(enabled);
 }
 
 void StageHost::createWindowButton(TaskButton *btn)

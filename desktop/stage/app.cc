@@ -61,7 +61,6 @@ StageApplication::StageApplication(int &argc, char **argv)
     connect(m_protocol, &AIPrivateWaylandProtocol::activeChanged,
             this, &StageApplication::privateProtocolReady);
 
-    setupNotifierHost();
     auto aboutSys = m_context->addAction(tr("&About This Computer..."));
     m_context->addSeparator();
     auto settings = m_context->addAction(tr("System &Settings"));
@@ -100,21 +99,16 @@ StageApplication::StageApplication(int &argc, char **argv)
     }
     connect(logoff, &QAction::triggered, this, &StageApplication::logoffSession);
 
-    if(m_southern)
-        setupMenuServer();
-}
+    connect(m_notifier, &NotifierHost::buttonAdded, this, &StageApplication::createStatusButton);
+    connect(m_notifier, &NotifierHost::buttonRemoved, this, &StageApplication::statusButtonRemoved);
 
-void StageApplication::createWindows()
-{
     m_host = new StageHost(primaryScreen());
     m_host->setClock(m_clock);
-    m_host->show();
     if(m_southern)
-    {
-        m_menu = new MenuServer(m_notifier, primaryScreen());
-        m_menu->setClock(m_clock);
-        m_menu->show();
-    }
+        setupMenuServer();
+    else
+        m_host->takeClock();
+    m_host->show();
 }
 
 bool StageApplication::executeDesktop(const QString &desktop)
@@ -172,6 +166,14 @@ void StageApplication::privateProtocolReady()
     if(!m_protocol)
         return;
 
+    setupPrivateProtocolResponder();
+}
+
+void StageApplication::setupPrivateProtocolResponder()
+{
+    if(m_has_menu_responder)
+        return;
+
     if(m_protocol->isActive())
     {
         auto ms = m_protocol->createMenuServerResponder();
@@ -181,6 +183,7 @@ void StageApplication::privateProtocolReady()
             connect(ms, &OriginullMenuServerClient::menuChanged,
                     this, &StageApplication::menuChanged);
         }
+        m_has_menu_responder = true;
     }
 }
 
@@ -221,6 +224,7 @@ void StageApplication::logoffSession()
 
 void StageApplication::configChanged()
 {
+    qDebug() << "configChanged";
     loadSettings();
 }
 
@@ -275,7 +279,7 @@ void StageApplication::loadSettings()
     m_bell.setSource(QUrl::fromLocalFile(bell));
     settings.endGroup();
     settings.beginGroup("Stage");
-    m_southern = settings.value("UseSouthernMode", true).toBool();
+    bool southern = settings.value("UseSouthernMode", false).toBool();
     auto show_clock = settings.value("ShowClock", HOLLYWOOD_STCLK_SHOW).toBool();
     auto show_date = settings.value("ShowDateInClock", HOLLYWOOD_STCLK_USEDATE).toBool();
     auto show_seconds = settings.value("ShowSecondsInClock", HOLLYWOOD_STCLK_USESECONDS).toBool();
@@ -283,17 +287,38 @@ void StageApplication::loadSettings()
     auto clock_ampm = settings.value("ShowAMPMInClock", HOLLYWOOD_STCLK_USEAMPM).toBool();
 
     settings.endGroup();
+    m_clock->clockSettingsChanged(show_clock, show_date, show_seconds, clock_24hr, clock_ampm);
+    transferLayoutModes(southern);
     emit settingsChanged();
-    emit clockSettingsChanged(show_clock, show_date, show_seconds, clock_24hr, clock_ampm);
 }
 
-void StageApplication::setupNotifierHost()
+void StageApplication::transferLayoutModes(bool useSouthern)
 {
+    if(useSouthern == m_southern)
+        return;
 
+    if(useSouthern)
+    {
+        setupMenuServer();
+        moveToMenubar();
+        if(m_host)
+            m_host->setMainEnabled(false);
+    }
+    else
+    {
+        destroyMenuServer();
+        moveToStage();
+        if(m_host)
+            m_host->takeClock();
+    }
+
+    m_southern = useSouthern;
 }
+
 
 void StageApplication::setupMenuServer()
 {
+    setupPrivateProtocolResponder();
     // Setup a menu importer if needed
     if (!m_menuImporter) {
         QDBusConnection::sessionBus().connect({}, {},
@@ -306,12 +331,47 @@ void StageApplication::setupMenuServer()
         connect(m_menuImporter, &MenuImporter::WindowRegistered, this, &StageApplication::slotWindowRegistered);
         m_menuImporter->connectToBus();
     }
+    if(!m_menu)
+    {
+        m_menu = new MenuServer(m_clock, primaryScreen());
+        m_menu->show();
+    }
+}
+
+void StageApplication::destroyMenuServer()
+{
+    m_host->setMainEnabled(false);
+    m_menuImporter->deleteLater();
+    disconnect(m_ms, &OriginullMenuServerClient::menuChanged,
+            this, &StageApplication::menuChanged);
+    m_ms->deleteLater();
+    m_menu->deleteLater();
+}
+
+void StageApplication::moveToStage()
+{
+    m_host->setMainEnabled(true);
+    for(auto b : m_traybtns)
+    {
+        m_menu->statusButtonRemoved(b);
+        m_host->createStatusButton(b);
+    }
+}
+
+void StageApplication::moveToMenubar()
+{
+    for(auto b : m_traybtns)
+    {
+        m_host->statusButtonRemoved(b);
+        m_menu->createStatusButton(b);
+    }
 }
 
 void StageApplication::menuChanged(const QString &serviceName, const QString &objectPath)
 {
-    m_menu->cleanMenu();
-    qDebug() << "privateProtocol: menuChanged" << serviceName << objectPath;
+    if(!m_southern)
+        return;
+
     if (m_serviceName == serviceName && m_menuObjectPath == objectPath)
     {
         if (m_importer)
@@ -335,19 +395,13 @@ void StageApplication::menuChanged(const QString &serviceName, const QString &ob
     m_importer = new DBusMenuImporter(serviceName, objectPath, this);
     QMetaObject::invokeMethod(m_importer, "updateMenu", Qt::QueuedConnection);
 
-    connect(m_importer.data(), &DBusMenuImporter::menuUpdated, this, [=](QMenu *menu) {
-        m_menubar = m_importer->menu();
-        if(m_menubar.isNull() || m_menubar != menu)
+    connect(m_importer.data(), &DBusMenuImporter::menuUpdated, this, [=](QMenu *menu)
+    {
+        // filter out a submenu
+        if(!m_importer->menu() || m_importer->menu() != menu)
             return;
 
-        for(QAction *a : menu->actions())
-        {
-            //if(a->associatedObjects().count() > 0)
-            //m_importer->updateMenu();
-            //auto menu = qobject_cast<QMenu*>(a->associatedObjects().first());
-            //m_menu->menuBar()->addAction(a);
-        }
-
+        m_menubar = m_importer->menu();
         m_menu->installMenu(m_menubar);
     });
 
@@ -366,6 +420,24 @@ void StageApplication::menuChanged(const QString &serviceName, const QString &ob
     });*/
 }
 
+void StageApplication::createStatusButton(StatusNotifierButton *btn)
+{
+    m_traybtns.append(btn);
+    if(m_southern)
+        m_menu->createStatusButton(btn);
+    else
+        m_host->createStatusButton(btn);
+}
+
+void StageApplication::statusButtonRemoved(StatusNotifierButton *btn)
+{
+    m_traybtns.removeOne(btn);
+    if(m_southern)
+        m_menu->statusButtonRemoved(btn);
+    else
+        m_host->statusButtonRemoved(btn);
+}
+
 void StageApplication::dbusMenuUpdated(QMenu *menu)
 {
     Q_UNUSED(menu);
@@ -376,6 +448,5 @@ int main(int argc, char *argv[])
 {
     QCoreApplication::setAttribute(Qt::AA_DontUseNativeMenuBar, true);
     StageApplication a(argc, argv);
-    a.createWindows();
     return a.exec();
 }

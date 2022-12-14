@@ -20,7 +20,7 @@
 #define HOLLYWOOD_SERVICE_NTPD      "openntpd"
 
 // Default Stage Settings
-#define HOLLYWOOD_STAGE_LAYOUT      0   // 0 northern, 1 southern
+#define HOLLYWOOD_STAGE_LAYOUT      false   // false northern, true southern
 #define HOLLYWOOD_STAGE_SIZE        0   // 0 small, 1 large
 #define HOLLYWOOD_STAGE_POSITION    0x00008 // bottom match Qt::Edge
 

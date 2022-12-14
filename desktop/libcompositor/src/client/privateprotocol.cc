@@ -30,6 +30,7 @@ OriginullMenuServerClient::OriginullMenuServerClient(struct ::org_originull_menu
     : QWaylandClientExtensionTemplate(1)
     , QtWayland::org_originull_menuserver(menu) {}
 
+
 void OriginullMenuServerClient::org_originull_menuserver_appmenu_top_level_window_changed(const QString &service_name, const QString &object_path)
 {
     qDebug() << "menuChanged" << service_name << object_path;

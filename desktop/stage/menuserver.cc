@@ -4,18 +4,15 @@
 #include "notifierhost.h"
 #include "client/privateprotocol.h"
 
-MenuServer::MenuServer(NotifierHost *notifier, QScreen *screen, QWidget *parent)
+MenuServer::MenuServer(StageClock *clock, QScreen *screen, QWidget *parent)
     : QWidget(parent)
     , m_screen(screen)
-    , m_notifier(notifier)
     , m_layout(new QHBoxLayout(this))
     , m_menuBar(new QMenuBar(0))
     , m_spacer(new QSpacerItem(1,1, QSizePolicy::Fixed, QSizePolicy::MinimumExpanding))
+    , m_clock(clock)
     , vl_opposite(new QHBoxLayout)
 {
-    connect(m_notifier, &NotifierHost::buttonAdded, this, &MenuServer::createStatusButton);
-    connect(m_notifier, &NotifierHost::buttonRemoved, this, &MenuServer::statusButtonRemoved);
-
     setWindowFlag(Qt::FramelessWindowHint, true);
     setMinimumHeight(1);
     setMaximumHeight(25);
@@ -35,6 +32,8 @@ MenuServer::MenuServer(NotifierHost *notifier, QScreen *screen, QWidget *parent)
     m_layout->setContentsMargins(0,0,0,0);
     vl_opposite->setSpacing(0);
     vl_opposite->setContentsMargins(0,0,0,0);
+    clock->setParent(this);
+    vl_opposite->addWidget(clock);
 }
 
 void MenuServer::installMenu(QMenu *menu)
@@ -62,15 +61,8 @@ void MenuServer::cleanMenu()
     }
 }
 
-void MenuServer::setClock(StageClock *clock)
-{
-    m_clock = clock;
-    vl_opposite->addWidget(clock);
-}
-
 void MenuServer::show()
 {
-
     QWidget::show();
     StageApplication::instance()->privateProtocolReady();
 
@@ -85,6 +77,7 @@ void MenuServer::show()
 
 void MenuServer::createStatusButton(StatusNotifierButton *btn)
 {
+    auto idx = vl_opposite->indexOf(m_clock);
     vl_opposite->insertWidget(vl_opposite->indexOf(m_clock), btn);
 }
 

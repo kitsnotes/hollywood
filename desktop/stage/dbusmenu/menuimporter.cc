@@ -48,21 +48,18 @@ QString RegistrarAdaptor::GetMenuForWindow(uint windowId, QDBusObjectPath &menuO
 {
     // handle method call com.canonical.AppMenu.Registrar.GetMenuForWindow
     //return static_cast<YourObjectType *>(parent())->GetMenuForWindow(windowId, menuObjectPath);
-    qDebug() << "RegistrarAdaptor::GetMenuForWindow" << windowId;
     QMetaObject::invokeMethod(parent(), "GetMenuForWindow", Q_ARG(WId, windowId), Q_ARG(QDBusObjectPath, menuObjectPath));
 }
 
 void RegistrarAdaptor::RegisterWindow(uint windowId, const QDBusObjectPath &menuObjectPath)
 {
     // handle method call com.canonical.AppMenu.Registrar.RegisterWindow
-    qDebug() << "RegistrarAdaptor::RegisterWindow: init" << windowId;
     QMetaObject::invokeMethod(parent(), "RegisterWindow", Q_ARG(WId, windowId), Q_ARG(QDBusObjectPath, menuObjectPath));
 }
 
 void RegistrarAdaptor::UnregisterWindow(uint windowId)
 {
     // handle method call com.canonical.AppMenu.Registrar.UnregisterWindow
-    qDebug() << "RegistrarAdaptor::UnregisterWindow: dest" << windowId;
     QMetaObject::invokeMethod(parent(), "UnregisterWindow", Q_ARG(WId, windowId));
 }
 
@@ -95,19 +92,9 @@ bool MenuImporter::connectToBus()
 
 void MenuImporter::RegisterWindow(WId id, const QDBusObjectPath &path)
 {
-    /* KWindowInfo info(id, NET::WMWindowType, NET::WM2WindowClass);
-    NET::WindowTypes mask = NET::AllTypesMask;
-    auto type = info.windowType(mask);
-
-    // Menu can try to register, right click in gimp for example
-    if (type != NET::Unknown && (type & (NET::Menu | NET::DropdownMenu | NET::PopupMenu))) {
-        return;
-    }*/
-
     if (path.path().isEmpty()) // prevent bad dbusmenu usage
         return;
 
-    qDebug() << "registerWindow:" << id;
     QString service = message().service();
 
     // TODO: FIX ME
@@ -135,7 +122,6 @@ void MenuImporter::UnregisterWindow(WId id)
 QString MenuImporter::GetMenuForWindow(WId id, QDBusObjectPath &path)
 {
     path = m_menuPaths.value(id);
-    qDebug() << "path:" << path.path();
     return m_menuServices.value(id);
 }
 

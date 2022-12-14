@@ -29,13 +29,13 @@ class MenuImporter;
 class OriginullMenuServerClient;
 class NotifierHost;
 class StageClock;
+class StatusNotifierButton;
 class StageApplication : public QApplication
 {
     Q_OBJECT
 public:
     StageApplication(int &argc, char **argv);
     static StageApplication* instance() { return static_cast<StageApplication*>(QApplication::instance()); }
-    void createWindows();
     bool executeDesktop(const QString &desktop);
     bool callSessionDBus(const QString &exec);
     bool displayManagerStart() { return m_started_dm; }
@@ -56,19 +56,25 @@ protected slots:
     friend class MenuServer;
     void privateProtocolReady();
 private slots:
+    void setupPrivateProtocolResponder();
     void dbusMenuUpdated(QMenu *menu);
     void configChanged();
     void slotWindowRegistered(WId id, const QString &serviceName, const QDBusObjectPath &menuObjectPath);
     void menuChanged(const QString &serviceName, const QString &objectPath);
+    void createStatusButton(StatusNotifierButton *btn);
+    void statusButtonRemoved(StatusNotifierButton *btn);
 Q_SIGNALS:
     void clockSettingsChanged(bool showClock, bool showDate, bool showSeconds, bool use24hr, bool ampm);
     void settingsChanged();    
 private:
     void loadSettings();
-    void setupNotifierHost();
+    void transferLayoutModes(bool useSouthern);
     void setupMenuServer();
     void destroyMenuServer();
+    void moveToStage();
+    void moveToMenubar();
 private:
+    QList<StatusNotifierButton*> m_traybtns;
     QFileSystemWatcher *m_cfgwatch = nullptr;
     StageHost *m_host = nullptr;
     MenuServer *m_menu = nullptr;
@@ -80,6 +86,7 @@ private:
     QSoundEffect m_bell;
     bool m_started_dm = false;
     bool m_southern = false;
+    bool m_has_menu_responder = false;
     NotifierHost *m_notifier = nullptr;
     AIPrivateWaylandProtocol *m_protocol = nullptr;
     MenuImporter* m_menuImporter = nullptr;

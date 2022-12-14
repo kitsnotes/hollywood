@@ -27,15 +27,17 @@ public:
 
     void setAlignment(Alignment align);
     void setClock(StageClock *clock);
+    void takeClock();
+    void setMainEnabled(bool enabled);
 public slots:
     void show();
+    void createStatusButton(StatusNotifierButton *btn);
+    void statusButtonRemoved(StatusNotifierButton *btn);
 protected:
     void resizeEvent(QResizeEvent *event) override;
 protected slots:
     void createWindowButton(TaskButton *btn);
     void windowClosed(TaskButton *btn);
-    void createStatusButton(StatusNotifierButton *btn);
-    void statusButtonRemoved(StatusNotifierButton *btn);
 private:
     bool m_ready = false;
     LayerShellQt::Window *m_lswnd;
