@@ -57,5 +57,6 @@ SUBDIRS = \
 }
 
 SUBDIRS += \
-    appstub
+    appstub \
+    notificationd
 
