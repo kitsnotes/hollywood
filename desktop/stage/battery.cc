@@ -51,7 +51,8 @@ BatteryMonitor::BatteryMonitor(QWidget *parent)
 
 void BatteryMonitor::batteryChanged()
 {
-    setText(QString::number(m_battery->percent()));
+    auto str = QString(" %1%%").arg(QString::number(m_battery->percent()));
+    setText(str);
     setIcon(QIcon::fromTheme(m_battery->displayIcon()));
     QString state;
     QString time;
@@ -87,11 +88,15 @@ void BatteryMonitor::batteryChanged()
         m_time->setVisible(false);
     else
     {
-        m_time->setVisible(true);
-        m_time->setDisabled(true);
         uint minutes = m_battery->timeUntilEmpty();
         if(m_battery->state() == 1)
             minutes = m_battery->timeUntilFull();
+
+        if(minutes == 0)
+            return;
+
+        m_time->setVisible(true);
+        m_time->setDisabled(true);
 
         minutes = minutes / 60;
 
@@ -103,7 +108,7 @@ void BatteryMonitor::batteryChanged()
         {
             auto hours = minutes / 60;
             auto min = minutes % 60;
-            timestr = QString("%1 hour%2 %3 minute%s").arg(
+            timestr = QString("%1 hour%2 %3 minute%4").arg(
                               QString::number(hours),
                               hours == 1 ? "" : "s",
                               QString::number(min),

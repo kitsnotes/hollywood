@@ -14,6 +14,7 @@
 #include <QtWidgets/QToolButton>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
+#include <QGroupBox>
 
 class EnergyApplet : public QObject, SettingsAppletInterface
 {
@@ -38,20 +39,19 @@ private:
     void setupWidget();
     QWidget* m_host = nullptr;
     QVBoxLayout *mainLayout = nullptr;
-    QTabWidget *m_tabs;
-    QWidget *m_mains;
-    QFormLayout *formLayout;
-    QLabel *lbl_mains_comp_sleep;
-    QSlider *m_mains_comp_sleep;
+    QGroupBox *m_batterysettings;
+    QGroupBox *m_mainssettings;
+
     QLabel *lbl_mains_disp_sleep;
     QSlider *m_mains_disp_sleep;
-    QSpacerItem *vs_mains;
-    QWidget *m_battery;
-    QFormLayout *formLayout_3;
-    QLabel *lbl_batt_comp_sleep;
-    QSlider *m_batt_comp_sleep;
+    QCheckBox *m_preventsleep;
+    QCheckBox *m_preventsleeplid;
+    QCheckBox *m_harddisks;
+
+    QFormLayout *fl_battery;
     QLabel *lbl_batt_disp_sleep;
     QSlider *m_batt_disp_sleep;
+    QCheckBox *m_harddisks_battery;
     QSpacerItem *vs_batt;
     QHBoxLayout *hl_bottom;
     QCheckBox *m_showinmenu;
