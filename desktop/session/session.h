@@ -58,6 +58,7 @@ public:
     QByteArray dbusSocket() { return m_dbusSessionVar; }
     QString localeVariable(LocaleVariable v);
     bool detailedLocaleSettings() const { return m_detailedregion; }
+    bool isBatteryPowered() const;
 private:
     void startDBusReliantServices();
     bool verifyXdgRuntime();

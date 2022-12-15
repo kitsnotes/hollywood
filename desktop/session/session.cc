@@ -272,6 +272,37 @@ QString SMApplication::localeVariable(LocaleVariable v)
     }
 }
 
+bool SMApplication::isBatteryPowered() const
+{
+    QFile bat0("/sys/class/power_supply/BAT0");
+    if(bat0.exists())
+        return true;
+
+    // fallback - check SMBIOS
+    QFile file("/sys/class/dmi/id/chassis_type");
+    if(file.exists())
+    {
+        file.open(QFile::ReadOnly);
+        auto val = file.readAll().trimmed().toInt();
+
+        // portable, laptop, notebook, handheld
+        if(val >= 8 && val <= 11)
+            return true;
+
+        // sub notebook
+        if(val == 14)
+            return true;
+
+        // tablet, convertable, detachable
+        if(val >= 30 && val <= 32)
+            return true;
+
+        file.close();
+    }
+
+    return false;
+}
+
 void SMApplication::startDBusReliantServices()
 {
     m_pipewireProcess->initialize();

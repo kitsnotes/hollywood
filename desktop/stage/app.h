@@ -29,6 +29,7 @@ class MenuImporter;
 class OriginullMenuServerClient;
 class NotifierHost;
 class StageClock;
+class BatteryMonitor;
 class StatusNotifierButton;
 class StageApplication : public QApplication
 {
@@ -97,6 +98,7 @@ private:
     QDBusServiceWatcher *m_menuViewWatcher;
     OriginullMenuServerClient *m_ms = nullptr;
     StageClock *m_clock = nullptr;
+    BatteryMonitor *m_battery = nullptr;
 };
 
 #endif // CSAPPLICATION_H

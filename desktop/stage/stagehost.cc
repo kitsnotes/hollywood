@@ -4,7 +4,7 @@
 #include "stageclock.h"
 #include "surfacemanager.h"
 #include "notifierhost.h"
-
+#include "battery.h"
 #include <QtWaylandClient/private/qwaylandwindow_p.h>
 
 StageHost::StageHost(QScreen *screen, QWidget *parent)
@@ -13,6 +13,8 @@ StageHost::StageHost(QScreen *screen, QWidget *parent)
     , m_menu(new QToolButton(this))
     , m_sm(new SurfaceManager(this))
 {
+    m_spacer = new QSpacerItem(1,20,QSizePolicy::Expanding);
+    m_trayspacer = new QSpacerItem(1,1,QSizePolicy::Fixed,QSizePolicy::Fixed);
     connect(m_sm, &SurfaceManager::windowCreated, this, &StageHost::createWindowButton);
     connect(m_sm, &SurfaceManager::windowDestroyed, this, &StageHost::windowClosed);
 
@@ -60,11 +62,12 @@ void StageHost::setAlignment(Alignment align)
         m_align = align;
         m_hbox = new QHBoxLayout(this);
         m_hbox->setContentsMargins(0,0,0,0);
-        m_spacer = new QSpacerItem(1,20,QSizePolicy::Expanding);
         if(!StageApplication::instance()->isSouthernMode())
         {
             m_hbox->addWidget(m_menu);
             m_hbox->addItem(m_spacer);
+            m_hbox->addSpacerItem(m_trayspacer);
+            m_hbox->addWidget(m_battery);
             m_hbox->addWidget(m_clock);
             m_menu->setVisible(true);
         }
@@ -72,6 +75,7 @@ void StageHost::setAlignment(Alignment align)
         {
             m_hbox->addWidget(m_menu);
             m_hbox->addItem(m_spacer);
+            m_hbox->addSpacerItem(m_trayspacer);
             m_menu->setVisible(false);
         }
         //m_hbox->addWidget(m_shutdown);
@@ -96,6 +100,20 @@ void StageHost::takeClock()
         m_hbox->addWidget(m_clock);
     else
         m_vbox->addWidget(m_clock);
+}
+
+void StageHost::setBattery(BatteryMonitor *battery)
+{
+    m_battery = battery;
+}
+
+void StageHost::takeBattery()
+{
+    m_battery->setParent(this);
+    if(m_align == Horizontal)
+        m_hbox->addWidget(m_battery);
+    else
+        m_vbox->addWidget(m_battery);
 }
 
 void StageHost::setMainEnabled(bool enabled)

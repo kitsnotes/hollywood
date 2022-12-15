@@ -23,6 +23,7 @@ DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000
 
 SOURCES += \
     app.cc \
+    battery.cc \
     dbusmenu/dbusmenu_interface.cc \
     dbusmenu/dbusmenuimporter.cc \
     dbusmenu/dbusmenushortcut.cc \
@@ -41,10 +42,12 @@ SOURCES += \
     statusnotifier/statusnotifierwatcher.cpp \
     surfacemanager.cc \
     taskbutton.cc \
+    upower.cc \
     wndmgmt.cc
 
 HEADERS += \
     app.h \
+    battery.h \
     dbusmenu/dbusmenu_interface.h \
     dbusmenu/dbusmenuimporter.h \
     dbusmenu/dbusmenuimporter_p.h \
@@ -64,6 +67,7 @@ HEADERS += \
     statusnotifier/statusnotifierwatcher.h \
     surfacemanager.h \
     taskbutton.h \
+    upower.h \
     wndmgmt.h
 
 # Default rules for deployment.

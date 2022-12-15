@@ -6,6 +6,7 @@
 #include <QMenuBar>
 #include <QHBoxLayout>
 
+class BatteryMonitor;
 class NotifierHost;
 class StatusNotifierButton;
 class StageClock;
@@ -14,7 +15,7 @@ class MenuServer : public QWidget
 {
     Q_OBJECT
 public:
-    explicit MenuServer(StageClock *clock, QScreen *screen, QWidget *parent = nullptr);
+    explicit MenuServer(StageClock *clock, BatteryMonitor *battery, QScreen *screen, QWidget *parent = nullptr);
     QMenuBar* menuBar() { return m_menuBar; }
     void installMenu(QMenu *menu);
     void cleanMenu();
@@ -30,9 +31,10 @@ private:
     QHBoxLayout *m_layout;
     QMenuBar *m_menuBar;
     QSpacerItem *m_spacer;
+    QSpacerItem *m_trayspacer;
 
     StageClock *m_clock = nullptr;
-
+    BatteryMonitor *m_battery = nullptr;
     QWidget *m_opposite = nullptr;
     QHBoxLayout *vl_opposite = nullptr;
 };

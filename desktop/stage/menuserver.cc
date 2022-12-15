@@ -2,15 +2,18 @@
 #include "app.h"
 #include "stageclock.h"
 #include "notifierhost.h"
+#include "battery.h"
 #include "client/privateprotocol.h"
 
-MenuServer::MenuServer(StageClock *clock, QScreen *screen, QWidget *parent)
+MenuServer::MenuServer(StageClock *clock, BatteryMonitor *battery, QScreen *screen, QWidget *parent)
     : QWidget(parent)
     , m_screen(screen)
     , m_layout(new QHBoxLayout(this))
     , m_menuBar(new QMenuBar(0))
     , m_spacer(new QSpacerItem(1,1, QSizePolicy::Fixed, QSizePolicy::MinimumExpanding))
+    , m_trayspacer(new QSpacerItem(1,1, QSizePolicy::Fixed, QSizePolicy::MinimumExpanding))
     , m_clock(clock)
+    , m_battery(battery)
     , vl_opposite(new QHBoxLayout)
 {
     setWindowFlag(Qt::FramelessWindowHint, true);
@@ -33,6 +36,8 @@ MenuServer::MenuServer(StageClock *clock, QScreen *screen, QWidget *parent)
     vl_opposite->setSpacing(0);
     vl_opposite->setContentsMargins(0,0,0,0);
     clock->setParent(this);
+    vl_opposite->addSpacerItem(m_trayspacer);
+    vl_opposite->addWidget(battery);
     vl_opposite->addWidget(clock);
 }
 
@@ -77,8 +82,8 @@ void MenuServer::show()
 
 void MenuServer::createStatusButton(StatusNotifierButton *btn)
 {
-    auto idx = vl_opposite->indexOf(m_clock);
-    vl_opposite->insertWidget(vl_opposite->indexOf(m_clock), btn);
+    auto idx = vl_opposite->indexOf(m_trayspacer);
+    vl_opposite->insertWidget(vl_opposite->indexOf(m_trayspacer), btn);
 }
 
 void MenuServer::statusButtonRemoved(StatusNotifierButton *btn)

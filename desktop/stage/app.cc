@@ -8,6 +8,7 @@
 #include "dbusmenu/dbusmenuimporter.h"
 #include "dbusmenu/menuimporter.h"
 #include "notifierhost.h"
+#include "battery.h"
 
 #include <hollywood/hollywood.h>
 #include <hollywood/layershellwindow.h>
@@ -35,6 +36,7 @@ StageApplication::StageApplication(int &argc, char **argv)
     , m_menuViewWatcher(new QDBusServiceWatcher(this))
     , m_protocol(new AIPrivateWaylandProtocol())
     , m_clock(new StageClock(0))
+    , m_battery(new BatteryMonitor(0))
 {
     setApplicationVersion(HOLLYWOOD_OS_VERSION);
     setOrganizationDomain(HOLLYWOOD_OS_DOMAIN);
@@ -104,10 +106,14 @@ StageApplication::StageApplication(int &argc, char **argv)
 
     m_host = new StageHost(primaryScreen());
     m_host->setClock(m_clock);
+    m_host->setBattery(m_battery);
     if(m_southern)
         setupMenuServer();
     else
+    {
+        m_host->takeBattery();
         m_host->takeClock();
+    }
     m_host->show();
 }
 
@@ -309,7 +315,10 @@ void StageApplication::transferLayoutModes(bool useSouthern)
         destroyMenuServer();
         moveToStage();
         if(m_host)
+        {
+            m_host->takeBattery();
             m_host->takeClock();
+        }
     }
 
     m_southern = useSouthern;
@@ -333,7 +342,7 @@ void StageApplication::setupMenuServer()
     }
     if(!m_menu)
     {
-        m_menu = new MenuServer(m_clock, primaryScreen());
+        m_menu = new MenuServer(m_clock, m_battery, primaryScreen());
         m_menu->show();
     }
 }
@@ -405,19 +414,7 @@ void StageApplication::menuChanged(const QString &serviceName, const QString &ob
         m_menu->installMenu(m_menubar);
     });
 
-    /*connect(m_importer.data(), &DBusMenuImporter::actionActivationRequested, this, [this](QAction * action) {
-        // TODO submenus
-        if (/* !m_wm || !m_wm->menuAvailable() ||  !m_menubar) {
-            return;
-        }
 
-        const auto actions = m_menubar->actions();
-        auto it = std::find(actions.begin(), actions.end(), action);
-
-        /*if (it != actions.end()) {
-            requestActivateIndex(it - actions.begin());
-        }
-    });*/
 }
 
 void StageApplication::createStatusButton(StatusNotifierButton *btn)

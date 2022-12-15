@@ -14,6 +14,7 @@ class StatusNotifierButton;
 class StageClock;
 class TaskButton;
 class SurfaceManager;
+class BatteryMonitor;
 class StageHost : public QWidget
 {
     Q_OBJECT
@@ -28,6 +29,8 @@ public:
     void setAlignment(Alignment align);
     void setClock(StageClock *clock);
     void takeClock();
+    void setBattery(BatteryMonitor *clock);
+    void takeBattery();
     void setMainEnabled(bool enabled);
 public slots:
     void show();
@@ -50,7 +53,9 @@ private:
     QToolButton *m_showdesktop = nullptr;
 
     SurfaceManager *m_sm = nullptr;
+    QSpacerItem *m_trayspacer = nullptr;
     StageClock *m_clock = nullptr;
+    BatteryMonitor *m_battery = nullptr;
 };
 
 #endif // STAGEHOST_H
