@@ -1,3 +1,7 @@
+// Hollywood Notification Daemon
+// (C) 2021, 2022 Cat Stevenson <cat@originull.org>
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 #include "adaptor.h"
 /*
  * Implementation of adaptor class NotificationsAdaptor

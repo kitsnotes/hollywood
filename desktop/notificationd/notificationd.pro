@@ -1,5 +1,5 @@
 include(../include/global.pri)
-QT       += core gui widgets dbus
+QT       += core gui widgets dbus multimedia
 CONFIG += c++17
 TARGET=notificationd
 

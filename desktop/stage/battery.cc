@@ -51,7 +51,7 @@ BatteryMonitor::BatteryMonitor(QWidget *parent)
 
 void BatteryMonitor::batteryChanged()
 {
-    auto str = QString(" %1%%").arg(QString::number(m_battery->percent()));
+    auto str = QString(" %1%").arg(QString::number(m_battery->percent(),'G',2));
     setText(str);
     setIcon(QIcon::fromTheme(m_battery->displayIcon()));
     QString state;
@@ -82,7 +82,7 @@ void BatteryMonitor::batteryChanged()
         state = tr("Unknown: %1");
         break;
     }
-    state = state.arg(QString::number(m_battery->percent()) + "%");
+    state = state.arg(QString::number(m_battery->percent(),'G',2) + "%");
     m_state->setText(state);
     if(time.isEmpty())
         m_time->setVisible(false);

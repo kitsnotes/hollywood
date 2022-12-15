@@ -71,13 +71,13 @@ void EnergyApplet::setupWidget()
     fl_mains->setWidget(1, QFormLayout::SpanningRole, m_preventsleep);
     fl_mains->setWidget(2, QFormLayout::SpanningRole, m_preventsleeplid);
     fl_mains->setWidget(3, QFormLayout::SpanningRole, m_harddisks);
-    fl_mains->setItem(4, QFormLayout::FieldRole, new QSpacerItem(518, 60, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    fl_mains->setItem(4, QFormLayout::FieldRole, new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding));
 
 
     fl_battery = new QFormLayout(m_batterysettings);
     lbl_batt_disp_sleep = new QLabel(m_batterysettings);
     m_batt_disp_sleep = new QSlider(m_batterysettings);
-    vs_batt = new QSpacerItem(518, 60, QSizePolicy::Minimum, QSizePolicy::Expanding);
+    vs_batt = new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding);
     m_batt_disp_sleep->setOrientation(Qt::Horizontal);
     m_showinmenu = new QCheckBox(m_host);
 
@@ -93,7 +93,7 @@ void EnergyApplet::setupWidget()
 
     m_help = new QToolButton(m_host);
     hl_bottom = new QHBoxLayout();
-    hs_bottom = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+    hs_bottom = new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Minimum);
     hl_bottom->addItem(hs_bottom);
     hl_bottom->addWidget(m_help);
     mainLayout->addLayout(hl_bottom);

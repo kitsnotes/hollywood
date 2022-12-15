@@ -1,3 +1,7 @@
+// Hollywood Notification Daemon
+// (C) 2021, 2022 Cat Stevenson <cat@originull.org>
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 #ifndef NOTIFICATIONWINDOW_H
 #define NOTIFICATIONWINDOW_H
 
@@ -13,9 +17,11 @@ class NotificationWindow : public QWidget
 public:
     NotificationWindow(Notification *parent);
     ~NotificationWindow();
+protected:
+    void paintEvent(QPaintEvent *event);
 signals:
-    void acknowledged();
-    void expired();
+    void closeRequested();
+    void dismissed();
 private:
     Notification *m_parent;
     QHBoxLayout *m_layout;

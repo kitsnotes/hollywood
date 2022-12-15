@@ -14,6 +14,7 @@ QLoggingCategory lcCompositor("hollywood.compositor");
 QLoggingCategory lcStage("hollywood.stage");
 QLoggingCategory lcDesktop("hollywood.shell");
 QLoggingCategory lcElevator("hollywood.elevator");
+QLoggingCategory lcNotification("hollywood.notificationd");
 QLoggingCategory lcWireplumber("wireplumber");
 QLoggingCategory lcPipewire("pipewire");
 QLoggingCategory lcPipewirePulse("pipewire.pulse");
@@ -296,6 +297,9 @@ void ManagedProcess::setEnvironmentForProcess()
 #endif
     }
 
+    if(m_process == NotificationDaemon)
+        env.insert("HW_TWILIGHT_SHELL", "1");
+
     setProcessEnvironment(env);
 }
 
@@ -340,6 +344,9 @@ void ManagedProcess::logInfo(const QString &msg)
     case Stage:
         qCInfo(lcStage) << msg;
 	break;
+    case NotificationDaemon:
+        qCInfo(lcNotification) << msg;
+    break;
     case Shell:
         qCInfo(lcDesktop) << msg;
 	break;

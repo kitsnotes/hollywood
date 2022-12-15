@@ -19,9 +19,14 @@
 #define HOLLYWOOD_SERVICE_UPDATE    "/usr/sbin/rc-update"
 #define HOLLYWOOD_SERVICE_NTPD      "openntpd"
 
+// Default bell & notification settings
+#define HOLLYWOOD_BELL_FILE         "/usr/share/sounds/Hollywood/Bell.wav"
+#define HOLLYWOOD_CBELL_FILE        "/usr/share/sounds/Hollywood/DoubleBell.wav"
+#define HOLLYWOOD_LN_TIMEOUT        5000    // low notification timeout in ms
+#define HOLLYWOOD_NN_TIMEOUT        10000   // normal notification timeout in ms
 // Default Stage Settings
 #define HOLLYWOOD_STAGE_LAYOUT      false   // false northern, true southern
-#define HOLLYWOOD_STAGE_SIZE        0   // 0 small, 1 large
+#define HOLLYWOOD_STAGE_SIZE        0       // 0 small, 1 large
 #define HOLLYWOOD_STAGE_POSITION    0x00008 // bottom match Qt::Edge
 
 // Stage Clock Settings

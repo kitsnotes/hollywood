@@ -62,6 +62,7 @@ SMApplication::SMApplication(int &argc, char **argv)
     , m_stageProcess(new ManagedProcess(ManagedProcess::Stage, this))
     , m_desktopProcess(new ManagedProcess(ManagedProcess::Shell, this))
     , m_pipewirePulseProcess(new ManagedProcess(ManagedProcess::PipewirePulse, this))
+    , m_notificationProcess(new ManagedProcess(ManagedProcess::NotificationDaemon, this))
 
 {
     setApplicationVersion(HOLLYWOOD_OS_VERSION);
@@ -201,12 +202,14 @@ void SMApplication::restartSession()
     m_elevatorProcess->setAutoRestart(false);
     m_stageProcess->setAutoRestart(false);
     m_desktopProcess->setAutoRestart(false);
+    m_notificationProcess->setAutoRestart(false);
 
     terminateUserProcesses();
 
     m_elevatorProcess->terminate();
     m_stageProcess->terminate();
     m_desktopProcess->terminate();
+    m_notificationProcess->terminate();
 
     reloadLocaleSettings();
     restartCompositorReliantProcesses();
@@ -311,6 +314,7 @@ void SMApplication::startDBusReliantServices()
     m_wireplumberProcess->initialize();
     m_stageProcess->initialize();
     m_desktopProcess->initialize();
+    m_notificationProcess->initialize();
 
     m_pipewirePulseProcess->initialize();
     m_sessionStarted = true;

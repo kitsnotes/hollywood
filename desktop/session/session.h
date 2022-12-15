@@ -85,6 +85,7 @@ private:
     ManagedProcess *m_stageProcess = nullptr;
     ManagedProcess *m_desktopProcess = nullptr;
     ManagedProcess *m_pipewirePulseProcess = nullptr;
+    ManagedProcess *m_notificationProcess = nullptr;
 
     QLocalServer* m_socket = nullptr;
     SessionDBus *m_dbus = nullptr;

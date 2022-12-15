@@ -58,7 +58,6 @@ protected slots:
     void privateProtocolReady();
 private slots:
     void setupPrivateProtocolResponder();
-    void dbusMenuUpdated(QMenu *menu);
     void configChanged();
     void slotWindowRegistered(WId id, const QString &serviceName, const QDBusObjectPath &menuObjectPath);
     void menuChanged(const QString &serviceName, const QString &objectPath);

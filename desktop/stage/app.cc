@@ -281,7 +281,7 @@ void StageApplication::loadSettings()
     m_configfile = settings.fileName();
 
     settings.beginGroup("Bell");
-    auto bell = settings.value("AudioFile", "/usr/share/sounds/Bell.wav").toString();
+    auto bell = settings.value("AudioFile", "/usr/share/sounds/Hollywood/Bell.wav").toString();
     m_bell.setSource(QUrl::fromLocalFile(bell));
     settings.endGroup();
     settings.beginGroup("Stage");
@@ -434,12 +434,6 @@ void StageApplication::statusButtonRemoved(StatusNotifierButton *btn)
     else
         m_host->statusButtonRemoved(btn);
 }
-
-void StageApplication::dbusMenuUpdated(QMenu *menu)
-{
-    Q_UNUSED(menu);
-}
-
 
 int main(int argc, char *argv[])
 {
