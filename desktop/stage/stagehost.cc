@@ -13,7 +13,7 @@ StageHost::StageHost(QScreen *screen, QWidget *parent)
     , m_menu(new QToolButton(this))
     , m_sm(new SurfaceManager(this))
 {
-    m_spacer = new QSpacerItem(1,20,QSizePolicy::Expanding);
+    m_spacer = new QSpacerItem(1,1,QSizePolicy::Expanding);
     m_trayspacer = new QSpacerItem(1,1,QSizePolicy::Fixed,QSizePolicy::Fixed);
     connect(m_sm, &SurfaceManager::windowCreated, this, &StageHost::createWindowButton);
     connect(m_sm, &SurfaceManager::windowDestroyed, this, &StageHost::windowClosed);
@@ -61,6 +61,7 @@ void StageHost::setAlignment(Alignment align)
 
         m_align = align;
         m_hbox = new QHBoxLayout(this);
+        m_hbox->setSpacing(0);
         m_hbox->setContentsMargins(0,0,0,0);
         if(!StageApplication::instance()->isSouthernMode())
         {

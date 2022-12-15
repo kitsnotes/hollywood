@@ -8,6 +8,8 @@ TaskButton::TaskButton(PlasmaWindow *wnd, QWidget *parent)
     ,m_window(wnd)
     ,m_context(new QMenu(this))
 {
+    setMinimumHeight(20);
+
     QFont myFont = font();
     myFont.setPointSize(myFont.pointSize()+1);
     setFont(myFont);

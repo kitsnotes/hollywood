@@ -16,6 +16,9 @@ private:
     QMenu *m_menu = nullptr;
     UPowerInterface *m_upower = nullptr;
     UPowerDeviceInterface *m_battery = nullptr;
+
+    QAction* m_state = nullptr;
+    QAction* m_time = nullptr;
 };
 
 #endif // BATTERYMONITOR_H
