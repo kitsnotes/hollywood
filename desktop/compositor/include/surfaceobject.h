@@ -43,6 +43,8 @@ class Output;
 class Surface : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(QPointF surfacePosition READ surfacePosition WRITE setPosition)
+    Q_PROPERTY(QSize animatedSurfaceSize READ surfaceSize WRITE setAnimatedSurfaceSize)
 public:
     enum SurfaceType {
         Unknown = 0,
@@ -141,6 +143,7 @@ public slots:
     void toggleActive();
 protected:
     // only callable by Compostior
+    void setAnimatedSurfaceSize(QSize size);
     void setParentSurfaceObject(Surface *parent);
     void createWlShellSurface(QWaylandWlShellSurface *surface);
     void createXdgShellSurface(HWWaylandXdgSurface *surface);
@@ -220,9 +223,15 @@ private:
     bool m_maximized = false;
     bool m_fullscreen = false;
 
+    // tracking for animation
+    bool m_maximized_complete = true;
+
     bool m_ssd = false;
 
     bool m_moving = false;
+    bool m_resize_animation = false;
+    QPointF m_resize_animation_start_point;
+
     SurfaceType m_surfaceType;
 
     bool m_fullscreenShell = false;
@@ -240,6 +249,8 @@ private:
 
     // the point at where the actual wayland surface is visible
     QPointF m_surfacePosition;
+    QSize m_resize_animation_size;
+    QSize m_resize_animation_start_size;
 
     // used for restoring window
     QPointF m_priorNormalPos;

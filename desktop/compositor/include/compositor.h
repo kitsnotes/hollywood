@@ -62,6 +62,7 @@ public:
     QColor primaryBackgroundColor() const;
     Output* primaryOutput() const;
     bool legacyRender() const;
+    bool useAnimations() const;
 
     QList<Surface*> surfaceObjects() const { return m_surfaces; }
     QVector<Surface*> surfaceByZOrder() { return m_zorder; }

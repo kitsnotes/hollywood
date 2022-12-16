@@ -19,6 +19,8 @@
 #include <QPainter>
 #include <QStaticText>
 #include <QPainterPath>
+#include <QPropertyAnimation>
+#include <QParallelAnimationGroup>
 
 #include <hollywood/hollywood.h>
 
@@ -296,6 +298,12 @@ uint Surface::shadowSize() const
 
 QSize Surface::surfaceSize() const
 {
+    if(m_resize_animation)
+    {
+        // return our resize animation
+        return m_resize_animation_size;
+    }
+
     if(m_fullscreenShell)
         return surface()->destinationSize();
 
@@ -964,6 +972,11 @@ void Surface::toggleActive()
     hwComp->raise(this);
 }
 
+void Surface::setAnimatedSurfaceSize(QSize size)
+{
+    m_resize_animation_size = size;
+}
+
 void Surface::createWlShellSurface(QWaylandWlShellSurface *surface)
 {
     m_wlShellSurface = surface;
@@ -1095,12 +1108,14 @@ void Surface::onXdgSetMaximized()
     m_minimized = false;
     m_maximized = true;
     m_priorNormalPos = m_surfacePosition;
+    m_resize_animation_start_size = surfaceSize();
     auto size = primaryView()->output()->availableGeometry();
     if(this->serverDecorated())
     {
         size.setHeight(size.height() - hwComp->decorationSize() - hwComp->borderSize());
         size.setWidth(size.width() - hwComp->borderSize()*2);
     }
+    m_maximized_complete = false;
     m_xdgTopLevel->sendMaximized(size.size());
     if(m_wndctl)
         m_wndctl->setMaximized(true);
@@ -1109,8 +1124,9 @@ void Surface::onXdgSetMaximized()
 void Surface::onXdgUnsetMaximized()
 {
     m_maximized = false;
+    m_resize_animation_start_point = surfacePosition();
     m_xdgTopLevel->sendUnmaximized();
-    m_surfacePosition = m_priorNormalPos;
+    m_resize_animation_start_size = surfaceSize();
     if(m_wndctl)
         m_wndctl->setMaximized(true);
 }
@@ -1131,8 +1147,42 @@ void Surface::completeXdgConfigure()
         auto pos = primaryView()->output()->position();
         pos.setX(pos.x()+hwComp->borderSize());
         pos.setY(pos.y()+hwComp->decorationSize());
-        setPosition(pos);
-        hwComp->triggerRender();
+        if(!hwComp->useAnimations() || m_maximized_complete)
+        {
+            setPosition(pos);
+            qDebug() << "setPosition" << pos;
+            hwComp->triggerRender();
+        }
+        else
+        {
+            if(!m_resize_animation)
+            {
+                auto group = new QParallelAnimationGroup;
+                QPropertyAnimation *posAnimation = new QPropertyAnimation(this, "surfacePosition");
+                posAnimation->setStartValue(m_priorNormalPos);
+                posAnimation->setEndValue(pos);
+                posAnimation->setDuration(190);
+                posAnimation->setEasingCurve(QEasingCurve::InOutQuad);
+                connect(posAnimation, &QPropertyAnimation::valueChanged, hwComp, &Compositor::triggerRender);
+                QPropertyAnimation *sizeAnimation = new QPropertyAnimation(this, "animatedSurfaceSize");
+                sizeAnimation->setStartValue(m_resize_animation_start_size);
+                sizeAnimation->setEndValue(surfaceSize());
+                sizeAnimation->setDuration(190);
+                sizeAnimation->setEasingCurve(QEasingCurve::InOutQuad);
+                connect(posAnimation, &QPropertyAnimation::valueChanged, [this](){
+                    renderDecoration();
+                    hwComp->triggerRender();
+                });
+                m_resize_animation = true;
+                group->addAnimation(posAnimation);
+                group->addAnimation(sizeAnimation);
+                group->start(QPropertyAnimation::DeleteWhenStopped);
+                connect(group, &QParallelAnimationGroup::finished, [this]() {
+                    m_maximized_complete = true;
+                    m_resize_animation = false;
+                });
+            }
+        }
     }
     else if(m_fullscreen)
     {
@@ -1142,6 +1192,40 @@ void Surface::completeXdgConfigure()
     else
     {
         // restore our window to prior position
+        if(!hwComp->useAnimations())
+        {
+            setPosition(m_priorNormalPos);
+            hwComp->triggerRender();
+        }
+        else
+        {
+            if(!m_resize_animation)
+            {
+                auto group = new QParallelAnimationGroup;
+                QPropertyAnimation *posAnimation = new QPropertyAnimation(this, "surfacePosition");
+                posAnimation->setStartValue(m_resize_animation_start_point);
+                posAnimation->setEndValue(m_priorNormalPos);
+                posAnimation->setDuration(190);
+                posAnimation->setEasingCurve(QEasingCurve::InOutQuad);
+                connect(posAnimation, &QPropertyAnimation::valueChanged, hwComp, &Compositor::triggerRender);
+                QPropertyAnimation *sizeAnimation = new QPropertyAnimation(this, "animatedSurfaceSize");
+                sizeAnimation->setStartValue(m_resize_animation_start_size);
+                sizeAnimation->setEndValue(surfaceSize());
+                sizeAnimation->setDuration(190);
+                sizeAnimation->setEasingCurve(QEasingCurve::InOutQuad);
+                connect(posAnimation, &QPropertyAnimation::valueChanged, [this](){
+                    renderDecoration();
+                    hwComp->triggerRender();
+                });
+                m_resize_animation = true;
+                group->addAnimation(posAnimation);
+                group->addAnimation(sizeAnimation);
+                group->start(QPropertyAnimation::DeleteWhenStopped);
+                connect(group, &QParallelAnimationGroup::finished, [this]() {
+                    m_resize_animation = false;
+                });
+            }
+        }
     }
 }
 
@@ -1214,6 +1298,7 @@ void Surface::onXdgWindowGeometryChanged()
     if(!m_surfaceInit)
     {
         // TODO: reposition
+        qDebug() << surfaceSize();
         m_surfaceInit = true;
     }
 }

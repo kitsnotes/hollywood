@@ -811,24 +811,7 @@ void OutputWindow::sendMouseEvent(QMouseEvent *e, SurfaceView *target)
 
     QPointF mappedPos = adjustedPoint;
     if (target)
-    {
-        if(!target->surfaceObject()->isMaximized())
-            mappedPos -= target->surfaceObject()->surfacePosition();
-        else
-            mappedPos -= target->output()->availableGeometry().topLeft();
-
-
-       /* if(target->surfaceObject()->surfaceType() == Surface::Popup &&
-                target->surfaceObject()->parentSurfaceObject() != nullptr)
-        {
-            // re-map our position to account for PARENT
-            if(target->surfaceObject()->parentSurfaceObject()->serverDecorated())
-            {
-                mappedPos.setY(mappedPos.y() - hwComp->decorationSize());
-                mappedPos.setX(mappedPos.x() - hwComp->borderSize());
-            }
-        } */
-    }
+        mappedPos -= target->surfaceObject()->surfacePosition();
     QMouseEvent viewEvent(e->type(), mappedPos, adjustedPoint, e->button(), e->buttons(), e->modifiers());
     hwComp->handleMouseEvent(target, &viewEvent);
 }

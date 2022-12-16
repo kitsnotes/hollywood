@@ -360,7 +360,6 @@ Surface* Compositor::findSurfaceObject(const QWaylandSurface *s) const
 
 void Compositor::onMenuServerRequest(OriginullMenuServer *menu)
 {
-    qDebug() << "setting menu server";
     m_menuServer = menu;
     connect(m_menuServer, &OriginullMenuServer::menuServerDestroyed,
                this, &Compositor::menuServerDestroyed);
@@ -370,7 +369,6 @@ void Compositor::onDesktopRequest(QWaylandSurface *surface)
 {
     auto *acSurface = findSurfaceObject(surface);
     Q_ASSERT(acSurface);
-    qDebug() << "onDesktopRequest" << acSurface->uuid();
 
     if(m_zorder.contains(acSurface))
         m_zorder.removeOne(acSurface);
@@ -818,13 +816,9 @@ void Compositor::raise(Surface *obj)
        obj->m_gtk ||
        obj->m_qt)&& !obj->isSpecialShellObject())
     {
-        qDebug() << "checking for menu server";
         // TODO: handle popups??
         if(m_menuServer)
-        {
-            qDebug() << "menuserver exists: raising";
             m_menuServer->setTopWindowForMenuServer(obj);
-        }
     }
 
     if(!m_zorder.contains(obj))
@@ -846,20 +840,14 @@ void Compositor::raise(Surface *obj)
 
 void Compositor::activate(Surface *obj)
 {
-    qDebug() << "Compositor::activate on " << obj->m_uuid;
-
     // Since the compositor is only tracking unparented objects
     // we leave the ordering of children to SurfaceObject
     if((obj->m_xdgTopLevel ||
        obj->m_qt))
     {
-        qDebug() << "checking for menu server";
         // TODO: handle popups??
         if(m_menuServer)
-        {
-            qDebug() << "menuserver exists: raising";
             m_menuServer->setTopWindowForMenuServer(obj);
-        }
     }
     defaultSeat()->setKeyboardFocus(obj->surface());
     defaultSeat()->setMouseFocus(obj->surface()->primaryView());
@@ -879,6 +867,11 @@ Output* Compositor::primaryOutput() const
 bool Compositor::legacyRender() const
 {
     return m_legacyExperience;
+}
+
+bool Compositor::useAnimations() const
+{
+    return true;
 }
 
 void Compositor::removeOutput(Output *output)
