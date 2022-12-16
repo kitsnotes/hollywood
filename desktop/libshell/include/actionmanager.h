@@ -10,6 +10,10 @@ class LSActionManager : public QObject
 public:
     explicit LSActionManager(QObject *parent = nullptr);
     QAction* shellAction(HWShell::ShellActions action);
+    QActionGroup* groupViewMode();
+    QActionGroup* groupViewColumn();
+    QActionGroup* groupViewOrder();
+
 signals:
 private:
     void setupActions();

@@ -51,7 +51,7 @@ public:
         ModificationDate,
         Owner,
         Group,
-        Comment
+        Comment // Keep comment LAST!
     };
 
     enum Option

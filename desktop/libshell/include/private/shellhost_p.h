@@ -51,6 +51,8 @@ private:
     QListView *m_filesList;
     QTreeView *m_filesTable;
 
+    uint m_sortColumn;
+    Qt::SortOrder m_sortOrder;
     HWShell::ViewMode m_viewMode;
     LSFSModel *m_model;
     ApplicationModel *m_apps;

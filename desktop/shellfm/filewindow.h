@@ -30,6 +30,8 @@ private slots:
     // view options
     void statusBarActionToggled(bool);
     void goQuickAction();
+    void viewModeChanged();
+    void sortOrderChanged();
 private:
     void setupActions();
     void setupMenuBar();
@@ -71,6 +73,8 @@ private:
     QStatusBar *m_statusBar;
     QLabel *m_statusLabel;
     QToolBar *m_toolBar;
+    QToolButton *m_sort = nullptr;
+    QToolButton *m_view = nullptr;
     QLineEdit *m_search;
 };
 

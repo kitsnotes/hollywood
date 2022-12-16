@@ -1,6 +1,8 @@
 #include "filewindow.h"
 #include "fmapplication.h"
 
+#include <QToolButton>
+
 FileWindow::FileWindow(HWShell::WindowMode windowMode, QWidget *parent)
     : QMainWindow(parent),
       m_shellHost(new LSEmbeddedShellHost(this)),
@@ -308,6 +310,29 @@ void FileWindow::setupMainView()
     m_toolBar->addAction(m_shellHost->shellAction(HWShell::ACT_GO_FORWARD));
     m_toolBar->addAction(m_shellHost->shellAction(HWShell::ACT_GO_ENCLOSING_FOLDER));
     m_toolBar->addWidget(m_shellHost->locationBar());
+    m_sort = new QToolButton(m_toolBar);
+    m_sort->setPopupMode(QToolButton::MenuButtonPopup);
+    m_sort->setText(tr("Sort"));
+    m_sort->setIcon(QIcon::fromTheme("view-sort"));
+    auto sortmenu = new QMenu(m_sort);
+    sortmenu->addAction(m_shellHost->shellAction(HWShell::ACT_VIEW_SORT_ASC));
+    sortmenu->addAction(m_shellHost->shellAction(HWShell::ACT_VIEW_SORT_DESC));
+
+    m_view = new QToolButton(m_toolBar);
+    m_view->setPopupMode(QToolButton::MenuButtonPopup);
+    m_view->setText(tr("Sort"));
+    m_view->setIcon(QIcon::fromTheme("view-sort"));
+    auto menu = new QMenu(m_view);
+    menu->addAction(m_shellHost->shellAction(HWShell::ACT_VIEW_ICONS));
+    menu->addAction(m_shellHost->shellAction(HWShell::ACT_VIEW_LIST));
+    menu->addAction(m_shellHost->shellAction(HWShell::ACT_VIEW_COLUMNS));
+
+    m_view->setMenu(menu);
+    m_sort->setMenu(sortmenu);
+    m_view->setAutoRaise(true);
+    m_sort->setAutoRaise(true);
+    m_toolBar->addWidget(m_sort);
+    m_toolBar->addWidget(m_view);
     m_toolBar->addWidget(m_search);
     m_search->setMaximumWidth(150);
     m_search->setDisabled(true);
@@ -334,6 +359,8 @@ void FileWindow::setupMainView()
     menu_View->removeAction(a_Toolbar);
     m_toolBar->toggleViewAction()->setShortcut(QKeySequence::fromString("Ctrl+Shift+T"));
 
+    connect(m_shellHost, &LSEmbeddedShellHost::viewModeChanged, this, &FileWindow::viewModeChanged);
+    connect(m_shellHost, &LSEmbeddedShellHost::sortOrderChanged, this, &FileWindow::sortOrderChanged);
     connect(m_shellHost, &LSEmbeddedShellHost::updateStatusBar, m_statusLabel, &QLabel::setText);
     setCentralWidget(m_shellHost);
 
@@ -405,5 +432,25 @@ void FileWindow::goQuickAction()
      //       m_shellHost->navigateToPath(path);
 
         // TODO: desktop mode
+    }
+}
+
+void FileWindow::viewModeChanged()
+{
+    if(m_view)
+    {
+        auto action = m_shellHost->groupViewMode()->checkedAction();
+        if(action && !action->icon().isNull())
+            m_view->setIcon(action->icon());
+    }
+}
+
+void FileWindow::sortOrderChanged()
+{
+    if(m_sort)
+    {
+        auto action = m_shellHost->groupViewOrder()->checkedAction();
+        if(action && !action->icon().isNull())
+            m_sort->setIcon(action->icon());
     }
 }

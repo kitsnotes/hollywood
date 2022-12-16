@@ -80,6 +80,21 @@ QAction* LSActionManager::shellAction(HWShell::ShellActions action)
         return nullptr;
     }
 }
+
+QActionGroup *LSActionManager::groupViewMode()
+{
+    return d->m_views;
+}
+
+QActionGroup *LSActionManager::groupViewColumn()
+{
+    return d ->m_sortcol;
+}
+
+QActionGroup *LSActionManager::groupViewOrder()
+{
+    return d->m_sortorder;
+}
 void LSActionManager::setupActions()
 {
     d->a_NewTab = new QAction(this);
@@ -150,24 +165,30 @@ void LSActionManager::setupActions()
 
 
     // View Menu
-    QActionGroup *grpViewStyles = new QActionGroup(this);
-    QActionGroup *grpViewSortCol = new QActionGroup(this);
-    QActionGroup *grpViewSortDir = new QActionGroup(this);
+    d->m_views = new QActionGroup(this);
+    d->m_sortcol = new QActionGroup(this);
+    d->m_sortorder = new QActionGroup(this);
     d->a_Icons = new QAction(this);
     d->a_Icons->setObjectName(QString::fromUtf8("ViewIcons"));
     d->a_Icons->setCheckable(true);
     d->a_Icons->setShortcut(QKeySequence("Ctrl+1"));
+    d->a_Icons->setIconVisibleInMenu(false);
+    d->a_Icons->setIcon(QIcon::fromTheme("view-list-icons"));
     d->a_List = new QAction(this);
     d->a_List->setObjectName(QString::fromUtf8("ViewList"));
     d->a_List->setCheckable(true);
     d->a_List->setShortcut(QKeySequence("Ctrl+2"));
+    d->a_List->setIconVisibleInMenu(false);
+    d->a_List->setIcon(QIcon::fromTheme("view-list-tree"));
     d->a_Columns = new QAction(this);
     d->a_Columns->setObjectName(QString::fromUtf8("ViewColumns"));
     d->a_Columns->setCheckable(true);
     d->a_Columns->setShortcut(QKeySequence("Ctrl+3"));
-    grpViewStyles->addAction(d->a_Icons);
-    grpViewStyles->addAction(d->a_List);
-    grpViewStyles->addAction(d->a_Columns);
+    d->a_Columns->setIconVisibleInMenu(false);
+    d->a_Columns->setIcon(QIcon::fromTheme("view-file-columns"));
+    d->m_views->addAction(d->a_Icons);
+    d->m_views->addAction(d->a_List);
+    d->m_views->addAction(d->a_Columns);
 
     d->a_sortNone = new QAction(this);
     d->a_sortNone->setObjectName(QString::fromUtf8("SortNone"));
@@ -212,28 +233,31 @@ void LSActionManager::setupActions()
     d->a_sortComment->setShortcut(QKeySequence("Ctrl+Alt+Shift+7"));
     d->a_sortComment->setText(tr("&Comment"));
 
-    grpViewSortCol->addAction(d->a_sortNone);
-    grpViewSortCol->addAction(d->a_sortName);
-    grpViewSortCol->addAction(d->a_sortSize);
-    grpViewSortCol->addAction(d->a_sortKind);
-    grpViewSortCol->addAction(d->a_sortModified);
-    grpViewSortCol->addAction(d->a_sortOwner);
-    grpViewSortCol->addAction(d->a_sortGroup);
-    grpViewSortCol->addAction(d->a_sortComment);
+    d->m_sortcol->addAction(d->a_sortNone);
+    d->m_sortcol->addAction(d->a_sortName);
+    d->m_sortcol->addAction(d->a_sortSize);
+    d->m_sortcol->addAction(d->a_sortKind);
+    d->m_sortcol->addAction(d->a_sortModified);
+    d->m_sortcol->addAction(d->a_sortOwner);
+    d->m_sortcol->addAction(d->a_sortGroup);
+    d->m_sortcol->addAction(d->a_sortComment);
 
     d->a_sortAsc = new QAction(this);
     d->a_sortAsc->setObjectName(QString::fromUtf8("SortAsc"));
     d->a_sortAsc->setCheckable(true);
+    d->a_sortAsc->setIconVisibleInMenu(false);
     //d->a_sortAsc->setShortcut(QKeySequence("Ctrl+Alt+Shift+7"));
     d->a_sortAsc->setText(tr("&Ascending Order"));
+    d->a_sortAsc->setIcon(QIcon::fromTheme("view-sort-ascending"));
     d->a_sortDesc = new QAction(this);
     d->a_sortDesc->setObjectName(QString::fromUtf8("SortDesc"));
     d->a_sortDesc->setCheckable(true);
     //d->a_sortDesc->setShortcut(QKeySequence("Ctrl+Alt+Shift+7"));
     d->a_sortDesc->setText(tr("&Descending Order"));
-
-    grpViewSortDir->addAction(d->a_sortAsc);
-    grpViewSortDir->addAction(d->a_sortDesc);
+    d->a_sortDesc->setIconVisibleInMenu(false);
+    d->a_sortDesc->setIcon(QIcon::fromTheme("view-sort-descending"));
+    d->m_sortorder->addAction(d->a_sortAsc);
+    d->m_sortorder->addAction(d->a_sortDesc);
 
     d->a_ViewOptions = new QAction(this);
     d->a_ViewOptions->setObjectName(QString::fromUtf8("ShowViewOptions"));

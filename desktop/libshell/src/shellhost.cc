@@ -268,6 +268,16 @@ void LSEmbeddedShellHost::restoreViewModeFromSettings()
     default:
         setIconListView();
     }
+
+    p->m_sortColumn = settings.value("Preferences/DefaultSortColumn", 0).toUInt();
+    if(p->m_sortColumn > LSFSModel::Comment)
+        p->m_sortColumn = 0;
+
+    auto sortOrder = settings.value("Preferences/DefaultSortOrder", 0).toUInt();
+    if(sortOrder > 1)
+        sortOrder = 0;
+    p->m_sortOrder = (Qt::SortOrder)sortOrder;
+    doSort(p->m_sortColumn, p->m_sortOrder);
 }
 
 void LSEmbeddedShellHost::toggleViewOptions(bool checked)
@@ -285,6 +295,7 @@ void LSEmbeddedShellHost::doSort(int column, Qt::SortOrder order)
         p->m_model->sort(column, order);
         if(p->m_viewMode == HWShell::VIEW_LIST)
             p->m_filesTable->header()->setSortIndicator(column, order);
+        emit sortOrderChanged();
     }
 }
 
@@ -477,6 +488,7 @@ void LSEmbeddedShellHost::setIconListView(bool updateSettings)
     }
     disableActionsForNoSelection();
     p->m_curSelModel = p->m_filesList->selectionModel();
+    emit viewModeChanged();
     emit updateStatusBar(generateStatusBarMsg());
 }
 
@@ -509,6 +521,7 @@ void LSEmbeddedShellHost::setColumnView(bool updateSettings)
     }
     p->m_curSelModel = p->m_filesColumn->selectionModel();
     disableActionsForNoSelection();
+    emit viewModeChanged();
     emit updateStatusBar(generateStatusBarMsg());
 }
 
@@ -542,6 +555,7 @@ void LSEmbeddedShellHost::setTableListView(bool updateSettings)
     }
     p->m_curSelModel = p->m_filesTable->selectionModel();
     disableActionsForNoSelection();
+    emit viewModeChanged();
     emit updateStatusBar(generateStatusBarMsg());
 }
 
@@ -728,10 +742,12 @@ void LSEmbeddedShellHost::filesystemSortingChanged()
         switch(p->m_model->sortOrder())
         {
         case Qt::AscendingOrder:
+            p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_DESC)->setChecked(false);
             p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_ASC)->setChecked(true);
             break;
         case Qt::DescendingOrder:
         default:
+            p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_ASC)->setChecked(false);
             p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_DESC)->setChecked(true);
             break;
         }
@@ -1086,6 +1102,7 @@ void LSEmbeddedShellHost::swapToModel(ShellModel model)
         p->m_filesList->setModel(p->m_model);
         p->m_filesTable->setModel(p->m_model);
         p->m_currentModel = Filesystem;
+        doSort(p->m_sortColumn, p->m_sortOrder);
         disableActionsForNoSelection();
         filesystemSortingChanged();
         adjustColumnHeaders();
@@ -1171,6 +1188,21 @@ void LSEmbeddedShellHost::updateRootIndex(const QModelIndex &idx, bool internal)
 QAction* LSEmbeddedShellHost::shellAction(HWShell::ShellActions shellAction)
 {
     return p->m_actions->shellAction(shellAction);
+}
+
+QActionGroup *LSEmbeddedShellHost::groupViewMode()
+{
+    return p->m_actions->groupViewMode();
+}
+
+QActionGroup *LSEmbeddedShellHost::groupViewColumn()
+{
+    return p->m_actions->groupViewColumn();
+}
+
+QActionGroup *LSEmbeddedShellHost::groupViewOrder()
+{
+    return p->m_actions->groupViewOrder();
 }
 
 void LSEmbeddedShellHost::goBack()

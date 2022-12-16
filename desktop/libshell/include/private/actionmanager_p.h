@@ -2,6 +2,7 @@
 #define ACTIONMANAGER_P_H
 
 #include <QAction>
+#include <QActionGroup>
 
 class LSActionManagerPrivate
 {
@@ -55,6 +56,10 @@ private:
     QAction *a_Applications;
     QAction *a_Connect_to_Server;
     QAction *a_Network;
+
+    QActionGroup *m_views;
+    QActionGroup *m_sortcol;
+    QActionGroup *m_sortorder;
 };
 
 #endif // ACTIONMANAGER_P_H

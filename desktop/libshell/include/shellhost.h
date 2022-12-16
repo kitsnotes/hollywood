@@ -29,6 +29,10 @@ public:
     };
     explicit LSEmbeddedShellHost(QWidget *parent = nullptr);
     QAction* shellAction(HWShell::ShellActions shellAction);
+    QActionGroup* groupViewMode();
+    QActionGroup* groupViewColumn();
+    QActionGroup* groupViewOrder();
+
     LSLocationBar* locationBar();
 public slots:
     bool navigateToPath(const QString &path);
@@ -47,6 +51,8 @@ signals:
     void updateWindowTitle(const QString &title);
     void updateWindowIcon(const QIcon &icon);
     void updateStatusBar(const QString &status);
+    void viewModeChanged();
+    void sortOrderChanged();
 protected:
     void resizeEvent(QResizeEvent* event);
 private slots:
