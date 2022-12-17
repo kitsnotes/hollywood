@@ -410,7 +410,8 @@ public:
 
             const std::string irdname = "initrd-asahi";
             if(run_command("chroot", {target, "dracut", "--kver", kver, "-N",
-                                      "--force", "-a", "dmsquash-live",
+                                      "--force", "-a", "dmsquash-live", "--add-drivers",
+                                       "\"apple-mailbox nvme-apple pinctrl-apple-gpio macsmc macsmc-rtkit i2c-apple tps6598x apple-dart dwc3 dwc3-of-simple nvmem-apple-efuses phy-apple-atc xhci-pci pcie-apple gpio_macsmc spi-apple spi-hid-apple spi-hid-apple-of rtc-macsmc simple-mfd-spmi spmi-apple-controller nvmem_spmi_mfd apple-dockchannel dockchannel-hid apple-rtkit-helper\"",
                                       "/boot/" + irdname}) != 0) {
                 output_error("CD backend", "dracut failed to create asahi initramfs");
                 return COMMAND_ERROR;
