@@ -1042,7 +1042,7 @@ bool Bootloader::execute() const {
 
         }
         refind_conf << "\toptions \"root=UUID=" << root_uuid
-                    << " ro quiet splash rootfstype=" << root_fstype
+                    << " ro quiet splash loglevel=1 vt.global_cursor_default=0 rootfstype=" << root_fstype
                     << "\"" << std::endl;
 
         refind_conf << "}";
