@@ -25,8 +25,6 @@ public slots:
     // tab functions
 private slots:
     void shWindowTitleChanged(const QString &title);
-    // desktop functions
-    void desktopGeometryChanged(const QRect& geom);
     // view options
     void statusBarActionToggled(bool);
     void goQuickAction();
@@ -36,7 +34,6 @@ private:
     void setupActions();
     void setupMenuBar();
     void setupMainView();
-    void setupDesktopView();
 private:
     LSEmbeddedShellHost *m_shellHost;
     HWShell::WindowMode m_windowMode;

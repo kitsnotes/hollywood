@@ -26,7 +26,7 @@ class LSPlaceModel;
 class LSPlaceView;
 class LSColumnPreview;
 class LSFSItemDelegate;
-
+class LSMimeApplications;
 typedef QList<QUrl> UrlList;
 
 class LSEmbeddedShellHost;
@@ -61,6 +61,8 @@ private:
     LSPlaceModel *m_placeModel;
     QMap<QUuid, QUrl> m_tabLocations;
     QMap<QUuid, HWShell::ViewMode> m_tabViewMode;
+    QMap<QUuid, Qt::SortOrder> m_tabSortOrder;
+    QMap<QUuid, uint> m_tabSortCol;
 
     QMap<QUuid, UrlList> m_backLists;
     QMap<QUuid, UrlList> m_forwardLists;
@@ -72,7 +74,7 @@ private:
     LSFSItemDelegate *m_delegate = nullptr;
 
     QItemSelectionModel *m_curSelModel = nullptr;
-
+    LSMimeApplications *m_mimeapps = nullptr;
 };
 
 #endif // SHELLHOST_P_H

@@ -12,6 +12,9 @@
 #include "appmodel.h"
 #include "getinfodialog.h"
 #include "trashmodel.h"
+#include "mimeapps.h"
+#include "fileinfo.h"
+#include "desktopentry.h"
 
 #include <QDBusInterface>
 #include <hollywood/hollywood.h>
@@ -27,12 +30,15 @@ LSEmbeddedShellHostPrivate::LSEmbeddedShellHostPrivate(LSEmbeddedShellHost *pare
     , m_trash(new LSTrashModel(parent))
     , m_placeModel(new LSPlaceModel(parent))
     , m_viewOptions(new LSViewOptionsDialog(parent))
-    , m_delegate(new LSFSItemDelegate(parent)) {}
+    , m_delegate(new LSFSItemDelegate(parent))
+    , m_mimeapps(new LSMimeApplications(parent)) {}
 
 LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
     : QWidget(parent)
     , p(new LSEmbeddedShellHostPrivate(this))
 {
+    p->m_mimeapps->processGlobalMimeCache();
+    p->m_mimeapps->cacheAllDesktops();
     setContentsMargins(0,0,0,0);
     QSettings settings("originull", "hollywood");
     p->m_model->setRootPath("/");
@@ -139,8 +145,11 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
     connect(p->m_filesColumn, &QColumnView::updatePreviewWidget,
             this, &LSEmbeddedShellHost::updateColumnWidget);
 
-    connect(p->m_model, SIGNAL(rootPathChanged(const QString&)),
-            this, SLOT(modelRootPathChanged(const QString&)));
+    connect(p->m_model, &LSFSModel::rootPathChanged,
+            this, &LSEmbeddedShellHost::modelRootPathChanged);
+
+    connect(p->m_model, &LSFSModel::sortingChanged,
+            this, &LSEmbeddedShellHost::sortOrderChanged);
 
     connect(p->m_actions->shellAction(HWShell::ACT_VIEW_OPTIONS),
             &QAction::triggered, this, &LSEmbeddedShellHost::toggleViewOptions);
@@ -292,7 +301,13 @@ void LSEmbeddedShellHost::doSort(int column, Qt::SortOrder order)
 {
     if(p->m_currentModel == Filesystem)
     {
+        auto uuid = p->m_tabs->tabData(p->m_tabs->currentIndex()).toUuid();
         p->m_model->sort(column, order);
+        p->m_sortOrder = order;
+        p->m_sortColumn = column;
+        p->m_tabSortOrder[uuid] = p->m_sortOrder;
+        p->m_tabSortCol[uuid] = p->m_sortColumn;
+
         if(p->m_viewMode == HWShell::VIEW_LIST)
             p->m_filesTable->header()->setSortIndicator(column, order);
         emit sortOrderChanged();
@@ -311,6 +326,10 @@ void LSEmbeddedShellHost::tabCloseRequested(int index)
     QUuid uuid = p->m_tabs->tabData(index).toUuid();
     p->m_tabLocations.remove(uuid);
     p->m_tabViewMode.remove(uuid);
+    p->m_tabSortOrder.remove(uuid);
+    p->m_tabSortCol.remove(uuid);
+    p->m_backLists.remove(uuid);
+    p->m_forwardLists.remove(uuid);
     p->m_tabs->removeTab(index);
     if(p->m_tabs->count() == 0)
         close();
@@ -402,6 +421,11 @@ void LSEmbeddedShellHost::newTabWithPath(const QUrl &path)
          // just temporary to add the map entry
          p->m_tabLocations.insert(tabId, QUrl::fromLocalFile("/"));
          p->m_tabViewMode.insert(tabId, p->m_viewMode);
+         p->m_tabSortOrder.insert(tabId, p->m_sortOrder);
+         p->m_tabSortCol.insert(tabId, p->m_sortColumn);
+
+         p->m_backLists.insert(tabId, UrlList());
+         p->m_forwardLists.insert(tabId, UrlList());
 
          p->m_tabs->setCurrentIndex(idx);
          navigateToPath(localPath);
@@ -417,6 +441,11 @@ void LSEmbeddedShellHost::newTabWithPath(const QUrl &path)
         // just temporary to add the map entry
         p->m_tabLocations.insert(tabId, url);
         p->m_tabViewMode.insert(tabId, p->m_viewMode);
+        p->m_tabSortOrder.insert(tabId, p->m_sortOrder);
+        p->m_tabSortCol.insert(tabId, p->m_sortColumn);
+
+        p->m_backLists.insert(tabId, UrlList());
+        p->m_forwardLists.insert(tabId, UrlList());
         p->m_tabs->setCurrentIndex(idx);
         navigateToUrl(url);
     }
@@ -429,6 +458,11 @@ void LSEmbeddedShellHost::newTabWithPath(const QUrl &path)
         // just temporary to add the map entry
         p->m_tabLocations.insert(tabId, url);
         p->m_tabViewMode.insert(tabId, p->m_viewMode);
+        p->m_tabSortOrder.insert(tabId, p->m_sortOrder);
+        p->m_tabSortCol.insert(tabId, p->m_sortColumn);
+
+        p->m_backLists.insert(tabId, UrlList());
+        p->m_forwardLists.insert(tabId, UrlList());
         p->m_tabs->setCurrentIndex(idx);
         navigateToUrl(url);
     }
@@ -440,6 +474,8 @@ void LSEmbeddedShellHost::currentTabChanged(int index)
     QUrl path = p->m_tabLocations[uuid];
     swapModelForUrl(path);
     HWShell::ViewMode mode = p->m_tabViewMode[uuid];
+    p->m_sortColumn = p->m_tabSortCol[uuid];
+    p->m_sortOrder = p->m_tabSortOrder[uuid];
     switch(mode)
     {
     case HWShell::VIEW_COLUMN:
@@ -454,6 +490,7 @@ void LSEmbeddedShellHost::currentTabChanged(int index)
     }
     navigateToUrl(path);
     updateNavigationButtonStatus();
+    doSort(p->m_sortColumn, p->m_sortOrder);
     emit updateStatusBar(generateStatusBarMsg());
  }
 
@@ -684,8 +721,9 @@ void LSEmbeddedShellHost::viewContextMenuRequested(const QPoint &pos)
     if(onSel)
     {
         // create our menu for a selection
-        //menu->addAction(p->m_actions->shellAction(ArionShell::ACT_FILE_OPEN_WITH));
-        menu->addAction(p->m_actions->shellAction(HWShell::ACT_FILE_OPEN_WITH));
+        menu->addAction(p->m_actions->shellAction(HWShell::ACT_FILE_OPEN));
+        menu->addMenu(p->m_actions->openWithMenu());
+        menu->addSeparator();
         menu->addAction(p->m_actions->shellAction(HWShell::ACT_FILE_ARCHIVE));
         menu->addAction(p->m_actions->shellAction(HWShell::ACT_FILE_RENAME));
         menu->addAction(p->m_actions->shellAction(HWShell::ACT_EDIT_COPY));
@@ -697,7 +735,7 @@ void LSEmbeddedShellHost::viewContextMenuRequested(const QPoint &pos)
     else
     {
         // no selection - create menu for this folder
-        menu->addAction(p->m_actions->shellAction(HWShell::ACT_FILE_NEW_FOLDER));
+        menu->addMenu(p->m_actions->newMenu());
         menu->addAction(p->m_actions->shellAction(HWShell::ACT_EDIT_PASTE));
         menu->addSeparator();
         menu->addAction(p->m_actions->shellAction(HWShell::ACT_FILE_GET_INFO));
@@ -751,6 +789,7 @@ void LSEmbeddedShellHost::filesystemSortingChanged()
             p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_DESC)->setChecked(true);
             break;
         }
+        emit sortOrderChanged();
     }
 
 }
@@ -905,8 +944,12 @@ bool LSEmbeddedShellHost::openFileOverDBusWithDefault(const QString &file)
 
 void LSEmbeddedShellHost::disableActionsForNoSelection()
 {
+    p->m_actions->openWithMenu()->setEnabled(false);
     p->m_actions->shellAction(HWShell::ACT_FILE_RENAME)->setText(tr("&Rename"));
+    p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setText(tr("&Open"));
+    p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setDisabled(true);
     p->m_actions->shellAction(HWShell::ACT_FILE_OPEN_WITH)->setDisabled(true);
+    p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setIcon(QIcon());
     p->m_actions->shellAction(HWShell::ACT_FILE_GET_INFO)->setDisabled(true);
     p->m_actions->shellAction(HWShell::ACT_FILE_RENAME)->setDisabled(true);
     p->m_actions->shellAction(HWShell::ACT_FILE_ARCHIVE)->setDisabled(true);
@@ -930,20 +973,61 @@ void LSEmbeddedShellHost::disableActionsForNoSelection()
 void LSEmbeddedShellHost::enableActionsForFileSelection(bool multiple)
 {
     if(!multiple)
-        p->m_actions->shellAction(HWShell::ACT_FILE_RENAME)->setText(tr("&Rename"));
-    else
-        p->m_actions->shellAction(HWShell::ACT_FILE_RENAME)->setText(tr("&Rename..."));
+    {
+        if(p->m_currentModel == Filesystem)
+        {
+            auto idx = p->m_curSelModel->selectedIndexes().first();
+            auto data = p->m_model->data(idx, LSFSModel::FileInfoRole).value<QSharedPointer<LSExtendedFileInfo>>();
+            QMimeDatabase db;
+            auto mime = db.mimeTypeForFile(data->fileInfo().absoluteFilePath());
+            if(mime.name() != "inode/directory")
+            {
+                p->m_actions->openWithMenu()->setEnabled(true);
+                p->m_actions->shellAction(HWShell::ACT_FILE_OPEN_WITH)->setEnabled(true);
+                auto app = p->m_mimeapps->defaultApp(mime.name());
+                if(app)
+                {
+                    p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setText(tr("&Open with %1").arg(app->value("Name").toString()));
+                    p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setIcon(app->icon());
+                    p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setEnabled(true);
+                }
+                else
+                {
+                    p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setText(tr("&Open"));
+                    p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setIcon(QIcon());
+                    p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setEnabled(true);
+                    p->m_actions->openWithMenu()->setEnabled(true);
+                }
+            }
+            else
+            {
+                p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setText(tr("&Open"));
+                p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setIcon(QIcon());
+                p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setEnabled(true);
+                p->m_actions->openWithMenu()->setEnabled(false);
+            }
+        }
+        else
+        {
+            p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setText(tr("&Open"));
+            p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setIcon(QIcon());
+            p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setEnabled(true);
+        }
 
+        p->m_actions->shellAction(HWShell::ACT_FILE_RENAME)->setText(tr("&Rename"));
+    }
+    else
+    {
+        p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setText(tr("&Open..."));
+        p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setIcon(QIcon());
+        p->m_actions->shellAction(HWShell::ACT_FILE_RENAME)->setText(tr("&Rename..."));
+    }
 
     p->m_actions->shellAction(HWShell::ACT_FILE_GET_INFO)->setEnabled(true);
     p->m_actions->shellAction(HWShell::ACT_FILE_RENAME)->setEnabled(true);
     //p->m_actions->shellAction(ArionShell::ACT_FILE_ARCHIVE)->setEnabled(true);
     p->m_actions->shellAction(HWShell::ACT_FILE_TRASH)->setEnabled(true);
-
     p->m_actions->shellAction(HWShell::ACT_EDIT_COPY)->setEnabled(true);
-
-    // TODO: check if .desktop
-    p->m_actions->shellAction(HWShell::ACT_FILE_OPEN_WITH)->setEnabled(true);
 
     //p->m_actions->shellAction(ArionShell::ACT_EDIT_CUT)->setDisabled(true);
     p->m_actions->shellAction(HWShell::ACT_EDIT_INV_SEL)->setDisabled(true);
@@ -1013,8 +1097,6 @@ QString LSEmbeddedShellHost::generateStatusBarMsg() const
 
 void LSEmbeddedShellHost::showFolderPermissionError(const QString &folder)
 {
-    qDebug() << "showFolderPermissionError: " << folder;
-
     auto *msg = new QMessageBox(this);
     msg->setModal(true);
     msg->setIcon(QMessageBox::Information);
@@ -1203,6 +1285,16 @@ QActionGroup *LSEmbeddedShellHost::groupViewColumn()
 QActionGroup *LSEmbeddedShellHost::groupViewOrder()
 {
     return p->m_actions->groupViewOrder();
+}
+
+QMenu *LSEmbeddedShellHost::openWithMenu()
+{
+    return p->m_actions->openWithMenu();
+}
+
+QMenu *LSEmbeddedShellHost::newMenu()
+{
+    return p->m_actions->newMenu();
 }
 
 void LSEmbeddedShellHost::goBack()

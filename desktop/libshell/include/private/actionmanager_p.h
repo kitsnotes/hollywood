@@ -3,11 +3,13 @@
 
 #include <QAction>
 #include <QActionGroup>
-
+#include <QMenu>
 class LSActionManagerPrivate
 {
 private:
     friend class LSActionManager;
+    QMenu *m_openwith;
+    QMenu *m_newmenu;
     QAction *a_NewTab;
     QAction *a_NewFolder;
     QAction *actionNew_File;

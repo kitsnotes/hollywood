@@ -807,6 +807,7 @@ void LSFSModel::sort(int column, Qt::SortOrder order)
     }
     changePersistentIndexList(oldList, newList);
     emit layoutChanged();
+    emit sortingChanged();
 }
 
 int LSFSModel::sortColumn() const

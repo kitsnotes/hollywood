@@ -32,6 +32,8 @@ public:
     QActionGroup* groupViewMode();
     QActionGroup* groupViewColumn();
     QActionGroup* groupViewOrder();
+    QMenu* openWithMenu();
+    QMenu* newMenu();
 
     LSLocationBar* locationBar();
 public slots:

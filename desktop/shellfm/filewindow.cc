@@ -68,7 +68,7 @@ void FileWindow::setupMenuBar()
     menuRecent_Locations->setTitle(tr("Recent &Locations"));
     menu_Bookmark->setTitle(tr("&Bookmarks"));
     menu_Help->setTitle(tr("&Help"));
-    menu_Sort->setTitle(tr("&Sort By"));
+    menu_Sort->setTitle(tr("&Organize By"));
 
     m_menuBar->addAction(menu_File->menuAction());
     m_menuBar->addAction(menu_Edit->menuAction());
@@ -79,11 +79,14 @@ void FileWindow::setupMenuBar()
     menu_File->addAction(a_NewWindow);
     menu_File->addAction(m_shellHost->shellAction(HWShell::ACT_FILE_NEW_TAB));
     menu_File->addSeparator();
-    menu_File->addAction(m_shellHost->shellAction(HWShell::ACT_FILE_NEW_FOLDER));
-    menu_File->addAction(m_shellHost->shellAction(HWShell::ACT_FILE_NEW_FILE));
-    menu_File->addSeparator();
+    menu_File->addMenu(m_shellHost->newMenu());
+    m_shellHost->newMenu()->addAction(m_shellHost->shellAction(HWShell::ACT_FILE_NEW_FOLDER));
+    m_shellHost->newMenu()->addAction(m_shellHost->shellAction(HWShell::ACT_FILE_NEW_FILE));
+    m_shellHost->newMenu()->addSeparator();
     menu_File->addAction(m_shellHost->shellAction(HWShell::ACT_FILE_OPEN));
-    menu_File->addAction(m_shellHost->shellAction(HWShell::ACT_FILE_OPEN_WITH));
+    menu_File->addMenu(m_shellHost->openWithMenu());
+    m_shellHost->openWithMenu()->addSeparator();
+    m_shellHost->openWithMenu()->addAction(m_shellHost->shellAction(HWShell::ACT_FILE_OPEN_WITH));
     menu_File->addAction(m_shellHost->shellAction(HWShell::ACT_FILE_GET_INFO));
     menu_File->addAction(m_shellHost->shellAction(HWShell::ACT_FILE_RENAME));
     menu_File->addAction(m_shellHost->shellAction(HWShell::ACT_FILE_ARCHIVE));
@@ -266,32 +269,6 @@ void FileWindow::setupActions()
     connect(a_Close_Window, SIGNAL(triggered()), this, SLOT(close()));
 }
 
-void FileWindow::setupDesktopView()
-{
-    setAttribute(Qt::WA_NoSystemBackground);
-    setAttribute(Qt::WA_TranslucentBackground);
-    setAttribute(Qt::WA_TransparentForMouseEvents);
-
-    m_statusBar = nullptr;
-    m_toolBar = nullptr;
-
-    move(0,0);
-    resize(qApp->primaryScreen()->size());
-    connect(qApp->primaryScreen(), &QScreen::geometryChanged, this, &FileWindow::desktopGeometryChanged);
-
-    setWindowFlag(Qt::Widget, true);
-    setWindowFlag(Qt::FramelessWindowHint, true);
-    setWindowFlag(Qt::WindowStaysOnBottomHint, true);
-
-    m_desktopModel = new QFileSystemModel(this);
-}
-
-void FileWindow::desktopGeometryChanged(const QRect &geom)
-{
-    //move(geom.topLeft());
-    resize(geom.size());
-}
-
 void FileWindow::setupMainView()
 {
     QSettings settings("originull", "hollywood");
@@ -315,6 +292,17 @@ void FileWindow::setupMainView()
     m_sort->setText(tr("Sort"));
     m_sort->setIcon(QIcon::fromTheme("view-sort"));
     auto sortmenu = new QMenu(m_sort);
+    auto header = sortmenu->addAction(tr("Organize by..."));
+    header->setEnabled(false);
+    sortmenu->addAction(m_shellHost->shellAction(HWShell::ACT_VIEW_SORT_NONE));
+    sortmenu->addAction(m_shellHost->shellAction(HWShell::ACT_VIEW_SORT_NAME));
+    sortmenu->addAction(m_shellHost->shellAction(HWShell::ACT_VIEW_SORT_SIZE));
+    sortmenu->addAction(m_shellHost->shellAction(HWShell::ACT_VIEW_SORT_KIND));
+    sortmenu->addAction(m_shellHost->shellAction(HWShell::ACT_VIEW_SORT_MODIFIED));
+    sortmenu->addAction(m_shellHost->shellAction(HWShell::ACT_VIEW_SORT_OWNER));
+    sortmenu->addAction(m_shellHost->shellAction(HWShell::ACT_VIEW_SORT_GROUP));
+    sortmenu->addAction(m_shellHost->shellAction(HWShell::ACT_VIEW_SORT_COMMENT));
+    sortmenu->addSeparator();
     sortmenu->addAction(m_shellHost->shellAction(HWShell::ACT_VIEW_SORT_ASC));
     sortmenu->addAction(m_shellHost->shellAction(HWShell::ACT_VIEW_SORT_DESC));
 
@@ -336,6 +324,8 @@ void FileWindow::setupMainView()
     m_toolBar->addWidget(m_search);
     m_search->setMaximumWidth(150);
     m_search->setDisabled(true);
+    auto *icon = new QIcon(QIcon::fromTheme("search"));
+    m_search->addAction(*icon, QLineEdit::LeadingPosition);
     m_search->setPlaceholderText(tr("Search"));
     m_toolBar->setWindowTitle(tr("Toolbar"));
     m_toolBar->setMovable(false);

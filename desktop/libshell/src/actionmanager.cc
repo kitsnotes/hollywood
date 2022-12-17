@@ -5,6 +5,11 @@ LSActionManager::LSActionManager(QObject *parent)
     : QObject(parent)
     , d(new LSActionManagerPrivate)
 {
+    d->m_openwith = new QMenu(0);
+    d->m_openwith->setTitle(tr("Op&en With..."));
+
+    d->m_newmenu = new QMenu(0);
+    d->m_newmenu->setTitle(tr("Create &New"));
     setupActions();
 }
 
@@ -18,6 +23,8 @@ QAction* LSActionManager::shellAction(HWShell::ShellActions action)
         return d->a_NewFolder;
     case HWShell::ACT_FILE_NEW_FILE:
         return d->actionNew_File;
+    case HWShell::ACT_FILE_OPEN:
+        return d->a_Open;
     case HWShell::ACT_FILE_GET_INFO:
         return d->actionGet_Information;
     case HWShell::ACT_FILE_RENAME:
@@ -95,6 +102,17 @@ QActionGroup *LSActionManager::groupViewOrder()
 {
     return d->m_sortorder;
 }
+
+QMenu *LSActionManager::openWithMenu()
+{
+    return d->m_openwith;
+}
+
+QMenu *LSActionManager::newMenu()
+{
+    return d->m_newmenu;
+}
+
 void LSActionManager::setupActions()
 {
     d->a_NewTab = new QAction(this);
@@ -252,7 +270,6 @@ void LSActionManager::setupActions()
     d->a_sortDesc = new QAction(this);
     d->a_sortDesc->setObjectName(QString::fromUtf8("SortDesc"));
     d->a_sortDesc->setCheckable(true);
-    //d->a_sortDesc->setShortcut(QKeySequence("Ctrl+Alt+Shift+7"));
     d->a_sortDesc->setText(tr("&Descending Order"));
     d->a_sortDesc->setIconVisibleInMenu(false);
     d->a_sortDesc->setIcon(QIcon::fromTheme("view-sort-descending"));
@@ -264,66 +281,21 @@ void LSActionManager::setupActions()
     d->a_ViewOptions->setCheckable(true);
     d->a_ViewOptions->setShortcut(QKeySequence::fromString("Ctrl+J"));
     d->a_ViewOptions->setText(tr("&View Options"));
-    connect(d->a_ViewOptions, SIGNAL(toggled(bool)),
-            this, SLOT(toggleViewOptions(bool)));
 
     // Go Menu Options
     d->a_Back = new QAction(this);
     d->a_Back->setObjectName(QString::fromUtf8("GoBack"));
     d->a_Back->setShortcut(QKeySequence(QKeySequence::Back));
+    d->a_Back->setIconVisibleInMenu(false);
+
     d->a_Forward = new QAction(this);
     d->a_Forward->setObjectName(QString::fromUtf8("GoForward"));
     d->a_Forward->setShortcut(QKeySequence(QKeySequence::Forward));
+    d->a_Forward->setIconVisibleInMenu(false);
+
     d->a_Enclosing_Folder = new QAction(this);
     d->a_Enclosing_Folder->setObjectName(QString::fromUtf8("GoEnclosingFolder"));
-    /* d->a_Clear_List = new QAction(this);
-    d->a_Clear_List->setObjectName(QString::fromUtf8("ClearRecentList"));
-    d->a_Home = new QAction(this);
-    d->a_Home->setObjectName(QString::fromUtf8("GoHome"));
-    d->a_Home->setIcon(QIcon::fromTheme("user-home"));
-    d->a_Home->setShortcut(QKeySequence("Ctrl+Shift+H"));
-    connect(d->a_Home, SIGNAL(triggered()),
-            this, SLOT(goQuickAction()));
-    d->a_Documents = new QAction(this);
-    d->a_Documents->setObjectName(QString::fromUtf8("GoDocuments"));
-    d->a_Documents->setIcon(QIcon::fromTheme("folder-documents"));
-    d->a_Documents->setShortcut(QKeySequence("Ctrl+Shift+D"));
-    connect(d->a_Documents, SIGNAL(triggered()),
-            this, SLOT(goQuickAction()));
-    d->a_Photos = new QAction(this);
-    d->d->a_Photos->setObjectName(QString::fromUtf8("GoPhotos"));
-    d->a_Photos->setIcon(QIcon::fromTheme("folder-pictures"));
-    connect(d->a_Photos, SIGNAL(triggered()),
-            this, SLOT(goQuickAction()));
-
-    d->a_Videos = new QAction(this);
-    d->a_Videos->setObjectName(QString::fromUtf8("GoVideos"));
-    d->a_Videos->setIcon(QIcon::fromTheme("folder-videos"));
-    connect(d->a_Videos, SIGNAL(triggered()),
-            this, SLOT(goQuickAction()));
-    d->a_Music = new QAction(this);
-    d->a_Music->setObjectName(QString::fromUtf8("GoMusic"));
-    d->a_Music->setIcon(QIcon::fromTheme("folder-music"));
-    connect(d->a_Music, SIGNAL(triggered()),
-            this, SLOT(goQuickAction()));
-    d->a_Desktop = new QAction(this);
-    d->a_Desktop->setObjectName(QString::fromUtf8("GoDesktop"));
-    d->a_Desktop->setIcon(QIcon::fromTheme("user-desktop"));
-    connect(d->a_Desktop, SIGNAL(triggered()),
-            this, SLOT(goQuickAction()));
-    d->a_Applications = new QAction(this);
-    d->a_Applications->setObjectName(QString::fromUtf8("GoApplications"));
-    d->a_Applications->setEnabled(false);
-    d->a_Applications->setShortcut(QKeySequence("Ctrl+Shift+A"));
-    d->a_Network = new QAction(this);
-    d->a_Network->setObjectName(QString::fromUtf8("GoNetwork"));
-    d->a_Network->setIcon(QIcon::fromTheme(QString::fromUtf8("network-workgroup")));
-    d->a_Network->setShortcut(QKeySequence("Ctrl+Shift+N"));
-    d->a_Network->setEnabled(false);
-
-    d->a_Connect_to_Server = new QAction(this);
-    d->a_Connect_to_Server->setObjectName(QString::fromUtf8("ConnectServer"));
-    d->a_Connect_to_Server->setShortcut(QKeySequence("Ctrl+K")); */
+    d->a_Enclosing_Folder->setIconVisibleInMenu(false);
 
     d->a_NewTab->setText(tr("New &Tab"));
     d->a_NewFolder->setText(tr("New &Folder"));
@@ -354,15 +326,4 @@ void LSActionManager::setupActions()
 
     d->a_Enclosing_Folder->setText(tr("&Enclosing Folder"));
     d->a_Enclosing_Folder->setIcon(QIcon::fromTheme("go-up"));
-
-    /*d->a_Clear_List->setText(tr("&Clear List"));
-    d->a_Home->setText(tr("&Home Folder"));
-    d->a_Documents->setText(tr("&Documents"));
-    d->a_Photos->setText(tr("&Photos"));
-    d->a_Videos->setText(tr("&Videos"));
-    d->a_Music->setText(tr("&Music"));
-    d->a_Desktop->setText(tr("Des&ktop"));
-    d->a_Applications->setText(tr("&Applications"));
-    d->a_Network->setText(tr("&Network"));
-    d->a_Connect_to_Server->setText(tr("&Connect to Server...")); */
 }
