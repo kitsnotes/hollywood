@@ -58,7 +58,7 @@ quint16 UPowerDeviceInterface::state()
 
 double UPowerDeviceInterface::percent()
 {
-    return m_props.value("Percent", 0.0).toDouble();
+    return m_props.value("Percentage", 0.0).toDouble();
 }
 
 qint64 UPowerDeviceInterface::timeUntilFull()

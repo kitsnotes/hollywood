@@ -324,5 +324,7 @@ void StageApplet::setupWidget()
     m_seconds->setText(QCoreApplication::translate("StageSettings", "Show time with seconds.", nullptr));
     m_24hour->setText(QCoreApplication::translate("StageSettings", "Use a 24 hour clock.", nullptr));
 
+    m_southern->setEnabled(false);
+    m_large->setEnabled(false);
 }
 
