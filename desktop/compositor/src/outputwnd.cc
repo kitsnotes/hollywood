@@ -828,14 +828,25 @@ void OutputWindow::keyReleaseEvent(QKeyEvent *e)
 
 void OutputWindow::wheelEvent(QWheelEvent *e)
 {
+    // all wheels send an angle delta
     bool vert = false;
-    int delta = e->pixelDelta().x();
+    int delta = e->angleDelta().x();
     if(e->angleDelta().y() != 0)
     {
-        delta = e->pixelDelta().y();
+        delta = e->angleDelta().y();
         vert = true;
     }
 
+    // some high precision touchpads send a pixel delta
+    if(e->hasPixelDelta())
+    {
+        if(vert)
+            delta = e->pixelDelta().y();
+        else
+            delta = e->pixelDelta().x();
+    }
+
+    // TODO: flip-flop the values if we do not want 'natural' scrolling
     hwComp->defaultSeat()->sendMouseWheelEvent(vert ? Qt::Vertical : Qt::Horizontal,
                                                delta);
 }
