@@ -96,6 +96,8 @@ uint Compositor::nextId()
     return m_id;
 }
 
+uint Compositor::decorationSize() const { return m_decorationSize; }
+
 Output *Compositor::outputAtPosition(const QPoint &pos)
 {
     for(auto out : m_outputs)

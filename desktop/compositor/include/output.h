@@ -28,6 +28,10 @@ public:
 signals:
     void reservedRegionsChanged();
 private:
+    QString persistentSettingName() const;
+    void touchConfiguration();
+    void reloadConfiguration();
+    uint defaultScaleFactor();
     void updateUsableGeometry();
     void configureForScreen(QScreen *s, bool defaultScreen = false);
     void configureDebugWindow();

@@ -81,7 +81,7 @@ public:
     bool hasMenuServer();
     uint nextId();
 
-    uint decorationSize() const { return m_decorationSize; }
+    uint decorationSize() const;
     uint borderSize() const { return m_borderSize; }
     uint viewMode() const { return m_apperance; }
 

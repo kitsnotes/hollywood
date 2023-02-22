@@ -56,12 +56,13 @@ SOURCES += \
     src/wallpaper.cc \
     src/xdgshell.cc
 
-QMAKE_SUBSTITUTES += org.originull.compositor.desktop.in
-desktop.path = $$PREFIX/share/applications
-desktop.files = org.originull.compositor.desktop
+#QMAKE_SUBSTITUTES += org.originull.compositor.desktop.in
+#desktop.path = $$PREFIX/share/applications
+#desktop.files = org.originull.compositor.desktop
 target.path = $$PREFIX/libexec/hollywood/
 
-INSTALLS += target desktop
+INSTALLS += target
+# desktop
 
 DISTFILES += \
     org.originull.compositor.desktop.in \

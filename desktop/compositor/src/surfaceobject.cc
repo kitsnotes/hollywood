@@ -38,6 +38,8 @@ Surface::Surface(QWaylandSurface *surface)
     connect(m_surface, &QWaylandSurface::redraw, hwComp, &Compositor::triggerRender);    
     connect(m_surface, &QWaylandSurface::subsurfacePositionChanged, hwComp, &Compositor::onSubsurfacePositionChanged);
     connect(m_surface, &QWaylandSurface::sourceGeometryChanged, this, &Surface::onSurfaceSourceGeometryChanged);
+    connect(m_surface, &QWaylandSurface::destinationSizeChanged, this, &Surface::onDestinationSizeChanged);
+    connect(m_surface, &QWaylandSurface::bufferScaleChanged, this, &Surface::onBufferScaleChanged);
 
     // TODO: multi-monitor suppot
 }
@@ -305,7 +307,7 @@ QSize Surface::surfaceSize() const
     }
 
     if(m_fullscreenShell)
-        return surface()->destinationSize();
+        return surface()->bufferSize();
 
     if(m_layerSurface)
         return m_ls_size;
@@ -313,15 +315,15 @@ QSize Surface::surfaceSize() const
     if(m_qt)
     {
         if(m_qt_size.isEmpty())
-            return surface()->destinationSize();
+            return surface()->bufferSize();
         else
             return m_qt_size;
     }
 
     if(m_xdgSurface)
-        return m_xdgSurface->windowGeometry().size();
+        return surface()->bufferSize();
 
-    return surface()->destinationSize();
+    return surface()->bufferSize();
 }
 
 QSize Surface::decoratedSize() const
@@ -331,6 +333,8 @@ QSize Surface::decoratedSize() const
     {
         auto bs = hwComp->borderSize();
         auto ds = hwComp->decorationSize();
+        bs = bs * surface()->bufferScale();
+        ds = ds * surface()->bufferScale();
         size.setHeight(size.height()+bs+ds);
         size.setWidth(size.width()+bs+bs);
     }
@@ -359,8 +363,8 @@ QRectF Surface::decoratedRect() const
     auto pos = surfacePosition();
     if(m_ssd)
     {
-        pos.setX(pos.x()-hwComp->borderSize());
-        pos.setY(pos.y()-hwComp->decorationSize());
+        pos.setX(pos.x()-hwComp->borderSize()*surface()->bufferScale());
+        pos.setY(pos.y()-hwComp->decorationSize()*surface()->bufferScale());
     }
     return QRectF(pos, decoratedSize());
 }
@@ -370,7 +374,7 @@ QRectF Surface::closeButtonRect() const
     if(!serverDecorated())
         return QRectF();
 
-    auto ds = hwComp->decorationSize();
+    auto ds = hwComp->decorationSize()*surface()->bufferScale();
     const int windowRight = decoratedRect().right() + 1;
     return QRectF(windowRight - BUTTON_WIDTH - BUTTON_SPACING * 0 - BUTTONS_RIGHT_MARGIN,
                    decorationPosition().y()+(ds - BUTTON_WIDTH) / 2, BUTTON_WIDTH, BUTTON_WIDTH);
@@ -381,7 +385,7 @@ QRectF Surface::maximizeButtonRect() const
     if(!serverDecorated())
         return QRectF();
 
-    auto ds = hwComp->decorationSize();
+    auto ds = hwComp->decorationSize()*surface()->bufferScale();
     const int windowRight = decoratedRect().right() + 1;
     return QRectF(windowRight - BUTTON_WIDTH * 2 - BUTTON_SPACING * 1 - BUTTONS_RIGHT_MARGIN,
                    decorationPosition().y()+(ds - BUTTON_WIDTH) / 2, BUTTON_WIDTH, BUTTON_WIDTH);
@@ -392,7 +396,7 @@ QRectF Surface::minimizeButtonRect() const
     if(!serverDecorated())
         return QRectF();
 
-    auto ds = hwComp->decorationSize();
+    auto ds = hwComp->decorationSize()*surface()->bufferScale();
     const int windowRight = decoratedRect().right() + 1;
     return QRectF(windowRight - BUTTON_WIDTH * 3 - BUTTON_SPACING * 2 - BUTTONS_RIGHT_MARGIN,
                   decorationPosition().y()+(ds - BUTTON_WIDTH) / 2, BUTTON_WIDTH, BUTTON_WIDTH);
@@ -401,8 +405,8 @@ QRectF Surface::minimizeButtonRect() const
 QRectF Surface::titleBarRect() const
 {
     auto point = decorationPosition();
-    auto bs = hwComp->borderSize();
-    auto ds = hwComp->decorationSize();
+    auto bs = hwComp->borderSize()*surface()->bufferScale();
+    auto ds = hwComp->decorationSize()*surface()->bufferScale();
     return QRectF(point, QSize(surfaceSize().width()+(bs*2), ds));
 }
 
@@ -535,10 +539,10 @@ QPointF Surface::renderPosition() const
     // account for the server decoration
     if(m_ssd)
     {
-        calculated.setTop(calculated.top()-hwComp->decorationSize());
-        calculated.setLeft(calculated.left()-hwComp->borderSize());
-        calculated.setRight(calculated.right()+hwComp->borderSize());
-        calculated.setBottom(calculated.bottom()+hwComp->borderSize());
+        calculated.setTop(calculated.top()-(hwComp->decorationSize()*surface()->bufferScale()));
+        calculated.setLeft(calculated.left()-(hwComp->borderSize()*surface()->bufferScale()));
+        calculated.setRight(calculated.right()+(hwComp->borderSize()*surface()->bufferScale()));
+        calculated.setBottom(calculated.bottom()+(hwComp->borderSize()*surface()->bufferScale()));
     }
 
     // account for shadows if we are using them
@@ -614,10 +618,11 @@ void Surface::renderDecoration()
 
     bool active = activated();
 
-    auto bs = hwComp->borderSize();
-    auto ds = hwComp->decorationSize();
-    auto btnsp = 3; // TODO: metrics
-    int btnsz = 22;
+    auto bs = hwComp->borderSize()*surface()->bufferScale();
+    auto ds = hwComp->decorationSize()*surface()->bufferScale();
+
+    auto btnsp = 3*surface()->bufferScale(); // TODO: metrics
+    int btnsz = 22*surface()->bufferScale();
 
     p.setCompositionMode(QPainter::CompositionMode_Clear);
     p.fillRect(decoratedRect(), QColor(255,255,255,0));
@@ -672,7 +677,8 @@ void Surface::renderDecoration()
         }
 
         QFont font = p.font();
-        font.setPixelSize(12);
+        auto psz = 12*surface()->bufferScale();
+        font.setPixelSize(psz);
         p.setFont(font);
         QFontMetrics m(p.font());
         QPoint start(iconRect.topLeft().toPoint());
@@ -782,8 +788,20 @@ void Surface::handleLayerShellPopupPositioning()
 
 void Surface::onSurfaceSourceGeometryChanged()
 {
-    //qDebug() << "Surface::onSurfaceSourceGeometryChanged" << surface()->sourceGeometry();
+    qDebug() << "Surface::onSurfaceSourceGeometryChanged" << surface()->sourceGeometry();
     //m_viewport = surface()->sourceGeometry();
+}
+
+void Surface::onDestinationSizeChanged()
+{
+    renderDecoration();
+    hwComp->triggerRender();
+}
+
+void Surface::onBufferScaleChanged()
+{
+    renderDecoration();
+    hwComp->triggerRender();
 }
 
 void Surface::onXdgStartResize(QWaylandSeat *seat, Qt::Edges edges)

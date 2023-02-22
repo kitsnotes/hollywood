@@ -164,6 +164,8 @@ protected:
     void handleLayerShellPopupPositioning();
 private slots:
     void onSurfaceSourceGeometryChanged();
+    void onDestinationSizeChanged();
+    void onBufferScaleChanged();
     void onXdgStartResize(QWaylandSeat *seat, Qt::Edges edges);
     void onXdgSetMaximized();
     void onXdgUnsetMaximized();
