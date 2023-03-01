@@ -423,31 +423,8 @@ public:
                 return FS_ERROR;
             }
         }
-        /* REQ: ISO.24 */
-        std::string postscript;
-        if(opts.find("post-script") != opts.end() &&
-                fs::exists(opts.at("post-script"))) {
-            postscript = opts.at("post-script");
-        } else {
-            for(const auto &path : data_dirs()) {
-                fs::path candidate{fs::path{path}.append("horizon")
-                            .append("iso").append("post-" + my_arch + ".sh")};
-                if(fs::exists(candidate, ec)) {
-                    postscript = candidate;
-                    break;
-                }
-            }
-        }
-        if(postscript.length() > 0) {
-            output_info("CD backend", "running architecture-specific script",
-                        postscript);
-            if(run_command("/bin/sh", {"-e", postscript}) != 0) {
-                output_error("CD backend", "architecture-specific script failed");
-                return COMMAND_ERROR;
-            }
-        }
 
-        /* REQ: ISO.25 */
+        /* REQ: ISO.24 */
         output_info("CD backend", "installing kernel");
         for(const auto &candidate : fs::directory_iterator(target + "/boot")) {
             auto name = candidate.path().filename().string();
@@ -464,7 +441,7 @@ public:
         }
 
 
-        /* REQ: ISO.25 */
+        /* REQ: ISO.24 */
         if(my_arch == "aarch64")
         {
             output_info("CD backend", "installing devicetrees");
@@ -500,6 +477,30 @@ public:
                 return FS_ERROR;
             }
 
+        }
+
+        /* REQ: ISO.25 */
+        std::string postscript;
+        if(opts.find("post-script") != opts.end() &&
+                fs::exists(opts.at("post-script"))) {
+            postscript = opts.at("post-script");
+        } else {
+            for(const auto &path : data_dirs()) {
+                fs::path candidate{fs::path{path}.append("horizon")
+                            .append("iso").append("post-" + my_arch + ".sh")};
+                if(fs::exists(candidate, ec)) {
+                    postscript = candidate;
+                    break;
+                }
+            }
+        }
+        if(postscript.length() > 0) {
+            output_info("CD backend", "running architecture-specific script",
+                        postscript);
+            if(run_command("/bin/sh", {"-e", postscript}) != 0) {
+                output_error("CD backend", "architecture-specific script failed");
+                return COMMAND_ERROR;
+            }
         }
 
         /* REQ: ISO.26 */
