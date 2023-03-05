@@ -23,7 +23,7 @@ menuentry "Hollywood Live" {
         volume HWAMD64
         loader /boot/kernel-stable.amd64
         initrd /boot/initrd-stable.amd64
-        options "root=live:LABEL=HWAMD64 rd.live.dir=/ rd.live.squashimg=boot/live-image-amd64.img quiet splash"
+        options "root=live:LABEL=HWAMD64 rd.live.dir=/boot rd.live.squashimg=live-image.amd64 quiet splash"
 }
 
 REFINDCFG
@@ -70,7 +70,11 @@ AUTORUN
 fi
 
 # Get the size of the binaries to go in the El Torito image in kB
-ToritoSize=$(du -s cdroot/boot/ | cut -f 1)
+EFIToritoSize=$(du -s cdroot/EFI/ | cut -f 1)
+KernelToritoSize=$(du -s cdroot/boot/kernel* | cut -f 1)
+InitrdToritoSize=$(du -s cdroot/boot/initrd* | cut -f 1)
+ToritoSize=0
+((ToritoSize=EFIToritoSize+KernelToritoSize+InitrdToritoSize))
 ((ToritoSize=ToritoSize/28))
 ((ToritoSize=ToritoSize*32))
 
@@ -86,7 +90,9 @@ MTOOLSRC
         export MTOOLSRC="$PWD/mtoolsrc"
         dd if=/dev/zero of=efi64.img bs=1024 count=$ToritoSize
         mkfs.fat efi64.img
-        mcopy -s cdroot/boot/ A:/
+        mmd A:/boot
+        mcopy cdroot/boot/kernel-stable.amd64 A:/boot/
+        mcopy cdroot/boot/initrd-stable.amd64 A:/boot/
         mcopy -s cdroot/EFI/ A:/
         mv efi64.img cdroot/efi.img
 fi
