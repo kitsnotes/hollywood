@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/">
+        <file alias="Logo">res/hollywood.svg</file>
+        <file alias="BGLight">res/hw-palms.svg</file>
+        <file alias="Originull">res/originull.png</file>
+        <file alias="go-next">res/go-next.svg</file>
+    </qresource>
+</RCC>
