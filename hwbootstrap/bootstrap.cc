@@ -3,7 +3,13 @@
 #include <style.h>
 #ifdef Q_OS_MAC
 #include <CoreFoundation/CoreFoundation.h>
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#include <stdio.h>
 #endif
+#include <QFile>
+#include <QDir>
+#include <QProcess>
 
 HWBootstrap::HWBootstrap(int &argc, char **argv)
     : QApplication(argc, argv)
@@ -41,8 +47,36 @@ void HWBootstrap::initHardwareTest()
 void HWBootstrap::wifiFirmwareTransfer()
 {
 #ifdef Q_OS_MAC
-    CFOptionFlags cfRes;
-    CFUserNotificationDisplayAlert(0, kCFUserNotificationNoteAlertLevel, NULL, NULL, NULL, CFSTR("Firmware transfer not required."), CFSTR("This system does not require a transfer of wireless firmware."), NULL, NULL, NULL, &cfRes);
+    QFile list(":/FirmwareList");
+    QList<QByteArray> models;
+    if(list.open(QIODevice::ReadOnly))
+    {
+        models = list.readAll().split('\n');
+        list.close();
+    }
+    char buffer[30];
+    size_t bufferlen = 30;
+    sysctlbyname("hw.model",&buffer,&bufferlen,NULL,0);
+    QByteArray model(buffer);
+
+    if(models.contains(model))
+    {
+        QDir resourceDir = QDir(QApplication::applicationDirPath());
+        resourceDir.cdUp();
+        resourceDir.cd("Resources");
+        QProcess proc;
+        proc.startDetached("bash",
+            QStringList() << "-c" <<
+            QString("SUDO_ASKPASS='%1' sudo --askpass bash %2").arg(resourceDir.absoluteFilePath("askpass-macos.js"), resourceDir.absoluteFilePath("t2-firmware-dump.sh")));
+    }
+    else
+    {
+        CFOptionFlags cfRes;
+        CFUserNotificationDisplayAlert(0, kCFUserNotificationNoteAlertLevel, NULL, NULL, NULL,
+                                       CFSTR("Firmware transfer not required."),
+                                       CFSTR("This system does not require a transfer of wireless firmware."),
+                                       NULL, NULL, NULL, &cfRes);
+    }
 #endif
 }
 

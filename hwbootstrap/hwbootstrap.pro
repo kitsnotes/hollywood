@@ -22,7 +22,9 @@ macx {
     TARGET = Hollywood
     QMAKE_INFO_PLIST = res/Info.plist
     ICON = res/hollywood.icns
-    RESOURCE_FILES.files = $$ICON
+    RESOURCE_FILES.files = $$ICON \
+        scripts/askpass-macos.js \
+        scripts/t2-firmware-dump.sh
     RESOURCE_FILES.path = Contents/Resources
     QMAKE_BUNDLE_DATA += RESOURCE_FILES
     LIBS += -framework CoreFoundation
@@ -33,3 +35,6 @@ win32 {
     RC_FILE = res/hwbootstrap.rc
     CONFIG -= embed_manifest_exe
 }
+
+DISTFILES += \
+    res/firmware-list.txt

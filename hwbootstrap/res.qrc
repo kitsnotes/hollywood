@@ -4,5 +4,6 @@
         <file alias="BGLight">res/hw-palms.svg</file>
         <file alias="Originull">res/originull.png</file>
         <file alias="go-next">res/go-next.svg</file>
+        <file alias="FirmwareList">res/firmware-list.txt</file>
     </qresource>
 </RCC>
