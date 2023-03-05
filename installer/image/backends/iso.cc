@@ -338,7 +338,7 @@ public:
         if(my_arch == "aarch64")
             hw_arch = "amd64";
         output_info("CD backend", "creating SquashFS");
-        const std::string squashpath = cdpath + "/live-image." + hw_arch;
+        const std::string squashpath = cdpath + "/boot/live-image." + hw_arch;
         if(run_command("mksquashfs", {target, squashpath, "-noappend",
                                       "-wildcards", "-ef",
                                       this->ir_dir + "/exclude.list"}) != 0) {
