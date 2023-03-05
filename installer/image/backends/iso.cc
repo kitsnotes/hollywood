@@ -72,7 +72,7 @@ const fs::path find_data_file(std::string name) {
 bool copy_volume_icon_to(fs::path ir_dir) {
     error_code ec;
 
-    const fs::path dest = ir_dir.append("cdroot").append("VolumeIcon.icns");
+    const fs::path dest = ir_dir.append("cdroot").append(".VolumeIcon.icns");
     const fs::path src = find_data_file("VolumeIcon.icns");
 
     /* No volume icon. */
@@ -334,8 +334,11 @@ public:
         }
 
         /* REQ: ISO.22 */
+        std::string hw_arch = "amd64";
+        if(my_arch == "aarch64")
+            hw_arch = "amd64";
         output_info("CD backend", "creating SquashFS");
-        const std::string squashpath = cdpath + "/" + my_arch + ".squashfs";
+        const std::string squashpath = cdpath + "/live-image." + hw_arch;
         if(run_command("mksquashfs", {target, squashpath, "-noappend",
                                       "-wildcards", "-ef",
                                       this->ir_dir + "/exclude.list"}) != 0) {
@@ -373,7 +376,7 @@ public:
         std::ifstream kverstream(kverpath);
         kverstream >> kver;
 
-        const std::string irdname = "initrd-stable";
+        const std::string irdname = "initrd-stable." + hw_arch;
         if(run_command("chroot", {target, "dracut", "--kver", kver, "-N",
                                   "--force", "-a", "dmsquash-live",
                                   "/boot/" + irdname}) != 0) {
@@ -408,7 +411,7 @@ public:
             std::ifstream kverstream(kverpath);
             kverstream >> kver;
 
-            const std::string irdname = "initrd-asahi";
+            const std::string irdname = "initrd-asahi." + hw_arch;
             if(run_command("chroot", {target, "dracut", "--kver", kver, "-N",
                                       "--force", "-a", "dmsquash-live", "--add-drivers",
                                        "\"apple-mailbox nvme-apple pinctrl-apple-gpio macsmc macsmc-rtkit i2c-apple tps6598x apple-dart dwc3 dwc3-of-simple nvmem-apple-efuses phy-apple-atc xhci-pci pcie-apple gpio_macsmc spi-apple spi-hid-apple spi-hid-apple-of rtc-macsmc simple-mfd-spmi spmi-apple-controller nvmem_spmi_mfd apple-dockchannel dockchannel-hid apple-rtkit-helper\"",
@@ -429,7 +432,7 @@ public:
         for(const auto &candidate : fs::directory_iterator(target + "/boot")) {
             auto name = candidate.path().filename().string();
             if(name == "vmlinuz-stable") {
-                fs::copy(candidate.path(), cdpath + "/boot/kernel-stable", ec);
+                fs::copy(candidate.path(), cdpath + "/boot/kernel-stable." + hw_arch, ec);
                 if(ec) {
                     output_error("CD backend", "failed to copy kernel",
                                  ec.message());
@@ -457,7 +460,7 @@ public:
             for(const auto &candidate : fs::directory_iterator(target + "/boot")) {
                 auto name = candidate.path().filename().string();
                 if(name == "vmlinuz-asahi") {
-                    fs::copy(candidate.path(), cdpath + "/boot/kernel-asahi", ec);
+                    fs::copy(candidate.path(), cdpath + "/boot/kernel-asahi." + hw_arch, ec);
                     if(ec) {
                         output_error("CD backend", "failed to copy asahi kernel",
                                      ec.message());
