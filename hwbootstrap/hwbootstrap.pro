@@ -1,4 +1,5 @@
 QT       += core gui svg widgets
+QT -= quick qml dbus virtualkeyboard
 CONFIG += c++17
 DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000
 TEMPLATE = app
@@ -20,6 +21,7 @@ RESOURCES += \
 
 macx {
     TARGET = Hollywood
+    CONFIG += sdk_nno_version_check
     QMAKE_INFO_PLIST = res/Info.plist
     ICON = res/hollywood.icns
     RESOURCE_FILES.files = $$ICON \
