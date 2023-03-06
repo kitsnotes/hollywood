@@ -22,5 +22,7 @@
         <string>@EXECUTABLE@</string>
         <key>NSSupportsAutomaticGraphicsSwitching</key>
         <true/>
+        <key>UIUserInterfaceStyle</key>
+        <string>Light</string>
 </dict>
 </plist>

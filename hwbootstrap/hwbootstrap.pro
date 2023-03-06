@@ -8,10 +8,12 @@ include("../desktop/style/style.pri")
 INCLUDEPATH += ../desktop/style/include
 
 SOURCES += \
+    assistant.cc \
     bootstrap.cc \
     menu.cc
 
 HEADERS += \
+    assistant.h \
     bootstrap.h \
     menu.h
 

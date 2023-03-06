@@ -5,5 +5,7 @@
         <file alias="Originull">res/originull.png</file>
         <file alias="go-next">res/go-next.svg</file>
         <file alias="FirmwareList">res/firmware-list.txt</file>
+        <file alias="Current">res/status-current-high.svg</file>
+        <file alias="Success">res/status-success-high.svg</file>
     </qresource>
 </RCC>

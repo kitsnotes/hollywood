@@ -1,5 +1,6 @@
 #include "bootstrap.h"
 #include "menu.h"
+#include "assistant.h"
 #include <style.h>
 #ifdef Q_OS_MAC
 #include <CoreFoundation/CoreFoundation.h>
@@ -10,6 +11,8 @@
 #include <QFile>
 #include <QDir>
 #include <QProcess>
+#include <QMessageBox>
+
 
 HWBootstrap::HWBootstrap(int &argc, char **argv)
     : QApplication(argc, argv)
@@ -36,12 +39,18 @@ void HWBootstrap::showMenu()
 
 void HWBootstrap::aboutBootstrap()
 {
-
+    QMessageBox::about(0, tr("About Hollywood Setup Assistant"),
+                       tr("Hollywood Setup Assistant 1.0\n(C) 2023 Originull Software"));
 }
 
 void HWBootstrap::initHardwareTest()
 {
+    m_hwfail.clear();
 
+    if(!m_hwtest)
+    {
+
+    }
 }
 
 void HWBootstrap::wifiFirmwareTransfer()
@@ -68,6 +77,12 @@ void HWBootstrap::wifiFirmwareTransfer()
         proc.startDetached("bash",
             QStringList() << "-c" <<
             QString("SUDO_ASKPASS='%1' sudo --askpass bash %2").arg(resourceDir.absoluteFilePath("askpass-macos.js"), resourceDir.absoluteFilePath("t2-firmware-dump.sh")));
+
+        CFOptionFlags cfRes;
+        CFUserNotificationDisplayAlert(0, kCFUserNotificationNoteAlertLevel, NULL, NULL, NULL,
+                                       CFSTR("Firmware transfer complete."),
+                                       CFSTR("Wireless firmware has been successfully staged for Hollywood installation."),
+                                       NULL, NULL, NULL, &cfRes);
     }
     else
     {
@@ -78,6 +93,14 @@ void HWBootstrap::wifiFirmwareTransfer()
                                        NULL, NULL, NULL, &cfRes);
     }
 #endif
+}
+
+void HWBootstrap::startSideBySide()
+{
+    if(!m_setup)
+        m_setup = new SetupAssistant(0);
+
+    m_setup->show();
 }
 
 void HWBootstrap::createGlobalMenu()
@@ -117,6 +140,14 @@ void HWBootstrap::createGlobalMenu()
     auto help = m_menubar->addMenu(tr("&Help"));
     auto about = help->addAction(tr("&About Setup Assistant"));
     about->setMenuRole(QAction::AboutRole);
+    connect(about, &QAction::triggered, this, &HWBootstrap::aboutBootstrap);
+}
+
+bool HWBootstrap::runHardwareTest()
+{
+#ifdef Q_OS_MAC
+    // See if we're on 64-bit EFI
+#endif
 }
 
 int main(int argc, char *argv[])

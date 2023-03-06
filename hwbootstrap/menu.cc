@@ -1,4 +1,6 @@
 #include "menu.h"
+#include "bootstrap.h"
+
 #include <QApplication>
 #include <QPainter>
 #include <QPalette>
@@ -143,5 +145,6 @@ void MenuDialog::setupUi()
     hollywood_label->setText(QCoreApplication::translate("Menu", "Hollywood", nullptr));
     hw_train->setText(QCoreApplication::translate("Menu", "", nullptr));
     lbl_copyright->setText(QCoreApplication::translate("Menu", "&copy; 2023 Originull Software and Contributors to the Hollywood Operating System.<br>Hollywood is free software; you have rights available to you under license. ", nullptr));
-}
 
+    connect(m_install_sxs, &QAbstractButton::pressed, bsApp, &HWBootstrap::startSideBySide);
+}
