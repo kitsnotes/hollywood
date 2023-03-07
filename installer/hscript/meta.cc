@@ -851,15 +851,15 @@ bool Bootloader::execute() const {
         std::set<std::string> refind_files;
         if(arch == "x86_64")
         {
-            fs::create_directory(refind_efi+"/drivers_x86_64");
-            fs::create_directory(refind_efi+"/tools_x86_64");
+            fs::create_directory(refind_efi+"/drivers_x64");
+            fs::create_directory(refind_efi+"/tools_x64");
             fs::create_directory(refind_efi+"/icons");
 
             /* copy over our refind files */
             refind_files = {
                 "/refind_x64.efi",
-                "/drivers_x86_64/ext4_x64.efi",
-                "/drivers_x86_64/btrfs_x64.efi",
+                "/drivers_x64/ext4_x64.efi",
+                "/drivers_x64/btrfs_x64.efi",
                 "/icons/arrow_left.png",
                 "/icons/arrow_right.png",
                 "/icons/func_about.png",
@@ -874,13 +874,16 @@ bool Bootloader::execute() const {
                 "/icons/mouse.png",
                 "/icons/os_linux.png",
                 "/icons/os_unknown.png",
+                "/icons/os_mac.png",
+                "/icons/os_win.png",
+                "/icons/os_hollywood.png",
                 "/icons/transparent.png"
             };
         }
         else
         {
-            fs::create_directory(refind_efi+"/drivers_aarch64");
-            fs::create_directory(refind_efi+"/tools_aarch64");
+            fs::create_directory(refind_efi+"/drivers_aa64");
+            fs::create_directory(refind_efi+"/tools_aa64");
             fs::create_directory(refind_efi+"/icons");
 
             /* copy over our refind files */
@@ -918,14 +921,14 @@ bool Bootloader::execute() const {
 
         if(arch == "x86_64")
         {
-            fs::rename(refind_efi+"/drivers_x86_64", refind_efi+"/drivers", ec);
+            fs::rename(refind_efi+"/drivers_x64", refind_efi+"/drivers", ec);
             if(ec) {
                 output_error(pos, "bootloader: failed to rename drivers_x86_64 to drivers",
                              ec.message());
                 return false;
             }
 
-            fs::rename(refind_efi+"/tools_x86_64", refind_efi+"/tools", ec);
+            fs::rename(refind_efi+"/tools_x64", refind_efi+"/tools", ec);
             if(ec) {
                 output_error(pos, "bootloader: failed to rename tools_x86_64 to drivers",
                              ec.message());
@@ -941,14 +944,14 @@ bool Bootloader::execute() const {
         }
         else
         {
-            fs::rename(refind_efi+"/drivers_aarch64", refind_efi+"/drivers", ec);
+            fs::rename(refind_efi+"/drivers_aa64", refind_efi+"/drivers", ec);
             if(ec) {
                 output_error(pos, "bootloader: failed to rename drivers_x86_64 to drivers",
                              ec.message());
                 return false;
             }
 
-            fs::rename(refind_efi+"/tools_aarch64", refind_efi+"/tools", ec);
+            fs::rename(refind_efi+"/tools_aa64", refind_efi+"/tools", ec);
             if(ec) {
                 output_error(pos, "bootloader: failed to rename tools_x86_64 to drivers",
                              ec.message());
@@ -1026,9 +1029,10 @@ bool Bootloader::execute() const {
         refind_conf << "scanfor manual" << std::endl;
         refind_conf << "showtools shell, memtest, firmware" << std::endl;
         refind_conf << "fold_linux_kernels true" << std::endl;
-
+        refind_conf << "hideui editor badges hints" << std::endl;
+        
         refind_conf << "menuentry Hollywood {" << std::endl;
-        refind_conf << "\ticon EFI/hollywood/icons/os_linux.png" << std::endl;
+        refind_conf << "\ticon EFI/hollywood/icons/os_hollywood.png" << std::endl;
         refind_conf << "\tvolume " << gpt_guid << std::endl;
         if(separate_boot)
         {

@@ -64,6 +64,7 @@ int main(int argc, char *argv[]) {
             ;
     options_description target{"Target control options"};
     target.add_options()
+            ("script,f", value<std::string>()->default_value("/etc/hollywood.hs"), "HorizonScript to use to build the image.")
             ("output,o", value<std::string>()->default_value("image.tar"), "Desired filename for the output file.")
             ("ir-dir,i", value<std::string>()->default_value("/tmp/horizon-image"), "Where to store intermediate files.")
             ;

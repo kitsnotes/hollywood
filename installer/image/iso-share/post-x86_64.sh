@@ -5,7 +5,7 @@ mkdir -p cdroot/boot/EFI/BOOT/drivers/
 mkdir -p cdroot/boot/EFI/BOOT/icons/
 
 cp /usr/share/refind/refind_x64.efi cdroot/boot/EFI/BOOT/BOOTX64.EFI
-cp /usr/share/refind/drivers_x86_64/* cdroot/boot/EFI/BOOT/drivers/
+cp /usr/share/refind/drivers_x64/* cdroot/boot/EFI/BOOT/drivers/
 cp /usr/share/refind/icons/*.png cdroot/boot/EFI/BOOT/icons/
 
 cat >cdroot/boot/EFI/BOOT/refind.conf <<REFINDCFG
@@ -17,9 +17,10 @@ scanfor manual
 scan_delay 0
 dont_scan_volumes "Recovery HD"
 fold_linux_kernels true
+hideui editor badges hints
 
 menuentry "Hollywood Live" {
-        icon EFI/BOOT/icons/install.png
+        icon EFI/BOOT/icons/hw_install.png
         volume HWAMD64
         loader /boot/kernel-stable.amd64
         initrd /boot/initrd-stable.amd64
