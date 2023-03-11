@@ -1,14 +1,16 @@
 #!/bin/sh
 
-mkdir -p cdroot/boot/EFI/BOOT/
-mkdir -p cdroot/boot/EFI/BOOT/drivers/
-mkdir -p cdroot/boot/EFI/BOOT/icons/
 
-cp /usr/share/refind/refind_x64.efi cdroot/boot/EFI/BOOT/BOOTX64.EFI
-cp /usr/share/refind/drivers_x64/* cdroot/boot/EFI/BOOT/drivers/
-cp /usr/share/refind/icons/*.png cdroot/boot/EFI/BOOT/icons/
+mkdir -p cdroot/boot/
+mkdir -p cdroot/EFI/BOOT/
+mkdir -p cdroot/EFI/BOOT/drivers/
+mkdir -p cdroot/EFI/BOOT/icons/
 
-cat >cdroot/boot/EFI/BOOT/refind.conf <<REFINDCFG
+cp /usr/share/refind/refind_x64.efi cdroot/EFI/BOOT/BOOTX64.EFI
+cp /usr/share/refind/drivers_x64/* cdroot/EFI/BOOT/drivers/
+cp /usr/share/refind/icons/*.png cdroot/EFI/BOOT/icons/
+
+cat >cdroot/EFI/BOOT/refind.conf <<REFINDCFG
 timeout -1
 log_level 0
 use_graphics_for linux, windows, osx
@@ -50,7 +52,7 @@ cat >cdroot/System/Library/CoreServices/SystemVersion.plist <<PLIST
 </dict>
 PLIST
 
-cp cdroot/boot/EFI/BOOT/refind.conf cdroot/System/Library/CoreServices/refind.conf
+cp cdroot/EFI/BOOT/refind.conf cdroot/System/Library/CoreServices/refind.conf
 # TODO: a .disk_label image
 
 if [ -f /usr/share/horizon/iso/windows-helper.zip ]; then
@@ -72,14 +74,12 @@ fi
 
 # Get the size of the binaries to go in the El Torito image in kB
 EFIToritoSize=$(du -s cdroot/EFI/ | cut -f 1)
-KernelToritoSize=$(du -s cdroot/boot/kernel* | cut -f 1)
-InitrdToritoSize=$(du -s cdroot/boot/initrd* | cut -f 1)
+KernelToritoSize=$(du -s cdroot/boot/vmlinuz-stable.amd64 | cut -f 1)
+InitrdToritoSize=$(du -s cdroot/boot/initramfs-stable.amd64 | cut -f 1)
 ToritoSize=0
 ((ToritoSize=EFIToritoSize+KernelToritoSize+InitrdToritoSize))
 ((ToritoSize=ToritoSize/28))
 ((ToritoSize=ToritoSize*32))
-
-mv cdroot/boot/EFI cdroot/EFI
 
 if ! type mkfs.fat>/dev/null || ! type mtools>/dev/null; then
         printf "EFI image cannot be created.\n"
@@ -92,8 +92,8 @@ MTOOLSRC
         dd if=/dev/zero of=efi64.img bs=1024 count=$ToritoSize
         mkfs.fat efi64.img
         mmd A:/boot
-        mcopy cdroot/boot/kernel-stable.amd64 A:/boot/
-        mcopy cdroot/boot/initrd-stable.amd64 A:/boot/
+        mcopy cdroot/boot/vmlinuz-stable.amd64 A:/boot/
+        mcopy cdroot/boot/initramfs-stable.amd64 A:/boot/
         mcopy -s cdroot/EFI/ A:/
         mv efi64.img cdroot/efi.img
 fi

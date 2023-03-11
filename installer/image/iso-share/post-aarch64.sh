@@ -1,14 +1,15 @@
 #!/bin/sh
 
-mkdir -p cdroot/boot/EFI/BOOT/
-mkdir -p cdroot/boot/EFI/BOOT/drivers/
-mkdir -p cdroot/boot/EFI/BOOT/icons/
+mkdir -p cdroot/boot/
+mkdir -p cdroot/EFI/BOOT/
+mkdir -p cdroot/EFI/BOOT/drivers/
+mkdir -p cdroot/EFI/BOOT/icons/
 
-cp /usr/share/refind/refind_aa64.efi cdroot/boot/EFI/BOOT/BOOTAA64.EFI
-cp /usr/share/refind/drivers_aa64/* cdroot/boot/EFI/BOOT/drivers/
-cp /usr/share/refind/icons/*.png cdroot/boot/EFI/BOOT/icons/
+cp /usr/share/refind/refind_aa64.efi cdroot/EFI/BOOT/BOOTAA64.EFI
+cp /usr/share/refind/drivers_aa64/* cdroot/EFI/BOOT/drivers/
+cp /usr/share/refind/icons/*.png cdroot/EFI/BOOT/icons/
 
-cat >cdroot/boot/EFI/BOOT/refind.conf <<'REFINDCFG'
+cat >cdroot/EFI/BOOT/refind.conf <<REFINDCFG
 timeout 10
 log_level 0
 use_graphics_for linux, windows, osx
@@ -38,21 +39,17 @@ menuentry "Hollywood Live (For Apple Silicon)" {
 REFINDCFG
 
 # Get the size of the binaries to go in the El Torito image in kB
-ToritoSize=$(du -s cdroot/boot/ | cut -f 1)
-((ToritoSize=ToritoSize/28))
-((ToritoSize=ToritoSize*32))
-
-# Get the size of the binaries to go in the El Torito image in kB
 EFIToritoSize=$(du -s cdroot/EFI/ | cut -f 1)
-KernelToritoSize=$(du -s cdroot/boot/kernel* | cut -f 1)
-InitrdToritoSize=$(du -s cdroot/boot/initrd* | cut -f 1)
-DTBSize=$(du -s cdroot/boot/dtbs* | cut -f 1)
+KernelToritoSize=$(du -s cdroot/boot/vmlinuz.arm64 | cut -f 1)
+InitrdToritoSize=$(du -s cdroot/boot/initramfs-stable.arm64 | cut -f 1)
+KernelAToritoSize=$(du -s cdroot/boot/vmlinuz-asahi.arm64 | cut -f 1)
+InitrdAToritoSize=$(du -s cdroot/boot/initramfs-asahi.arm64 | cut -f 1)
+DTBSize=$(du -s cdroot/boot/dtbs-stable/ | cut -f 1)
+DTBASize=$(du -s cdroot/boot/dtbs-asahi/ | cut -f 1)
 ToritoSize=0
-((ToritoSize=EFIToritoSize+KernelToritoSize+InitrdToritoSize+DTBSize))
+((ToritoSize=EFIToritoSize+KernelToritoSize+InitrdToritoSize+KernelAToritoSize+InitrdAToritoSize+DTBSize+DTBASize))
 ((ToritoSize=ToritoSize/28))
 ((ToritoSize=ToritoSize*32))
-
-mv cdroot/boot/EFI cdroot/EFI
 
 if ! type mkfs.fat>/dev/null || ! type mtools>/dev/null; then
         printf "EFI image cannot be created.\n"
@@ -67,8 +64,10 @@ MTOOLSRC
         mmd A:/boot
         mcopy -s cdroot/boot/dtbs-stable/ A:/boot/
         mcopy -s cdroot/boot/dtbs-asahi/ A:/boot/
-        mcopy cdroot/boot/kernel-stable.amd64 A:/boot/
-        mcopy cdroot/boot/initrd-stable.amd64 A:/boot/
+        mcopy cdroot/boot/vmlinuz-stable.arm64 A:/boot/
+        mcopy cdroot/boot/initramfs-stable.arm64 A:/boot/
+        mcopy cdroot/boot/vmlinuz-asahi.arm64 A:/boot/
+        mcopy cdroot/boot/initramfs-asahi.arm64 A:/boot/
         mcopy -s cdroot/EFI/ A:/
         mv efi64.img cdroot/efi.img
 fi
