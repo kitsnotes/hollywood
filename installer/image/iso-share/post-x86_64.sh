@@ -37,7 +37,7 @@ touch cdroot/System/Library/CoreServices/mach_kernel
 mkdir cdroot/System/Library/CoreServices/icons
 mkdir cdroot/System/Library/CoreServices/drivers
 cp /usr/share/refind/refind_x64.efi cdroot/System/Library/CoreServices/boot.efi
-cp /usr/share/refind/drivers_x86_64/* cdroot/System/Library/CoreServices/drivers/
+cp /usr/share/refind/drivers_x64/* cdroot/System/Library/CoreServices/drivers/
 cp /usr/share/refind/icons/*.png cdroot/System/Library/CoreServices/icons/
 
 cat >cdroot/System/Library/CoreServices/SystemVersion.plist <<PLIST
