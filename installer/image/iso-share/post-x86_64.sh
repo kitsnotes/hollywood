@@ -22,8 +22,8 @@ hideui editor badges hints
 menuentry "Hollywood Live" {
         icon EFI/BOOT/icons/hw_install.png
         volume HWAMD64
-        loader /boot/kernel-stable.amd64
-        initrd /boot/initrd-stable.amd64
+        loader /boot/vmlinuz-stable.amd64
+        initrd /boot/initramfs-stable.amd64
         options "root=live:LABEL=HWAMD64 rd.live.dir=/boot rd.live.squashimg=live-image.amd64 quiet splash"
 }
 
