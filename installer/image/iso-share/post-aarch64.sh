@@ -23,16 +23,16 @@ hideui editor badges hints
 menuentry "Hollywood Live (For all other systems)" {
         icon EFI/BOOT/icons/hw_install.png
         volume HWARM64
-        loader /boot/vmlinuz-stable.aarch64
-        initrd /boot/initramfs-stable.aarch64
+        loader /boot/vmlinuz-stable.arm64
+        initrd /boot/initramfs-stable.arm64
         options "root=live:LABEL=HWARM64 rd.live.dir=/boot rd.live.squashimg=live-image.arm64 quiet splash"
 }
 
 menuentry "Hollywood Live (For Apple Silicon)" {
         icon EFI/BOOT/icons/hw_install_asi.png
         volume HWARM64
-        loader /boot/vmlinuz-asahi.aarch64
-        initrd /boot/initramfs-asahi.aarch64
+        loader /boot/vmlinuz-asahi.arm64
+        initrd /boot/initramfs-asahi.arm64
         options "root=live:LABEL=HWARM64 rd.live.dir=/boot rd.live.squashimg=live-image.arm64 quiet splash"
 }
 
