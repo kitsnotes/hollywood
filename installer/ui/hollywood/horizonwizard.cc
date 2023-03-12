@@ -187,8 +187,8 @@ HorizonWizard::HorizonWizard(QWidget *parent) : QWizard(parent) {
      * Determine which platform kernel is being used, if any (-power8 etc)
      * Determine hardware requirements (easy or mainline)
      */
-    grub = true;
-    refind = false;
+    grub = false;
+    refind = true;
     kernel = "stable";
     ipv4.use = false;
     ipv6.use = false;

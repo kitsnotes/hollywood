@@ -732,7 +732,7 @@ Key *Bootloader::parseFromData(const std::string &data,
 
     if(boot == "true") {
         if(arch == "aarch64") {
-            boot = "grub-efi";
+            boot = "refind";
         } else if(arch == "x86_64") {
             boot = "refind";
         } else {
@@ -750,11 +750,10 @@ bool Bootloader::validate() const {
     const std::string candidate = this->bootloader();
 
    if(arch == "aarch64") {
-        const static std::set<std::string> valid_arm64 = {"refind", "grub-efi", "none"};
+        const static std::set<std::string> valid_arm64 = {"refind", "none"};
         valid_selection = valid_arm64.find(candidate) != valid_arm64.end();
     } else if(arch == "x86_64") {
         const static std::set<std::string> valid_x86 = {"refind",
-                                                        "grub-efi",
                                                         "none"};
         valid_selection = valid_x86.find(candidate) != valid_x86.end();
     } else {
@@ -777,46 +776,7 @@ bool Bootloader::execute() const {
     if(method == "none")
         return true;
 
-    if(method == "grub-efi") {
-        if(script->options().test(Simulate)) {
-            std::cout << "apk --root " << script->targetDirectory()
-                      << " --keys-dir etc/apk/keys add grub-efi"
-                      << std::endl
-                      << "chroot " << script->targetDirectory()
-                      << " grub-install " << _device << std::endl;
-            goto updateboot;
-        }
-#ifdef HAS_INSTALL_ENV
-        if(run_command("/sbin/apk",
-                       {"--root", script->targetDirectory(), "--keys-dir",
-                        "etc/apk/keys", "add", "grub-efi"}) != 0) {
-            output_error(pos, "bootloader: couldn't add package grub-efi");
-            return false;
-        }
-
-        /* remount EFI vars r/w */
-        /* const auto efipath{script->targetDirectory() +
-                           "/sys/firmware/efi/efivars"};
-        if(mount("efivarfs", efipath.c_str(), "efivarfs", MS_NOEXEC |
-                 MS_NODEV | MS_NOSUID | MS_RELATIME, nullptr) != 0) {
-            output_error(pos, "bootloader: failed to mount writable efivarfs",
-                         strerror(errno));
-            return false;
-        }*/
-
-        if(run_command("chroot",
-                       {script->targetDirectory(), "grub-install", _device})
-                != 0) {
-            output_error(pos, "bootloader: failed to install GRUB");
-            return false;
-        }
-
-        /* done, back to r/o */
-        //umount(efipath.c_str());
-        goto updateboot;
-#endif  /* HAS_INSTALL_ENV */
-    }
-    else if(method == "refind") {
+    if(method == "refind") {
         if(script->options().test(Simulate)) {
             std::cout << "apk --root " << script->targetDirectory()
                       << " --keys-dir etc/apk/keys add refind"
