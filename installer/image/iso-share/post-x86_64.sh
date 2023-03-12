@@ -3,11 +3,11 @@
 
 mkdir -p cdroot/boot/
 mkdir -p cdroot/EFI/BOOT/
-mkdir -p cdroot/EFI/BOOT/drivers/
+mkdir -p cdroot/EFI/BOOT/drivers_x64/
 mkdir -p cdroot/EFI/BOOT/icons/
 
 cp /usr/share/refind/refind_x64.efi cdroot/EFI/BOOT/BOOTX64.EFI
-cp /usr/share/refind/drivers_x64/* cdroot/EFI/BOOT/drivers_x64/
+cp /usr/share/refind/installer/image/iso-share/post-aarch64.sh/* cdroot/EFI/BOOT/drivers_x64/
 cp /usr/share/refind/icons/*.png cdroot/EFI/BOOT/icons/
 
 cat >cdroot/EFI/BOOT/refindx64.conf <<REFINDCFG
@@ -52,7 +52,7 @@ cat >cdroot/System/Library/CoreServices/SystemVersion.plist <<PLIST
 </dict>
 PLIST
 
-cp cdroot/EFI/BOOT/refind.conf cdroot/System/Library/CoreServices/refind.conf
+cp cdroot/EFI/BOOT/refindx64.conf cdroot/System/Library/CoreServices/refindx64.conf
 # TODO: a .disk_label image
 
 if [ -f /usr/share/horizon/iso/windows-helper.zip ]; then

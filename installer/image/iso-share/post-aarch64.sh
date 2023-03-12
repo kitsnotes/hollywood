@@ -40,7 +40,7 @@ REFINDCFG
 
 # Get the size of the binaries to go in the El Torito image in kB
 EFIToritoSize=$(du -s cdroot/EFI/ | cut -f 1)
-KernelToritoSize=$(du -s cdroot/boot/vmlinuz.arm64 | cut -f 1)
+KernelToritoSize=$(du -s cdroot/boot/vmlinuz-stable.arm64 | cut -f 1)
 InitrdToritoSize=$(du -s cdroot/boot/initramfs-stable.arm64 | cut -f 1)
 KernelAToritoSize=$(du -s cdroot/boot/vmlinuz-asahi.arm64 | cut -f 1)
 InitrdAToritoSize=$(du -s cdroot/boot/initramfs-asahi.arm64 | cut -f 1)
