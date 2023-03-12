@@ -7,10 +7,10 @@ mkdir -p cdroot/EFI/BOOT/drivers/
 mkdir -p cdroot/EFI/BOOT/icons/
 
 cp /usr/share/refind/refind_x64.efi cdroot/EFI/BOOT/BOOTX64.EFI
-cp /usr/share/refind/drivers_x64/* cdroot/EFI/BOOT/drivers/
+cp /usr/share/refind/drivers_x64/* cdroot/EFI/BOOT/drivers_x64/
 cp /usr/share/refind/icons/*.png cdroot/EFI/BOOT/icons/
 
-cat >cdroot/EFI/BOOT/refind.conf <<REFINDCFG
+cat >cdroot/EFI/BOOT/refindx64.conf <<REFINDCFG
 timeout -1
 log_level 0
 use_graphics_for linux, windows, osx
@@ -35,9 +35,9 @@ echo "This file is required for booting on Macintosh systems" > cdroot/mach_kern
 mkdir -p cdroot/System/Library/CoreServices
 touch cdroot/System/Library/CoreServices/mach_kernel
 mkdir cdroot/System/Library/CoreServices/icons
-mkdir cdroot/System/Library/CoreServices/drivers
+mkdir cdroot/System/Library/CoreServices/drivers_x64
 cp /usr/share/refind/refind_x64.efi cdroot/System/Library/CoreServices/boot.efi
-cp /usr/share/refind/drivers_x64/* cdroot/System/Library/CoreServices/drivers/
+cp /usr/share/refind/drivers_x64/* cdroot/System/Library/CoreServices/drivers_x64/
 cp /usr/share/refind/icons/*.png cdroot/System/Library/CoreServices/icons/
 
 cat >cdroot/System/Library/CoreServices/SystemVersion.plist <<PLIST

@@ -2,14 +2,14 @@
 
 mkdir -p cdroot/boot/
 mkdir -p cdroot/EFI/BOOT/
-mkdir -p cdroot/EFI/BOOT/drivers/
+mkdir -p cdroot/EFI/BOOT/drivers_aa64/
 mkdir -p cdroot/EFI/BOOT/icons/
 
 cp /usr/share/refind/refind_aa64.efi cdroot/EFI/BOOT/BOOTAA64.EFI
-cp /usr/share/refind/drivers_aa64/* cdroot/EFI/BOOT/drivers/
+cp /usr/share/refind/drivers_aa64/* cdroot/EFI/BOOT/drivers_aa64/
 cp /usr/share/refind/icons/*.png cdroot/EFI/BOOT/icons/
 
-cat >cdroot/EFI/BOOT/refind.conf <<REFINDCFG
+cat >cdroot/EFI/BOOT/refindaa64.conf <<REFINDCFG
 timeout 10
 log_level 0
 use_graphics_for linux, windows, osx
