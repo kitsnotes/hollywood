@@ -889,8 +889,8 @@ bool Bootloader::execute() const {
             /* copy over our refind files */
             refind_files = {
                 "/refind_aa64.efi",
-                "/drivers_aarch64/ext4_aa64.efi",
-                "/drivers_aarch64/btrfs_aa64.efi",
+                "/drivers_a64/ext4_aa64.efi",
+                "/drivers_a64/btrfs_aa64.efi",
                 "/icons/arrow_left.png",
                 "/icons/arrow_right.png",
                 "/icons/func_about.png",
@@ -904,6 +904,9 @@ bool Bootloader::execute() const {
                 "/icons/func_shutdown.png",
                 "/icons/mouse.png",
                 "/icons/os_linux.png",
+                "/icons/os_mac.png",
+                "/icons/os_win.png",
+                "/icons/os_hollywood.png",
                 "/icons/os_unknown.png",
                 "/icons/transparent.png"
             };

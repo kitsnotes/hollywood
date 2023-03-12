@@ -472,18 +472,7 @@ QString HorizonWizard::toHScript() {
 
     lines << QString::fromStdString("version " + version);    
     lines << ("kernel " + QString::fromStdString(this->kernel));
-    switch(arch) {
-    case aarch64:
-        lines << "bootloader grub-efi";
-        break;
-    case x86_64:
-        lines << "bootloader refind";
-        break;
-    case UnknownCPU:
-        /* no arch line.  hopefully it's run on the target. */
-        lines << "bootloader grub-efi";
-        break;
-    }
+    lines << "bootloader refind";
 
     lines << "language en_US.UTF-8";
 
@@ -527,7 +516,6 @@ QString HorizonWizard::toHScript() {
 
     lines << "svcenable killprocs shutdown";
     lines << "svcenable savecache shutdown";
-    lines << "svcenable savekeymaps shutdown";
     lines << "svcenable mount-ro shutdown";
 
     /* char *root = encrypt_pw(field("rootpw").toString().toStdString().c_str());
