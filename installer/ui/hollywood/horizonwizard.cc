@@ -556,6 +556,8 @@ QString HorizonWizard::toHScript() {
         }
     }
 
+    lines << "pkginstall hollywood-accessories";
+
     return lines.join("\n");
 }
 
