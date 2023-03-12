@@ -37,7 +37,7 @@ ErrorPage::ErrorPage(QWidget *parent) : HorizonWizardPage(parent) {
     QPushButton *viewLog = new QPushButton(tr("&View Log"));
     viewLog->setWhatsThis(tr("Opens a log viewer, in which you can examine the contents of the installation log file."));
     connect(viewLog, &QPushButton::clicked, [=]{
-        QFile log("/var/log/horizon/executor.log");
+        QFile log("/var/log/hollywood-install.log");
         log.open(QFile::ReadOnly);
         HorizonHelpWindow window(&log, this, true);
         window.exec();
@@ -49,8 +49,8 @@ ErrorPage::ErrorPage(QWidget *parent) : HorizonWizardPage(parent) {
 
         QString dir = QFileDialog::getExistingDirectory(this, tr("Choose Directory"), "/target/root");
         if(dir.size() > 0) {
-            success = QFile::copy("/etc/horizon/installfile", dir + QDir::separator() + "installfile");
-            if(success) success = QFile::copy("/var/log/horizon/executor.log", dir + QDir::separator() + "install.log");
+            success = QFile::copy("/etc/hollywood.hs", dir + QDir::separator() + "installfile");
+            if(success) success = QFile::copy("/var/log/hollywood-install.log", dir + QDir::separator() + "install.log");
         }
 
         if(!success) {
