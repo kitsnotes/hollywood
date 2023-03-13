@@ -1168,7 +1168,6 @@ void Surface::completeXdgConfigure()
         if(!hwComp->useAnimations() || m_maximized_complete)
         {
             setPosition(pos);
-            qDebug() << "setPosition" << pos;
             hwComp->triggerRender();
         }
         else
@@ -1198,6 +1197,8 @@ void Surface::completeXdgConfigure()
                 connect(group, &QParallelAnimationGroup::finished, [this]() {
                     m_maximized_complete = true;
                     m_resize_animation = false;
+                    renderDecoration();
+                    hwComp->triggerRender();
                 });
             }
         }
@@ -1241,6 +1242,8 @@ void Surface::completeXdgConfigure()
                 group->start(QPropertyAnimation::DeleteWhenStopped);
                 connect(group, &QParallelAnimationGroup::finished, [this]() {
                     m_resize_animation = false;
+                    renderDecoration();
+                    hwComp->triggerRender();
                 });
             }
         }

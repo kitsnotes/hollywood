@@ -29,6 +29,7 @@ HEADERS += \
     include/output.h \
     include/qtshell.h \
     include/screencopy.h \
+    include/shortcuts.h \
     include/surfaceobject.h \
     include/outputwnd.h \
     include/view.h \
@@ -48,6 +49,7 @@ SOURCES += \
     src/output.cc \
     src/qtshell.cc \
     src/screencopy.cc \
+    src/shortcuts.cc \
     src/surfaceobject.cc \
     src/compositor.cc \
     src/outputwnd.cc \

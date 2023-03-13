@@ -48,6 +48,7 @@ class GtkShell;
 class GtkSurface;
 class QtShell;
 class QtSurface;
+class ShortcutManager;
 class Compositor : public QWaylandCompositor
 {
     Q_OBJECT
@@ -102,6 +103,7 @@ public:
     bool processHasTwilightMode(quint64 pid) const;
     bool isRunningLoginManager() const { return m_sddm; }
     QPointF correctedPosition(const QPointF &point);
+    ShortcutManager* shortcuts();
 protected:
     void adjustCursorSurface(QWaylandSurface *surface, int hotspotX, int hotspotY);
     void recycleSurfaceObject(Surface *obj);
@@ -218,6 +220,8 @@ private:
 
     bool m_hasFullscreenSurface = false;
     Surface *m_fullscreenSurface = nullptr;
+
+    ShortcutManager *m_shortcuts = nullptr;
 };
 
 #endif // WINDOWCOMPOSITOR_H

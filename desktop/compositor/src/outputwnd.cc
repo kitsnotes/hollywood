@@ -37,6 +37,7 @@
 #include "wallpaper.h"
 #include "output.h"
 #include "surfaceobject.h"
+#include "shortcuts.h"
 
 unsigned int VBO;
 
@@ -819,7 +820,8 @@ void OutputWindow::sendMouseEvent(QMouseEvent *e, SurfaceView *target)
 
 void OutputWindow::keyPressEvent(QKeyEvent *e)
 {
-    hwComp->defaultSeat()->sendKeyPressEvent(e->nativeScanCode());
+    if(!hwComp->shortcuts()->checkAndHandleCombo(e->keyCombination()))
+        hwComp->defaultSeat()->sendKeyPressEvent(e->nativeScanCode());
 }
 
 void OutputWindow::keyReleaseEvent(QKeyEvent *e)

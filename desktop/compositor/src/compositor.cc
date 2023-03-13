@@ -19,6 +19,7 @@
 #include "fullscreen.h"
 
 #include "surfaceobject.h"
+#include "shortcuts.h"
 
 #include <QSettings>
 #include <QPainter>
@@ -40,6 +41,7 @@ Compositor::Compositor(bool sddm)
     m_fs(new FullscreenShell(this)),
     m_sddm(sddm),
     m_desktop_bg(QColor(HOLLYWOOD_DEF_DESKTOP_BG))
+  , m_shortcuts(new ShortcutManager(this))
 {
     loadSettings();
     m_cfgwatch = new QFileSystemWatcher();
@@ -265,6 +267,11 @@ QPointF Compositor::correctedPosition(const QPointF &point)
     }
 
     return returnPoint;
+}
+
+ShortcutManager *Compositor::shortcuts()
+{
+    return m_shortcuts;
 }
 
 QList<SurfaceView*> Compositor::views() const
