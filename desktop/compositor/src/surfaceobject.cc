@@ -788,7 +788,6 @@ void Surface::handleLayerShellPopupPositioning()
 
 void Surface::onSurfaceSourceGeometryChanged()
 {
-    qDebug() << "Surface::onSurfaceSourceGeometryChanged" << surface()->sourceGeometry();
     //m_viewport = surface()->sourceGeometry();
 }
 
@@ -1319,7 +1318,6 @@ void Surface::onXdgWindowGeometryChanged()
     if(!m_surfaceInit)
     {
         // TODO: reposition
-        qDebug() << surfaceSize();
         m_surfaceInit = true;
     }
 }

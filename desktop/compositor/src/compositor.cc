@@ -541,7 +541,6 @@ void Compositor::onXdgStartResize(QWaylandSeat *seat,
 
 void Compositor::onSetTransient(QWaylandSurface *parent, const QPoint &relativeToParent, bool inactive)
 {
-    qDebug() << "onSetTransient";
     Q_UNUSED(relativeToParent);
     Q_UNUSED(inactive);
 
@@ -635,7 +634,6 @@ void Compositor::appMenuCreated(AppMenu *m)
 
 void Compositor::menuServerDestroyed()
 {
-    qDebug() << "menuserver object destroyed";
     disconnect(m_menuServer, &OriginullMenuServer::menuServerDestroyed,
                this, &Compositor::menuServerDestroyed);
     delete m_menuServer;
@@ -811,14 +809,11 @@ QWaylandClient *Compositor::popupClient() const
 
 void Compositor::raise(Surface *obj)
 {
-    qDebug() << "Compositor::raise on " << obj->m_uuid;
     /*if(obj->m_xdgPopup != nullptr)
         return;*/
     if(obj->isSpecialShellObject())
-    {
-        qDebug() << "special shell object";
         return;
-    }
+
     // Since the compositor is only tracking unparented objects
     // we leave the ordering of children to SurfaceObject
     if((obj->m_xdgTopLevel ||

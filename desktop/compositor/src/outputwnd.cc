@@ -366,7 +366,6 @@ void OutputWindow::drawShadowForObject(uint shadowOffset, Surface *obj)
 
 void OutputWindow::drawDesktopInfoString()
 {
-    return;
     QImage* img = hwComp->desktopLabelImage();
 
     QOpenGLFunctions *functions = context()->functions();
@@ -814,6 +813,7 @@ void OutputWindow::sendMouseEvent(QMouseEvent *e, SurfaceView *target)
     QPointF mappedPos = adjustedPoint;
     if (target)
         mappedPos -= target->surfaceObject()->surfacePosition();
+
     QMouseEvent viewEvent(e->type(), mappedPos, adjustedPoint, e->button(), e->buttons(), e->modifiers());
     hwComp->handleMouseEvent(target, &viewEvent);
 }
