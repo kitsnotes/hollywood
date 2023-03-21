@@ -705,6 +705,7 @@ void OutputWindow::mousePressEvent(QMouseEvent *e)
         sendMouseEvent(&moveEvent, m_mouseSelectedSurfaceObject->primaryView());
     }
     sendMouseEvent(&e2, m_mouseSelectedSurfaceObject->primaryView()); //(m_output));
+    hwComp->resetIdle();
 }
 
 void OutputWindow::mouseReleaseEvent(QMouseEvent *e)
@@ -736,6 +737,7 @@ void OutputWindow::mouseReleaseEvent(QMouseEvent *e)
 
         setCursor(Qt::ArrowCursor);
     }
+    hwComp->resetIdle();
 }
 
 void OutputWindow::mouseMoveEvent(QMouseEvent *e)
@@ -803,6 +805,7 @@ void OutputWindow::mouseMoveEvent(QMouseEvent *e)
     }
         break;
     }
+    hwComp->resetIdle();
 }
 
 void OutputWindow::sendMouseEvent(QMouseEvent *e, SurfaceView *target)
@@ -816,17 +819,20 @@ void OutputWindow::sendMouseEvent(QMouseEvent *e, SurfaceView *target)
 
     QMouseEvent viewEvent(e->type(), mappedPos, adjustedPoint, e->button(), e->buttons(), e->modifiers());
     hwComp->handleMouseEvent(target, &viewEvent);
+    hwComp->resetIdle();
 }
 
 void OutputWindow::keyPressEvent(QKeyEvent *e)
 {
     if(!hwComp->shortcuts()->checkAndHandleCombo(e->keyCombination()))
         hwComp->defaultSeat()->sendKeyPressEvent(e->nativeScanCode());
+    hwComp->resetIdle();
 }
 
 void OutputWindow::keyReleaseEvent(QKeyEvent *e)
 {
     hwComp->defaultSeat()->sendKeyReleaseEvent(e->nativeScanCode());
+    hwComp->resetIdle();
 }
 
 void OutputWindow::wheelEvent(QWheelEvent *e)
@@ -852,6 +858,7 @@ void OutputWindow::wheelEvent(QWheelEvent *e)
     // TODO: flip-flop the values if we do not want 'natural' scrolling
     hwComp->defaultSeat()->sendMouseWheelEvent(vert ? Qt::Vertical : Qt::Horizontal,
                                                delta);
+    hwComp->resetIdle();
 }
 
 void OutputWindow::touchEvent(QTouchEvent *e)
@@ -862,4 +869,5 @@ void OutputWindow::touchEvent(QTouchEvent *e)
                 m_mouseSelectedSurfaceObject->viewForOutput(m_output) : viewAt(adjustedPoint);
 
     hwComp->defaultSeat()->sendFullTouchEvent(view->surface(), e);
+    hwComp->resetIdle();
 }

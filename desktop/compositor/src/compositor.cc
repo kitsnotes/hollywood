@@ -29,9 +29,10 @@
 #include <sys/utsname.h>
 
 Compositor::Compositor(bool sddm)
-    : m_wlShell(new QWaylandWlShell(this)),
-    m_xdgShell(new HWWaylandXdgShell(this)),
-    m_xdgDecoration(new QWaylandXdgDecorationManagerV1()),
+    : m_wlShell(new QWaylandWlShell(this))
+    , m_desktop_bg(QColor(HOLLYWOOD_DEF_DESKTOP_BG))
+    , m_xdgShell(new HWWaylandXdgShell(this))
+    , m_xdgDecoration(new QWaylandXdgDecorationManagerV1()),
     m_hwPrivate(new OriginullProtocol(this)),
     m_layerShell(new WlrLayerShellV1(this)),
     m_wndmgr(new PlasmaWindowManagement(this)),
@@ -39,10 +40,11 @@ Compositor::Compositor(bool sddm)
     m_gtk(new GtkShell(this)),
     m_qt(new QtShell(this)),
     m_fs(new FullscreenShell(this)),
-    m_sddm(sddm),
-    m_desktop_bg(QColor(HOLLYWOOD_DEF_DESKTOP_BG))
+    m_sddm(sddm)
   , m_shortcuts(new ShortcutManager(this))
+  , m_timeout(new QTimer(this))
 {
+    m_timeout->setTimerType(Qt::VeryCoarseTimer);
     loadSettings();
     m_cfgwatch = new QFileSystemWatcher();
     m_cfgwatch->addPath(m_configfile);
@@ -69,6 +71,7 @@ Compositor::Compositor(bool sddm)
     connect(m_fs, &FullscreenShell::surfacePresented, this, &Compositor::onFullscreenSurfaceRequested);
 
     generateDesktopInfoLabelImage();
+    connect(m_timeout, &QTimer::timeout, this, &Compositor::idleTimeout);
 }
 
 Compositor::~Compositor()
@@ -442,14 +445,70 @@ void Compositor::loadSettings()
     m_legacyExperience = settings.value("LegacyExperience", false).toBool();
 
     settings.endGroup();
+    settings.beginGroup(QLatin1String("Energy"));
 
+    // TODO: put these defaults into hollywood.h
+    m_timeout_display = settings.value("DisplayTimeout", 60).toUInt();
+    m_timeout_sleep = settings.value("SleepTimeout", 300).toUInt();
+
+    // monitors should not sleep before the system does
+    if(m_timeout_display >= m_timeout_sleep)
+        m_timeout_display = 0;
+
+    settings.endGroup();
     if(m_apperance != old_app)
     {
         // dark/light mode changed - redraw SSD's
         for(auto s : m_surfaces)
             s->renderDecoration();
     }
+
+    if(m_timeout->isActive())
+        m_timeout->stop();
+    setupIdleTimer();
     emit settingsChanged();
+}
+
+void Compositor::setupIdleTimer()
+{
+    // setup the timer
+    if(!m_display_sleeping && m_timeout_display > 0)
+        m_timeout->start(m_timeout_display*1000);
+    else if(m_display_sleeping || (m_timeout_display == 0 && m_timeout_sleep > 0))
+        m_timeout->start(m_timeout_sleep*1000);
+}
+
+void Compositor::idleTimeout()
+{
+    // idle inhibited by client, don't do anything
+    if(m_idle_inhibit)
+        return;
+
+    // timeout to handle a display sleep
+    if(!m_display_sleeping && m_timeout_display > 0)
+    {
+        // display not sleeping, display timeout > 0 so this
+        // will be a display sleep command
+
+        if(m_lock_after_sleep == 0)
+            lockSession();
+        else
+            QTimer::singleShot(m_lock_after_sleep, this, &Compositor::lockSession);
+
+        m_display_sleeping = false;
+        if(m_timeout_sleep > 0)
+            setupIdleTimer();
+    }
+
+    // timeout to handle a system sleep
+    if(m_display_sleeping ||
+       (m_timeout_display == 0 &&
+        m_timeout_sleep > 0))
+    {
+        // we don't have display sleep but we do have system sleep
+        lockSession();
+        // TODO: tell session to put system to sleep
+    }
 }
 
 void Compositor::onWlShellSurfaceCreated(QWaylandWlShellSurface *wlShellSurface)
@@ -588,6 +647,11 @@ void Compositor::triggerRender()
     {
         out->window()->requestUpdate();
     }
+}
+
+void Compositor::lockSession()
+{
+
 }
 
 void Compositor::startRender()
@@ -876,6 +940,13 @@ bool Compositor::legacyRender() const
 bool Compositor::useAnimations() const
 {
     return true;
+}
+
+void Compositor::resetIdle()
+{
+    m_timeout->stop();
+    if(!m_idle_inhibit)
+        setupIdleTimer();
 }
 
 void Compositor::removeOutput(Output *output)

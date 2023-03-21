@@ -65,6 +65,8 @@ public:
     bool legacyRender() const;
     bool useAnimations() const;
 
+    void resetIdle();
+
     QList<Surface*> surfaceObjects() const { return m_surfaces; }
     QVector<Surface*> surfaceByZOrder() { return m_zorder; }
     QList<Surface*> desktopSurfaces() const { return m_desktops; }
@@ -115,7 +117,7 @@ signals:
     void settingsChanged();
 public slots:
     void triggerRender();
-
+    void lockSession();
 protected slots:
     void surfaceHasContentChanged();
     void onStartMove(QWaylandSeat *seat);
@@ -145,6 +147,8 @@ private slots:
     void menuServerDestroyed();
     void configChanged();
     void loadSettings();
+    void setupIdleTimer();
+    void idleTimeout();
 private:
     void sendWindowUUID(QUuid &uuid);
 private:
@@ -163,6 +167,8 @@ private:
     uint m_decorationSize = 30;
     uint m_borderSize = 1;
     uint m_apperance = 0;
+    QColor m_accent;
+    QColor m_desktop_bg;
 
     QList<Output*> m_outputs;
     uint m_id = 0;
@@ -191,6 +197,7 @@ private:
     // fullscreen-shell protocol support
     FullscreenShell *m_fs = nullptr;
 
+    // running under user 'sddm'
     bool m_sddm = false;
 
     // Our cursor
@@ -201,9 +208,8 @@ private:
     OriginullMenuServer *m_menuServer = nullptr;
     uint m_menuServerReserved = 0;
     QList<Surface*> m_desktops;
-    QColor m_accent;
-    QColor m_desktop_bg;
 
+    // layer shell objects
     QList<Surface*> m_layer_bg;
     QList<Surface*> m_layer_bottom;
     QList<Surface*> m_layer_top;
@@ -221,7 +227,16 @@ private:
     bool m_hasFullscreenSurface = false;
     Surface *m_fullscreenSurface = nullptr;
 
+    // global hotkey / shortcuts
     ShortcutManager *m_shortcuts = nullptr;
+
+    // idle tracking and timeouts
+    uint m_timeout_display;
+    uint m_timeout_sleep;
+    uint m_lock_after_sleep;
+    QTimer *m_timeout = nullptr;
+    bool m_display_sleeping = false;
+    bool m_idle_inhibit = false;
 };
 
 #endif // WINDOWCOMPOSITOR_H
