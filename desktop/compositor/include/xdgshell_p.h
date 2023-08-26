@@ -10,7 +10,7 @@
 #include <QtWaylandCompositor/QWaylandResource>
 #include <QtWaylandCompositor/QWaylandShell>
 #include <QtWaylandCompositor/QWaylandShellSurface>
-#include <QtWaylandCompositor/qwaylandquickchildren.h>
+//#include <QtWaylandCompositor/qwaylandquickchildren.h>
 #include <QtWaylandCompositor/private/qwaylandcompositorextension_p.h>
 #include <QtWaylandCompositor/private/qwaylandshell_p.h>
 #include <QtWaylandCompositor/private/qwayland-server-xdg-shell.h>

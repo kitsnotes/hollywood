@@ -576,9 +576,9 @@ Q_NEVER_INLINE PhSwatchPtr getCachedSwatchOfQPalette(
 } // namespace
 } // namespace Phantom
 
-class ArionStylePrivate {
+class HollywoodStylePrivate {
 public:
-  ArionStylePrivate();
+  HollywoodStylePrivate();
 
   // A fast'n'easy hash of QPalette::cacheKey()+QPalette::currentColorGroup()
   // of only the head element of swatchCache list. The most common thing that
@@ -1327,20 +1327,20 @@ Q_NEVER_INLINE void paintBorderedRoundRect(QPainter* p, QRect rect,
 } // namespace Phantom
 
 
-ArionStylePrivate::ArionStylePrivate() : headSwatchFastKey(0) {}
+HollywoodStylePrivate::HollywoodStylePrivate() : headSwatchFastKey(0) {}
 
-ArionStyle::ArionStyle() : d(new ArionStylePrivate) {
+HollywoodStyle::HollywoodStyle() : d(new HollywoodStylePrivate) {
   setObjectName(QLatin1String("Phantom"));
 }
 
-ArionStyle::~ArionStyle() { delete d; }
+HollywoodStyle::~HollywoodStyle() { delete d; }
 
 // Draw text in a rectangle. The current pen set on the painter is used, unless
 // an explicit textRole is set, in which case the palette will be used. The
 // enabled bool indicates whether the text is enabled or not, and can influence
 // how the text is drawn outside of just color. Wrapping and alignment flags
 // can be passed in `alignment`.
-void ArionStyle::drawItemText(QPainter* painter, const QRect& rect,
+void HollywoodStyle::drawItemText(QPainter* painter, const QRect& rect,
                                 int alignment, const QPalette& pal,
                                 bool enabled, const QString& text,
                                 QPalette::ColorRole textRole) const {
@@ -1365,7 +1365,7 @@ void ArionStyle::drawItemText(QPainter* painter, const QRect& rect,
 }
 
 
-void ArionStyle::drawPrimitive(PrimitiveElement elem,
+void HollywoodStyle::drawPrimitive(PrimitiveElement elem,
                                  const QStyleOption* option, QPainter* painter,
                                  const QWidget* widget) const {
   Q_ASSERT(option);
@@ -2129,7 +2129,7 @@ void ArionStyle::drawPrimitive(PrimitiveElement elem,
   }
 }
 
-void ArionStyle::drawControl(ControlElement element,
+void HollywoodStyle::drawControl(ControlElement element,
                                const QStyleOption* option, QPainter* painter,
                                const QWidget* widget) const {
 #ifdef BUILD_WITH_EASY_PROFILER
@@ -3137,11 +3137,11 @@ void ArionStyle::drawControl(ControlElement element,
   }
 }
 
-QPalette ArionStyle::standardPalette() const {
+QPalette HollywoodStyle::standardPalette() const {
   return QCommonStyle::standardPalette();
 }
 
-void ArionStyle::drawComplexControl(ComplexControl control,
+void HollywoodStyle::drawComplexControl(ComplexControl control,
                                       const QStyleOptionComplex* option,
                                       QPainter* painter,
                                       const QWidget* widget) const {
@@ -4090,7 +4090,7 @@ void ArionStyle::drawComplexControl(ComplexControl control,
   }
 }
 
-int ArionStyle::pixelMetric(PixelMetric metric, const QStyleOption* option,
+int HollywoodStyle::pixelMetric(PixelMetric metric, const QStyleOption* option,
                               const QWidget* widget) const {
   int val = -1;
   switch (metric) {
@@ -4281,7 +4281,7 @@ int ArionStyle::pixelMetric(PixelMetric metric, const QStyleOption* option,
   return (int)Phantom::dpiScaled(val);
 }
 
-QSize ArionStyle::sizeFromContents(ContentsType type,
+QSize HollywoodStyle::sizeFromContents(ContentsType type,
                                      const QStyleOption* option,
                                      const QSize& size,
                                      const QWidget* widget) const {
@@ -4587,9 +4587,9 @@ QSize ArionStyle::sizeFromContents(ContentsType type,
   return newSize;
 }
 
-void ArionStyle::polish(QApplication* app) { QCommonStyle::polish(app); }
+void HollywoodStyle::polish(QApplication* app) { QCommonStyle::polish(app); }
 
-void ArionStyle::polish(QWidget* widget) {
+void HollywoodStyle::polish(QWidget* widget) {
   QCommonStyle::polish(widget);
   // Leaving this code here to debug/remove hover stuff if necessary
 #if 0
@@ -4623,9 +4623,9 @@ void ArionStyle::polish(QWidget* widget) {
 #endif
 }
 
-void ArionStyle::polish(QPalette& pal) { QCommonStyle::polish(pal); }
+void HollywoodStyle::polish(QPalette& pal) { QCommonStyle::polish(pal); }
 
-void ArionStyle::unpolish(QWidget* widget) {
+void HollywoodStyle::unpolish(QWidget* widget) {
   QCommonStyle::unpolish(widget);
   // Leaving this code here to debug/remove hover stuff if necessary
 #if 0
@@ -4658,9 +4658,9 @@ void ArionStyle::unpolish(QWidget* widget) {
 #endif
 }
 
-void ArionStyle::unpolish(QApplication* app) { QCommonStyle::unpolish(app); }
+void HollywoodStyle::unpolish(QApplication* app) { QCommonStyle::unpolish(app); }
 
-QRect ArionStyle::subControlRect(ComplexControl control,
+QRect HollywoodStyle::subControlRect(ComplexControl control,
                                    const QStyleOptionComplex* option,
                                    SubControl subControl,
                                    const QWidget* widget) const {
@@ -4987,27 +4987,27 @@ QRect ArionStyle::subControlRect(ComplexControl control,
   return rect;
 }
 
-QRect ArionStyle::itemPixmapRect(const QRect& r, int flags,
+QRect HollywoodStyle::itemPixmapRect(const QRect& r, int flags,
                                    const QPixmap& pixmap) const {
   return QCommonStyle::itemPixmapRect(r, flags, pixmap);
 }
-void ArionStyle::drawItemPixmap(QPainter* painter, const QRect& rect,
+void HollywoodStyle::drawItemPixmap(QPainter* painter, const QRect& rect,
                                   int alignment, const QPixmap& pixmap) const {
   QCommonStyle::drawItemPixmap(painter, rect, alignment, pixmap);
 }
 QStyle::SubControl
-ArionStyle::hitTestComplexControl(ComplexControl cc,
+HollywoodStyle::hitTestComplexControl(ComplexControl cc,
                                     const QStyleOptionComplex* opt,
                                     const QPoint& pt, const QWidget* w) const {
   return QCommonStyle::hitTestComplexControl(cc, opt, pt, w);
 }
-QPixmap ArionStyle::generatedIconPixmap(QIcon::Mode iconMode,
+QPixmap HollywoodStyle::generatedIconPixmap(QIcon::Mode iconMode,
                                           const QPixmap& pixmap,
                                           const QStyleOption* opt) const {
   return QCommonStyle::generatedIconPixmap(iconMode, pixmap, opt);
 }
 
-int ArionStyle::styleHint(StyleHint hint, const QStyleOption* option,
+int HollywoodStyle::styleHint(StyleHint hint, const QStyleOption* option,
                             const QWidget* widget,
                             QStyleHintReturn* returnData) const {
   switch (hint) {
@@ -5158,7 +5158,7 @@ int ArionStyle::styleHint(StyleHint hint, const QStyleOption* option,
   return QCommonStyle::styleHint(hint, option, widget, returnData);
 }
 
-QRect ArionStyle::subElementRect(SubElement sr, const QStyleOption* opt,
+QRect HollywoodStyle::subElementRect(SubElement sr, const QStyleOption* opt,
                                    const QWidget* w) const {
   switch (sr) {
   case SE_ProgressBarLabel:

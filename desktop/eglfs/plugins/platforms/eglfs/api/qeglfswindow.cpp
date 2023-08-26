@@ -145,7 +145,11 @@ void HWEglFSWindow::create()
         m_rasterCompositingContext->setScreen(window()->screen());
         if (Q_UNLIKELY(!m_rasterCompositingContext->create()))
             qFatal("EGLFS: Failed to create compositing context");
+#if QT_VERSION < 0x060500
         compositor->setTarget(m_rasterCompositingContext, window(), screen->rawGeometry());
+#else
+	compositor->setTargetWindow(window(), screen->rawGeometry());
+#endif
         compositor->setRotation(qEnvironmentVariableIntValue("QT_QPA_EGLFS_ROTATION"));
         // If there is a "root" window into which raster and QOpenGLWidget content is
         // composited, all other contexts must share with its context.
@@ -155,6 +159,10 @@ void HWEglFSWindow::create()
             // AA_ShareOpenGLContexts. Set the attribute to be fully consistent.
             QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
         }
+#if QT_VERSION > 0x060500
+	QOpenGLCompositor *compositor = QOpenGLCompositor::instance();
+	    compositor->setTargetContext(m_rasterCompositingContext);
+#endif
     }
 #endif // QT_NO_OPENGL
 }

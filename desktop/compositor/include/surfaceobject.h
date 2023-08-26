@@ -78,6 +78,7 @@ public:
     QPointF decorationPosition() const;
     void setPosition(const QPointF &pos);
     uint shadowSize() const;
+    bool inhibitsIdle() const;
 
     QSize surfaceSize() const;
     QSize decoratedSize() const;

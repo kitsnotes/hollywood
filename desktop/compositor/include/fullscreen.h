@@ -7,7 +7,7 @@
 
 #include <QObject>
 #include <QWaylandCompositorExtensionTemplate>
-#include <QWaylandQuickExtension>
+//#include <QWaylandQuickExtension>
 #include <QWaylandCompositor>
 #include <QWaylandResource>
 

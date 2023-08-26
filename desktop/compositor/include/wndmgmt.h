@@ -8,7 +8,7 @@
 #include <QUuid>
 
 #include <QWaylandCompositorExtensionTemplate>
-#include <QWaylandQuickExtension>
+//#include <QWaylandQuickExtension>
 #include <QWaylandCompositor>
 #include <QIcon>
 

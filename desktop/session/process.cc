@@ -265,7 +265,7 @@ void ManagedProcess::setEnvironmentForProcess()
     else
     {
         env.remove("QT_QPA_PLATFORM");
-        env.insert("QT_QPA_PLATFORM", "hollywood");
+        env.insert("QT_QPA_PLATFORM", "wayland");
     }
 
     // exclude items not wayland dependent

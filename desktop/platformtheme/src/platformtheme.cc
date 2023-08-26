@@ -114,7 +114,7 @@ void HollywoodPlatformTheme::secondInit()
 
 }
 
-#if QT_VERSION > 0x060000
+#if QT_VERSION > 0x060000 && QT_VERSION < 0x060500
 QPlatformTheme::Appearance HollywoodPlatformTheme::appearance() const
 {
     //0x0001 == light, 0x0002 == dark

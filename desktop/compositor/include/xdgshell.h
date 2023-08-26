@@ -11,7 +11,7 @@
 #include <QtWaylandCompositor/QWaylandShell>
 #include <QtWaylandCompositor/QWaylandShellSurface>
 #include <QtWaylandCompositor/QWaylandSurface>
-#include <QtWaylandCompositor/qwaylandquickchildren.h>
+//#include <QtWaylandCompositor/qwaylandquickchildren.h>
 #include <QtWaylandCompositor/private/qwaylandcompositorextension_p.h>
 #include <QtWaylandCompositor/private/qwaylandshell_p.h>
 #include <QtWaylandCompositor/private/qwayland-server-xdg-shell.h>
@@ -83,7 +83,7 @@ public:
     Q_INVOKABLE void initialize(HWWaylandXdgShell* xdgShell, QWaylandSurface *surface, const QWaylandResource &resource);
 
     Qt::WindowType windowType() const override;
-    QWaylandQuickShellIntegration *createIntegration(QWaylandQuickShellSurfaceItem *item) override;
+//    QWaylandQuickShellIntegration *createIntegration(QWaylandQuickShellSurfaceItem *item) override;
 
     HWWaylandXdgShell *shell() const;
     QWaylandSurface *surface() const;
