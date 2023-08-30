@@ -813,6 +813,8 @@ void Compositor::handleResize(SurfaceView *target, const QSize &initialSize, con
         wlShellSurface->sendConfigure(newSize, edges);
     }
 
+    // TODO: Qt Surface resize
+
     HWWaylandXdgSurface *xdgSurface = target->surfaceObject()->xdgSurface();
     if (xdgSurface)
     {

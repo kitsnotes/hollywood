@@ -230,7 +230,7 @@ void StageApplication::logoffSession()
 
 void StageApplication::configChanged()
 {
-    qDebug() << "configChanged";
+    qDebug() << "Stage: configChanged";
     loadSettings();
 }
 
@@ -275,7 +275,7 @@ void StageApplication::playBell()
 
 void StageApplication::loadSettings()
 {
-    qDebug() << "Loading Settings";
+    qDebug() << "Stage: Loading Settings";
     QSettings settings(QSettings::UserScope,
        QLatin1String("originull"), QLatin1String("hollywood"));
     m_configfile = settings.fileName();
