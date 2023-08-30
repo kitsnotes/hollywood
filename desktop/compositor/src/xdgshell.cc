@@ -1009,6 +1009,7 @@ uint HWWaylandXdgToplevel::sendConfigure(const QSize &size, const QList<int> &st
     QList<State> s;
     for (auto state : states)
         s << State(state);
+
     return sendConfigure(size, s);
 }
 
@@ -1141,7 +1142,6 @@ uint HWWaylandXdgToplevel::sendResizing(const QSize &maxSize)
         conf.states.append(HWWaylandXdgToplevel::State::ResizingState);
     conf.states.removeOne(HWWaylandXdgToplevel::State::MaximizedState);
     conf.states.removeOne(HWWaylandXdgToplevel::State::FullscreenState);
-
     return sendConfigure(maxSize, conf.states);
 }
 

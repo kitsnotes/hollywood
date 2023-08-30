@@ -805,6 +805,7 @@ void Surface::onBufferScaleChanged()
 
 void Surface::onXdgStartResize(QWaylandSeat *seat, Qt::Edges edges)
 {
+    qDebug() << "onXdgStartResize";
     hwComp->onXdgStartResize(seat, edges);
     renderDecoration();
 }
@@ -1031,6 +1032,7 @@ void Surface::createXdgTopLevelSurface(HWWaylandXdgToplevel *topLevel)
     connect(m_xdgTopLevel, &HWWaylandXdgToplevel::parentToplevelChanged, this, &Surface::onXdgParentTopLevelChanged);
     connect(m_xdgTopLevel, &HWWaylandXdgToplevel::titleChanged, this, &Surface::onXdgTitleChanged);
     connect(m_xdgTopLevel, &HWWaylandXdgToplevel::appIdChanged, this, &Surface::onXdgAppIdChanged);
+    //connect(m_xdgTopLevel, &HWWaylandXdgToplevel::resizingChanged, this, &Surface::completeXdgConfigure);
     connect(m_xdgTopLevel, &HWWaylandXdgToplevel::maximizedChanged, this, &Surface::completeXdgConfigure);
     connect(m_xdgTopLevel, &HWWaylandXdgToplevel::fullscreenChanged, this, &Surface::completeXdgConfigure);
 }
@@ -1158,6 +1160,7 @@ void Surface::onXdgSetMinimized()
 
 void Surface::completeXdgConfigure()
 {
+    qDebug() << "completeXdgConfigure();";
     renderDecoration();
     if(m_maximized)
     {

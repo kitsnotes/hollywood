@@ -220,8 +220,9 @@ void OutputWindow::drawTextureForObject(Surface *obj)
         {
             QOpenGLFunctions *functions = context()->functions();
 
-            if (m_mouseSelectedSurfaceObject == obj && m_grabState == ResizeGrab && m_resizeAnchored)
-                obj->setPosition(getAnchoredPosition(m_resizeAnchorPosition, m_resizeEdge, s));
+            // THIS IS WHERE OUR RESIZE POSITION GETS SET!!!!
+            /* if (m_mouseSelectedSurfaceObject == obj && m_grabState == ResizeGrab && m_resizeAnchored)
+                obj->setPosition(getAnchoredPosition(m_resizeAnchorPosition, m_resizeEdge, s)); */
 
             auto surfaceOrigin = obj->primaryView()->textureOrigin();
 
@@ -579,11 +580,13 @@ void OutputWindow::startMove()
 
 void OutputWindow::startResize(int edge, bool anchored)
 {
+    qDebug() << "OutputWindow::startResize";
     m_initialSize = m_mouseSelectedSurfaceObject->surfaceSize();
     m_grabState = ResizeGrab;
     m_resizeEdge = edge;
     m_resizeAnchored = anchored;
-    m_resizeAnchorPosition = getAnchorPosition(m_mouseSelectedSurfaceObject->surfacePosition(), edge, m_mouseSelectedSurfaceObject->surface()->destinationSize());
+    m_resizeAnchorPosition = getAnchorPosition(m_mouseSelectedSurfaceObject->surfacePosition(),
+                       edge, m_mouseSelectedSurfaceObject->surface()->destinationSize());
 }
 
 void OutputWindow::startDrag(Surface *dragIcon)

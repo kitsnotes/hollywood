@@ -634,6 +634,7 @@ void Compositor::onSubsurfaceChanged(QWaylandSurface *child, QWaylandSurface *pa
 
 void Compositor::onSubsurfacePositionChanged(const QPoint &position)
 {
+    qDebug() << "Compositor::onSubsurfacePositionChanged" << position;
     QWaylandSurface *surface = qobject_cast<QWaylandSurface*>(sender());
     if (!surface)
         return;
