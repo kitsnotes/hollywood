@@ -37,14 +37,11 @@ AboutWindow::AboutWindow(QWidget *parent)
     renderer.render(&pd, r);
 
     setupUi();
-    /*QPixmap logo(230,52);
+    QPixmap logo(60,60);
     QPainter pmp(&logo);
     renderer.load(QString(":/Logo"));
-    renderer.render(&pmp, QRect(10,10,220,42));
-    logo_icon->setPixmap(logo);*/
-    QPixmap orl(":/Originull");
-    orl = orl.scaledToWidth(220,Qt::SmoothTransformation);
-    logo_icon->setPixmap(orl);
+    renderer.render(&pmp, QRect(0,0,60,60));
+    logo_icon->setPixmap(logo);
 
     QFont font = hw_train->font();
     font.setPixelSize(35);
