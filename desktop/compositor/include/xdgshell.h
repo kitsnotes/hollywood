@@ -83,7 +83,7 @@ public:
     Q_INVOKABLE void initialize(HWWaylandXdgShell* xdgShell, QWaylandSurface *surface, const QWaylandResource &resource);
 
     Qt::WindowType windowType() const override;
-//    QWaylandQuickShellIntegration *createIntegration(QWaylandQuickShellSurfaceItem *item) override;
+    QWaylandQuickShellIntegration *createIntegration(QWaylandQuickShellSurfaceItem *item) override;
 
     HWWaylandXdgShell *shell() const;
     QWaylandSurface *surface() const;

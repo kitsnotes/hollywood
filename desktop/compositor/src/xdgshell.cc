@@ -660,11 +660,11 @@ HWWaylandXdgSurface *HWWaylandXdgSurface::fromResource(wl_resource *resource)
     return nullptr;
 }
 
-/* QWaylandQuickShellIntegration *HWWaylandXdgSurface::createIntegration(QWaylandQuickShellSurfaceItem *item)
+QWaylandQuickShellIntegration *HWWaylandXdgSurface::createIntegration(QWaylandQuickShellSurfaceItem *item)
 {
     Q_UNUSED(item)
     return nullptr;
-} */
+}
 
 
 /*!
