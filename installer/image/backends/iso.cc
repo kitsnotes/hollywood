@@ -271,18 +271,6 @@ public:
         output_info("CD backend", "configuring mtab");
         write_etc_mtab_to(target);
 
-        /* REQ: ISO.10 */
-        output_info("CD backend", "enabling required services");
-        const std::string targetsi = target + "/etc/runlevels/sysinit/";
-        for(const std::string &svc : {"udev", "udev-trigger", "lvmetad"}) {
-            fs::create_symlink("/etc/init.d/" + svc, targetsi + svc, ec);
-            if(ec && ec.value() != EEXIST) {
-                output_error("CD backend", "could not enable service " + svc,
-                             ec.message());
-                return FS_ERROR;
-            }
-        }
-
         /* REQ: ISO.12 */
         output_info("CD backend", "creating live environment /etc/fstab");
         if(!write_fstab_to(target)) return FS_ERROR;
@@ -490,7 +478,7 @@ public:
         if(postscript.length() > 0) {
             output_info("CD backend", "running architecture-specific script",
                         postscript);
-            if(run_command("/bin/sh", {"-e", postscript}) != 0) {
+            if(run_command("/bin/bash", {"-e", postscript}) != 0) {
                 output_error("CD backend", "architecture-specific script failed");
                 return COMMAND_ERROR;
             }

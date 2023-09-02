@@ -647,26 +647,23 @@ bool SvcEnable::validate() const {
 /* LCOV_EXCL_STOP */
 
 bool SvcEnable::execute() const {
-    const std::string target = script->targetDirectory() +
-                               "/etc/runlevels/" + _runlevel + "/" + _svc;
-    const std::string initd = "/etc/init.d/" + _svc;
+    const std::string lib_systemd = "/usr/lib/systemd/system/" + _svc + ".service";
     output_info(pos, "svcenable: enabling service " + _svc);
 
     if(script->options().test(Simulate)) {
-        std::cout << "ln -s " << initd << " " << target << std::endl;
+        std::cout << "systemctl enable " << _svc << std::endl;
         return true;
     }
 
 #ifdef HAS_INSTALL_ENV
     error_code ec;
-    if(!fs::exists(script->targetDirectory() + initd, ec)) {
+    if(!fs::exists(script->targetDirectory() + lib_systemd, ec)) {
         output_warning(pos, "svcenable: missing service", _svc);
     }
 
-    fs::create_symlink(initd, target, ec);
-    if(ec && ec.value() != EEXIST) {
-        output_error(pos, "svcenable: could not enable service " + _svc,
-                     ec.message());
+    if(run_command("chroot", {script->targetDirectory(), "systemctl",
+                               "enable", _svc}) != 0) {
+        output_error(pos, "svcenable: could not enable service " + _svc);
         return false;
     }
 #endif  /* HAS_INSTALL_ENV */
