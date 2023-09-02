@@ -100,7 +100,6 @@ public:
     bool canMaximize() const;
     bool canMinimize() const;
     bool canClose() const;
-    void sendClose();
     void setMaximized();
     void unsetMaximized();
     void setMinimized();
@@ -142,6 +141,7 @@ public slots:
     void toggleMinimize();
     void toggleMaximize();
     void toggleActive();
+    void sendClose();
 protected:
     // only callable by Compostior
     void setAnimatedSurfaceSize(QSize size);

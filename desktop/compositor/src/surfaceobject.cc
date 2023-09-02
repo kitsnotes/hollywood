@@ -525,6 +525,7 @@ void Surface::createPlasmaWindowControl()
     connect(m_wndctl, &PlasmaWindowControl::minimizedRequested, this, &Surface::toggleMinimize);
     connect(m_wndctl, &PlasmaWindowControl::maximizedRequested, this, &Surface::toggleMaximize);
     connect(m_wndctl, &PlasmaWindowControl::activeRequested, this, &Surface::toggleActive);
+    connect(m_wndctl, &PlasmaWindowControl::closeRequested, this, &Surface::sendClose);
     QIcon icon = QIcon::fromTheme(QLatin1String("process-working"));
     m_wndctl->setIcon(icon);
 }

@@ -218,8 +218,6 @@ void WallpaperManager::setupRotationTimer()
 
 void WallpaperManager::transitionWallpaper()
 {
-    QSize dsize = m_parent->size();
-
     m_shader->bind();
 
     m_intrans = true;

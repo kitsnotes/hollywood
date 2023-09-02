@@ -761,6 +761,7 @@ void OutputWindow::mouseMoveEvent(QMouseEvent *e)
             setCursor(Qt::ArrowCursor);
         else
         {
+
             auto mouseedge = view->nearEdge(adjustedPoint);
             if(mouseedge == 0x0)
             {
