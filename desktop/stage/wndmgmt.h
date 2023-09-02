@@ -42,7 +42,7 @@ public:
     QString windowTitle() const;
     void toggleMinimize();
     bool minimized() const;
-
+    void maximize();
     void requestClose();
 Q_SIGNALS:
     void iconChanged();
