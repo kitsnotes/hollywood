@@ -23,8 +23,8 @@ hideui editor badges hints
 menuentry "Hollywood Live (For all other systems)" {
         icon EFI/BOOT/icons/hw_install.png
         volume HWARM64
-        loader /boot/vmlinuz-stable.arm64
-        initrd /boot/initramfs-stable.arm64
+        loader /boot/vmlinuz-lts.arm64
+        initrd /boot/initramfs-lts.arm64
         options "root=live:LABEL=HWARM64 rd.live.dir=/boot rd.live.squashimg=live-image.arm64 quiet splash"
 }
 
@@ -40,11 +40,11 @@ REFINDCFG
 
 # Get the size of the binaries to go in the El Torito image in kB
 EFIToritoSize=$(du -s cdroot/EFI/ | cut -f 1)
-KernelToritoSize=$(du -s cdroot/boot/vmlinuz-stable.arm64 | cut -f 1)
-InitrdToritoSize=$(du -s cdroot/boot/initramfs-stable.arm64 | cut -f 1)
+KernelToritoSize=$(du -s cdroot/boot/vmlinuz-lts.arm64 | cut -f 1)
+InitrdToritoSize=$(du -s cdroot/boot/initramfs-lts.arm64 | cut -f 1)
 KernelAToritoSize=$(du -s cdroot/boot/vmlinuz-asahi.arm64 | cut -f 1)
 InitrdAToritoSize=$(du -s cdroot/boot/initramfs-asahi.arm64 | cut -f 1)
-DTBSize=$(du -s cdroot/boot/dtbs-stable/ | cut -f 1)
+DTBSize=$(du -s cdroot/boot/dtbs-lts/ | cut -f 1)
 DTBASize=$(du -s cdroot/boot/dtbs-asahi/ | cut -f 1)
 ToritoSize=0
 ((ToritoSize=EFIToritoSize+KernelToritoSize+InitrdToritoSize+KernelAToritoSize+InitrdAToritoSize+DTBSize+DTBASize))
@@ -62,10 +62,10 @@ MTOOLSRC
         dd if=/dev/zero of=efi64.img bs=1024 count=$ToritoSize
         mkfs.fat efi64.img
         mmd A:/boot
-        mcopy -s cdroot/boot/dtbs-stable/ A:/boot/
+        mcopy -s cdroot/boot/dtbs-lts/ A:/boot/
         mcopy -s cdroot/boot/dtbs-asahi/ A:/boot/
-        mcopy cdroot/boot/vmlinuz-stable.arm64 A:/boot/
-        mcopy cdroot/boot/initramfs-stable.arm64 A:/boot/
+        mcopy cdroot/boot/vmlinuz-lts.arm64 A:/boot/
+        mcopy cdroot/boot/initramfs-lts.arm64 A:/boot/
         mcopy cdroot/boot/vmlinuz-asahi.arm64 A:/boot/
         mcopy cdroot/boot/initramfs-asahi.arm64 A:/boot/
         mcopy -s cdroot/EFI/ A:/
