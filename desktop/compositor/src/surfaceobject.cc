@@ -267,8 +267,41 @@ OriginullMenuServer *Surface::menuServer() const
 
 void Surface::setPosition(const QPointF &pos)
 {
-    m_surfacePosition = hwComp->correctedPosition(pos);
+    //auto oldPos = m_surfacePosition;
+    auto newPos = hwComp->correctedPosition(pos);
 
+    // If we are in a move and then...
+    // If we have a sudden jump in X or Y, as in, over 80% of the display, lets ignore it
+    //if(m_moving)
+    //{
+    //    QPoint nf(pos.toPoint());
+        /*if(hwComp->outputAtPosition(nf) == nullptr)
+            goto move_finish;
+
+        QScreen *sc = hwComp->outputAtPosition(nf)->screen();
+        if(sc != nullptr)
+        {
+            int max_x = (sc->availableSize().width() * 0.80);
+            int max_y = (sc->availableSize().height() * 0.80);
+
+            if(newPos.y()-oldPos.y() > max_y)
+                m_surfacePosition = oldPos;
+            else
+                m_surfacePosition = newPos;
+
+            if(newPos.x()-oldPos.x() > max_x)
+                m_surfacePosition = oldPos;
+            else
+                m_surfacePosition = newPos;
+        }
+        else
+            m_surfacePosition = oldPos;
+    }
+    else
+        m_surfacePosition = newPos;
+
+move_finish:*/
+        m_surfacePosition = newPos;
     if(m_qt != nullptr && m_qt_moveserial != 0)
     {
         auto x = m_surfacePosition.x();
@@ -450,6 +483,8 @@ QPointF Surface::parentPosition() const
 }
 
 QList<Surface *> Surface::childSurfaceObjects() const { return m_children; }
+
+QList<Surface *> Surface::childXdgSurfaceObjects() const { return m_xdgChildren; }
 
 bool Surface::surfaceReadyToRender() const
 {
@@ -1287,6 +1322,7 @@ void Surface::onXdgTitleChanged()
 
 void Surface::onXdgParentTopLevelChanged()
 {
+    qDebug() << "onXdgParentTopLevelChanged";
     m_parentTopLevelSurface =
             hwComp->findSurfaceObject(m_xdgTopLevel->parentToplevel()->xdgSurface()->surface());
     m_parentTopLevelSurface->addXdgChildSurfaceObject(this);

@@ -6,6 +6,7 @@
 #include "outputwnd.h"
 #include "compositor.h"
 #include "output.h"
+
 #include <sys/types.h>
 #include <pwd.h>
 #include <errno.h>

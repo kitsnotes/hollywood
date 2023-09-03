@@ -49,6 +49,7 @@ class GtkSurface;
 class QtShell;
 class QtSurface;
 class ShortcutManager;
+class XdgActivation;
 class Compositor : public QWaylandCompositor
 {
     Q_OBJECT
@@ -141,6 +142,7 @@ protected slots:
 
     void onSubsurfaceChanged(QWaylandSurface *child, QWaylandSurface *parent);
     void onSubsurfacePositionChanged(const QPoint &position);
+    void onXdgSurfaceActivated(QWaylandSurface *surface);
     void updateCursor();
 private slots:
     void appMenuCreated(AppMenu *m);
@@ -196,6 +198,8 @@ private:
     QtShell *m_qt = nullptr;
     // fullscreen-shell protocol support
     FullscreenShell *m_fs = nullptr;
+    // XDG Activation Manager
+    XdgActivation *m_activation = nullptr;
 
     // running under user 'sddm'
     bool m_sddm = false;

@@ -17,6 +17,7 @@
 #include "gtkshell.h"
 #include "qtshell.h"
 #include "fullscreen.h"
+#include "activation.h"
 
 #include "surfaceobject.h"
 #include "shortcuts.h"
@@ -29,20 +30,21 @@
 #include <sys/utsname.h>
 
 Compositor::Compositor(bool sddm)
-    : m_wlShell(new QWaylandWlShell(this))
-    , m_desktop_bg(QColor(HOLLYWOOD_DEF_DESKTOP_BG))
+    : m_desktop_bg(QColor(HOLLYWOOD_DEF_DESKTOP_BG))
+    , m_wlShell(new QWaylandWlShell(this))
     , m_xdgShell(new HWWaylandXdgShell(this))
-    , m_xdgDecoration(new QWaylandXdgDecorationManagerV1()),
-    m_hwPrivate(new OriginullProtocol(this)),
-    m_layerShell(new WlrLayerShellV1(this)),
-    m_wndmgr(new PlasmaWindowManagement(this)),
-    m_appMenu(new AppMenuManager(this)),
-    m_gtk(new GtkShell(this)),
-    m_qt(new QtShell(this)),
-    m_fs(new FullscreenShell(this)),
-    m_sddm(sddm)
-  , m_shortcuts(new ShortcutManager(this))
-  , m_timeout(new QTimer(this))
+    , m_xdgDecoration(new QWaylandXdgDecorationManagerV1())
+    , m_hwPrivate(new OriginullProtocol(this))
+    , m_layerShell(new WlrLayerShellV1(this))
+    , m_wndmgr(new PlasmaWindowManagement(this))
+    , m_appMenu(new AppMenuManager(this))
+    , m_gtk(new GtkShell(this))
+    , m_qt(new QtShell(this))
+    , m_fs(new FullscreenShell(this))
+    , m_activation(new XdgActivation(this))
+    , m_sddm(sddm)
+    , m_shortcuts(new ShortcutManager(this))
+    , m_timeout(new QTimer(this))
 {
     m_timeout->setTimerType(Qt::VeryCoarseTimer);
     loadSettings();
@@ -70,6 +72,7 @@ Compositor::Compositor(bool sddm)
     connect(m_qt, &QtShell::surfaceCreated, this, &Compositor::onQtSurfaceCreated);
     connect(m_fs, &FullscreenShell::surfacePresented, this, &Compositor::onFullscreenSurfaceRequested);
 
+    connect(m_activation, &XdgActivation::surfaceActivated, this, &Compositor::onXdgSurfaceActivated);
     generateDesktopInfoLabelImage();
     connect(m_timeout, &QTimer::timeout, this, &Compositor::idleTimeout);
 }
@@ -632,12 +635,21 @@ void Compositor::onSubsurfaceChanged(QWaylandSurface *child, QWaylandSurface *pa
 
 void Compositor::onSubsurfacePositionChanged(const QPoint &position)
 {
-    qDebug() << "Compositor::onSubsurfacePositionChanged" << position;
     QWaylandSurface *surface = qobject_cast<QWaylandSurface*>(sender());
     if (!surface)
         return;
     findSurfaceObject(surface)->setPosition(position);
     triggerRender();
+}
+
+void Compositor::onXdgSurfaceActivated(QWaylandSurface *surface)
+{
+    auto sf = findSurfaceObject(surface);
+    if(sf)
+    {
+        qDebug() << "XdgSurfaceActivated: raising " << sf->uuid().toString();
+        raise(sf);
+    }
 }
 
 void Compositor::triggerRender()
@@ -873,10 +885,13 @@ QWaylandClient *Compositor::popupClient() const
 }
 
 void Compositor::raise(Surface *obj)
-{
+{    
     /*if(obj->m_xdgPopup != nullptr)
         return;*/
     if(obj->isSpecialShellObject())
+        return;
+
+    if(!m_zorder.contains(obj))
         return;
 
     // Since the compositor is only tracking unparented objects
@@ -890,9 +905,6 @@ void Compositor::raise(Surface *obj)
             m_menuServer->setTopWindowForMenuServer(obj);
     }
 
-    if(!m_zorder.contains(obj))
-        return;
-
     m_zorder.removeOne(obj);
     m_zorder.push_back(obj);
 
@@ -904,6 +916,11 @@ void Compositor::raise(Surface *obj)
     {
         if(m_wndmgr->isInitialized())
            m_wndmgr->updateZOrder(surfaceZOrderByUUID());
+    }
+    // if we have a subchild, then raise that further
+    if(obj->childXdgSurfaceObjects().count() > 0)
+    {
+        raise(obj->childXdgSurfaceObjects().first());
     }
 }
 

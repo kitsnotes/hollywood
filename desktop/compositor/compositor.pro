@@ -17,8 +17,10 @@ WAYLANDSERVERSOURCES += protocols/wlr-screencopy-unstable-v1.xml
 WAYLANDSERVERSOURCES += protocols/gtk.xml
 WAYLANDSERVERSOURCES += protocols/qt-shell-unstable-v1.xml
 WAYLANDSERVERSOURCES += protocols/xdg-shell.xml
+WAYLANDSERVERSOURCES += protocols/xdg-activation-v1.xml
 
 HEADERS += \
+    include/activation.h \
     include/application.h \
     include/appmenu.h \
     include/fullscreen.h \
@@ -40,6 +42,7 @@ HEADERS += \
     include/xdgshell_p.h
 
 SOURCES += \
+    src/activation.cc \
     src/application.cc \
     src/appmenu.cc \
     src/fullscreen.cc \

@@ -787,6 +787,7 @@ void OutputWindow::mouseMoveEvent(QMouseEvent *e)
     }
         break;
     case MoveGrab: {
+        //qDebug() << "moving window: " << adjustedPoint - m_mouseOffset << " mouseOffset: " << m_mouseOffset;
         m_mouseSelectedSurfaceObject->setPosition(adjustedPoint - m_mouseOffset);
         update();
     }
