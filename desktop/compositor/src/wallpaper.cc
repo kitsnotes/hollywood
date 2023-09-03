@@ -231,7 +231,6 @@ void WallpaperManager::transitionWallpaper()
     // we should make sure we are bound and
     // TODO: write a fall back measure
 
-    qDebug() << m_bgSize;
     float ratio = m_parent->size().width() / m_parent->size().height();
     m_shader->setUniformValue("from", 0);
     m_shader->setUniformValue("to",   1);

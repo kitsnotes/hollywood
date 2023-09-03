@@ -296,10 +296,8 @@ void Compositor::onSurfaceCreated(QWaylandSurface *surface)
     obj->setTwilight(twilight);
     auto outputAt = outputAtPosition(obj->surfacePosition().toPoint());
     if(outputAt == nullptr)
-    {
-        qDebug() << "null outputAtPosition";
         outputAt = m_outputs.first();
-    }
+
     obj->createViewForOutput(outputAt);
     m_surfaces << obj;
     m_zorder << obj;

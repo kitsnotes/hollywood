@@ -580,7 +580,6 @@ void OutputWindow::startMove()
 
 void OutputWindow::startResize(int edge, bool anchored)
 {
-    qDebug() << "OutputWindow::startResize";
     m_initialSize = m_mouseSelectedSurfaceObject->surfaceSize();
     m_grabState = ResizeGrab;
     m_resizeEdge = edge;

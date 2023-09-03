@@ -432,7 +432,7 @@ SurfaceView* Surface::createViewForOutput(Output *o)
 
         return view;
     }
-    qDebug() << "ACSurfaceObject::createView() failed. returning nullptr";
+    qDebug() << "Surface::createView() failed. returning nullptr";
     return nullptr;
 }
 
@@ -806,7 +806,6 @@ void Surface::onBufferScaleChanged()
 
 void Surface::onXdgStartResize(QWaylandSeat *seat, Qt::Edges edges)
 {
-    qDebug() << "onXdgStartResize";
     hwComp->onXdgStartResize(seat, edges);
     renderDecoration();
 }
@@ -1161,7 +1160,6 @@ void Surface::onXdgSetMinimized()
 
 void Surface::completeXdgConfigure()
 {
-    qDebug() << "completeXdgConfigure();";
     renderDecoration();
     if(m_maximized)
     {
