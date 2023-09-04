@@ -28,7 +28,9 @@ SUBDIRS = \
     sysmon/helper-sysmon \
     terminal \
     calculator \
-    popular
+    popular \
+    appstub \
+    notificationd
 
     libshell.depends = libcompositor
     eglfs.depends = libhwudev libhwlogind
@@ -56,7 +58,4 @@ SUBDIRS = \
     style
 }
 
-SUBDIRS += \
-    appstub \
-    notificationd
 
