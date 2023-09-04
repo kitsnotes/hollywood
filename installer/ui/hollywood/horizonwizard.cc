@@ -500,6 +500,7 @@ QString HorizonWizard::toHScript() {
     lines << "svcenable rtkit-daemon";
     lines << "svcenable wpa_supplicant";
     lines << "svcenable sshd";
+    lines << "svcenable sddm";
 
     /* char *root = encrypt_pw(field("rootpw").toString().toStdString().c_str());
     Q_ASSERT(root != nullptr);
@@ -533,8 +534,6 @@ QString HorizonWizard::toHScript() {
         if(acctWidget->isAutoLogin() && !did_autologin)
         {
             lines << ("autologin " + acctWidget->accountText());
-            lines << "svcenable sddm";
-
             did_autologin = true;
         }
     }
