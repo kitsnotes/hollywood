@@ -96,8 +96,6 @@ StageApplication::StageApplication(int &argc, char **argv)
         }
         else
             logoff->setText(tr("Log off..."));
-
-        logoff->setDisabled(true);
     }
     connect(logoff, &QAction::triggered, this, &StageApplication::logoffSession);
 
@@ -219,12 +217,21 @@ void StageApplication::run()
 
 void StageApplication::logoffSession()
 {
-    QMessageBox msg(QMessageBox::Question, tr("Exit Session?"),
-                    tr("Do you want to exit your session? All running applications will be closed."),
-                    QMessageBox::Yes|QMessageBox::No);
-    if(msg.exec() == QMessageBox::Yes)
+    if(displayManagerStart())
     {
-        exit();
+        QMessageBox msg(QMessageBox::Question, tr("Log Off?"),
+                        tr("Do you want to log off? All running applications will be closed."),
+                        QMessageBox::Yes|QMessageBox::No);
+        if(msg.exec() == QMessageBox::Yes)
+            callSessionDBus("reboot");
+    }
+    else
+    {
+        QMessageBox msg(QMessageBox::Question, tr("Exit Session?"),
+                         tr("Do you want to exit your session? All running applications will be closed."),
+                        QMessageBox::Yes|QMessageBox::No);
+        if(msg.exec() == QMessageBox::Yes)
+            exit();
     }
 }
 
