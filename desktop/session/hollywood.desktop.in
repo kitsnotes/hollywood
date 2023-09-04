@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
 Exec=/usr/libexec/hollywood/session
-Name=Hollywood Session
+Name=Hollywood
 Icon=wayland
 X-Hollywood-System=true
