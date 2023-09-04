@@ -140,10 +140,10 @@ bool SMApplication::startSession()
     m_socket->removeServer(xdg_runtime_sock);
     m_socket->listen(xdg_runtime_sock);
 
-    connect(m_dbusSessionProcess, &ManagedProcess::dbusSessionBusAddressAvailable,
+    /* connect(m_dbusSessionProcess, &ManagedProcess::dbusSessionBusAddressAvailable,
             this, &SMApplication::dbusAvailable);
 
-    m_dbusSessionProcess->initialize();
+    m_dbusSessionProcess->initialize(); */
 
     connect(m_compositorProcess, &ManagedProcess::compositorDied,
             this, &SMApplication::compositorDied);
@@ -153,7 +153,8 @@ bool SMApplication::startSession()
         return false;
     }
 
-    auto dbusenv = qgetenv("DBUS_SESSION_BUS_ADDRESS");
+    startDBusReliantServices();
+/*    auto dbusenv = qgetenv("DBUS_SESSION_BUS_ADDRESS");
     if(!m_useDBus)
     {
         qCInfo(lcSession) << "Not supervising a dbus-session by user request.";
@@ -163,7 +164,7 @@ bool SMApplication::startSession()
     {
         qCInfo(lcSession) << "Not supervising a dbus-session as one exists.";
         startDBusReliantServices();
-    }
+    }*/
     return true;
 }
 
@@ -503,15 +504,12 @@ int main(int argc, char *argv[])
          QCoreApplication::translate("main", "Do not launch the notification daemon with this session.")},
      {"no-pipewire",
          QCoreApplication::translate("main", "Do not launch pipewire daemon with this session.")},
-     {"no-dbus",
-         QCoreApplication::translate("main", "Do not launch a dbus-daemon for session bus with this session.")},
     });
     p.process(a);
 
     if(p.isSet("no-elevator"))
         a.setUseElevator(false);
-    if(p.isSet("no-dbus"))
-        a.setUseDBus(false);
+    a.setUseDBus(false);
     if(p.isSet("no-pipewire"))
         a.setUsePipewire(false);
 
