@@ -3,6 +3,7 @@
 
 #include <QToolButton>
 #include <QWidget>
+#include <QCalendarWidget>
 
 class StageClock : public QToolButton
 {
@@ -21,6 +22,8 @@ private:
     bool show_ampm = true;
 
     QString m_format;
+
+    QCalendarWidget *m_cal = nullptr;
 };
 
 #endif // STAGECLOCK_H

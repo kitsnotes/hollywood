@@ -38,6 +38,8 @@ public:
     StageApplication(int &argc, char **argv);
     static StageApplication* instance() { return static_cast<StageApplication*>(QApplication::instance()); }
     bool executeDesktop(const QString &desktop);
+    bool openSettingsApplet(const QString &settings);
+    bool executeFilesystemUrl(const QString &fsurl);
     bool callSessionDBus(const QString &exec);
     bool displayManagerStart() { return m_started_dm; }
     QMenu* systemMenu() { return m_context; }

@@ -69,6 +69,11 @@ public slots:
     {
         return m_parent->openFileWithDefault(file);
     }
+
+    bool OpenSettingsApplet(const QString &settings)
+    {
+        return m_parent->openSettingsApplet(settings);
+    }
 private:
     SMApplication *m_parent;
 };

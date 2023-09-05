@@ -1,8 +1,9 @@
 #include "battery.h"
 #include "upower.h"
+#include "app.h"
 #include <QMenu>
 #include <QAction>
-
+#include <hollywood/hollywood.h>
 BatteryMonitor::BatteryMonitor(QWidget *parent)
     : QToolButton(parent)
     , m_menu(new QMenu(this))
@@ -24,7 +25,10 @@ BatteryMonitor::BatteryMonitor(QWidget *parent)
     m_time->setVisible(false);
     m_time->setDisabled(true);
     m_menu->addSeparator();
-    m_menu->addAction(tr("Energy Settings..."));
+    auto energy = m_menu->addAction(tr("Energy Settings..."));
+    connect(energy, &QAction::triggered, []() {
+        StageApplication::instance()->openSettingsApplet(HOLLYWOOD_ENERGY_APPLET);
+    });
     setMenu(m_menu);
     if(!m_upower && !m_upower->isValid())
         qDebug() << "Invalid UPower state";

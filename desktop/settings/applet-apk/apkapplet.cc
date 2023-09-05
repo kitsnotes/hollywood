@@ -121,7 +121,7 @@ void APKUpdateApplet::checkForUpdates()
     else
     {
         lb_updates->setText(tr("Your system is up to date."));
-        lb_desc->setText(tr("Last checked: %1"));
+        lb_desc->setText(tr("Last checked: %1").arg(QDateTime::currentDateTime().toString()));
         m_update->setEnabled(true);
         m_update->setText(tr("Check Now"));
         m_select->setVisible(false);

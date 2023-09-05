@@ -65,9 +65,14 @@ StageApplication::StageApplication(int &argc, char **argv)
 
     auto aboutSys = m_context->addAction(tr("&About This Computer..."));
     m_context->addSeparator();
+    auto applications = m_context->addAction(tr("&Applications"));
     auto settings = m_context->addAction(tr("System &Settings"));
     auto sysmon = m_context->addAction(tr("System &Monitor"));
     auto term = m_context->addAction(tr("&Terminull"));
+
+    connect(applications, &QAction::triggered, [this]() {
+        executeFilesystemUrl(QStringLiteral("applications://"));
+    });
 
     connect(aboutSys, &QAction::triggered, this, &StageApplication::launchAbout);
     connect(settings, &QAction::triggered, this, &StageApplication::launchSettings);
@@ -92,10 +97,10 @@ StageApplication::StageApplication(int &argc, char **argv)
             if(!gecos.isEmpty())
                 display = gecos;
 
-            logoff->setText(tr("Log off %1...").arg(display));
+            logoff->setText(tr("&Log off %1...").arg(display));
         }
         else
-            logoff->setText(tr("Log off..."));
+            logoff->setText(tr("&Log off..."));
     }
     connect(logoff, &QAction::triggered, this, &StageApplication::logoffSession);
 
@@ -125,6 +130,66 @@ bool StageApplication::executeDesktop(const QString &desktop)
     }
 
     QDBusMessage msg = ldb.call("executeDesktop", desktop, QStringList(), QStringList());
+
+    if(msg.arguments().isEmpty() || msg.arguments().constFirst().isNull())
+        return true;
+
+    auto response = msg.arguments().constFirst();
+
+    if(msg.arguments().isEmpty())
+        return true;
+
+    if(response.isNull())
+        return true;
+
+    if(response.toBool())
+        return true;
+
+    return false;
+}
+
+bool StageApplication::openSettingsApplet(const QString &settings)
+{
+    QDBusInterface ldb(HOLLYWOOD_SESSION_DBUS, HOLLYWOOD_SESSION_DBUSOBJ, HOLLYWOOD_SESSION_DBUSPATH);
+
+    if(!ldb.isValid())
+    {
+        qDebug() << QString("Could not call session DBUS interface. Command: openSettingsApplet");
+        return false;
+    }
+
+
+    QDBusMessage msg = ldb.call("openSettingsApplet", settings);
+
+    if(msg.arguments().isEmpty() || msg.arguments().constFirst().isNull())
+        return true;
+
+    auto response = msg.arguments().constFirst();
+
+    if(msg.arguments().isEmpty())
+        return true;
+
+    if(response.isNull())
+        return true;
+
+    if(response.toBool())
+        return true;
+
+    return false;
+}
+
+bool StageApplication::executeFilesystemUrl(const QString &fsurl)
+{
+    QDBusInterface ldb(QStringLiteral("org.freedesktop.FileManager1"),
+                QStringLiteral("/org/freedesktop/FileManager1"),
+                QStringLiteral("org.freedesktop.FileManager1"));
+    if(!ldb.isValid())
+    {
+        qDebug() << QString("Could not call session DBUS interface. Command: executeFilesystemUrl");
+        return false;
+    }
+
+    QDBusMessage msg = ldb.call("ShowFolders", QStringList() << fsurl, QString());
 
     if(msg.arguments().isEmpty() || msg.arguments().constFirst().isNull())
         return true;
@@ -219,17 +284,23 @@ void StageApplication::logoffSession()
 {
     if(displayManagerStart())
     {
-        QMessageBox msg(QMessageBox::Question, tr("Log Off?"),
-                        tr("Do you want to log off? All running applications will be closed."),
-                        QMessageBox::Yes|QMessageBox::No);
+        HWMessageBox msg(QMessageBox::NoIcon, tr("Log Off?"),
+                        tr("Do you want to log off? All running applications will be closed."));
+        msg.setIconPixmap(QIcon::fromTheme("system-log-out").pixmap(QSize(64,64)));
+        msg.setInformativeText(tr("You should save all documents before logging off."));
+        msg.setStandardButtons(QMessageBox::Yes|QMessageBox::No);
+        playBell();
         if(msg.exec() == QMessageBox::Yes)
-            callSessionDBus("reboot");
+            callSessionDBus("logout");
     }
     else
     {
-        QMessageBox msg(QMessageBox::Question, tr("Exit Session?"),
-                         tr("Do you want to exit your session? All running applications will be closed."),
-                        QMessageBox::Yes|QMessageBox::No);
+        HWMessageBox msg(QMessageBox::NoIcon, tr("Exit Session?"),
+                         tr("Do you want to exit your session? All running applications will be closed."));
+        msg.setIconPixmap(QIcon::fromTheme("application-exit").pixmap(QSize(64,64)));
+        msg.setInformativeText(tr("You should save all documents before exiting your session."));
+        msg.setStandardButtons(QMessageBox::Yes|QMessageBox::No);
+        playBell();
         if(msg.exec() == QMessageBox::Yes)
             exit();
     }
@@ -277,7 +348,8 @@ bool StageApplication::callSessionDBus(const QString &exec)
 
 void StageApplication::playBell()
 {
-    m_bell.play();
+    // TODO: move into thread so this doesn't block
+    //m_bell.play();
 }
 
 void StageApplication::loadSettings()

@@ -242,6 +242,22 @@ bool SMApplication::openFileWithDefault(const QString &file)
     return res;
 }
 
+bool SMApplication::openSettingsApplet(const QString &settings)
+{
+    LSExecutor *e = new LSExecutor(this);
+    if(e->setDesktopFile(HOLYWOOD_SETTINGS_APP))
+    {
+        e->addArgument(settings);
+        e->launch();
+        return true;
+    }
+    else
+    {
+        return false;
+        delete e;
+    }
+}
+
 bool SMApplication::haveSDDMAutoStart()
 {
     // TODO: this

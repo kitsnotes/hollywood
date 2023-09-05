@@ -14,6 +14,8 @@
 #define HOLYWOOD_TERMINULL_APP      "org.originull.terminull.desktop"
 
 #define HOLLYWOOD_WP_APPLET         "org.originull.wallpaper"
+#define HOLLYWOOD_DT_APPLET         "org.originull.datetime"
+#define HOLLYWOOD_ENERGY_APPLET     "org.originull.energy"
 
 #define HOLLYWOOD_SERVICE_SVC       "/usr/sbin/rc-service"
 #define HOLLYWOOD_SERVICE_UPDATE    "/usr/sbin/rc-update"
