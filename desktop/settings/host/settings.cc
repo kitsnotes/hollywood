@@ -7,7 +7,6 @@
 #include <QSettings>
 #include <QActionGroup>
 #include <QApplication>
-#include <QCommandLineParser>
 
 #include "qcategorizedview/qcategorydrawer.h"
 
@@ -159,7 +158,6 @@ void SettingsWindow::showAppletWidget(SettingsAppletInterface *applet)
         QSize sizeHint(m_homeWidth, applet->applet()->minimumHeight());
         setMaximumHeight(applet->applet()->minimumHeight());
         resize(sizeHint);
-        qDebug() << "sizeHint" << sizeHint;
     }
     setCentralWidget(applet->applet());
     m_list = nullptr; // qmainwindow will destroy this
@@ -329,43 +327,4 @@ void SettingsWindow::showAppletById(const QString &id)
 
     if(applet->init())
         showAppletWidget(applet);
-}
-
-int main(int argc, char *argv[])
-{
-    QApplication a(argc, argv);
-    a.setApplicationVersion(HOLLYWOOD_OS_VERSION);
-    a.setOrganizationDomain(HOLLYWOOD_OS_DOMAIN);
-    a.setOrganizationName(HOLLYWOOD_OS_ORGNAME);
-    a.setApplicationName("System Settings");
-    a.setWindowIcon(QIcon::fromTheme("preferences-system"));
-
-    QCommandLineParser p;
-    p.setApplicationDescription(QString("Hollywood System Settings"));
-    p.addHelpOption();
-    p.addVersionOption();
-
-    p.addOptions({
-     {{"S", "single"},
-         QCoreApplication::translate("main", "Start in single applet mode.")},
-    });
-    p.process(a);
-
-    auto execapplet = QString();
-
-
-    if(p.positionalArguments().count() > 0)
-        execapplet = p.positionalArguments().first();
-
-    bool single = false;
-    if(p.isSet("single"))
-        single = true;
-
-    SettingsWindow w;
-    w.setSingleMode(single);
-    if(!execapplet.isEmpty())
-        w.showAppletById(execapplet);
-    w.show();
-
-    return a.exec();
 }

@@ -267,7 +267,6 @@ int QCategorizedView::Private::blockHeight(const QString &category)
     const int height = bottomRight.bottomRight().y() - topLeft.topLeft().y() + 1;
     block.height = height;
 
-    qDebug() << height;
     return height;
 }
 
@@ -587,7 +586,6 @@ QSize QCategorizedView::preferredSize()
     this->slotLayoutChanged();
     for(QHash<QString,Private::Block>::iterator i=d->blocks.begin();i!=d->blocks.end();++i)
     {
-        qDebug() << i.key() << d->blockHeight(i.key());
         height += d->blockHeight(i.key());
     }
 

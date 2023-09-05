@@ -1,7 +1,7 @@
 include(../../include/global.pri)
 CONFIG(debug): DESTDIR=$${OBJECTS_DIR}../../output/
 TARGET = hwsettings
-
+QT += dbus
 INCLUDEPATH += ../../libcommdlg
 SOURCES += \
     application.cc \
