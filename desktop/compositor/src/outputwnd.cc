@@ -285,10 +285,14 @@ void OutputWindow::drawTextureForObject(Surface *obj)
             QMatrix4x4 tt_surface = QOpenGLTextureBlitter::targetTransform(source,
                                       QRect(m_output->wlOutput()->position(), size()));
 
+            if(texture->format() == QOpenGLTexture::RGBFormat)
+                m_rgbShader->bind();
             m_textureBlitter.setOpacity(1.0);
             m_textureBlitter.bind(currentTarget);
             m_textureBlitter.blit(texture->textureId(), tt_surface, surfaceOrigin);
             m_textureBlitter.release();
+            if(texture->format() == QOpenGLTexture::RGBFormat)
+                m_rgbShader->release();
             functions->glDisable(GL_BLEND);
        }
     }

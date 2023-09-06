@@ -41,6 +41,7 @@ Surface::Surface(QWaylandSurface *surface)
     connect(m_surface, &QWaylandSurface::destinationSizeChanged, this, &Surface::onDestinationSizeChanged);
     connect(m_surface, &QWaylandSurface::bufferScaleChanged, this, &Surface::onBufferScaleChanged);
 
+
     // TODO: multi-monitor suppot
 }
 
