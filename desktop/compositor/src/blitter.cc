@@ -45,9 +45,16 @@ static const char fragment_shader150[] =
     "uniform float opacity;"
     "uniform bool isrgb;"
     "void main() {"
+    "   if(isrgb) {"
+    "     vec4 tmpFragColor; tmpFragColor.rgb = 1.0*texture(textureSampler,uv).rgb;"
+    "     tmpFragColor.a = 1.0;"
+    "     tmpFragColor.a *= opacity;"
+    "     fragcolor = swizzle ? tmpFragColor.bgra : tmpFragColor;"
+    "   } else {"
     "   vec4 tmpFragColor = texture(textureSampler, uv);"
     "   tmpFragColor.a *= opacity;"
     "   fragcolor = swizzle ? tmpFragColor.bgra : tmpFragColor;"
+    "   } "
     "}";
 
 static const char vertex_shader[] =
