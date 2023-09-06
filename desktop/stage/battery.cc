@@ -87,7 +87,7 @@ void BatteryMonitor::batteryChanged()
         state = tr("Unknown: %1");
         break;
     }
-    state = state.arg(QString::number(m_battery->percent(),'G',2) + "%");
+    state = state.arg(QString::number(m_battery->percent(),'G',3) + "%");
     m_state->setText(state);
     if(time.isEmpty())
         m_time->setVisible(false);

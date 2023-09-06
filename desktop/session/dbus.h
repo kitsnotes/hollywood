@@ -70,7 +70,7 @@ public slots:
         return m_parent->openFileWithDefault(file);
     }
 
-    bool OpenSettingsApplet(const QString &settings)
+    bool openSettingsApplet(const QString &settings)
     {
         return m_parent->openSettingsApplet(settings);
     }
