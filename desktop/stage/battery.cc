@@ -49,13 +49,14 @@ BatteryMonitor::BatteryMonitor(QWidget *parent)
                delete device;
         }
     }
-    //if(m_battery == nullptr)
-     //   setVisible(false);
+    if(m_battery == nullptr)
+        setVisible(false);
 }
 
 void BatteryMonitor::batteryChanged()
 {
-    auto str = QString(" %1%").arg(QString::number(m_battery->percent(),'G',2));
+    auto percent = QString::number(m_battery->percent(),'G',3);
+    auto str = QString(" %1%").arg(percent);
     setText(str);
     setIcon(QIcon::fromTheme(m_battery->displayIcon()));
     QString state;
