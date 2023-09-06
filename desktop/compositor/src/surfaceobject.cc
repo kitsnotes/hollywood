@@ -388,7 +388,7 @@ QSize Surface::renderSize() const
 
 QRectF Surface::windowRect() const
 {
-    return QRectF(surfacePosition(), QSizeF(surfaceSize()));
+    return QRectF(surfacePosition(), QSizeF(surfaceSize()*surface()->bufferScale()));
 }
 
 QRectF Surface::decoratedRect() const
