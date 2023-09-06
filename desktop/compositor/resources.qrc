@@ -6,6 +6,7 @@
         <file>transition.vsh</file>
         <file>rgbconv.fsh</file>
         <file>rgbconv.vsh</file>
+        <file>rgba.fsh</file>
     </qresource>
     <qresource prefix="/Icons/Light">
         <file alias="window-close">icons/light/window-close.svg</file>

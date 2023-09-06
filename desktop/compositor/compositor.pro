@@ -23,6 +23,7 @@ HEADERS += \
     include/activation.h \
     include/application.h \
     include/appmenu.h \
+    include/blitter.h \
     include/fullscreen.h \
     include/gtkshell.h \
     include/hwc.h \
@@ -45,6 +46,7 @@ SOURCES += \
     src/activation.cc \
     src/application.cc \
     src/appmenu.cc \
+    src/blitter.cc \
     src/fullscreen.cc \
     src/gtkshell.cc \
     src/layershell.cc \
@@ -78,6 +80,7 @@ DISTFILES += \
     protocols/wlr-layer-shell-unstable-v1.xml \
     protocols/qt-shell-unstable-v1.xml \
     protocols/xdg-shell.xml \
+    rgba.fsh \
     rgbconv.fsh \
     rgbconv.vsh \
     shadow.fsh \

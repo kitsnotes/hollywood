@@ -30,7 +30,7 @@
 #include <QRectF>
 #include <hollywood/hollywood.h>
 
-
+#include "blitter.h"
 #include "hwc.h"
 
 #include "view.h"
@@ -64,6 +64,7 @@ OutputWindow::OutputWindow(Output* parent)
     :m_output(parent)
     ,m_shadowShader(new QOpenGLShaderProgram(this))
     ,m_rgbShader(new QOpenGLShaderProgram(this))
+    ,m_rgbaShader(new QOpenGLShaderProgram(this))
     ,m_wpm(new WallpaperManager(this))
     ,m_rgb_vao(new QOpenGLVertexArrayObject)
 {
@@ -88,8 +89,12 @@ void OutputWindow::initializeGL()
     m_rgbShader->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/rgbconv.vsh");
     m_rgbShader->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/Shaders/rgbconv.fsh");
     m_rgbShader->link();
-
+    m_rgbaShader->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/rgbconv.vsh");
+    m_rgbaShader->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/Shaders/rgba.fsh");
+    m_rgbaShader->link();
+    m_rgbaShader->bind();
     QOpenGLVertexArrayObject::Binder vaoBinder(m_rgb_vao.data());
+
     m_vertexBuffer.create();
     m_vertexBuffer.bind();
     m_vertexBuffer.allocate(vertex_buffer_data, sizeof(vertex_buffer_data));
@@ -99,6 +104,7 @@ void OutputWindow::initializeGL()
     m_textureBuffer.bind();
     m_textureBuffer.allocate(texture_buffer_data, sizeof(texture_buffer_data));
     m_textureBuffer.release();
+    m_rgbaShader->release();
 
     m_textureBlitter.create();
     m_wpm->setup();
@@ -285,14 +291,52 @@ void OutputWindow::drawTextureForObject(Surface *obj)
             QMatrix4x4 tt_surface = QOpenGLTextureBlitter::targetTransform(source,
                                       QRect(m_output->wlOutput()->position(), size()));
 
-            if(texture->format() == QOpenGLTexture::RGBFormat)
-                m_rgbShader->bind();
-            m_textureBlitter.setOpacity(1.0);
             m_textureBlitter.bind(currentTarget);
+            m_textureBlitter.setTextureFormat(texture->format());
             m_textureBlitter.blit(texture->textureId(), tt_surface, surfaceOrigin);
             m_textureBlitter.release();
-            if(texture->format() == QOpenGLTexture::RGBFormat)
+
+            /*if(texture->format() == QOpenGLTexture::RGBFormat)
+            {
+                m_rgbShader->bind();
+                m_rgbShader->setUniformValue(m_rgbShader->uniformLocation("texture"), texture->textureId());
+                functions->glDrawArrays(GL_TRIANGLES, 0, 6);
                 m_rgbShader->release();
+
+            }
+            else
+            {
+                m_rgb_vao->bind();
+
+                // Start Blit
+                m_rgbaShader->bind();
+                functions->glBindTexture(currentTarget, texture->textureId());
+                // Prepare Program
+
+                m_vertexBuffer.bind();
+                auto loc = m_rgbaShader->uniformLocation("vertexCoord");
+                m_rgbaShader->setAttributeBuffer(loc, GL_FLOAT, 0, 3, 0);
+                m_rgbaShader->enableAttributeArray(loc);
+                m_vertexBuffer.release();
+
+                m_rgbaShader->setUniformValue(m_rgbaShader->uniformLocation("vertexTransform"), tt_surface);
+
+                m_textureBuffer.bind();
+                auto texloc = m_rgbaShader->uniformLocation("textureCoord");
+                m_rgbaShader->setAttributeBuffer(texloc, GL_FLOAT, 0, 2, 0);
+                m_rgbaShader->enableAttributeArray(texloc);
+                m_textureBuffer.release();
+
+                // END: prepare program
+
+                m_rgbaShader->setUniformValue(m_rgbaShader->uniformLocation("textureTransform"), QMatrix3x3());
+                m_rgbaShader->setUniformValue(m_rgbaShader->uniformLocation("textureSampler"), texture->textureId());
+                functions->glDrawArrays(GL_TRIANGLES, 0, 6);
+                functions->glBindTexture(currentTarget, 0);
+                // END blit
+                m_rgbaShader->release();
+                m_rgb_vao->release();
+            }*/
             functions->glDisable(GL_BLEND);
        }
     }
