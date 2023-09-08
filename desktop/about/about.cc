@@ -133,8 +133,11 @@ void AboutWindow::setupUi()
     line->setFrameShape(QFrame::HLine);
     line->setFrameShadow(QFrame::Sunken);
 
+#ifdef HW_BUILD_VER
+    m_shellVersion->setText(QString("%1.%2").arg(qApp->applicationVersion(), QString::number(HW_BUILD_VER)));
+#else
     m_shellVersion->setText(qApp->applicationVersion());
-
+#endif
     l_hw = new QLabel(this);
     m_hardware = new QLabel(this);
     l_proc = new QLabel(this);
