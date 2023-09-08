@@ -70,10 +70,13 @@ QVariant LSDesktopModel::data(const QModelIndex &index, int role) const
         if (index.column() == 1)
             return QVariant(Qt::AlignTrailing | Qt::AlignVCenter);
         break;
+// TODO: hack. fix?
+#if QT_VERSION >= 0x060000
     case Qt::UserRole+4:
             if(index.row() > p->m_files.count()-1)
                 return QVariant();
             return QVariant::fromValue(p->m_files.at(index.row())->info);
+#endif
     }
 
     return QVariant();

@@ -6,6 +6,7 @@
 
 #include <QMimeDatabase>
 #include <QSharedPointer>
+#include "fileinfo.h"
 
 class LSDesktopEntry;
 class LSExtendedFileInfo;
@@ -47,7 +48,6 @@ public:
     bool operator ==(const LSExtendedFileInfo &fileInfo) const;
 
     inline bool hasInformation() const { return info.data() != nullptr; }
-
     void populate(const LSExtendedFileInfo &fileInfo);
 
     int visibleLocation(const QString &childName);

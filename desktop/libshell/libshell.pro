@@ -10,7 +10,7 @@ CONFIG(debug, debug|release) {
 
 TEMPLATE = lib
 DEFINES += LIBSHELL_LIBRARY
-DEFINES += USE_DNSSD
+# sDEFINES += USE_DNSSD
 
 INCLUDEPATH += include/
 INCLUDEPATH += include/private/
@@ -95,7 +95,7 @@ HEADERS += \
     include/trashmodel.h \
     include/executor.h
 
-LIBS += -ldns_sd
+#LIBS += -ldns_sd
 
 headers.files = $${HEADERS}
 headers.path = $$PREFIX/include/hollywood/

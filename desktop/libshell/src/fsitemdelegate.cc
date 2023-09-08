@@ -232,22 +232,21 @@ void LSFSItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
         return;
 
     // get file info for the item
-    auto file = index.data(Qt::UserRole + 4).value<QSharedPointer<LSExtendedFileInfo>>();
-
+    bool hidden = index.data(Qt::UserRole + 4).toBool();
+    bool symlink = index.data(Qt::UserRole + 5).toBool();
     QStyleOptionViewItem opt = option;
     initStyleOption(&opt, index);
 
     // distinguish the hidden items visually by making their texts italic
     bool shadowIcon(false);
-    if(file && file->isHidden()) {
+    if(hidden) {
         QFont f(opt.font);
         f.setItalic(true);
         opt.font = f;
         shadowIcon = p->m_shadowHidden;
     }
 
-    bool isSymlink = file && file->isSymLink();
-    if(file && file->isSymLink()) {
+    if(symlink) {
         QFont f(opt.font);
         f.setItalic(true);
         opt.font = f;
@@ -281,7 +280,7 @@ void LSFSItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
         }
 
         // draw some emblems for the item if needed
-        if(isSymlink) {
+        if(symlink) {
             // draw the emblem for symlinks
             auto sml = iconRect;
             sml.setSize(option.decorationSize / 3);
@@ -387,7 +386,7 @@ void LSFSItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
         // draw some emblems for the item if needed
         QRect iconRect = style->subElementRect(QStyle::SE_ItemViewItemDecoration, &opt, widget);
         iconRect.setSize(option.decorationSize / 2);
-        if(isSymlink)
+        if(symlink)
             p->m_symlinkIcon.paint(painter, iconRect, Qt::AlignCenter, iconMode);
 /*
         if(file && file->canUnmount()) {

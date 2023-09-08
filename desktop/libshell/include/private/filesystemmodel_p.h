@@ -141,12 +141,10 @@ public:
 
 #if QT_VERSION >= 0x060000
     QMultiHash<int,QByteArray> roleNames;
-    QStringList nameFilters;
     std::vector<QRegularExpression> nameFiltersRegexps;
     void rebuildNameFilterRegexps();
-#else
-    QList<QRegExp> nameFilters;
 #endif
+    QStringList nameFilters;
     QHash<QString, QString> resolvedSymLinks;
 
     LSFSNode root;

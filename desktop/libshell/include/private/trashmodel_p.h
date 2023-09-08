@@ -12,6 +12,7 @@
 #include <QHash>
 #include <QMimeDatabase>
 #include <QFileSystemWatcher>
+#include <QDateTime>
 
 class LSFSThread;
 class LSTrashModel;
