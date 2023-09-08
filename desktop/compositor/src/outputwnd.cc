@@ -296,47 +296,6 @@ void OutputWindow::drawTextureForObject(Surface *obj)
             m_textureBlitter.blit(texture->textureId(), tt_surface, surfaceOrigin);
             m_textureBlitter.release();
 
-            /*if(texture->format() == QOpenGLTexture::RGBFormat)
-            {
-                m_rgbShader->bind();
-                m_rgbShader->setUniformValue(m_rgbShader->uniformLocation("texture"), texture->textureId());
-                functions->glDrawArrays(GL_TRIANGLES, 0, 6);
-                m_rgbShader->release();
-
-            }
-            else
-            {
-                m_rgb_vao->bind();
-
-                // Start Blit
-                m_rgbaShader->bind();
-                functions->glBindTexture(currentTarget, texture->textureId());
-                // Prepare Program
-
-                m_vertexBuffer.bind();
-                auto loc = m_rgbaShader->uniformLocation("vertexCoord");
-                m_rgbaShader->setAttributeBuffer(loc, GL_FLOAT, 0, 3, 0);
-                m_rgbaShader->enableAttributeArray(loc);
-                m_vertexBuffer.release();
-
-                m_rgbaShader->setUniformValue(m_rgbaShader->uniformLocation("vertexTransform"), tt_surface);
-
-                m_textureBuffer.bind();
-                auto texloc = m_rgbaShader->uniformLocation("textureCoord");
-                m_rgbaShader->setAttributeBuffer(texloc, GL_FLOAT, 0, 2, 0);
-                m_rgbaShader->enableAttributeArray(texloc);
-                m_textureBuffer.release();
-
-                // END: prepare program
-
-                m_rgbaShader->setUniformValue(m_rgbaShader->uniformLocation("textureTransform"), QMatrix3x3());
-                m_rgbaShader->setUniformValue(m_rgbaShader->uniformLocation("textureSampler"), texture->textureId());
-                functions->glDrawArrays(GL_TRIANGLES, 0, 6);
-                functions->glBindTexture(currentTarget, 0);
-                // END blit
-                m_rgbaShader->release();
-                m_rgb_vao->release();
-            }*/
             functions->glDisable(GL_BLEND);
        }
     }

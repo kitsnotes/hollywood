@@ -77,7 +77,6 @@ static const char fragment_shader[] =
     "void main() {"
     "   if(isrgb) {"
     "     highp vec4 tmpFragColor; tmpFragColor.rgb = 1.0*texture2D(textureSampler,uv).rgb;"
-    "     tmpFragColor.a = 1.0;"
     "     tmpFragColor.a *= opacity;"
     "     gl_FragColor = swizzle ? tmpFragColor.bgra : tmpFragColor;"
     "   } else {"
