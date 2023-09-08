@@ -11,7 +11,11 @@
 FMApplication::FMApplication(int &argc, char **argv)
     :QApplication(argc, argv)
 {
+#ifdef HW_BUILD_VER
+    setApplicationVersion(QString("%1.%2").arg(HOLLYWOOD_OS_VERSION, QString::number(HW_BUILD_VER)));
+#else
     setApplicationVersion(HOLLYWOOD_OS_VERSION);
+#endif
     setApplicationName("Hollywood Shell");
     setOrganizationDomain(HOLLYWOOD_OS_DOMAIN);
     setWindowIcon(QIcon::fromTheme("system-file-manager"));
