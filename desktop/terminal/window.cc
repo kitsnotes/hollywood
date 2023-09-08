@@ -61,6 +61,19 @@ void TerminalWindow::setupActions()
     newwnd->setShortcut(QKeySequence("Ctrl+Shift+N"));
     connect(newwnd, &QAction::triggered, app, &TerminalApplication::newWindow);
 
+    connect(shell, &QMenu::aboutToShow, [this]() {
+        auto host = m_tabs->currentHost();
+        if(host == nullptr)
+            goto disable_hosts;
+
+        if(host->hasSelection())
+        {
+            m_saveSelection->setEnabled(true);
+            return;
+        }
+disable_hosts:
+        m_saveSelection->setDisabled(true);
+    });
     auto newtab = shell->addAction(tr("New &Tab"));
     newtab->setShortcut(QKeySequence("Ctrl+Shift+T"));
     newtab->setObjectName("NewTab");
@@ -79,7 +92,21 @@ void TerminalWindow::setupActions()
     quit->setObjectName("QuitTerminal");
     connect(quit, &QAction::triggered, qApp, &QApplication::quit);
     auto edit = menubar->addMenu(tr("&Edit"));
+    connect(edit, &QMenu::aboutToShow, [this]() {
+        auto host = m_tabs->currentHost();
+        if(host == nullptr)
+            goto disable_hosts;
 
+        if(host->hasSelection())
+        {
+            m_copy->setEnabled(true);
+            m_pasteSelection->setEnabled(true);
+            return;
+        }
+    disable_hosts:
+        m_copy->setDisabled(true);
+        m_pasteSelection->setDisabled(true);
+    });
     // basically just for show to have symmetry with other apps
     // i don't know if this is a good idea yet or not --cat
     auto cut = edit->addAction(tr("&Cut"));
@@ -155,15 +182,15 @@ void TerminalWindow::closeEvent(QCloseEvent *event)
 void TerminalWindow::newTab()
 {
     m_tabs->newDefaultTab();
-    disableSelectionRelevantActions();
+    m_tabs->currentHost()->widget()->activateWindow();
+    m_tabs->currentHost()->widget()->setFocus();
 }
 
 void TerminalWindow::currentTabChanged()
 {
-    disableSelectionRelevantActions();
     auto tw = m_tabs->currentHost();
-    if(!tw->widget()->selectedText().isEmpty())
-        enableSelectionRelevantActions();
+    m_tabs->currentHost()->widget()->activateWindow();
+    m_tabs->currentHost()->widget()->setFocus();
 }
 
 void TerminalWindow::showPreferences()
@@ -180,7 +207,6 @@ void TerminalWindow::aboutTerminal()
                              .arg(QLatin1String(QT_VERSION_STR)));
     connect(about, SIGNAL(finished(int)), about, SLOT(deleteLater()));
     about->show();
-
 }
 
 void TerminalWindow::clipboardDataChanged()
@@ -241,28 +267,30 @@ void TerminalWindow::saveToFile()
 
 void TerminalWindow::contextMenuRequested(const QPoint &pos)
 {
-    qDebug() << "TerminalWindow::contextMenuRequested";
     QMenu menu;
 
     menu.addAction(m_copy);
     menu.addAction(m_pasteClipboard);
     menu.addAction(m_pasteSelection);
+    auto host = m_tabs->currentHost();
+    if(host == nullptr)
+    {
+        m_copy->setDisabled(true);
+        m_pasteSelection->setDisabled(true);
+    }
+
+    if(host->hasSelection())
+    {
+        m_copy->setEnabled(true);
+        m_pasteSelection->setEnabled(true);
+    }
+    else
+    {
+        m_copy->setDisabled(true);
+        m_pasteSelection->setDisabled(true);
+    }
+
     auto act = menu.exec(mapToGlobal(pos));
     if(act == nullptr)
         return;
-
-}
-
-void TerminalWindow::disableSelectionRelevantActions()
-{
-    m_copy->setDisabled(true);
-    m_pasteSelection->setDisabled(true);
-    m_saveSelection->setDisabled(true);
-}
-
-void TerminalWindow::enableSelectionRelevantActions()
-{
-    m_copy->setDisabled(false);
-    m_pasteSelection->setDisabled(false);
-    m_saveSelection->setDisabled(false);
 }

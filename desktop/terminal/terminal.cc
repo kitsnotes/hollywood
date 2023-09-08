@@ -29,6 +29,8 @@ TerminalHost::TerminalHost(TerminalProfile *profile, QWidget *parent)
 
     m_widget->setScrollBarPosition(QTermWidget::ScrollBarRight);
     m_widget->setContextMenuPolicy(Qt::CustomContextMenu);
+    m_widget->setTrimPastedTrailingNewlines(true);
+    m_widget->setTerminalSizeHint(true);
     connect(m_profile, &TerminalProfile::profileChanged, this, &TerminalHost::profileChanged);
     connect(m_widget, &QTermWidget::finished, this, &TerminalHost::terminalFinished);
     connect(m_widget, &QTermWidget::titleChanged, this, &TerminalHost::terminalTitleChanged);
@@ -183,6 +185,7 @@ QString TerminalHost::getProcessName(uint pid)
 
 void TerminalHost::copyAvailable(bool canCopy)
 {
+    qDebug() << "canCopy";
     m_copy = canCopy;
     emit canCopyChanged(m_copy);
 }
@@ -338,4 +341,17 @@ void TerminalHost::setProfile(TerminalProfile *profile)
     Q_ASSERT(profile);
     m_profile = profile;
     profileChanged();
+}
+
+bool TerminalHost::hasSelection()
+{
+    int startCol,startRow,endCol,endRow;
+
+    m_widget->getSelectionStart(startRow,startCol);
+    m_widget->getSelectionEnd(endRow,endCol);
+
+    if(startRow == endRow && startCol == endCol)
+        return false;
+
+    return true;
 }

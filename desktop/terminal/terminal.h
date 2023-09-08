@@ -20,6 +20,7 @@ public:
     QString generateWindowTitle();
     void setProfile(TerminalProfile* profile);
     bool canCopy();
+    bool hasSelection();
 private:
     explicit TerminalHost(TerminalProfile *profile, QWidget *parent = nullptr);
 signals:
