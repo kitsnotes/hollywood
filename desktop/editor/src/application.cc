@@ -1,6 +1,6 @@
 
 #include "application.h"
-#include <aboutdialog.h>
+#include <hollywood/aboutdialog.h>
 
 #ifdef Q_OS_MAC
 extern void disableWindowTabbing();
