@@ -53,6 +53,7 @@ lessThan(QT_MAJOR_VERSION, 6) {
 SUBDIRS = \
     libcommdlg \
     libcompositor \
+    libshell \
     platformtheme \
     platformplugin \
     style
