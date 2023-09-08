@@ -10,7 +10,7 @@
 #include <QSettings>
 #include <QClipboard>
 #include <QVBoxLayout>
-#include <aboutdialog.h>
+#include <hollywood/aboutdialog.h>
 
 #include "window.h"
 #include "calculator.h"

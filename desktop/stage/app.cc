@@ -13,7 +13,7 @@
 #include <hollywood/hollywood.h>
 #include <hollywood/layershellwindow.h>
 #include <executor.h>
-#include <messagebox.h>
+#include <hollywood/messagebox.h>
 #include <desktopentry.h>
 #include <QDBusInterface>
 #include <QIcon>

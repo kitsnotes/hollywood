@@ -1,5 +1,5 @@
 #include "dialoghelpers.h"
-#include <messagebox.h>
+#include <hollywood/messagebox.h>
 #include <QAbstractButton>
 #include <QPushButton>
 

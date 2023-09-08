@@ -5,7 +5,7 @@
 #include <QIcon>
 #include <QString>
 #include <QLocalServer>
-#include <aboutdialog.h>
+#include <hollywood/aboutdialog.h>
 
 #include "filewindow.h"
 

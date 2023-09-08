@@ -16,7 +16,7 @@
 #include <QtWidgets/QGroupBox>
 #include <QtWidgets/QToolButton>
 
-#include <preferencedialog.h>
+#include <hollywood/preferencedialog.h>
 
 class GeneralTab : public QWidget
 {

@@ -15,6 +15,7 @@ DEFINES += LIBSHELL_LIBRARY
 INCLUDEPATH += include/
 INCLUDEPATH += include/private/
 INCLUDEPATH += ../libcompositor/include
+INCLUDEPATH += ../libcommdlg
 QMAKE_PKGCONFIG_DESCRIPTION = Hollywood Shell Library
 versionAtLeast(QT_VERSION, 6.0.0) {
     LIBS += -L../output -lcommdlg-$${HOLLYWOOD_APIVERSION} -lcompositor-$${HOLLYWOOD_APIVERSION}

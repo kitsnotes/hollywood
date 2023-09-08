@@ -4,7 +4,7 @@
 #include <qpa/qplatformdialoghelper.h>
 #include <QObject>
 #include <QSharedPointer>
-#include <messagebox.h>
+#include <hollywood/messagebox.h>
 
 class HWMessageDialogHelper : public QPlatformMessageDialogHelper
 {

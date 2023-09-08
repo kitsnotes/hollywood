@@ -16,7 +16,7 @@
 #include <qtermwidget5/qtermwidget.h>
 #endif
 
-#include <aboutdialog.h>
+#include <hollywood/aboutdialog.h>
 #include <QSettings>
 TerminalWindow::TerminalWindow(QWidget *parent)
     : QMainWindow(parent),

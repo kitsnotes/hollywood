@@ -11,7 +11,7 @@
 #include <QStandardPaths>
 #include <QSettings>
 #include <hollywood/hollywood.h>
-#include <messagebox.h>
+#include <hollywood/messagebox.h>
 #include <QDBusInterface>
 
 const static QString lcLang = QStringLiteral("LANG");

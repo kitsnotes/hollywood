@@ -1,7 +1,7 @@
 #include "settings.h"
-#include <aboutdialog.h>
 #include <hollywood/hollywood.h>
 #include <hollywood/appletinterface.h>
+#include <hollywood/aboutdialog.h>
 #include <QStyledItemDelegate>
 #include <QHash>
 #include <QSettings>
