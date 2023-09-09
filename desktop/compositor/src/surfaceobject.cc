@@ -47,6 +47,8 @@ Surface::Surface(QWaylandSurface *surface)
 
 Surface::~Surface()
 {
+    qDebug() << "destroying surface:" << uuid().toString(QUuid::WithoutBraces);
+
     if(m_parentSurface)
         m_parentSurface->recycleChildSurfaceObject(this);
 
@@ -202,9 +204,11 @@ WlrLayerSurfaceV1::Anchors Surface::anchors()
 
 bool Surface::isSpecialShellObject() const
 {
-    if(surface())
-        if(surface()->isCursorSurface())
-            return true;
+    if(m_surface == nullptr)
+        return false;
+
+    if(m_cursor)
+        return true;
 
     if(m_surfaceType == Desktop)
         return true;
@@ -1137,9 +1141,9 @@ void Surface::createMenuServer(OriginullMenuServer *menu)
 
 void Surface::surfaceDestroyed()
 {
-    hwComp->recycleSurfaceObject(this);
     if(m_wndctl)
         m_wndctl->destroy();
+    hwComp->recycleSurfaceObject(this);
     hwComp->triggerRender();
 }
 

@@ -306,10 +306,13 @@ void Compositor::onSurfaceCreated(QWaylandSurface *surface)
     obj->createViewForOutput(outputAt);
     m_surfaces << obj;
     m_zorder << obj;
+
+    qDebug() << "surfaceCreated:" << obj->uuid().toString(QUuid::WithoutBraces);
 }
 
 void Compositor::recycleSurfaceObject(Surface *obj)
 {
+    qDebug() << "recycling surface:" << obj->uuid().toString(QUuid::WithoutBraces);
     Surface *parent = nullptr;
     if(obj->parentSurfaceObject() != nullptr)
     {
