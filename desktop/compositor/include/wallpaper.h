@@ -36,6 +36,7 @@ private:
     QString findNextWallpaperRandom();
     void renderTransition();
     void completeTransition();
+    void setNewWallpaperPath(const QString &wallpaper);
 private slots:
     void transitionWallpaper();
 private:

@@ -242,6 +242,7 @@ void WallpaperManager::transitionWallpaper()
     m_transprogress = 0.0f;
     m_wallpaper = findNextWallpaperInOrder();
     wallpaperChanged();
+    setNewWallpaperPath(m_wallpaper);
 
     // clang analyzer complains about this
     // we should make sure we are bound and
@@ -410,4 +411,11 @@ void WallpaperManager::completeTransition()
     m_intrans = false;
     hwComp->triggerRender();
     setupRotationTimer();
+}
+
+void WallpaperManager::setNewWallpaperPath(const QString &wallpaper)
+{
+    QSettings settings("originull", "hollywood");
+    settings.beginGroup("PrimaryWallpaper");
+    settings.setValue("Wallpaper", wallpaper);
 }
