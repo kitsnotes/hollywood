@@ -16,7 +16,6 @@ unsigned int VBOWP;
 
 static const float pos[12] = { -1.0f, -1.0f, 1.0f, -1.0f, -1.0f, 1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f, 1.0f};
 
-
 WallpaperManager::WallpaperManager(OutputWindow *parent)
     : QObject{0}
     , m_parent(parent) {}
@@ -30,15 +29,6 @@ void WallpaperManager::setup()
     m_shader->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/transition.vsh");
     m_shader->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/Shaders/transition.fsh");
     m_shader->link();
-
-    QOpenGLFunctions *functions = QOpenGLContext::currentContext()->functions();
-    functions->glUseProgram(m_shader->programId());
-
-    functions->glGenBuffers(1,&VBOWP);
-    functions->glBindBuffer(GL_ARRAY_BUFFER, VBOWP);
-    functions->glBufferData(GL_ARRAY_BUFFER, sizeof(pos), pos, GL_STATIC_DRAW);
-    functions->glEnableVertexAttribArray(m_shader->attributeLocation("position"));
-    functions->glVertexAttribPointer(m_shader->attributeLocation("position"), 2, GL_FLOAT, GL_FALSE, 0, 0);
 }
 
 void WallpaperManager::wallpaperChanged()
@@ -59,8 +49,7 @@ void WallpaperManager::wallpaperChanged()
         m_wallpaper = QString("");
         return;
     }
-    //bg.rgbSwap();
-    //bg.invertPixels();
+
     bg.mirror(false, true);
     m_wpStartPoint = QPoint(0,0);
     if(bg.size() != m_parent->size())
@@ -213,7 +202,34 @@ void WallpaperManager::setupRotationTimer()
     m_rotationTimer = new QTimer(this);
     connect(m_rotationTimer, &QTimer::timeout, this, &WallpaperManager::transitionWallpaper);
     m_rotationTimer->setSingleShot(true);
-    //m_rotationTimer->start(4500);
+    uint time = (60*1000);
+    switch(m_rotateTime)
+    {
+    case 3:
+        time = ((60*5)*1000);
+        break;
+    case 4:
+        time = ((60*10)*1000);
+        break;
+    case 5:
+        time = ((60*30)*1000);
+        break;
+    case 6:
+        time = ((60*60)*1000);
+        break;
+    case 7:
+        time = ((120*60)*1000);
+        break;
+    case 8:
+        time = ((240*60)*1000);
+        break;
+    case 2:
+    default:
+        time = (60*1000);
+        break;
+    }
+
+    m_rotationTimer->start(time);
 }
 
 void WallpaperManager::transitionWallpaper()
@@ -240,7 +256,6 @@ void WallpaperManager::transitionWallpaper()
     m_shader->setUniformValue("progress", m_transprogress);
 
     // TODO: disable transitions for legacy mode?
-    //completeTransition();
     hwComp->triggerRender();
 }
 
@@ -253,6 +268,9 @@ void WallpaperManager::querySettings()
     QSettings settings("originull", "hollywood");
     settings.beginGroup("PrimaryWallpaper");
     m_rotate = settings.value("Rotate", false).toBool();
+    if(!m_rotate && m_rotationTimer != nullptr && m_rotationTimer->isActive())
+        m_rotationTimer->stop();
+
     m_rotateFolder = settings.value("RotateFolder").toString();
     m_wallpaper = settings.value("Wallpaper").toString();
     m_color = settings.value("BackgroundColor", HOLLYWOOD_DEF_DESKTOP_BG).toString().toUpper();
@@ -261,13 +279,25 @@ void WallpaperManager::querySettings()
             dm = 0;
     m_displayMode = (Layout)dm;
 
-    /*QFile file(m_wallpaper);
-
-    if(!file.isReadable())
-        m_wallpaper = QString("");*/
+    QDir dir(m_rotateFolder);
+    if(!dir.exists())
+    {
+        settings.setValue("Rotate", false);
+        m_rotate = false;
+    }
 
     m_rotateTime = settings.value("RotateTime", 6).toUInt();
+    if(m_rotateTime > 9)
+    {
+        m_rotateTime = 6;
+        settings.setValue("RotateTime", 6);
+    }
     m_rotateMode = settings.value("RotateMode", 0).toUInt();
+    if(m_rotateMode > 1)
+    {
+        m_rotateMode = 0;
+        settings.setValue("RotateMode", 0);
+    }
     settings.endGroup();
 
     if(m_wallpaper != oldbg ||
@@ -277,25 +307,25 @@ void WallpaperManager::querySettings()
     {
         wallpaperChanged();
     }
-    setupRotationTimer();
+    if(m_rotate && (m_rotateTime > 1 && m_rotateTime < 9))
+        setupRotationTimer();
 }
 
 QString WallpaperManager::findNextWallpaperInOrder()
 {
-    return QString("/usr/share/wallpapers/California Scenes/Joshua Tree.jpg");
     QDir dir(m_rotateFolder);
     if(!dir.exists())
         return QString();
 
     QString firstValid;
 
-    auto entries = dir.entryList(QDir::NoDotAndDotDot, QDir::Name);
+    auto entries = dir.entryList(QDir::Files, QDir::Name);
     for(auto e : entries)
     {
         QImage i;
-        if(i.load(e))
+        if(i.load(QString("%1/%2").arg(m_rotateFolder, e)))
         {
-            firstValid = e;
+            firstValid = QString("%1/%2").arg(m_rotateFolder, e);
             break;
         }
     }
@@ -305,14 +335,18 @@ QString WallpaperManager::findNextWallpaperInOrder()
 
 
     QString nextWallpaper;
-    auto current = QString("%1/%2").arg(m_rotateFolder, m_wallpaper);
-    auto idx = entries.indexOf(current);
-    for(int i = idx; i < entries.count(); ++i)
+    auto currWallpaper = m_wallpaper.split("/").last();
+    auto idx = entries.indexOf(currWallpaper);
+    if(idx == -1)
+        return QString();
+
+    for(int i = idx+1; i < entries.count(); ++i)
     {
         QImage img;
-        if(img.load(entries.at(i)))
+        auto imgpath = QString("%1/%2").arg(m_rotateFolder, entries[i]);
+        if(img.load(imgpath))
         {
-            nextWallpaper = entries[i];
+            nextWallpaper = QString("%1/%2").arg(m_rotateFolder, entries[i]);
             break;
         }
     }
@@ -320,41 +354,36 @@ QString WallpaperManager::findNextWallpaperInOrder()
     if(nextWallpaper.isEmpty())
         return firstValid;
 
-    qDebug() << nextWallpaper;
     return nextWallpaper;
 }
 
 void WallpaperManager::renderTransition()
 {
     QOpenGLFunctions *functions = m_parent->context()->functions();
+    functions->glUseProgram(m_shader->programId());
+
+    functions->glGenBuffers(1,&VBOWP);
+    functions->glBindBuffer(GL_ARRAY_BUFFER, VBOWP);
+    functions->glBufferData(GL_ARRAY_BUFFER, sizeof(pos), pos, GL_STATIC_DRAW);
+    functions->glEnableVertexAttribArray(m_shader->attributeLocation("position"));
+    functions->glVertexAttribPointer(m_shader->attributeLocation("position"), 2, GL_FLOAT, GL_FALSE, 0, 0);
+
     m_shader->bind();
-    //functions->glViewport(m_wpStartPoint.x(), m_wpStartPoint.y(), m_bgSize.width(), m_bgSize.height());
-    functions->glViewport(0,0,500,500);
-
-    //glViewport(0,0,m_parent->size().width(), m_parent->size().height());
-
-
     m_shader->setUniformValue("progress", m_transprogress);
 
     functions->glActiveTexture(GL_TEXTURE0);
     m_oldtexture->bind(GL_TEXTURE_2D);
-    functions->glActiveTexture(GL_TEXTURE0+1);
+    functions->glActiveTexture(GL_TEXTURE1);
     m_texture->bind(GL_TEXTURE_2D);
-    functions->glEnable(GL_BLEND);
-    functions->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-    functions->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    functions->glDisable(GL_BLEND);
-    m_transprogress += 0.1f;
+    functions->glDrawArrays(GL_TRIANGLE_STRIP, 0, 6);
+    m_transprogress += 0.02f;
 
     m_oldtexture->release();
     functions->glActiveTexture(GL_TEXTURE0);
     m_texture->release();
     m_shader->release();
 
-    qDebug() << "renderFrame:" << m_transprogress;
-    //functions->glViewport(0,0,m_parent->size().width(),m_parent->size().height());
-
-    if(m_transprogress >=  3.0f)
+    if(m_transprogress >=  1.0f)
     {
         completeTransition();
         return;
@@ -373,7 +402,6 @@ void WallpaperManager::renderTransition()
 void WallpaperManager::completeTransition()
 {
     QOpenGLFunctions *functions = m_parent->context()->functions();
-    qDebug() << "complete transition";
     functions->glActiveTexture(GL_TEXTURE0);
 
     m_shader->release();

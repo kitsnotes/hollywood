@@ -38,7 +38,6 @@ vec4 transition(vec2 uv) {
     c1 /= float(passes*passes);
     c2 /= float(passes*passes);
     return mix(c1, c2, progress);
-    //return mix(getFromColor(uv), getToColor(uv), progress);
 }
 
 void main()
