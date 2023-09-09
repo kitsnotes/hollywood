@@ -111,15 +111,6 @@ void OutputWindow::initializeGL()
     m_shadowShader->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/shadow.vsh");
     m_shadowShader->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/Shaders/shadow.fsh");
     m_shadowShader->link();
-
-    glGenBuffers(1,&VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    float data[] = {0,0,1,0,0,1,1,1};
-    glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, false, 0, 0);
-
-
 }
 
 void OutputWindow::paintGL()
@@ -333,7 +324,14 @@ void OutputWindow::drawShadowForObject(uint shadowOffset, Surface *obj)
     float corner = r * (0.5 + 0.5 * cos(2*angle));
     float sigma = z*10;
 
+    functions->glUseProgram(m_shadowShader->programId());
     m_shadowShader->bind();
+    glGenBuffers(1,&VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    float data[] = {0,0,1,0,0,1,1,1};
+    glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, false, 0, 0);
 
     auto bs = hwComp->borderSize();
     auto ds = hwComp->decorationSize();
