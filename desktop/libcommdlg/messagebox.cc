@@ -1,6 +1,7 @@
 #include "messagebox_p.h"
 #include "messagebox.h"
 
+#include <QLineEdit>
 #include <QFile>
 #include <QPropertyAnimation>
 #include <QTimer>
@@ -256,11 +257,13 @@ void HWMessageBox::showDetailedText()
 
 void HWMessageBox::addButton(QAbstractButton *button, QMessageBox::ButtonRole role)
 {
+    qDebug() << "buttonBox: adding role" << role;
     q->buttonBox->addButton(button, QDialogButtonBox::ButtonRole(role));
 }
 
 QPushButton *HWMessageBox::addButton(const QString &text, QMessageBox::ButtonRole role)
 {
+    qDebug() << "buttonBox: adding role" << role << "with text" << text;
     auto btn = new QPushButton(text, this);
     q->buttonBox->addButton(btn, QDialogButtonBox::ButtonRole(role));
     return btn;
@@ -268,6 +271,7 @@ QPushButton *HWMessageBox::addButton(const QString &text, QMessageBox::ButtonRol
 
 QPushButton *HWMessageBox::addButton(QMessageBox::StandardButton button)
 {
+    qDebug() << "buttonBox: adding std button" << button;
     auto btn = q->buttonBox->addButton((QDialogButtonBox::StandardButton)button);
     return btn;
 }
@@ -302,6 +306,7 @@ QMessageBox::ButtonRole HWMessageBox::buttonRole(QAbstractButton *button) const
 
 void HWMessageBox::setStandardButtons(QMessageBox::StandardButtons buttons)
 {
+    qDebug() << "setStandardButtons";
     bool use_help = false;
     if(buttons.testFlag(QMessageBox::Help))
     {
@@ -491,6 +496,7 @@ QCheckBox *HWMessageBox::checkBox() const
 
 int HWMessageBox::exec()
 {
+    qDebug() << "exec";
     QDialog::exec();
 
     return standardButton(q->m_clicked);
@@ -498,12 +504,13 @@ int HWMessageBox::exec()
 
 void HWMessageBox::showEvent(QShowEvent *event)
 {
-    q->playBell();
+    //q->playBell();
     QDialog::showEvent(event);
 }
 
 void HWMessageBox::boxButtonClicked(QAbstractButton *button)
 {
+    qDebug() << "boxButtonClicked";
     q->m_clicked = button;
     setResult(standardButton(button));
     emit buttonClicked(button);
