@@ -622,11 +622,13 @@ Key *SvcEnable::parseFromData(const std::string &data,
                               const Script *script) {
     const static std::string valid_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890.-_";
     std::string::size_type space = data.find_first_of(' ');;
-    std::string svc, runlevel{"default"};
-
+    std::string svc;
+    bool user = false;
     if(space != std::string::npos) {
         svc = data.substr(0, space);
-        runlevel = data.substr(space + 1);
+        std::string usercheck = data.substr(space + 1);
+        if(usercheck == "globaluser")
+            user = true;
     } else {
         svc = data;
     }
@@ -637,7 +639,7 @@ Key *SvcEnable::parseFromData(const std::string &data,
         return nullptr;
     }
 
-    return new SvcEnable(script, pos, svc, runlevel);
+    return new SvcEnable(script, pos, svc, user);
 }
 
 /* LCOV_EXCL_START */
@@ -647,24 +649,51 @@ bool SvcEnable::validate() const {
 /* LCOV_EXCL_STOP */
 
 bool SvcEnable::execute() const {
-    const std::string lib_systemd = "/usr/lib/systemd/system/" + _svc + ".service";
-    output_info(pos, "svcenable: enabling service " + _svc);
+    const std::string lib_systemd_system = "/usr/lib/systemd/system/" + _svc + ".service";
+    const std::string lib_systemd_user = "/usr/lib/systemd/user/" + _svc + ".service";
+    if(_userglobal)
+    {
+        output_info(pos, "svcenable: enabling user service " + _svc);
 
-    if(script->options().test(Simulate)) {
-        std::cout << "systemctl enable " << _svc << std::endl;
-        return true;
+        if(script->options().test(Simulate)) {
+            std::cout << "systemctl --global enable " << _svc << std::endl;
+            return true;
+        }
     }
+    else
+    {
+        output_info(pos, "svcenable: enabling system service " + _svc);
 
+        if(script->options().test(Simulate)) {
+            std::cout << "systemctl enable " << _svc << std::endl;
+            return true;
+        }
+    }
 #ifdef HAS_INSTALL_ENV
     error_code ec;
-    if(!fs::exists(script->targetDirectory() + lib_systemd, ec)) {
-        output_warning(pos, "svcenable: missing service", _svc);
-    }
+    if(_userglobal)
+    {
+        if(!fs::exists(script->targetDirectory() + lib_systemd_user, ec)) {
+            output_warning(pos, "svcenable: missing user service", _svc);
+        }
 
-    if(run_command("chroot", {script->targetDirectory(), "systemctl",
-                               "enable", _svc}) != 0) {
-        output_error(pos, "svcenable: could not enable service " + _svc);
-        return false;
+        if(run_command("chroot", {script->targetDirectory(), "systemctl", "--global",
+                                   "enable", _svc}) != 0) {
+            output_error(pos, "svcenable: could not enable user service " + _svc);
+            return false;
+        }
+    }
+    else
+    {
+        if(!fs::exists(script->targetDirectory() + lib_systemd_system, ec)) {
+            output_warning(pos, "svcenable: missing system service", _svc);
+        }
+
+        if(run_command("chroot", {script->targetDirectory(), "systemctl",
+                                   "enable", _svc}) != 0) {
+            output_error(pos, "svcenable: could not enable system service " + _svc);
+            return false;
+        }
     }
 #endif  /* HAS_INSTALL_ENV */
     return true;  /* LCOV_EXCL_LINE */
