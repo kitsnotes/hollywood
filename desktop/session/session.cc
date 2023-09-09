@@ -325,15 +325,15 @@ bool SMApplication::isBatteryPowered() const
 
 void SMApplication::startDBusReliantServices()
 {
-    m_pipewireProcess->initialize();
+    //m_pipewireProcess->initialize();
+    //m_wireplumberProcess->initialize();
+    //m_pipewirePulseProcess->initialize();
     m_elevatorProcess->initialize();
 
-    m_wireplumberProcess->initialize();
     m_stageProcess->initialize();
     m_desktopProcess->initialize();
     m_notificationProcess->initialize();
 
-    m_pipewirePulseProcess->initialize();
     m_sessionStarted = true;
     m_dbus = new SessionDBus(this);
     QDBusConnection::sessionBus().registerService(QLatin1String(HOLLYWOOD_SESSION_DBUS));
@@ -390,15 +390,15 @@ bool SMApplication::stopSession()
     terminateUserProcesses();
     m_desktopProcess->deconstruct();
     m_elevatorProcess->deconstruct();
-    m_pipewirePulseProcess->deconstruct();
-    m_wireplumberProcess->deconstruct();
-    m_pipewireProcess->deconstruct();
+    //m_pipewirePulseProcess->deconstruct();
+    //m_wireplumberProcess->deconstruct();
+    //m_pipewireProcess->deconstruct();
     // insert more sub-processes HERE
 
     // stop the stage ,compositor, dbus-session at the end, in that order
     m_stageProcess->deconstruct();
     m_compositorProcess->deconstruct();
-    m_dbusSessionProcess->deconstruct();
+    //m_dbusSessionProcess->deconstruct();
 
     m_socket->close();
     return true;

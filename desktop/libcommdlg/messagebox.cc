@@ -147,7 +147,7 @@ void MessageBoxPrivate::playBell()
         if(QFile::exists("/usr/share/sounds/Hollywood/DoubleBell.wav"))
             m_bell->setSource(QUrl::fromLocalFile("/usr/share/sounds/Hollywood/DoubleBell.wav"));
     }
-    m_bell->play();
+    //m_bell->play();
 }
 
 void MessageBoxPrivate::animateOpenDetails()
