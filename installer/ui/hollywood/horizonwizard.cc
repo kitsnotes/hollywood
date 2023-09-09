@@ -501,6 +501,8 @@ QString HorizonWizard::toHScript() {
     lines << "svcenable wpa_supplicant";
     lines << "svcenable sshd";
     lines << "svcenable sddm";
+    lines << "svcenable wireplumber globaluser";
+    lines << "svcenable pipewire-pulse globaluser";
 
     /* char *root = encrypt_pw(field("rootpw").toString().toStdString().c_str());
     Q_ASSERT(root != nullptr);
