@@ -1043,13 +1043,13 @@ QFile::Permissions LSFSModel::permissions(const QModelIndex &index) const
 bool LSFSModel::isHidden(const QModelIndex &index) const
 {
     Q_D(const LSFSModel);
-    return d->node(index)->isSymLink();
+    return d->node(index)->isHidden();
 }
 
 bool LSFSModel::isSymlink(const QModelIndex &index) const
 {
     Q_D(const LSFSModel);
-    return d->node(index)->isHidden();
+    return d->node(index)->isSymLink();
 }
 
 QString LSFSModel::absolutePath(const QModelIndex &index) const

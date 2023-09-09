@@ -27,6 +27,7 @@ public:
     OutputWindow(Output *parent = nullptr);
     int width();
     int height();
+    WallpaperManager* wallpaperManager() { return m_wpm; }
 protected:
     void initializeGL() override;
     void paintGL() override;

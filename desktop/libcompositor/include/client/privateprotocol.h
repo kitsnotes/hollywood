@@ -22,6 +22,8 @@ class LIBCOMPOSITOR_EXPORT AIPrivateWaylandProtocol
 public:
     AIPrivateWaylandProtocol();
     Q_INVOKABLE OriginullMenuServerClient* createMenuServerResponder();
+    Q_INVOKABLE void rotateWallpaper();
+
 private:
     void windowForSurface();
 };

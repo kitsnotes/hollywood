@@ -34,6 +34,12 @@ void OriginullProtocol::org_originull_privateapi_provision_menu_server(Resource 
     emit menuServerSet(menu);
 }
 
+void OriginullProtocol::org_originull_privateapi_rotate_wallpaper(Resource *resource)
+{
+    Q_UNUSED(resource);
+    emit wallpaperRotationRequested();
+}
+
 OriginullMenuServer::OriginullMenuServer(struct ::wl_client *client, uint32_t id, OriginullProtocol *proto, Compositor *c)
                    : QObject(nullptr)
                    , QtWaylandServer::org_originull_menuserver(client, id, 1)

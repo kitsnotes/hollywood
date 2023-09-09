@@ -144,6 +144,7 @@ protected slots:
     void onSubsurfacePositionChanged(const QPoint &position);
     void onXdgSurfaceActivated(QWaylandSurface *surface);
     void updateCursor();
+    void onRotateWallpaper();
 private slots:
     void appMenuCreated(AppMenu *m);
     void menuServerDestroyed();

@@ -20,10 +20,14 @@ OriginullMenuServerClient* AIPrivateWaylandProtocol::createMenuServerResponder()
 {
     if(!isActive())
         return nullptr;
-    qDebug() << "provisioning menu server";
     auto obj = provision_menu_server();
     auto mp = new OriginullMenuServerClient(obj);
     return mp;
+}
+
+void AIPrivateWaylandProtocol::rotateWallpaper()
+{
+    rotate_wallpaper();
 }
 
 OriginullMenuServerClient::OriginullMenuServerClient(struct ::org_originull_menuserver *menu)
@@ -33,6 +37,5 @@ OriginullMenuServerClient::OriginullMenuServerClient(struct ::org_originull_menu
 
 void OriginullMenuServerClient::org_originull_menuserver_appmenu_top_level_window_changed(const QString &service_name, const QString &object_path)
 {
-    qDebug() << "menuChanged" << service_name << object_path;
     emit menuChanged(service_name, object_path);
 }

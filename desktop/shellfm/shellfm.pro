@@ -6,7 +6,8 @@ CONFIG   += c++11 wayland-scanner link_pkgconfig
 INCLUDEPATH += ../libshell/include
 INCLUDEPATH += include/
 INCLUDEPATH += ../libcommdlg
-INCLUDEPATH += ../libcompositor/include
+INCLUDEPATH += ../libcompositor/include/
+
 TARGET = shellfm
 DBUS_ADAPTORS += org.freedesktop.FileManager1.xml
 

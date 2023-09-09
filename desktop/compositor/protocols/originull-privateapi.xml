@@ -13,6 +13,11 @@
           </description>
           <arg name="id" type="new_id" interface="org_originull_menuserver"/>
         </request>
+        <request name="rotate_wallpaper">
+          <description summary="Rotate Wallpaper">
+            Trigger a request to rotate the wallpaper.
+          </description>
+        </request>
     </interface>
     <interface name="org_originull_menuserver" version="1">
         <event name="appmenu_top_level_window_changed">

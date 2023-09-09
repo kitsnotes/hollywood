@@ -29,6 +29,7 @@ public slots:
     void clearBackgroundColor();
     void renderWallpaper();
     void setupRotationTimer();
+    void rotateNow();
 signals:
 private:
     void querySettings();

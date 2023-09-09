@@ -232,6 +232,20 @@ void WallpaperManager::setupRotationTimer()
     m_rotationTimer->start(time);
 }
 
+void WallpaperManager::rotateNow()
+{
+    if(m_rotate == false)
+        return;
+
+    if(m_rotationTimer != nullptr)
+    {
+        auto interval = m_rotationTimer->interval();
+        m_rotationTimer->stop();
+        m_rotationTimer->start(interval);
+    }
+    transitionWallpaper();
+}
+
 void WallpaperManager::transitionWallpaper()
 {
     m_shader->bind();

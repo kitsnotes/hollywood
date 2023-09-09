@@ -8,6 +8,7 @@
 #include "surfaceobject.h"
 #include "output.h"
 #include "outputwnd.h"
+#include "wallpaper.h"
 
 // Wayland Extensions
 #include "appmenu.h"
@@ -63,6 +64,7 @@ Compositor::Compositor(bool sddm)
     m_xdgDecoration->setPreferredMode(QWaylandXdgToplevel::ServerSideDecoration);
     connect(m_appMenu, &AppMenuManager::appMenuCreated, this, &Compositor::appMenuCreated);
     connect(m_hwPrivate, &OriginullProtocol::menuServerSet, this, &Compositor::onMenuServerRequest);
+    connect(m_hwPrivate, &OriginullProtocol::wallpaperRotationRequested, this, &Compositor::onRotateWallpaper);
     connect(m_wlShell, &QWaylandWlShell::wlShellSurfaceCreated, this, &Compositor::onWlShellSurfaceCreated);
     connect(m_xdgShell, &HWWaylandXdgShell::xdgSurfaceCreated, this, &Compositor::onXdgSurfaceCreated);
     connect(m_xdgShell, &HWWaylandXdgShell::toplevelCreated, this, &Compositor::onXdgTopLevelCreated);
@@ -700,6 +702,12 @@ void Compositor::updateCursor()
     QImage image = m_cursorObject->primaryView()->currentBuffer().image();
     if (!image.isNull())
         primaryOutput()->window()->setCursor(QCursor(QPixmap::fromImage(image), m_cursorHotspotX, m_cursorHotspotY));
+}
+
+void Compositor::onRotateWallpaper()
+{
+    // TODO: multiple screens
+    primaryOutput()->window()->wallpaperManager()->rotateNow();
 }
 
 void Compositor::appMenuCreated(AppMenu *m)

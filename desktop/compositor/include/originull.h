@@ -23,8 +23,10 @@ public:
     void initialize();
 signals:
     void menuServerSet(OriginullMenuServer *menu);
+    void wallpaperRotationRequested();
 protected:
     void org_originull_privateapi_provision_menu_server(Resource *resource, uint32_t id) override;
+    void org_originull_privateapi_rotate_wallpaper(Resource *resource) override;
 private:
     Compositor *m_compositor = nullptr;
     OriginullMenuServer *m_menu = nullptr;
