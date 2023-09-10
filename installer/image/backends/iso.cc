@@ -339,7 +339,7 @@ public:
         output_info("CD backend", "creating initrd");
         std::string kver, kverpath;
         for(const auto &dent :
-            fs::recursive_directory_iterator(target + "/usr/share/kernel/lts/", ec))
+            fs::recursive_directory_iterator(target + "/usr/share/kernel/stable/", ec))
         {
             if(dent.is_regular_file() &&
                dent.path().filename().string() == "kernel.release") {
@@ -354,7 +354,7 @@ public:
         std::ifstream kverstream(kverpath);
         kverstream >> kver;
 
-        const std::string irdname = "initramfs-lts." + hw_arch;
+        const std::string irdname = "initramfs-stable." + hw_arch;
         if(run_command("chroot", {target, "dracut", "--kver", kver, "-N",
                                   "--force", "-a", "dmsquash-live",
                                   "/boot/" + irdname}) != 0) {
@@ -409,8 +409,8 @@ public:
         output_info("CD backend", "installing kernel");
         for(const auto &candidate : fs::directory_iterator(target + "/boot")) {
             auto name = candidate.path().filename().string();
-            if(name == "vmlinuz-lts") {
-                fs::copy(candidate.path(), cdpath + "/boot/vmlinuz-lts." + hw_arch, ec);
+            if(name == "vmlinuz-stable") {
+                fs::copy(candidate.path(), cdpath + "/boot/vmlinuz-stable." + hw_arch, ec);
                 if(ec) {
                     output_error("CD backend", "failed to copy kernel",
                                  ec.message());
@@ -426,7 +426,7 @@ public:
         if(my_arch == "aarch64")
         {
             output_info("CD backend", "installing devicetrees");
-            fs::copy(target + "/boot/dtbs-lts", cdpath + "/boot/dtbs-lts",
+            fs::copy(target + "/boot/dtbs-stable", cdpath + "/boot/dtbs-stable",
                      fs::copy_options::recursive, ec);
             if(ec) {
                 output_error("CD backend", "failed to copy devicetrees",

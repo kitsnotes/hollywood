@@ -24,8 +24,8 @@ hideui editor badges hints
 menuentry "Hollywood Live" {
         icon EFI/BOOT/icons/hw_install.png
         volume HWAMD64
-        loader /boot/vmlinuz-lts.amd64
-        initrd /boot/initramfs-lts.amd64
+        loader /boot/vmlinuz-stable.amd64
+        initrd /boot/initramfs-stable.amd64
         options "root=live:LABEL=HWAMD64 rd.live.dir=/boot rd.live.squashimg=live-image.amd64 quiet splash"
 }
 
@@ -74,8 +74,8 @@ fi
 
 # Get the size of the binaries to go in the El Torito image in kB
 EFIToritoSize=$(du -s cdroot/EFI/ | cut -f 1)
-KernelToritoSize=$(du -s cdroot/boot/vmlinuz-lts.amd64 | cut -f 1)
-InitrdToritoSize=$(du -s cdroot/boot/initramfs-lts.amd64 | cut -f 1)
+KernelToritoSize=$(du -s cdroot/boot/vmlinuz-stable.amd64 | cut -f 1)
+InitrdToritoSize=$(du -s cdroot/boot/initramfs-stable.amd64 | cut -f 1)
 ToritoSize=0
 ((ToritoSize=EFIToritoSize+KernelToritoSize+InitrdToritoSize))
 ((ToritoSize=ToritoSize/28))
@@ -92,8 +92,8 @@ MTOOLSRC
         dd if=/dev/zero of=efi64.img bs=1024 count=$ToritoSize
         mkfs.fat efi64.img
         mmd A:/boot
-        mcopy cdroot/boot/vmlinuz-lts.amd64 A:/boot/
-        mcopy cdroot/boot/initramfs-lts.amd64 A:/boot/
+        mcopy cdroot/boot/vmlinuz-stable.amd64 A:/boot/
+        mcopy cdroot/boot/initramfs-stable.amd64 A:/boot/
         mcopy -s cdroot/EFI/ A:/
         mv efi64.img cdroot/efi.img
 fi
