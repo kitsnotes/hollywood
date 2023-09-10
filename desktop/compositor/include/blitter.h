@@ -35,8 +35,8 @@ public:
 
     void setTextureFormat(QOpenGLTexture::TextureFormat format);
 
-    void blit(GLuint texture, const QMatrix4x4 &targetTransform, QOpenGLTextureBlitter::Origin sourceOrigin);
-    void blit(GLuint texture, const QMatrix4x4 &targetTransform, const QMatrix3x3 &sourceTransform);
+    void blit(GLuint texture, const QMatrix4x4 &targetTransform, QOpenGLTextureBlitter::Origin sourceOrigin, QOpenGLTexture::TextureFormat format);
+    void blit(GLuint texture, const QMatrix4x4 &targetTransform, const QMatrix3x3 &sourceTransform, QOpenGLTexture::TextureFormat format);
 
     static QMatrix4x4 targetTransform(const QRectF &target, const QRect &viewport);
     static QMatrix3x3 sourceTransform(const QRectF &subTexture, const QSize &textureSize, QOpenGLTextureBlitter::Origin origin);

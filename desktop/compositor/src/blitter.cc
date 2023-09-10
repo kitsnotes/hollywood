@@ -183,8 +183,8 @@ public:
     bool buildProgram(ProgramIndex idx, const char *vs, const char *fs);
     bool ensureProgram(ProgramIndex idx);
 
-    void blit(GLuint texture, const QMatrix4x4 &targetTransform, const QMatrix3x3 &sourceTransform);
-    void blit(GLuint texture, const QMatrix4x4 &targetTransform, QOpenGLTextureBlitter::Origin origin);
+    void blit(GLuint texture, const QMatrix4x4 &targetTransform, const QMatrix3x3 &sourceTransform, QOpenGLTexture::TextureFormat format);
+    void blit(GLuint texture, const QMatrix4x4 &targetTransform, QOpenGLTextureBlitter::Origin origin, QOpenGLTexture::TextureFormat format);
 
     QMatrix3x3 toTextureCoordinates(const QMatrix3x3 &sourceTransform) const;
 
@@ -295,30 +295,38 @@ QMatrix3x3 BlitterPrivate::toTextureCoordinates(const QMatrix3x3 &sourceTransfor
 
 void BlitterPrivate::blit(GLuint texture,
                                         const QMatrix4x4 &targetTransform,
-                                        const QMatrix3x3 &sourceTransform)
+                                        const QMatrix3x3 &sourceTransform,
+                                        QOpenGLTexture::TextureFormat format)
 {
     QBlitterTextureBinder binder(currentTarget, texture);
     if (!prepareProgram(targetTransform))
         return;
 
     Program *program = &programs[targetToProgramIndex(currentTarget)];
+    program->glProgram->setUniformValue(program->isrgbUniformPos, false);
 
     const QMatrix3x3 textureTransform = toTextureCoordinates(sourceTransform);
     program->glProgram->setUniformValue(program->textureTransformUniformPos, textureTransform);
     program->textureMatrixUniformState = User;
 
+    if(format == QOpenGLTexture::RGB)
+        program->glProgram->setUniformValue(program->isrgbUniformPos, true);
+
     QOpenGLContext::currentContext()->functions()->glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
 void BlitterPrivate::blit(GLuint texture,
-                                        const QMatrix4x4 &targetTransform,
-                                        QOpenGLTextureBlitter::Origin origin)
+                          const QMatrix4x4 &targetTransform,
+                          QOpenGLTextureBlitter::Origin origin,
+                          QOpenGLTexture::TextureFormat format)
 {
+
     QBlitterTextureBinder binder(currentTarget, texture);
     if (!prepareProgram(targetTransform))
         return;
 
     Program *program = &programs[targetToProgramIndex(currentTarget)];
+    program->glProgram->setUniformValue(program->isrgbUniformPos, false);
 
     if (origin == QOpenGLTextureBlitter::OriginTopLeft) {
         if (program->textureMatrixUniformState != IdentityFlipped) {
@@ -334,6 +342,9 @@ void BlitterPrivate::blit(GLuint texture,
         program->glProgram->setUniformValue(program->textureTransformUniformPos, textureTransform);
         program->textureMatrixUniformState = Identity;
     }
+
+    if(format == QOpenGLTexture::RGB)
+        program->glProgram->setUniformValue(program->isrgbUniformPos, true);
 
     QOpenGLContext::currentContext()->functions()->glDrawArrays(GL_TRIANGLES, 0, 6);
 }
@@ -554,18 +565,20 @@ void Blitter::setTextureFormat(QOpenGLTexture::TextureFormat format)
 
 void Blitter::blit(GLuint texture,
                                  const QMatrix4x4 &targetTransform,
-                                 QOpenGLTextureBlitter::Origin sourceOrigin)
+                                 QOpenGLTextureBlitter::Origin sourceOrigin,
+                                 QOpenGLTexture::TextureFormat format)
 {
     Q_D(Blitter);
-    d->blit(texture, targetTransform, sourceOrigin);
+    d->blit(texture, targetTransform, sourceOrigin, format);
 }
 
 void Blitter::blit(GLuint texture,
                                  const QMatrix4x4 &targetTransform,
-                                 const QMatrix3x3 &sourceTransform)
+                                 const QMatrix3x3 &sourceTransform,
+                                 QOpenGLTexture::TextureFormat format)
 {
     Q_D(Blitter);
-    d->blit(texture, targetTransform, sourceTransform);
+    d->blit(texture, targetTransform, sourceTransform, format);
 }
 
 QMatrix4x4 Blitter::targetTransform(const QRectF &target,

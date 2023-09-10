@@ -270,7 +270,8 @@ void OutputWindow::drawTextureForObject(Surface *obj)
                 QMatrix4x4 tt_fbo = QOpenGLTextureBlitter::targetTransform(source,
                                                         QRect(m_output->wlOutput()->position(), size()));
                 m_textureBlitter.blit(m_fbo->texture(), tt_fbo,
-                                      QOpenGLTextureBlitter::OriginBottomLeft);
+                                      QOpenGLTextureBlitter::OriginBottomLeft,
+                                      QOpenGLTexture::RGBAFormat);
                 m_textureBlitter.release();
                 functions->glDisable(GL_BLEND);
             }
@@ -284,7 +285,7 @@ void OutputWindow::drawTextureForObject(Surface *obj)
 
             m_textureBlitter.bind(currentTarget);
             m_textureBlitter.setTextureFormat(texture->format());
-            m_textureBlitter.blit(texture->textureId(), tt_surface, surfaceOrigin);
+            m_textureBlitter.blit(texture->textureId(), tt_surface, surfaceOrigin, texture->format());
             m_textureBlitter.release();
 
             functions->glDisable(GL_BLEND);
@@ -386,7 +387,7 @@ void OutputWindow::drawDesktopInfoString()
 
     QMatrix4x4 tf = QOpenGLTextureBlitter::targetTransform(QRect(startPoint, img->size()),
                                                  QRect(QPoint(0,0), size()));
-    m_textureBlitter.blit(texture.textureId(), tf, QOpenGLTextureBlitter::OriginTopLeft);
+    m_textureBlitter.blit(texture.textureId(), tf, QOpenGLTextureBlitter::OriginTopLeft, texture.format());
     texture.release();
     texture.destroy();
     m_textureBlitter.release();
@@ -416,7 +417,7 @@ void OutputWindow::drawServerSideDecoration(Surface *obj)
     auto ss = obj->shadowSize();
     QMatrix4x4 targetTransform = QOpenGLTextureBlitter::targetTransform(QRect(ss,ss,obj->decoratedSize().width(), obj->decoratedSize().height()),
                               QRect(0,0,fbo_sz.width(),fbo_sz.height()));
-    m_textureBlitter.blit(texture.textureId(), targetTransform, QOpenGLTextureBlitter::OriginTopLeft);
+    m_textureBlitter.blit(texture.textureId(), targetTransform, QOpenGLTextureBlitter::OriginTopLeft, texture.format());
     texture.release();
     texture.destroy();
     m_textureBlitter.release();

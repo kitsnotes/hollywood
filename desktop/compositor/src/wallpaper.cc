@@ -185,7 +185,7 @@ void WallpaperManager::renderWallpaper()
     QMatrix4x4 tf = QOpenGLTextureBlitter::targetTransform(QRect(m_wpStartPoint, m_bgSize),
                                                 QRect(QPoint(0,0), m_parent->size()));
 
-    m_parent->m_textureBlitter.blit(m_texture->textureId(), tf, QOpenGLTextureBlitter::OriginBottomLeft);
+    m_parent->m_textureBlitter.blit(m_texture->textureId(), tf, QOpenGLTextureBlitter::OriginBottomLeft, m_texture->format());
     m_texture->release();
     functions->glDisable(GL_BLEND);
     m_parent->m_textureBlitter.release();
