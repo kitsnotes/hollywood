@@ -632,14 +632,17 @@ void Compositor::onSetPopup(QWaylandSeat *seat, QWaylandSurface *parent, const Q
 
 void Compositor::onSubsurfaceChanged(QWaylandSurface *child, QWaylandSurface *parent)
 {
+    qDebug() << "Compositor::onSubsurfaceChanged";
     Surface *obj = findSurfaceObject(child);
     Surface *objParent = findSurfaceObject(parent);
     obj->setParentSurfaceObject(objParent);
+    obj->setSubsurface(true);
     m_zorder.removeOne(obj);
 }
 
 void Compositor::onSubsurfacePositionChanged(const QPoint &position)
 {
+    qDebug() << "Compositor::onSubsurfacePositionChanged" << position;
     QWaylandSurface *surface = qobject_cast<QWaylandSurface*>(sender());
     if (!surface)
         return;

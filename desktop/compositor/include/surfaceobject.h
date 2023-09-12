@@ -71,6 +71,8 @@ public:
     QString appId() const { return m_appid; }
     QString themedIcon() const { return m_icontheme; }
 
+    bool subsurface() const { return m_subsurface; }
+    void setSubsurface(const bool subsurface) { m_subsurface = subsurface; }
     bool surfaceReadyToRender() const;
     bool serverDecorated() const;
     QPointF renderPosition() const;
@@ -164,6 +166,7 @@ protected:
     void setLayerShellParent(Surface *surface);
     void handleLayerShellPopupPositioning();
 private slots:
+    void onChildAdded(QWaylandSurface *child);
     void onSurfaceSourceGeometryChanged();
     void onDestinationSizeChanged();
     void onBufferScaleChanged();
@@ -215,6 +218,8 @@ private:
     bool m_cursor = false;
 
     bool m_active = false;
+
+    bool m_subsurface = false;
 
     bool m_canMaximize = true;
     bool m_canMinimize = true;

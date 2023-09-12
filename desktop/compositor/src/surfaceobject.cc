@@ -40,6 +40,7 @@ Surface::Surface(QWaylandSurface *surface)
     connect(m_surface, &QWaylandSurface::sourceGeometryChanged, this, &Surface::onSurfaceSourceGeometryChanged);
     connect(m_surface, &QWaylandSurface::destinationSizeChanged, this, &Surface::onDestinationSizeChanged);
     connect(m_surface, &QWaylandSurface::bufferScaleChanged, this, &Surface::onBufferScaleChanged);
+    connect(m_surface, &QWaylandSurface::childAdded, this, &Surface::onChildAdded);
 
 
     // TODO: multi-monitor suppot
@@ -193,6 +194,11 @@ SurfaceView *Surface::primaryView() const
     }
 
     return view;
+}
+
+void Surface::onChildAdded(QWaylandSurface *child)
+{
+    qDebug() << "Surface::onChildAdded";
 }
 
 Surface::SurfaceType Surface::surfaceType() const { return m_surfaceType; }

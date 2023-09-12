@@ -177,6 +177,8 @@ private:
     uint m_id = 0;
     // Our list of surfaces
     QList<Surface*> m_surfaces;
+
+    // Top level surfaces to worry about z-order
     QVector<Surface*> m_zorder;
 
     // Our wl_shell protocol support
