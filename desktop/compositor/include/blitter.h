@@ -33,8 +33,6 @@ public:
     void setRedBlueSwizzle(bool swizzle);
     void setOpacity(float opacity);
 
-    void setTextureFormat(QOpenGLTexture::TextureFormat format);
-
     void blit(GLuint texture, const QMatrix4x4 &targetTransform, QOpenGLTextureBlitter::Origin sourceOrigin, QOpenGLTexture::TextureFormat format);
     void blit(GLuint texture, const QMatrix4x4 &targetTransform, const QMatrix3x3 &sourceTransform, QOpenGLTexture::TextureFormat format);
 

@@ -122,6 +122,13 @@ static const char fragment_shader150_rectangle[] =
     "   fragcolor = swizzle ? tmpFragColor.bgra : tmpFragColor;"
     "}";
 
+static const GLfloat vertex_buffer_data2[] = {
+    0, 0,
+    0, 1,
+    1, 0,
+    0, 1
+};
+
 static const GLfloat vertex_buffer_data[] = {
         -1,-1, 0,
         -1, 1, 0,
@@ -173,7 +180,6 @@ public:
 
     BlitterPrivate(Blitter *q_ptr) :
         q(q_ptr),
-        swizzle(false),
         opacity(1.0f),
         vao(new QOpenGLVertexArrayObject),
         isrgb(false),
@@ -199,9 +205,7 @@ public:
             vertexTransformUniformPos(0),
             textureCoordAttribPos(0),
             textureTransformUniformPos(0),
-            swizzleUniformPos(0),
             opacityUniformPos(0),
-            swizzle(false),
             isrgb(false),
             opacity(0.0f),
             textureMatrixUniformState(User)
@@ -211,15 +215,12 @@ public:
         GLuint vertexTransformUniformPos;
         GLuint textureCoordAttribPos;
         GLuint textureTransformUniformPos;
-        GLuint swizzleUniformPos;
         GLuint opacityUniformPos;
         GLuint isrgbUniformPos;
-        bool swizzle;
         bool isrgb;
         float opacity;
         TextureMatrixUniform textureMatrixUniformState;
     } programs[3];
-    bool swizzle;
     float opacity;
     QScopedPointer<QOpenGLVertexArrayObject> vao;
     bool isrgb;
@@ -260,11 +261,6 @@ bool BlitterPrivate::prepareProgram(const QMatrix4x4 &vertexTransform)
     program->glProgram->setAttributeBuffer(program->textureCoordAttribPos, GL_FLOAT, 0, 2, 0);
     program->glProgram->enableAttributeArray(program->textureCoordAttribPos);
     textureBuffer.release();
-
-    if (swizzle != program->swizzle) {
-        program->glProgram->setUniformValue(program->swizzleUniformPos, swizzle);
-        program->swizzle = swizzle;
-    }
 
     if (opacity != program->opacity) {
         program->glProgram->setUniformValue(program->opacityUniformPos, opacity);
@@ -312,7 +308,7 @@ void BlitterPrivate::blit(GLuint texture,
     if(format == QOpenGLTexture::RGB)
         program->glProgram->setUniformValue(program->isrgbUniformPos, true);
 
-    QOpenGLContext::currentContext()->functions()->glDrawArrays(GL_TRIANGLES, 0, 6);
+    QOpenGLContext::currentContext()->functions()->glDrawArrays(GL_TRIANGLE_STRIP, 0, 6);
 }
 
 void BlitterPrivate::blit(GLuint texture,
@@ -346,7 +342,7 @@ void BlitterPrivate::blit(GLuint texture,
     if(format == QOpenGLTexture::RGB)
         program->glProgram->setUniformValue(program->isrgbUniformPos, true);
 
-    QOpenGLContext::currentContext()->functions()->glDrawArrays(GL_TRIANGLES, 0, 6);
+    QOpenGLContext::currentContext()->functions()->glDrawArrays(GL_TRIANGLE_STRIP, 0, 6);
 }
 
 bool BlitterPrivate::buildProgram(ProgramIndex idx, const char *vs, const char *fs)
@@ -369,11 +365,9 @@ bool BlitterPrivate::buildProgram(ProgramIndex idx, const char *vs, const char *
     p->vertexTransformUniformPos = p->glProgram->uniformLocation("vertexTransform");
     p->textureCoordAttribPos = p->glProgram->attributeLocation("textureCoord");
     p->textureTransformUniformPos = p->glProgram->uniformLocation("textureTransform");
-    p->swizzleUniformPos = p->glProgram->uniformLocation("swizzle");
     p->opacityUniformPos = p->glProgram->uniformLocation("opacity");
     p->isrgbUniformPos = p->glProgram->uniformLocation("isrgb");
 
-    p->glProgram->setUniformValue(p->swizzleUniformPos, false);
     p->glProgram->setUniformValue(p->isrgbUniformPos, false);
 
     // minmize state left set after a create()
@@ -521,7 +515,7 @@ void Blitter::bind(GLenum target)
     p->glProgram->bind();
 
     d->vertexBuffer.bind();
-    p->glProgram->setAttributeBuffer(p->vertexCoordAttribPos, GL_FLOAT, 0, 3, 0);
+    p->glProgram->setAttributeBuffer(p->vertexCoordAttribPos, GL_FLOAT, 0, 2, 0);
     p->glProgram->enableAttributeArray(p->vertexCoordAttribPos);
     d->vertexBuffer.release();
 
@@ -541,26 +535,10 @@ void Blitter::release()
         d->vao->release();
 }
 
-void Blitter::setRedBlueSwizzle(bool swizzle)
-{
-    Q_D(Blitter);
-    d->swizzle = swizzle;
-}
-
-
 void Blitter::setOpacity(float opacity)
 {
     Q_D(Blitter);
     d->opacity = opacity;
-}
-
-void Blitter::setTextureFormat(QOpenGLTexture::TextureFormat format)
-{
-    Q_D(Blitter);
-    BlitterPrivate::Program *p = &d->programs[targetToProgramIndex(d->currentTarget)];
-    p->glProgram->setUniformValue(p->isrgbUniformPos, false);
-    if(format == QOpenGLTexture::RGBFormat)
-        p->glProgram->setUniformValue(p->isrgbUniformPos, true);
 }
 
 void Blitter::blit(GLuint texture,

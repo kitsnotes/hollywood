@@ -233,6 +233,9 @@ void OutputWindow::drawTextureForObject(Surface *obj)
             if(obj->isFullscreenShell() || obj->isFullscreen())
                 use_fbo = false;
 
+            if(obj->isSubsurface())
+                use_fbo = false;
+
             if(use_fbo)
             {
                 // we use FBO's to construct a final thing to ouptut
@@ -276,6 +279,11 @@ void OutputWindow::drawTextureForObject(Surface *obj)
                 functions->glDisable(GL_BLEND);
             }
 
+            if(obj->isSubsurface())
+                qDebug() << "rendering subsurface:" << obj->uuid().toString(QUuid::WithoutBraces);
+            else
+                qDebug() << "rendering surface:" << obj->uuid().toString(QUuid::WithoutBraces);
+
             functions->glEnable(GL_BLEND);
             functions->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -284,7 +292,6 @@ void OutputWindow::drawTextureForObject(Surface *obj)
                                       QRect(m_output->wlOutput()->position(), size()));
 
             m_textureBlitter.bind(currentTarget);
-            m_textureBlitter.setTextureFormat(texture->format());
             m_textureBlitter.blit(texture->textureId(), tt_surface, surfaceOrigin, texture->format());
             m_textureBlitter.release();
 
