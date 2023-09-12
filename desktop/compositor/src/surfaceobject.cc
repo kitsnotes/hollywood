@@ -48,7 +48,6 @@ Surface::Surface(QWaylandSurface *surface)
 
 Surface::~Surface()
 {
-    qDebug() << "destroying surface:" << uuid().toString(QUuid::WithoutBraces);
 
     if(m_parentSurface)
         m_parentSurface->recycleChildSurfaceObject(this);
@@ -198,7 +197,7 @@ SurfaceView *Surface::primaryView() const
 
 void Surface::onChildAdded(QWaylandSurface *child)
 {
-    qDebug() << "Surface::onChildAdded";
+    Q_UNUSED(child)
 }
 
 Surface::SurfaceType Surface::surfaceType() const { return m_surfaceType; }
@@ -1333,7 +1332,6 @@ void Surface::onXdgTitleChanged()
 
 void Surface::onXdgParentTopLevelChanged()
 {
-    qDebug() << "onXdgParentTopLevelChanged";
     m_parentTopLevelSurface =
             hwComp->findSurfaceObject(m_xdgTopLevel->parentToplevel()->xdgSurface()->surface());
     m_parentTopLevelSurface->addXdgChildSurfaceObject(this);

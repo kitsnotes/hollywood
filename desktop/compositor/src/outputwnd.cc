@@ -279,11 +279,6 @@ void OutputWindow::drawTextureForObject(Surface *obj)
                 functions->glDisable(GL_BLEND);
             }
 
-            if(obj->isSubsurface())
-                qDebug() << "rendering subsurface:" << obj->uuid().toString(QUuid::WithoutBraces);
-            else
-                qDebug() << "rendering surface:" << obj->uuid().toString(QUuid::WithoutBraces);
-
             functions->glEnable(GL_BLEND);
             functions->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 

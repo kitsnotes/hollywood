@@ -306,13 +306,10 @@ void Compositor::onSurfaceCreated(QWaylandSurface *surface)
     obj->createViewForOutput(outputAt);
     m_surfaces << obj;
     m_zorder << obj;
-
-    qDebug() << "surfaceCreated:" << obj->uuid().toString(QUuid::WithoutBraces);
 }
 
 void Compositor::recycleSurfaceObject(Surface *obj)
 {
-    qDebug() << "recycling surface:" << obj->uuid().toString(QUuid::WithoutBraces);
     Surface *parent = nullptr;
     if(obj->parentSurfaceObject() != nullptr)
     {
@@ -632,17 +629,16 @@ void Compositor::onSetPopup(QWaylandSeat *seat, QWaylandSurface *parent, const Q
 
 void Compositor::onSubsurfaceChanged(QWaylandSurface *child, QWaylandSurface *parent)
 {
-    qDebug() << "Compositor::onSubsurfaceChanged";
     Surface *obj = findSurfaceObject(child);
     Surface *objParent = findSurfaceObject(parent);
     obj->setParentSurfaceObject(objParent);
     obj->setSubsurface(true);
+    obj->m_surfaceInit = true;
     m_zorder.removeOne(obj);
 }
 
 void Compositor::onSubsurfacePositionChanged(const QPoint &position)
 {
-    qDebug() << "Compositor::onSubsurfacePositionChanged" << position;
     QWaylandSurface *surface = qobject_cast<QWaylandSurface*>(sender());
     if (!surface)
         return;
@@ -654,10 +650,7 @@ void Compositor::onXdgSurfaceActivated(QWaylandSurface *surface)
 {
     auto sf = findSurfaceObject(surface);
     if(sf)
-    {
-        qDebug() << "XdgSurfaceActivated: raising " << sf->uuid().toString();
         raise(sf);
-    }
 }
 
 void Compositor::triggerRender()
