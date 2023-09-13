@@ -446,14 +446,14 @@ Surface* OutputWindow::surfaceAt(const QPointF &point)
 
     for(auto surf : hwComp->overlayLayerSurfaces())
     {
-        QRectF geom(surf->surfacePosition(), surf->surface()->bufferSize());
+        QRectF geom(surf->surfacePosition(), surf->surface()->bufferSize()*surf->surface()->bufferScale());
         if (geom.contains(point))
             ret = surf;
 
         // check children of the menuserver
         for(auto *s : surf->childSurfaceObjects())
         {
-            QRectF geom(s->surfacePosition(), s->surface()->bufferSize());
+            QRectF geom(s->surfacePosition(), s->surface()->bufferSize()*surf->surface()->bufferScale());
             if (geom.contains(adjustedPoint))
                 ret = s;
         }
@@ -461,14 +461,14 @@ Surface* OutputWindow::surfaceAt(const QPointF &point)
 
     for(auto surf : hwComp->topLayerSurfaces())
     {
-        QRectF geom(surf->surfacePosition(), surf->surface()->bufferSize());
+        QRectF geom(surf->surfacePosition(), surf->surface()->bufferSize()*surf->surface()->bufferScale());
         if (geom.contains(point))
             ret = surf;
 
         // check children of the tolayer surfaces
         for(auto *s : surf->childSurfaceObjects())
         {
-            QRectF geom(s->surfacePosition(), s->surface()->bufferSize());
+            QRectF geom(s->surfacePosition(), s->surface()->bufferSize()*surf->surface()->bufferScale());
             if (geom.contains(adjustedPoint))
                 ret = s;
         }
@@ -483,7 +483,7 @@ Surface* OutputWindow::surfaceAt(const QPointF &point)
             {
                 if (surface == m_dragIconSurfaceObject)
                     continue;
-                QRectF geom(surface->surfacePosition(), surface->surface()->bufferSize());
+                QRectF geom(surface->surfacePosition(), surface->surface()->bufferSize()*surface->surface()->bufferScale());
                 if (geom.contains(adjustedPoint))
                     ret = surface;
             }
@@ -499,7 +499,7 @@ Surface* OutputWindow::surfaceAt(const QPointF &point)
             {
                 if (surface == m_dragIconSurfaceObject)
                     continue;
-                QRectF geom(surface->surfacePosition(), surface->surface()->bufferSize());
+                QRectF geom(surface->surfacePosition(), surface->surface()->bufferSize()*surface->surface()->bufferScale());
                 if (geom.contains(adjustedPoint))
                     ret = surface;
             }
@@ -515,7 +515,7 @@ Surface* OutputWindow::surfaceAt(const QPointF &point)
             {
                 if (surface == m_dragIconSurfaceObject)
                     continue;
-                QRectF geom(surface->surfacePosition(), surface->surface()->bufferSize());
+                QRectF geom(surface->surfacePosition(), surface->surface()->bufferSize()*surface->surface()->bufferScale());
                 if (geom.contains(adjustedPoint))
                     ret = surface;
             }
@@ -548,7 +548,7 @@ Surface* OutputWindow::surfaceAt(const QPointF &point)
         for (auto *surface : views) {
             if (surface == m_dragIconSurfaceObject)
                 continue;
-            QRectF geom(surface->surfacePosition(), surface->surface()->bufferSize());
+            QRectF geom(surface->surfacePosition(), surface->surface()->bufferSize()*surface->surface()->bufferScale());
             if (geom.contains(adjustedPoint))
                 ret = surface;
         }
@@ -560,7 +560,7 @@ Surface* OutputWindow::surfaceAt(const QPointF &point)
         for (auto *surface : views) {
             if (surface == m_dragIconSurfaceObject)
                 continue;
-            QRectF geom(surface->surfacePosition(), surface->surface()->bufferSize());
+            QRectF geom(surface->surfacePosition(), surface->surface()->bufferSize()*surface->surface()->bufferScale());
             if (geom.contains(adjustedPoint))
                 ret = surface;
         }
@@ -572,7 +572,7 @@ Surface* OutputWindow::surfaceAt(const QPointF &point)
         for (auto *surface : views) {
             if (surface == m_dragIconSurfaceObject)
                 continue;
-            QRectF geom(surface->surfacePosition(), surface->surface()->bufferSize());
+            QRectF geom(surface->surfacePosition(), surface->surface()->bufferSize()*surface->surface()->bufferScale());
             if (geom.contains(adjustedPoint))
                 ret = surface;
         }
