@@ -805,7 +805,7 @@ void Compositor::handleMouseEvent(QWaylandView *target, QMouseEvent *me)
          seat->sendMouseReleaseEvent(me->button());
          break;
     case QEvent::MouseMove:
-        seat->sendMouseMoveEvent(target, me->position(), me->globalPosition());
+         seat->sendMouseMoveEvent(target, findSurfaceObject(surface)->mapToSurface(me->position()), me->globalPosition());
     default:
         break;
     }

@@ -65,6 +65,7 @@ public:
     // This is only used for popup windows
     Surface* parentSurfaceObject() const;
     QPointF parentPosition() const;
+    QPointF mapToSurface(const QPointF &pos) const;
     QList<Surface*> childSurfaceObjects() const;
     QList<Surface*> childXdgSurfaceObjects() const;
 

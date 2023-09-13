@@ -611,7 +611,8 @@ void OutputWindow::mousePressEvent(QMouseEvent *e)
     QPoint adjustedPoint(m_output->wlOutput()->position().x()+e->position().x(),
                  m_output->wlOutput()->position().y()+e->position().y());
 
-    QMouseEvent e2(e->type(), adjustedPoint, e->button(), e->buttons(), e->modifiers(), e->pointingDevice());
+    QMouseEvent e2(e->type(), adjustedPoint, e->button(), e->buttons(),
+                   e->modifiers(), e->pointingDevice());
 
     if (m_mouseSelectedSurfaceObject.isNull())
     {
@@ -711,7 +712,8 @@ void OutputWindow::mousePressEvent(QMouseEvent *e)
         m_initialMousePos = adjustedPoint;
         m_mouseOffset = adjustedPoint - m_mouseSelectedSurfaceObject->surfacePosition();
 
-        QMouseEvent moveEvent(QEvent::MouseMove, adjustedPoint, e->globalPosition(), Qt::NoButton, Qt::NoButton, e->modifiers());
+        QMouseEvent moveEvent(QEvent::MouseMove, adjustedPoint, e->globalPosition(),
+                              Qt::NoButton, Qt::NoButton, e->modifiers());
         sendMouseEvent(&moveEvent, m_mouseSelectedSurfaceObject->primaryView());
     }
     sendMouseEvent(&e2, m_mouseSelectedSurfaceObject->primaryView()); //(m_output));
@@ -825,11 +827,14 @@ void OutputWindow::sendMouseEvent(QMouseEvent *e, SurfaceView *target)
     QPoint adjustedPoint(m_output->wlOutput()->position().x()+e->position().x(),
                  m_output->wlOutput()->position().y()+e->position().y());
 
+    qDebug() << "mappedPos:" << adjustedPoint;
     QPointF mappedPos = adjustedPoint;
     if (target)
         mappedPos -= target->surfaceObject()->surfacePosition();
 
-    QMouseEvent viewEvent(e->type(), mappedPos, adjustedPoint, e->button(), e->buttons(), e->modifiers());
+    qDebug() << "mappedPos2:" << mappedPos;
+    QMouseEvent viewEvent(e->type(), mappedPos,
+                          adjustedPoint, e->button(), e->buttons(), e->modifiers());
     hwComp->handleMouseEvent(target, &viewEvent);
     hwComp->resetIdle();
 }

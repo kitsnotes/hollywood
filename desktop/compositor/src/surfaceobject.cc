@@ -489,7 +489,18 @@ QPointF Surface::parentPosition() const
 {
     return m_parentSurface ?
                 (m_parentSurface->surfacePosition() + m_parentSurface->parentPosition())
-              : QPointF();
+                           : QPointF();
+}
+
+QPointF Surface::mapToSurface(const QPointF &pos) const
+{
+    if(!surface() || surface()->destinationSize().isEmpty())
+        return pos / surface()->bufferScale();
+
+    qreal xScale = windowRect().width() / surface()->bufferSize().width();
+    qreal yScale = windowRect().height() / surface()->bufferSize().height();
+
+    return QPointF(pos.x() / xScale, pos.y() / yScale);
 }
 
 QList<Surface *> Surface::childSurfaceObjects() const { return m_children; }
