@@ -31,5 +31,5 @@ void BatteryMeterWidget::upowerChanged()
     auto health = tr("OK");
     if(healthpercent <= 80)
         health = tr("Degraded");
-    m_health->setText(tr("Battery Health: %1 (%2%%)").arg(health, QString::number(healthpercent)));
+    m_health->setText(tr("Battery Health: %1 (%2%)").arg(health, QString::number(healthpercent)));
 }
