@@ -50,7 +50,6 @@ void SettingsApplication::showSingleWindow(const QString &prefpane)
 void SettingsApplication::activate()
 {
     createMainWindow();
-    // TODO: wayland xdg-activation protocol
     m_mainWnd->raise();
     m_mainWnd->activateWindow();
 }
