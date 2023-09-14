@@ -21,7 +21,9 @@ private:
     QHBoxLayout *m_mainLayout = nullptr;
     QVBoxLayout *m_detailLayout = nullptr;
     QLabel *m_icon = nullptr;
+    QLabel *m_info = nullptr;
     QProgressBar *m_level = nullptr;
+    QLabel *m_health = nullptr;
 };
 
 #endif // BATTERYMETERWIDGET_H

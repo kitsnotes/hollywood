@@ -12,6 +12,7 @@ EnergyApplet::EnergyApplet(QObject *parent)
 bool EnergyApplet::init()
 {
     m_upower = new UPowerInterface(this);
+    enumerateUPower();
     setupWidget();
     if(!queryForPortability())
     {
