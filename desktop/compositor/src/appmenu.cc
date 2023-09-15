@@ -86,7 +86,6 @@ void AppMenu::org_kde_kwin_appmenu_destroy_resource(Resource *resource)
 void AppMenu::org_kde_kwin_appmenu_set_address(Resource *resource, const QString &service_name, const QString &object_path)
 {
     Q_UNUSED(resource);
-    qDebug() << "server received MenuServer Request" << service_name << object_path;
     if (m_servicename == service_name && m_objectpath == object_path)
         return;
 

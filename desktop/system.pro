@@ -28,7 +28,9 @@ SUBDIRS = \
     sysmon/helper-sysmon \
     terminal \
     calculator \
-    popular
+    popular \
+    appstub \
+    notificationd
 
     libshell.depends = libcompositor
     eglfs.depends = libhwudev libhwlogind
@@ -51,12 +53,10 @@ lessThan(QT_MAJOR_VERSION, 6) {
 SUBDIRS = \
     libcommdlg \
     libcompositor \
+    libshell \
     platformtheme \
     platformplugin \
     style
 }
 
-SUBDIRS += \
-    appstub \
-    notificationd
 

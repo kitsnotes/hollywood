@@ -5,12 +5,12 @@
 #define PHANTOMSTYLE_H
 #include <QtWidgets/qcommonstyle.h>
 
-class ArionStylePrivate;
-class ArionStyle : public QCommonStyle {
+class HollywoodStylePrivate;
+class HollywoodStyle : public QCommonStyle {
   Q_OBJECT
 public:
-  ArionStyle();
-  ~ArionStyle();
+  HollywoodStyle();
+  ~HollywoodStyle();
 
   enum StylePrimitiveElement {
     Phantom_PE_IndicatorTabNew = PE_CustomBase + 1,
@@ -60,6 +60,6 @@ public:
   void unpolish(QApplication* app) override;
 
 protected:
-  ArionStylePrivate* d;
+  HollywoodStylePrivate* d;
 };
 #endif

@@ -13,7 +13,7 @@
 #include "nicedialog.h"
 #include "application.h"
 
-#include <aboutdialog.h>
+#include <hollywood/aboutdialog.h>
 #include <hollywood/hollywood.h>
 #include <signal.h>
 #include <QActionGroup>

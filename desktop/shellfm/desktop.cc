@@ -318,10 +318,12 @@ void DesktopWindow::setupMenuBar()
     menu_Help->addAction(a_About);
 
 
-    m_rightclick->addAction(tr("Paste"));
-    m_rightclick->addAction(tr("Paste Symbolic Links"));
-    auto wp = m_rightclick->addAction(tr("Change Wallpaper..."));
+    m_rightclick->addAction(tr("&Paste"))->setDisabled(true);
+    m_rightclick->addAction(tr("Paste &Symbolic Links"))->setDisabled(true);
+    auto wp = m_rightclick->addAction(tr("Change &Wallpaper..."));
     connect(wp, &QAction::triggered, FMApplication::instance(), &FMApplication::showWallpaperSettings);
+    m_rotate = m_rightclick->addAction(tr("&Rotate Wallpaper Now"));
+    connect(m_rotate, &QAction::triggered, FMApplication::instance(), &FMApplication::rotateWallpaper);
 }
 
 void DesktopWindow::desktopGeometryChanged(const QRect &geom)

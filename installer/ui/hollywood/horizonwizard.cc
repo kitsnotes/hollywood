@@ -493,30 +493,16 @@ QString HorizonWizard::toHScript() {
     lines << ("timezone " +
               dynamic_cast<DateTimePage *>(page(Page_DateTime))->selectedTimeZone());
 
-    // lines << "svcenable defaults";
-    //lines << "svcenable acpid sysinit";
-    lines << "svcenable sysklogd sysinit";
-    lines << "svcenable udev sysinit";
-    lines << "svcenable udev-trigger sysinit";
-    lines << "svcenable loadkeys sysinit";
-    lines << "svcenable sysctl sysinit";
-    lines << "svcenable bootmisc sysinit";
-    lines << "svcenable dbus sysinit";
-    lines << "svcenable connman sysinit";
-    lines << "svcenable urandom sysinit";
-
-    lines << "svcenable openntpd boot";
-    lines << "svcenable cronie boot";
-    lines << "svcenable elogind boot";
-    lines << "svcenable bootmisc boot";
-    lines << "svcenable polkit boot";
-    lines << "svcenable rtkit boot";
-    lines << "svcenable wpa_supplicant boot";
-    lines << "svcenable agetty.tty1 default";
-
-    lines << "svcenable killprocs shutdown";
-    lines << "svcenable savecache shutdown";
-    lines << "svcenable mount-ro shutdown";
+    lines << "svcenable syslogd";
+    lines << "svcenable cronie";
+    lines << "svcenable connman";
+    lines << "svcenable systemd-timesyncd";
+    lines << "svcenable rtkit-daemon";
+    lines << "svcenable wpa_supplicant";
+    lines << "svcenable sshd";
+    lines << "svcenable sddm";
+    lines << "svcenable wireplumber globaluser";
+    lines << "svcenable pipewire-pulse globaluser";
 
     /* char *root = encrypt_pw(field("rootpw").toString().toStdString().c_str());
     Q_ASSERT(root != nullptr);
@@ -550,8 +536,6 @@ QString HorizonWizard::toHScript() {
         if(acctWidget->isAutoLogin() && !did_autologin)
         {
             lines << ("autologin " + acctWidget->accountText());
-            lines << "svcenable sddm default";
-
             did_autologin = true;
         }
     }

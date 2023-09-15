@@ -26,8 +26,6 @@ private slots:
     void clipboardDataChanged();
     void saveToFile();
     void contextMenuRequested(const QPoint &pos);
-    void disableSelectionRelevantActions();
-    void enableSelectionRelevantActions();
 private:
     TabHost *m_tabs = nullptr;
 

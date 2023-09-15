@@ -38,6 +38,8 @@ public:
     StageApplication(int &argc, char **argv);
     static StageApplication* instance() { return static_cast<StageApplication*>(QApplication::instance()); }
     bool executeDesktop(const QString &desktop);
+    bool openSettingsApplet(const QString &settings);
+    bool executeFilesystemUrl(const QString &fsurl);
     bool callSessionDBus(const QString &exec);
     bool displayManagerStart() { return m_started_dm; }
     QMenu* systemMenu() { return m_context; }
@@ -88,13 +90,13 @@ private:
     bool m_southern = false;
     bool m_has_menu_responder = false;
     NotifierHost *m_notifier = nullptr;
+    QDBusServiceWatcher *m_menuViewWatcher;
     AIPrivateWaylandProtocol *m_protocol = nullptr;
     MenuImporter* m_menuImporter = nullptr;
     QPointer<DBusMenuImporter> m_importer;
     QString m_serviceName;
     QString m_menuObjectPath;
     DBusMenuImporter *getImporter(const QString &service, const QString &path);
-    QDBusServiceWatcher *m_menuViewWatcher;
     OriginullMenuServerClient *m_ms = nullptr;
     StageClock *m_clock = nullptr;
     BatteryMonitor *m_battery = nullptr;

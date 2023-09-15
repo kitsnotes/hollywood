@@ -4,14 +4,19 @@
 #include <executor.h>
 #include <QLocalSocket>
 #include <iostream>
-
+#include "client/privateprotocol.h"
 #include "filemanager1_adaptor.h"
 #include "getinfodialog.h"
 
 FMApplication::FMApplication(int &argc, char **argv)
     :QApplication(argc, argv)
+    , m_protocol(new AIPrivateWaylandProtocol())
 {
+#ifdef HW_BUILD_VER
+    setApplicationVersion(QString("%1.%2").arg(HOLLYWOOD_OS_VERSION, QString::number(HW_BUILD_VER)));
+#else
     setApplicationVersion(HOLLYWOOD_OS_VERSION);
+#endif
     setApplicationName("Hollywood Shell");
     setOrganizationDomain(HOLLYWOOD_OS_DOMAIN);
     setWindowIcon(QIcon::fromTheme("system-file-manager"));
@@ -84,9 +89,20 @@ void FMApplication::showPermissionError(const QUrl &path)
 
 }
 
+void FMApplication::rotateWallpaper()
+{
+    if(m_protocol)
+        m_protocol->rotateWallpaper();
+}
+
 void FMApplication::openFolderFromDesktop(const QUrl &path)
 {
     newFileWindow(path);
+}
+
+void FMApplication::settingsChanged()
+{
+
 }
 
 void FMApplication::createDBusInterfaces()

@@ -5,10 +5,11 @@
 #include <QIcon>
 #include <QString>
 #include <QLocalServer>
-#include <aboutdialog.h>
+#include <hollywood/aboutdialog.h>
 
 #include "filewindow.h"
 
+class AIPrivateWaylandProtocol;
 class DesktopWindow;
 class FileWindow;
 class FMApplication : public QApplication
@@ -35,11 +36,14 @@ public slots:
     void createDesktop();
     void showWallpaperSettings();
     void showPermissionError(const QUrl &path);
+    void rotateWallpaper();
 private slots:
     void openFolderFromDesktop(const QUrl &path);
+    void settingsChanged();
 private:
     void checkForSessionStartup();
 private:
+    AIPrivateWaylandProtocol *m_protocol = nullptr;
     QStringList m_args;
     QList<FileWindow*> m_fileWindows;
     DesktopWindow *m_desktop = nullptr;

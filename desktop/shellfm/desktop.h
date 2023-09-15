@@ -29,6 +29,7 @@ private:
     LSFSItemDelegate *m_delegate = nullptr;
     LSActionManager *m_actions = nullptr;
     QMenu *m_rightclick = nullptr;
+    QAction *m_rotate = nullptr;
 
     QAction *a_NewWindow;
     QAction *actionGet_System_Help;

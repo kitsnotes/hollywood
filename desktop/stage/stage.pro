@@ -4,7 +4,7 @@ QT       += core gui widgets waylandclient concurrent waylandclient-private dbus
 CONFIG   += c++11 wayland-scanner
 DESTDIR= ../output
 TARGET = stage
-INCLUDEPATH += ../include/
+INCLUDEPATH += ../shared/
 INCLUDEPATH += ../libshell/include
 INCLUDEPATH += ../libcommdlg/
 INCLUDEPATH += ../libcompositor/include/
@@ -42,7 +42,7 @@ SOURCES += \
     statusnotifier/statusnotifierwatcher.cpp \
     surfacemanager.cc \
     taskbutton.cc \
-    upower.cc \
+    ../shared/upower.cc \
     wndmgmt.cc
 
 HEADERS += \
@@ -67,7 +67,7 @@ HEADERS += \
     statusnotifier/statusnotifierwatcher.h \
     surfacemanager.h \
     taskbutton.h \
-    upower.h \
+    ../shared/upower.h \
     wndmgmt.h
 
 # Default rules for deployment.

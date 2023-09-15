@@ -1,6 +1,7 @@
 #include "messagebox_p.h"
 #include "messagebox.h"
 
+#include <QLineEdit>
 #include <QFile>
 #include <QPropertyAnimation>
 #include <QTimer>
@@ -147,7 +148,7 @@ void MessageBoxPrivate::playBell()
         if(QFile::exists("/usr/share/sounds/Hollywood/DoubleBell.wav"))
             m_bell->setSource(QUrl::fromLocalFile("/usr/share/sounds/Hollywood/DoubleBell.wav"));
     }
-    m_bell->play();
+    //m_bell->play();
 }
 
 void MessageBoxPrivate::animateOpenDetails()
@@ -498,7 +499,7 @@ int HWMessageBox::exec()
 
 void HWMessageBox::showEvent(QShowEvent *event)
 {
-    q->playBell();
+    //q->playBell();
     QDialog::showEvent(event);
 }
 

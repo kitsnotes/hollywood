@@ -34,6 +34,12 @@ void OriginullProtocol::org_originull_privateapi_provision_menu_server(Resource 
     emit menuServerSet(menu);
 }
 
+void OriginullProtocol::org_originull_privateapi_rotate_wallpaper(Resource *resource)
+{
+    Q_UNUSED(resource);
+    emit wallpaperRotationRequested();
+}
+
 OriginullMenuServer::OriginullMenuServer(struct ::wl_client *client, uint32_t id, OriginullProtocol *proto, Compositor *c)
                    : QObject(nullptr)
                    , QtWaylandServer::org_originull_menuserver(client, id, 1)
@@ -56,7 +62,6 @@ void OriginullMenuServer::setTopWindowForMenuServer(Surface *surface)
     auto serviceName = surface->appMenu()->serviceName();
     auto objectPath = surface->appMenu()->objectPath();
 
-    qDebug() << "sending topLevelWindowChanged" << serviceName << objectPath;
     send_appmenu_top_level_window_changed(serviceName, objectPath);
     for (auto r : resourceMap())
         send_appmenu_top_level_window_changed(r->handle, serviceName, objectPath);

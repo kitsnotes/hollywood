@@ -251,9 +251,9 @@ int main(int argc, char *argv[]) {
 
 trouble:        /* delete the Script and exit */
     /* ensure that our target mounts are unmounted */
-    run_command("umount", {"-R", (ir_dir + "/target/sys")});
+    run_command("umount", {"-Rl", (ir_dir + "/target/sys")});
     umount((ir_dir + "/target/proc").c_str());
-    run_command("umount", {"-R", (ir_dir + "/target/dev")});
+    run_command("umount", {"-Rl", (ir_dir + "/target/dev")});
 
     delete my_script;
 early_trouble:  /* no script yet */

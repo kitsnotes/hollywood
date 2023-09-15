@@ -8,6 +8,7 @@
 #include "surfaceobject.h"
 #include "output.h"
 #include "outputwnd.h"
+#include "wallpaper.h"
 
 // Wayland Extensions
 #include "appmenu.h"
@@ -17,8 +18,10 @@
 #include "gtkshell.h"
 #include "qtshell.h"
 #include "fullscreen.h"
+#include "activation.h"
 
 #include "surfaceobject.h"
+#include "shortcuts.h"
 
 #include <QSettings>
 #include <QPainter>
@@ -28,19 +31,23 @@
 #include <sys/utsname.h>
 
 Compositor::Compositor(bool sddm)
-    : m_wlShell(new QWaylandWlShell(this)),
-    m_xdgShell(new HWWaylandXdgShell(this)),
-    m_xdgDecoration(new QWaylandXdgDecorationManagerV1()),
-    m_hwPrivate(new OriginullProtocol(this)),
-    m_layerShell(new WlrLayerShellV1(this)),
-    m_wndmgr(new PlasmaWindowManagement(this)),
-    m_appMenu(new AppMenuManager(this)),
-    m_gtk(new GtkShell(this)),
-    m_qt(new QtShell(this)),
-    m_fs(new FullscreenShell(this)),
-    m_sddm(sddm),
-    m_desktop_bg(QColor(HOLLYWOOD_DEF_DESKTOP_BG))
+    : m_desktop_bg(QColor(HOLLYWOOD_DEF_DESKTOP_BG))
+    , m_wlShell(new QWaylandWlShell(this))
+    , m_xdgShell(new HWWaylandXdgShell(this))
+    , m_xdgDecoration(new QWaylandXdgDecorationManagerV1())
+    , m_hwPrivate(new OriginullProtocol(this))
+    , m_layerShell(new WlrLayerShellV1(this))
+    , m_wndmgr(new PlasmaWindowManagement(this))
+    , m_appMenu(new AppMenuManager(this))
+    , m_gtk(new GtkShell(this))
+    , m_qt(new QtShell(this))
+    , m_fs(new FullscreenShell(this))
+    , m_activation(new XdgActivation(this))
+    , m_sddm(sddm)
+    , m_shortcuts(new ShortcutManager(this))
+    , m_timeout(new QTimer(this))
 {
+    m_timeout->setTimerType(Qt::VeryCoarseTimer);
     loadSettings();
     m_cfgwatch = new QFileSystemWatcher();
     m_cfgwatch->addPath(m_configfile);
@@ -57,6 +64,7 @@ Compositor::Compositor(bool sddm)
     m_xdgDecoration->setPreferredMode(QWaylandXdgToplevel::ServerSideDecoration);
     connect(m_appMenu, &AppMenuManager::appMenuCreated, this, &Compositor::appMenuCreated);
     connect(m_hwPrivate, &OriginullProtocol::menuServerSet, this, &Compositor::onMenuServerRequest);
+    connect(m_hwPrivate, &OriginullProtocol::wallpaperRotationRequested, this, &Compositor::onRotateWallpaper);
     connect(m_wlShell, &QWaylandWlShell::wlShellSurfaceCreated, this, &Compositor::onWlShellSurfaceCreated);
     connect(m_xdgShell, &HWWaylandXdgShell::xdgSurfaceCreated, this, &Compositor::onXdgSurfaceCreated);
     connect(m_xdgShell, &HWWaylandXdgShell::toplevelCreated, this, &Compositor::onXdgTopLevelCreated);
@@ -66,7 +74,9 @@ Compositor::Compositor(bool sddm)
     connect(m_qt, &QtShell::surfaceCreated, this, &Compositor::onQtSurfaceCreated);
     connect(m_fs, &FullscreenShell::surfacePresented, this, &Compositor::onFullscreenSurfaceRequested);
 
+    connect(m_activation, &XdgActivation::surfaceActivated, this, &Compositor::onXdgSurfaceActivated);
     generateDesktopInfoLabelImage();
+    connect(m_timeout, &QTimer::timeout, this, &Compositor::idleTimeout);
 }
 
 Compositor::~Compositor()
@@ -267,6 +277,11 @@ QPointF Compositor::correctedPosition(const QPointF &point)
     return returnPoint;
 }
 
+ShortcutManager *Compositor::shortcuts()
+{
+    return m_shortcuts;
+}
+
 QList<SurfaceView*> Compositor::views() const
 {
     QList<SurfaceView*> returnList;
@@ -286,10 +301,8 @@ void Compositor::onSurfaceCreated(QWaylandSurface *surface)
     obj->setTwilight(twilight);
     auto outputAt = outputAtPosition(obj->surfacePosition().toPoint());
     if(outputAt == nullptr)
-    {
-        qDebug() << "null outputAtPosition";
         outputAt = m_outputs.first();
-    }
+
     obj->createViewForOutput(outputAt);
     m_surfaces << obj;
     m_zorder << obj;
@@ -435,14 +448,70 @@ void Compositor::loadSettings()
     m_legacyExperience = settings.value("LegacyExperience", false).toBool();
 
     settings.endGroup();
+    settings.beginGroup(QLatin1String("Energy"));
 
+    // TODO: put these defaults into hollywood.h
+    m_timeout_display = settings.value("DisplayTimeout", 60).toUInt();
+    m_timeout_sleep = settings.value("SleepTimeout", 300).toUInt();
+
+    // monitors should not sleep before the system does
+    if(m_timeout_display >= m_timeout_sleep)
+        m_timeout_display = 0;
+
+    settings.endGroup();
     if(m_apperance != old_app)
     {
         // dark/light mode changed - redraw SSD's
         for(auto s : m_surfaces)
             s->renderDecoration();
     }
+
+    if(m_timeout->isActive())
+        m_timeout->stop();
+    setupIdleTimer();
     emit settingsChanged();
+}
+
+void Compositor::setupIdleTimer()
+{
+    // setup the timer
+    if(!m_display_sleeping && m_timeout_display > 0)
+        m_timeout->start(m_timeout_display*1000);
+    else if(m_display_sleeping || (m_timeout_display == 0 && m_timeout_sleep > 0))
+        m_timeout->start(m_timeout_sleep*1000);
+}
+
+void Compositor::idleTimeout()
+{
+    // idle inhibited by client, don't do anything
+    if(m_idle_inhibit)
+        return;
+
+    // timeout to handle a display sleep
+    if(!m_display_sleeping && m_timeout_display > 0)
+    {
+        // display not sleeping, display timeout > 0 so this
+        // will be a display sleep command
+
+        if(m_lock_after_sleep == 0)
+            lockSession();
+        else
+            QTimer::singleShot(m_lock_after_sleep, this, &Compositor::lockSession);
+
+        m_display_sleeping = false;
+        if(m_timeout_sleep > 0)
+            setupIdleTimer();
+    }
+
+    // timeout to handle a system sleep
+    if(m_display_sleeping ||
+       (m_timeout_display == 0 &&
+        m_timeout_sleep > 0))
+    {
+        // we don't have display sleep but we do have system sleep
+        lockSession();
+        // TODO: tell session to put system to sleep
+    }
 }
 
 void Compositor::onWlShellSurfaceCreated(QWaylandWlShellSurface *wlShellSurface)
@@ -534,7 +603,6 @@ void Compositor::onXdgStartResize(QWaylandSeat *seat,
 
 void Compositor::onSetTransient(QWaylandSurface *parent, const QPoint &relativeToParent, bool inactive)
 {
-    qDebug() << "onSetTransient";
     Q_UNUSED(relativeToParent);
     Q_UNUSED(inactive);
 
@@ -564,6 +632,8 @@ void Compositor::onSubsurfaceChanged(QWaylandSurface *child, QWaylandSurface *pa
     Surface *obj = findSurfaceObject(child);
     Surface *objParent = findSurfaceObject(parent);
     obj->setParentSurfaceObject(objParent);
+    obj->setSubsurface(true);
+    obj->m_surfaceInit = true;
     m_zorder.removeOne(obj);
 }
 
@@ -576,12 +646,24 @@ void Compositor::onSubsurfacePositionChanged(const QPoint &position)
     triggerRender();
 }
 
+void Compositor::onXdgSurfaceActivated(QWaylandSurface *surface)
+{
+    auto sf = findSurfaceObject(surface);
+    if(sf)
+        raise(sf);
+}
+
 void Compositor::triggerRender()
 {
     for(auto out : m_outputs)
     {
         out->window()->requestUpdate();
     }
+}
+
+void Compositor::lockSession()
+{
+
 }
 
 void Compositor::startRender()
@@ -621,6 +703,12 @@ void Compositor::updateCursor()
         primaryOutput()->window()->setCursor(QCursor(QPixmap::fromImage(image), m_cursorHotspotX, m_cursorHotspotY));
 }
 
+void Compositor::onRotateWallpaper()
+{
+    // TODO: multiple screens
+    primaryOutput()->window()->wallpaperManager()->rotateNow();
+}
+
 void Compositor::appMenuCreated(AppMenu *m)
 {
     m->surface()->setAppMenu(m);
@@ -628,7 +716,6 @@ void Compositor::appMenuCreated(AppMenu *m)
 
 void Compositor::menuServerDestroyed()
 {
-    qDebug() << "menuserver object destroyed";
     disconnect(m_menuServer, &OriginullMenuServer::menuServerDestroyed,
                this, &Compositor::menuServerDestroyed);
     delete m_menuServer;
@@ -718,7 +805,7 @@ void Compositor::handleMouseEvent(QWaylandView *target, QMouseEvent *me)
          seat->sendMouseReleaseEvent(me->button());
          break;
     case QEvent::MouseMove:
-        seat->sendMouseMoveEvent(target, me->position(), me->globalPosition());
+         seat->sendMouseMoveEvent(target, findSurfaceObject(surface)->mapToSurface(me->position()), me->globalPosition());
     default:
         break;
     }
@@ -742,6 +829,8 @@ void Compositor::handleResize(SurfaceView *target, const QSize &initialSize, con
             target->m_surface->m_surfacePosition.setX(m_globalCursorPos.x());
         wlShellSurface->sendConfigure(newSize, edges);
     }
+
+    // TODO: Qt Surface resize
 
     HWWaylandXdgSurface *xdgSurface = target->surfaceObject()->xdgSurface();
     if (xdgSurface)
@@ -803,15 +892,15 @@ QWaylandClient *Compositor::popupClient() const
 }
 
 void Compositor::raise(Surface *obj)
-{
-    qDebug() << "Compositor::raise on " << obj->m_uuid;
+{    
     /*if(obj->m_xdgPopup != nullptr)
         return;*/
     if(obj->isSpecialShellObject())
-    {
-        qDebug() << "special shell object";
         return;
-    }
+
+    if(!m_zorder.contains(obj))
+        return;
+
     // Since the compositor is only tracking unparented objects
     // we leave the ordering of children to SurfaceObject
     if((obj->m_xdgTopLevel ||
@@ -822,9 +911,6 @@ void Compositor::raise(Surface *obj)
         if(m_menuServer)
             m_menuServer->setTopWindowForMenuServer(obj);
     }
-
-    if(!m_zorder.contains(obj))
-        return;
 
     m_zorder.removeOne(obj);
     m_zorder.push_back(obj);
@@ -837,6 +923,11 @@ void Compositor::raise(Surface *obj)
     {
         if(m_wndmgr->isInitialized())
            m_wndmgr->updateZOrder(surfaceZOrderByUUID());
+    }
+    // if we have a subchild, then raise that further
+    if(obj->childXdgSurfaceObjects().count() > 0)
+    {
+        raise(obj->childXdgSurfaceObjects().first());
     }
 }
 
@@ -874,6 +965,13 @@ bool Compositor::legacyRender() const
 bool Compositor::useAnimations() const
 {
     return true;
+}
+
+void Compositor::resetIdle()
+{
+    m_timeout->stop();
+    if(!m_idle_inhibit)
+        setupIdleTimer();
 }
 
 void Compositor::removeOutput(Output *output)

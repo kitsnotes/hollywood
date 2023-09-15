@@ -17,10 +17,13 @@ WAYLANDSERVERSOURCES += protocols/wlr-screencopy-unstable-v1.xml
 WAYLANDSERVERSOURCES += protocols/gtk.xml
 WAYLANDSERVERSOURCES += protocols/qt-shell-unstable-v1.xml
 WAYLANDSERVERSOURCES += protocols/xdg-shell.xml
+WAYLANDSERVERSOURCES += protocols/xdg-activation-v1.xml
 
 HEADERS += \
+    include/activation.h \
     include/application.h \
     include/appmenu.h \
+    include/blitter.h \
     include/fullscreen.h \
     include/gtkshell.h \
     include/hwc.h \
@@ -29,6 +32,7 @@ HEADERS += \
     include/output.h \
     include/qtshell.h \
     include/screencopy.h \
+    include/shortcuts.h \
     include/surfaceobject.h \
     include/outputwnd.h \
     include/view.h \
@@ -39,8 +43,10 @@ HEADERS += \
     include/xdgshell_p.h
 
 SOURCES += \
+    src/activation.cc \
     src/application.cc \
     src/appmenu.cc \
+    src/blitter.cc \
     src/fullscreen.cc \
     src/gtkshell.cc \
     src/layershell.cc \
@@ -48,6 +54,7 @@ SOURCES += \
     src/output.cc \
     src/qtshell.cc \
     src/screencopy.cc \
+    src/shortcuts.cc \
     src/surfaceobject.cc \
     src/compositor.cc \
     src/outputwnd.cc \
@@ -73,6 +80,7 @@ DISTFILES += \
     protocols/wlr-layer-shell-unstable-v1.xml \
     protocols/qt-shell-unstable-v1.xml \
     protocols/xdg-shell.xml \
+    rgba.fsh \
     rgbconv.fsh \
     rgbconv.vsh \
     shadow.fsh \

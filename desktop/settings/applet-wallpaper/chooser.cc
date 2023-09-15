@@ -241,8 +241,7 @@ void WPChooserWidget::setupUi()
             <<  tr("Every 30 minutes")
             <<  tr("Every hour")
             <<  tr("Every 2 hours")
-            <<  tr("Every 4 hours")
-            <<  tr("Every day"));
+            <<  tr("Every 4 hours"));
 
     m_rotate_order->addItems(QStringList()
                             << tr("in order")

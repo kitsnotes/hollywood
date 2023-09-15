@@ -977,9 +977,9 @@ void LSEmbeddedShellHost::enableActionsForFileSelection(bool multiple)
         if(p->m_currentModel == Filesystem)
         {
             auto idx = p->m_curSelModel->selectedIndexes().first();
-            auto data = p->m_model->data(idx, LSFSModel::FileInfoRole).value<QSharedPointer<LSExtendedFileInfo>>();
+            auto path = p->m_model->data(idx, LSFSModel::FileAbsolutePath).toString();
             QMimeDatabase db;
-            auto mime = db.mimeTypeForFile(data->fileInfo().absoluteFilePath());
+            auto mime = db.mimeTypeForFile(path);
             if(mime.name() != "inode/directory")
             {
                 p->m_actions->openWithMenu()->setEnabled(true);

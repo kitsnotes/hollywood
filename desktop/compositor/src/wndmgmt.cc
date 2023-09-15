@@ -239,6 +239,12 @@ void PlasmaWindowControl::org_kde_plasma_window_get_icon(Resource *resource, int
     file.close();
 }
 
+void PlasmaWindowControl::org_kde_plasma_window_close(Resource *resource)
+{
+    Q_UNUSED(resource);
+    emit closeRequested();
+}
+
 void PlasmaWindowControl::org_kde_plasma_window_destroy(Resource *resource)
 {
     wl_resource_destroy(resource->handle);

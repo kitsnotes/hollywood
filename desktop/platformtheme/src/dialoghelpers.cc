@@ -1,35 +1,27 @@
 #include "dialoghelpers.h"
-#include <messagebox.h>
+#include <hollywood/messagebox.h>
 #include <QAbstractButton>
 #include <QPushButton>
 
 HWMessageDialogHelper::HWMessageDialogHelper()
 {
-    m_dlg = new HWMessageBox(QMessageBox::NoIcon, QString(), QString());
-    connect(m_dlg, &HWMessageBox::accepted, [this]() {{
-            accept();
-    }});
-    connect(m_dlg, &HWMessageBox::rejected, [this]() {{
-            reject();
-    }});
-    connect(m_dlg, &HWMessageBox::buttonClicked, this, &HWMessageDialogHelper::hwDialogButtonClicked);
-
+    m_dlg = nullptr;
 }
 
 HWMessageDialogHelper::~HWMessageDialogHelper()
 {
-    m_dlg->deleteLater();
+    if(m_dlg)
+        m_dlg->deleteLater();
 }
 
 void HWMessageDialogHelper::exec()
 {
-    m_dlg->setIcon((QMessageBox::Icon)options()->icon());
-    m_dlg->setText(options()->text());
-    m_dlg->setInformativeText(options()->informativeText());
-    m_dlg->setWindowTitle(options()->windowTitle());
-
     uint flags = (uint)options()->standardButtons();
-    m_dlg->setStandardButtons(QFlags<QMessageBox::StandardButton>(flags));
+    provision((QMessageBox::Icon)options()->icon(),
+              options()->windowTitle(),
+              options()->text(),
+              QFlags<QMessageBox::StandardButton>(flags));
+    m_dlg->setInformativeText(options()->informativeText());
     m_dlg->setDetailedText(options()->detailedText());
     if(options()->customButtons().count() > 0)
     {
@@ -47,22 +39,34 @@ void HWMessageDialogHelper::exec()
 bool HWMessageDialogHelper::show(Qt::WindowFlags windowFlags, Qt::WindowModality windowModality, QWindow *parent)
 {
     Q_UNUSED(parent)
-    m_dlg->setWindowFlags(windowFlags);
-    m_dlg->setWindowModality(windowModality);
-    //m_dlg->setParent(parent);
-    m_dlg->setIcon((QMessageBox::Icon)options()->icon());
-    m_dlg->setText(options()->text());
-    m_dlg->setInformativeText(options()->informativeText());
-    uint flags = (uint)options()->standardButtons();
-    m_dlg->setStandardButtons(QFlags<QMessageBox::StandardButton>(flags));
-    m_dlg->setDetailedText(options()->detailedText());
-    m_dlg->show();
+    if(m_dlg)
+    {
+        m_dlg->setWindowFlags(windowFlags);
+        m_dlg->setWindowModality(windowModality);
+        m_dlg->show();
+    }
     return true;
 }
 
 void HWMessageDialogHelper::hide()
 {
     m_dlg->hide();
+}
+
+void HWMessageDialogHelper::provision(QMessageBox::Icon icon, const QString &title, const QString &text,
+                                      QMessageBox::StandardButtons buttons)
+{
+    if(m_dlg != nullptr)
+        m_dlg->deleteLater();
+
+    m_dlg = new HWMessageBox(icon, title, text, buttons);
+    connect(m_dlg, &HWMessageBox::accepted, [this]() {{
+            accept();
+    }});
+    connect(m_dlg, &HWMessageBox::rejected, [this]() {{
+            reject();
+    }});
+    connect(m_dlg, &HWMessageBox::buttonClicked, this, &HWMessageDialogHelper::hwDialogButtonClicked);
 }
 
 void HWMessageDialogHelper::hwDialogButtonClicked(QAbstractButton *btn)

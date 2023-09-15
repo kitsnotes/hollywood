@@ -100,7 +100,7 @@ void Output::reloadConfiguration()
     // TODO: set a resolution set if we have one set
 
     // set our scale factor
-    auto scale = settings.value("ScaleFactor", defaultScaleFactor()).toUInt();
+    auto scale = settings.value("ScaleFactor", defaultScaleFactor()).toInt();
     if(scale > 4)
         scale = 4;
 

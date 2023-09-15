@@ -76,6 +76,11 @@ QString PlasmaWindow::windowTitle() const
     return m_wndTitle;
 }
 
+void PlasmaWindow::maximize()
+{
+
+}
+
 void PlasmaWindow::toggleMinimize()
 {
     if(m_minimized)
@@ -93,6 +98,11 @@ void PlasmaWindow::activate()
 bool PlasmaWindow::minimized() const
 {
     return m_minimized;
+}
+
+void PlasmaWindow::requestClose()
+{
+    close();
 }
 
 void PlasmaWindow::org_kde_plasma_window_title_changed(const QString &title)

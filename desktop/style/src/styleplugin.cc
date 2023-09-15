@@ -8,7 +8,7 @@ ArionStylePlugin::ArionStylePlugin(QObject *parent) : QStylePlugin() {}
 ArionStylePlugin::~ArionStylePlugin() {}
 QStyle* ArionStylePlugin::create(const QString& key) {
     if(key.toLower() == "hollywood")
-        return new ArionStyle();
+        return new HollywoodStyle();
 
     return nullptr;
 }

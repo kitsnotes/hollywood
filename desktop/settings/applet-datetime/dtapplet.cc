@@ -69,7 +69,7 @@ bool ASDateTimeApplet::saveSettings()
 
 QString ASDateTimeApplet::id() const
 {
-    return QLatin1String("org.originull.hwsettings.datetime");
+    return QLatin1String("org.originull.datetime");
 }
 
 QString ASDateTimeApplet::name() const

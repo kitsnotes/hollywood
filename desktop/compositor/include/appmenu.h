@@ -6,7 +6,7 @@
 #define APPMENU_H
 
 #include <QWaylandCompositorExtensionTemplate>
-#include <QWaylandQuickExtension>
+//#include <QWaylandQuickExtension>
 #include <QWaylandCompositor>
 
 #include "qwayland-server-appmenu.h"

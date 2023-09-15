@@ -25,7 +25,10 @@ QOpenGLTexture *SurfaceView::getTexture()
     if (!buf.hasContent())
         m_texture = nullptr;
     if (newContent) {
-        m_texture = buf.toOpenGLTexture();
+        if(buf.isSharedMemory())
+            m_texture = new QOpenGLTexture(buf.image());
+        else
+            m_texture = buf.toOpenGLTexture();
         if (surface()) {
             m_size = surface()->destinationSize();
             m_origin = buf.origin() == QWaylandSurface::OriginTopLeft

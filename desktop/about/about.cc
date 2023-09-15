@@ -37,14 +37,11 @@ AboutWindow::AboutWindow(QWidget *parent)
     renderer.render(&pd, r);
 
     setupUi();
-    /*QPixmap logo(230,52);
+    QPixmap logo(60,60);
     QPainter pmp(&logo);
     renderer.load(QString(":/Logo"));
-    renderer.render(&pmp, QRect(10,10,220,42));
-    logo_icon->setPixmap(logo);*/
-    QPixmap orl(":/Originull");
-    orl = orl.scaledToWidth(220,Qt::SmoothTransformation);
-    logo_icon->setPixmap(orl);
+    renderer.render(&pmp, QRect(0,0,60,60));
+    logo_icon->setPixmap(logo);
 
     QFont font = hw_train->font();
     font.setPixelSize(35);
@@ -136,8 +133,11 @@ void AboutWindow::setupUi()
     line->setFrameShape(QFrame::HLine);
     line->setFrameShadow(QFrame::Sunken);
 
+#ifdef HW_BUILD_VER
+    m_shellVersion->setText(QString("%1.%2").arg(qApp->applicationVersion(), QString::number(HW_BUILD_VER)));
+#else
     m_shellVersion->setText(qApp->applicationVersion());
-
+#endif
     l_hw = new QLabel(this);
     m_hardware = new QLabel(this);
     l_proc = new QLabel(this);
@@ -213,7 +213,7 @@ void AboutWindow::setupUi()
     l_mem->setText(QCoreApplication::translate("AboutWindow", "Memory:", nullptr));
     l_gpu->setText(QCoreApplication::translate("AboutWindow", "Graphics:", nullptr));
     l_sysdisk->setText(QCoreApplication::translate("AboutWindow", "System Disk:", nullptr));
-    lbl_copyright->setText(QCoreApplication::translate("AboutWindow", "&copy; 2022 Originull Software and Contributors to the Hollywood Operating System. Hollywood is free software; you have rights available to you under license. ", nullptr));
+    lbl_copyright->setText(QCoreApplication::translate("AboutWindow", "&copy; 2023 Originull Software and Contributors to the Hollywood Operating System.<br>Hollywood is free software; you have rights available to you under license. ", nullptr));
     m_sysreport->setText(QCoreApplication::translate("AboutWindow", "Full System Report...", nullptr));
     m_update->setText(QCoreApplication::translate("AboutWindow", "Software Update...", nullptr));
     m_rights->setText(QCoreApplication::translate("AboutWindow", "About My Rights...", nullptr));

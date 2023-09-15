@@ -57,7 +57,7 @@ public:
     void globalMenuBarNoLongerExists();
     void windowCreated(QWindow *window);
 
-#if QT_VERSION > 0x060000
+#if QT_VERSION > 0x060000 && QT_VERSION < 0x060500
     Appearance appearance() const override;
 #endif
     const QPalette* palette(Palette type = SystemPalette) const override;

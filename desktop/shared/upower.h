@@ -23,10 +23,14 @@ public:
 
     quint16 type();
     quint16 state();
+    QString stateString();
     double percent();
     qint64 timeUntilFull();
     quint64 timeUntilEmpty();
     QString displayIcon();
+    double energyFull();
+    double energyFullDesign();
+    uint batteryHealthPercent();
 signals:
     void changed();
 private slots:

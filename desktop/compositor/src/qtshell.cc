@@ -84,18 +84,21 @@ void QtSurface::zqt_shell_surface_v1_request_activate(Resource *resource)
 void QtSurface::zqt_shell_surface_v1_set_size(Resource *resource, int32_t width, int32_t height)
 {
     Q_UNUSED(resource);
-
+    emit setSize(QSize(width,height));
 }
 
 void QtSurface::zqt_shell_surface_v1_set_minimum_size(Resource *resource, int32_t width, int32_t height)
 {
     Q_UNUSED(resource);
+    Q_UNUSED(width);
+    Q_UNUSED(height);
 }
 
 void QtSurface::zqt_shell_surface_v1_set_maximum_size(Resource *resource, int32_t width, int32_t height)
 {
     Q_UNUSED(resource);
-
+    Q_UNUSED(width);
+    Q_UNUSED(height);
 }
 
 void QtSurface::zqt_shell_surface_v1_set_window_title(Resource *resource, const QString &window_title)

@@ -112,11 +112,13 @@ void SettingsAppletModel::scanPlugins()
 #else
     auto appletDir = QDir(HOLLYWOOD_SETTINGS_PLUGIN_DIR);
 #endif
-    const auto entryList = appletDir.entryList(QDir::Files);
+    const auto entryList = appletDir.entryList(QStringList() << "*.so", QDir::Files);
     for (const QString &fileName : entryList)
     {
         QPluginLoader loader(appletDir.absoluteFilePath(fileName));
         auto applet_obj = loader.instance();
+        if(!loader.isLoaded())
+            qWarning() << loader.errorString();
         auto applet = qobject_cast<SettingsAppletInterface*>(applet_obj);
         if (applet && applet->available())
             m_applets.append(applet);

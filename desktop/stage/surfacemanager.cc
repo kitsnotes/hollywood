@@ -73,7 +73,6 @@ void SurfaceManager::buttonClicked()
 
 void SurfaceManager::windowClosed()
 {
-    qDebug() << "windowClosed";
     auto pm = qobject_cast<PlasmaWindow*>(sender());
 
     if(!pm)

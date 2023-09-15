@@ -7,12 +7,13 @@
 
 #include <QOpenGLWindow>
 #include <QPointer>
-#include <QOpenGLTextureBlitter>
 #include <QOpenGLFramebufferObject>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLPaintDevice>
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
+
+#include "blitter.h"
 
 class QOpenGLTexture;
 class Compositor;
@@ -26,6 +27,7 @@ public:
     OutputWindow(Output *parent = nullptr);
     int width();
     int height();
+    WallpaperManager* wallpaperManager() { return m_wpm; }
 protected:
     void initializeGL() override;
     void paintGL() override;
@@ -62,9 +64,10 @@ private:
 private:
     friend class WallpaperManager;
     Output *m_output;
-    QOpenGLTextureBlitter m_textureBlitter;
+    Blitter m_textureBlitter;
     QOpenGLShaderProgram *m_shadowShader;
     QOpenGLShaderProgram *m_rgbShader;
+    QOpenGLShaderProgram *m_rgbaShader;
     QOpenGLFramebufferObject *m_fbo = nullptr;
 
     QPointer<Surface> m_mouseSelectedSurfaceObject;

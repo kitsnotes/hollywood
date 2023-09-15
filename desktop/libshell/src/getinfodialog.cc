@@ -5,6 +5,7 @@
 #include <QMimeDatabase>
 #include <QFileInfo>
 #include <QGroupBox>
+#include <QDateTime>
 
 #include "mimeapps.h"
 #include "desktopentry.h"

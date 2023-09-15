@@ -30,13 +30,14 @@
 #include <QRectF>
 #include <hollywood/hollywood.h>
 
-
+#include "blitter.h"
 #include "hwc.h"
 
 #include "view.h"
 #include "wallpaper.h"
 #include "output.h"
 #include "surfaceobject.h"
+#include "shortcuts.h"
 
 unsigned int VBO;
 
@@ -63,6 +64,7 @@ OutputWindow::OutputWindow(Output* parent)
     :m_output(parent)
     ,m_shadowShader(new QOpenGLShaderProgram(this))
     ,m_rgbShader(new QOpenGLShaderProgram(this))
+    ,m_rgbaShader(new QOpenGLShaderProgram(this))
     ,m_wpm(new WallpaperManager(this))
     ,m_rgb_vao(new QOpenGLVertexArrayObject)
 {
@@ -87,8 +89,12 @@ void OutputWindow::initializeGL()
     m_rgbShader->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/rgbconv.vsh");
     m_rgbShader->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/Shaders/rgbconv.fsh");
     m_rgbShader->link();
-
+    m_rgbaShader->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/rgbconv.vsh");
+    m_rgbaShader->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/Shaders/rgba.fsh");
+    m_rgbaShader->link();
+    m_rgbaShader->bind();
     QOpenGLVertexArrayObject::Binder vaoBinder(m_rgb_vao.data());
+
     m_vertexBuffer.create();
     m_vertexBuffer.bind();
     m_vertexBuffer.allocate(vertex_buffer_data, sizeof(vertex_buffer_data));
@@ -98,21 +104,13 @@ void OutputWindow::initializeGL()
     m_textureBuffer.bind();
     m_textureBuffer.allocate(texture_buffer_data, sizeof(texture_buffer_data));
     m_textureBuffer.release();
+    m_rgbaShader->release();
 
     m_textureBlitter.create();
     m_wpm->setup();
     m_shadowShader->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/shadow.vsh");
     m_shadowShader->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/Shaders/shadow.fsh");
     m_shadowShader->link();
-
-    glGenBuffers(1,&VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    float data[] = {0,0,1,0,0,1,1,1};
-    glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, false, 0, 0);
-
-
 }
 
 void OutputWindow::paintGL()
@@ -219,8 +217,9 @@ void OutputWindow::drawTextureForObject(Surface *obj)
         {
             QOpenGLFunctions *functions = context()->functions();
 
-            if (m_mouseSelectedSurfaceObject == obj && m_grabState == ResizeGrab && m_resizeAnchored)
-                obj->setPosition(getAnchoredPosition(m_resizeAnchorPosition, m_resizeEdge, s));
+            // THIS IS WHERE OUR RESIZE POSITION GETS SET!!!!
+            /* if (m_mouseSelectedSurfaceObject == obj && m_grabState == ResizeGrab && m_resizeAnchored)
+                obj->setPosition(getAnchoredPosition(m_resizeAnchorPosition, m_resizeEdge, s)); */
 
             auto surfaceOrigin = obj->primaryView()->textureOrigin();
 
@@ -232,6 +231,9 @@ void OutputWindow::drawTextureForObject(Surface *obj)
 
             bool use_fbo = true;
             if(obj->isFullscreenShell() || obj->isFullscreen())
+                use_fbo = false;
+
+            if(obj->isSubsurface())
                 use_fbo = false;
 
             if(use_fbo)
@@ -271,7 +273,8 @@ void OutputWindow::drawTextureForObject(Surface *obj)
                 QMatrix4x4 tt_fbo = QOpenGLTextureBlitter::targetTransform(source,
                                                         QRect(m_output->wlOutput()->position(), size()));
                 m_textureBlitter.blit(m_fbo->texture(), tt_fbo,
-                                      QOpenGLTextureBlitter::OriginBottomLeft);
+                                      QOpenGLTextureBlitter::OriginBottomLeft,
+                                      QOpenGLTexture::RGBAFormat);
                 m_textureBlitter.release();
                 functions->glDisable(GL_BLEND);
             }
@@ -283,10 +286,10 @@ void OutputWindow::drawTextureForObject(Surface *obj)
             QMatrix4x4 tt_surface = QOpenGLTextureBlitter::targetTransform(source,
                                       QRect(m_output->wlOutput()->position(), size()));
 
-            m_textureBlitter.setOpacity(1.0);
             m_textureBlitter.bind(currentTarget);
-            m_textureBlitter.blit(texture->textureId(), tt_surface, surfaceOrigin);
+            m_textureBlitter.blit(texture->textureId(), tt_surface, surfaceOrigin, texture->format());
             m_textureBlitter.release();
+
             functions->glDisable(GL_BLEND);
        }
     }
@@ -324,7 +327,14 @@ void OutputWindow::drawShadowForObject(uint shadowOffset, Surface *obj)
     float corner = r * (0.5 + 0.5 * cos(2*angle));
     float sigma = z*10;
 
+    functions->glUseProgram(m_shadowShader->programId());
     m_shadowShader->bind();
+    glGenBuffers(1,&VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    float data[] = {0,0,1,0,0,1,1,1};
+    glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, false, 0, 0);
 
     auto bs = hwComp->borderSize();
     auto ds = hwComp->decorationSize();
@@ -365,7 +375,6 @@ void OutputWindow::drawShadowForObject(uint shadowOffset, Surface *obj)
 
 void OutputWindow::drawDesktopInfoString()
 {
-    return;
     QImage* img = hwComp->desktopLabelImage();
 
     QOpenGLFunctions *functions = context()->functions();
@@ -380,7 +389,7 @@ void OutputWindow::drawDesktopInfoString()
 
     QMatrix4x4 tf = QOpenGLTextureBlitter::targetTransform(QRect(startPoint, img->size()),
                                                  QRect(QPoint(0,0), size()));
-    m_textureBlitter.blit(texture.textureId(), tf, QOpenGLTextureBlitter::OriginTopLeft);
+    m_textureBlitter.blit(texture.textureId(), tf, QOpenGLTextureBlitter::OriginTopLeft, texture.format());
     texture.release();
     texture.destroy();
     m_textureBlitter.release();
@@ -410,7 +419,7 @@ void OutputWindow::drawServerSideDecoration(Surface *obj)
     auto ss = obj->shadowSize();
     QMatrix4x4 targetTransform = QOpenGLTextureBlitter::targetTransform(QRect(ss,ss,obj->decoratedSize().width(), obj->decoratedSize().height()),
                               QRect(0,0,fbo_sz.width(),fbo_sz.height()));
-    m_textureBlitter.blit(texture.textureId(), targetTransform, QOpenGLTextureBlitter::OriginTopLeft);
+    m_textureBlitter.blit(texture.textureId(), targetTransform, QOpenGLTextureBlitter::OriginTopLeft, texture.format());
     texture.release();
     texture.destroy();
     m_textureBlitter.release();
@@ -437,14 +446,14 @@ Surface* OutputWindow::surfaceAt(const QPointF &point)
 
     for(auto surf : hwComp->overlayLayerSurfaces())
     {
-        QRectF geom(surf->surfacePosition(), surf->surface()->bufferSize());
+        QRectF geom(surf->surfacePosition(), surf->surface()->bufferSize()*surf->surface()->bufferScale());
         if (geom.contains(point))
             ret = surf;
 
         // check children of the menuserver
         for(auto *s : surf->childSurfaceObjects())
         {
-            QRectF geom(s->surfacePosition(), s->surface()->bufferSize());
+            QRectF geom(s->surfacePosition(), s->surface()->bufferSize()*surf->surface()->bufferScale());
             if (geom.contains(adjustedPoint))
                 ret = s;
         }
@@ -452,14 +461,14 @@ Surface* OutputWindow::surfaceAt(const QPointF &point)
 
     for(auto surf : hwComp->topLayerSurfaces())
     {
-        QRectF geom(surf->surfacePosition(), surf->surface()->bufferSize());
+        QRectF geom(surf->surfacePosition(), surf->surface()->bufferSize()*surf->surface()->bufferScale());
         if (geom.contains(point))
             ret = surf;
 
         // check children of the tolayer surfaces
         for(auto *s : surf->childSurfaceObjects())
         {
-            QRectF geom(s->surfacePosition(), s->surface()->bufferSize());
+            QRectF geom(s->surfacePosition(), s->surface()->bufferSize()*surf->surface()->bufferScale());
             if (geom.contains(adjustedPoint))
                 ret = s;
         }
@@ -474,7 +483,7 @@ Surface* OutputWindow::surfaceAt(const QPointF &point)
             {
                 if (surface == m_dragIconSurfaceObject)
                     continue;
-                QRectF geom(surface->surfacePosition(), surface->surface()->bufferSize());
+                QRectF geom(surface->surfacePosition(), surface->surface()->bufferSize()*surface->surface()->bufferScale());
                 if (geom.contains(adjustedPoint))
                     ret = surface;
             }
@@ -490,7 +499,7 @@ Surface* OutputWindow::surfaceAt(const QPointF &point)
             {
                 if (surface == m_dragIconSurfaceObject)
                     continue;
-                QRectF geom(surface->surfacePosition(), surface->surface()->bufferSize());
+                QRectF geom(surface->surfacePosition(), surface->surface()->bufferSize()*surface->surface()->bufferScale());
                 if (geom.contains(adjustedPoint))
                     ret = surface;
             }
@@ -506,7 +515,7 @@ Surface* OutputWindow::surfaceAt(const QPointF &point)
             {
                 if (surface == m_dragIconSurfaceObject)
                     continue;
-                QRectF geom(surface->surfacePosition(), surface->surface()->bufferSize());
+                QRectF geom(surface->surfacePosition(), surface->surface()->bufferSize()*surface->surface()->bufferScale());
                 if (geom.contains(adjustedPoint))
                     ret = surface;
             }
@@ -539,7 +548,7 @@ Surface* OutputWindow::surfaceAt(const QPointF &point)
         for (auto *surface : views) {
             if (surface == m_dragIconSurfaceObject)
                 continue;
-            QRectF geom(surface->surfacePosition(), surface->surface()->bufferSize());
+            QRectF geom(surface->surfacePosition(), surface->surface()->bufferSize()*surface->surface()->bufferScale());
             if (geom.contains(adjustedPoint))
                 ret = surface;
         }
@@ -551,7 +560,7 @@ Surface* OutputWindow::surfaceAt(const QPointF &point)
         for (auto *surface : views) {
             if (surface == m_dragIconSurfaceObject)
                 continue;
-            QRectF geom(surface->surfacePosition(), surface->surface()->bufferSize());
+            QRectF geom(surface->surfacePosition(), surface->surface()->bufferSize()*surface->surface()->bufferScale());
             if (geom.contains(adjustedPoint))
                 ret = surface;
         }
@@ -563,7 +572,7 @@ Surface* OutputWindow::surfaceAt(const QPointF &point)
         for (auto *surface : views) {
             if (surface == m_dragIconSurfaceObject)
                 continue;
-            QRectF geom(surface->surfacePosition(), surface->surface()->bufferSize());
+            QRectF geom(surface->surfacePosition(), surface->surface()->bufferSize()*surface->surface()->bufferScale());
             if (geom.contains(adjustedPoint))
                 ret = surface;
         }
@@ -583,7 +592,8 @@ void OutputWindow::startResize(int edge, bool anchored)
     m_grabState = ResizeGrab;
     m_resizeEdge = edge;
     m_resizeAnchored = anchored;
-    m_resizeAnchorPosition = getAnchorPosition(m_mouseSelectedSurfaceObject->surfacePosition(), edge, m_mouseSelectedSurfaceObject->surface()->destinationSize());
+    m_resizeAnchorPosition = getAnchorPosition(m_mouseSelectedSurfaceObject->surfacePosition(),
+                       edge, m_mouseSelectedSurfaceObject->surface()->destinationSize());
 }
 
 void OutputWindow::startDrag(Surface *dragIcon)
@@ -601,7 +611,8 @@ void OutputWindow::mousePressEvent(QMouseEvent *e)
     QPoint adjustedPoint(m_output->wlOutput()->position().x()+e->position().x(),
                  m_output->wlOutput()->position().y()+e->position().y());
 
-    QMouseEvent e2(e->type(), adjustedPoint, e->button(), e->buttons(), e->modifiers(), e->pointingDevice());
+    QMouseEvent e2(e->type(), adjustedPoint, e->button(), e->buttons(),
+                   e->modifiers(), e->pointingDevice());
 
     if (m_mouseSelectedSurfaceObject.isNull())
     {
@@ -701,10 +712,12 @@ void OutputWindow::mousePressEvent(QMouseEvent *e)
         m_initialMousePos = adjustedPoint;
         m_mouseOffset = adjustedPoint - m_mouseSelectedSurfaceObject->surfacePosition();
 
-        QMouseEvent moveEvent(QEvent::MouseMove, adjustedPoint, e->globalPosition(), Qt::NoButton, Qt::NoButton, e->modifiers());
+        QMouseEvent moveEvent(QEvent::MouseMove, adjustedPoint, e->globalPosition(),
+                              Qt::NoButton, Qt::NoButton, e->modifiers());
         sendMouseEvent(&moveEvent, m_mouseSelectedSurfaceObject->primaryView());
     }
     sendMouseEvent(&e2, m_mouseSelectedSurfaceObject->primaryView()); //(m_output));
+    hwComp->resetIdle();
 }
 
 void OutputWindow::mouseReleaseEvent(QMouseEvent *e)
@@ -736,6 +749,7 @@ void OutputWindow::mouseReleaseEvent(QMouseEvent *e)
 
         setCursor(Qt::ArrowCursor);
     }
+    hwComp->resetIdle();
 }
 
 void OutputWindow::mouseMoveEvent(QMouseEvent *e)
@@ -756,6 +770,7 @@ void OutputWindow::mouseMoveEvent(QMouseEvent *e)
             setCursor(Qt::ArrowCursor);
         else
         {
+
             auto mouseedge = view->nearEdge(adjustedPoint);
             if(mouseedge == 0x0)
             {
@@ -782,6 +797,7 @@ void OutputWindow::mouseMoveEvent(QMouseEvent *e)
     }
         break;
     case MoveGrab: {
+        //qDebug() << "moving window: " << adjustedPoint - m_mouseOffset << " mouseOffset: " << m_mouseOffset;
         m_mouseSelectedSurfaceObject->setPosition(adjustedPoint - m_mouseOffset);
         update();
     }
@@ -803,6 +819,7 @@ void OutputWindow::mouseMoveEvent(QMouseEvent *e)
     }
         break;
     }
+    hwComp->resetIdle();
 }
 
 void OutputWindow::sendMouseEvent(QMouseEvent *e, SurfaceView *target)
@@ -810,21 +827,29 @@ void OutputWindow::sendMouseEvent(QMouseEvent *e, SurfaceView *target)
     QPoint adjustedPoint(m_output->wlOutput()->position().x()+e->position().x(),
                  m_output->wlOutput()->position().y()+e->position().y());
 
+    qDebug() << "mappedPos:" << adjustedPoint;
     QPointF mappedPos = adjustedPoint;
     if (target)
         mappedPos -= target->surfaceObject()->surfacePosition();
-    QMouseEvent viewEvent(e->type(), mappedPos, adjustedPoint, e->button(), e->buttons(), e->modifiers());
+
+    qDebug() << "mappedPos2:" << mappedPos;
+    QMouseEvent viewEvent(e->type(), mappedPos,
+                          adjustedPoint, e->button(), e->buttons(), e->modifiers());
     hwComp->handleMouseEvent(target, &viewEvent);
+    hwComp->resetIdle();
 }
 
 void OutputWindow::keyPressEvent(QKeyEvent *e)
 {
-    hwComp->defaultSeat()->sendKeyPressEvent(e->nativeScanCode());
+    if(!hwComp->shortcuts()->checkAndHandleCombo(e->keyCombination()))
+        hwComp->defaultSeat()->sendKeyPressEvent(e->nativeScanCode());
+    hwComp->resetIdle();
 }
 
 void OutputWindow::keyReleaseEvent(QKeyEvent *e)
 {
     hwComp->defaultSeat()->sendKeyReleaseEvent(e->nativeScanCode());
+    hwComp->resetIdle();
 }
 
 void OutputWindow::wheelEvent(QWheelEvent *e)
@@ -850,6 +875,7 @@ void OutputWindow::wheelEvent(QWheelEvent *e)
     // TODO: flip-flop the values if we do not want 'natural' scrolling
     hwComp->defaultSeat()->sendMouseWheelEvent(vert ? Qt::Vertical : Qt::Horizontal,
                                                delta);
+    hwComp->resetIdle();
 }
 
 void OutputWindow::touchEvent(QTouchEvent *e)
@@ -860,4 +886,5 @@ void OutputWindow::touchEvent(QTouchEvent *e)
                 m_mouseSelectedSurfaceObject->viewForOutput(m_output) : viewAt(adjustedPoint);
 
     hwComp->defaultSeat()->sendFullTouchEvent(view->surface(), e);
+    hwComp->resetIdle();
 }

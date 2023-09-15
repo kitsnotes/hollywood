@@ -56,6 +56,28 @@ quint16 UPowerDeviceInterface::state()
     return m_props.value("State", 0).toUInt();
 }
 
+QString UPowerDeviceInterface::stateString()
+{
+    switch(state())
+    {
+    case 1:
+        return tr("Charging");
+    case 2:
+        return tr("Discharging");
+    case 3:
+        return tr("Empty");
+    case 4:
+        return tr("Fully charged");
+    case 5:
+        return tr("Pending charge");
+    case 6:
+        return tr("Pending discharge");
+    case 0:
+    default:
+        return tr("Unknown");
+    }
+}
+
 double UPowerDeviceInterface::percent()
 {
     return m_props.value("Percentage", 0.0).toDouble();
@@ -74,6 +96,21 @@ quint64 UPowerDeviceInterface::timeUntilEmpty()
 QString UPowerDeviceInterface::displayIcon()
 {
     return m_props.value("IconName").toString();
+}
+
+double UPowerDeviceInterface::energyFull()
+{
+    return m_props.value("EnergyFull", 0.0).toDouble();
+}
+
+double UPowerDeviceInterface::energyFullDesign()
+{
+    return m_props.value("EnergyFullDesign", 0.0).toDouble();
+}
+
+uint UPowerDeviceInterface::batteryHealthPercent()
+{
+    return (uint)energyFull()*100/energyFullDesign();
 }
 
 void UPowerDeviceInterface::updateProperties()

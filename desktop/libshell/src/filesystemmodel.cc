@@ -18,7 +18,6 @@
 #include <qmessagebox.h>
 #include <qapplication.h>
 #include <QtCore/qcollator.h>
-
 #include <algorithm>
 #if QT_VERSION >= 0x060000
 #include <QRegularExpression>
@@ -362,7 +361,11 @@ QVariant LSFSModel::myComputer(int role) const
     case Qt::DisplayRole:
         return LSFSModelPrivate::myComputer();
     case Qt::DecorationRole:
+#if QT_VERSION >= 0x060000
         return d->fileInfoGatherer.iconProvider()->icon(QAbstractFileIconProvider::Computer);
+#else
+        return d->fileInfoGatherer.iconProvider()->icon(QFileIconProvider::Computer);
+#endif
     }
     return QVariant();
 }
@@ -389,6 +392,7 @@ QVariant LSFSModel::data(const QModelIndex &index, int role) const
         case 6: return d->comment(index);
         default:
             qWarning("data: invalid display value column %d", index.column());
+            return QString();
         }
         break;
     case FilePathRole:
@@ -414,8 +418,15 @@ QVariant LSFSModel::data(const QModelIndex &index, int role) const
         break;
     case FilePermissions:
         return (int)permissions(index);
+    case FileSymlink:
+        return (bool)isSymlink(index);
+    case FileHidden:
+        return (bool)isHidden(index);
+#if QT_VERSION >= 0x060000
+    // TODO: hack...
     case FileInfoRole:
         return QVariant::fromValue(d->node(index)->info);
+#endif
     }
 
     return QVariant();
@@ -925,10 +936,17 @@ void LSFSModel::setOptions(Options options)
 
     if (changed.testFlag(DontUseCustomDirectoryIcons)) {
         if (auto provider = iconProvider()) {
+#if QT_VERSION >= 0x060000
             QAbstractFileIconProvider::Options providerOptions = provider->options();
             providerOptions.setFlag(QAbstractFileIconProvider::DontUseCustomDirectoryIcons,
                                     options.testFlag(LSFSModel::DontUseCustomDirectoryIcons));
             provider->setOptions(providerOptions);
+#else
+            QFileIconProvider::Options providerOptions = provider->options();
+            providerOptions.setFlag(QFileIconProvider::DontUseCustomDirectoryIcons,
+                                    options.testFlag(LSFSModel::DontUseCustomDirectoryIcons));
+            provider->setOptions(providerOptions);
+#endif
         } else {
             qWarning("Setting LSFSModel::DontUseCustomDirectoryIcons has no effect when no provider is used");
         }
@@ -942,8 +960,13 @@ LSFSModel::Options LSFSModel::options() const
     Q_D(const LSFSModel);
     result.setFlag(DontWatchForChanges, !d->fileInfoGatherer.isWatching());
     if (auto provider = iconProvider()) {
+#if QT_VERSION >= 0x060000
         result.setFlag(DontUseCustomDirectoryIcons,
                        provider->options().testFlag(QAbstractFileIconProvider::DontUseCustomDirectoryIcons));
+#else
+        result.setFlag(DontUseCustomDirectoryIcons,
+                       provider->options().testFlag(QFileIconProvider::DontUseCustomDirectoryIcons));
+#endif
     }
     return result;
 }
@@ -1015,6 +1038,24 @@ QFile::Permissions LSFSModel::permissions(const QModelIndex &index) const
 {
     Q_D(const LSFSModel);
     return d->node(index)->permissions();
+}
+
+bool LSFSModel::isHidden(const QModelIndex &index) const
+{
+    Q_D(const LSFSModel);
+    return d->node(index)->isHidden();
+}
+
+bool LSFSModel::isSymlink(const QModelIndex &index) const
+{
+    Q_D(const LSFSModel);
+    return d->node(index)->isSymLink();
+}
+
+QString LSFSModel::absolutePath(const QModelIndex &index) const
+{
+    Q_D(const LSFSModel);
+    return d->node(index)->fileInfo().absoluteFilePath();
 }
 
 QModelIndex LSFSModel::setRootPath(const QString &newPath)
@@ -1097,11 +1138,15 @@ void LSFSModel::setFilter(QDir::Filters filters)
     Q_D(LSFSModel);
     if (d->filters == filters)
         return;
+    d->filters = filters;
+#if QT_VERSION >= 0x060000
     const bool changingCaseSensitivity =
         filters.testFlag(QDir::CaseSensitive) != d->filters.testFlag(QDir::CaseSensitive);
-    d->filters = filters;
     if (changingCaseSensitivity)
         d->rebuildNameFilterRegexps();
+#else
+    setNameFilters(nameFilters());
+#endif
     d->forceSort = true;
     d->delayedSort();
 }
@@ -1176,7 +1221,9 @@ void LSFSModel::setNameFilters(const QStringList &filters)
     }
 
     d->nameFilters = filters;
+#if QT_VERSION >= 0x060000
     d->rebuildNameFilterRegexps();
+#endif
     d->forceSort = true;
     d->delayedSort();
 #else
@@ -1294,7 +1341,7 @@ void LSFSModelPrivate::removeVisibleFile(LSFSNode *parentNode, int vLocation)
 }
 
 void LSFSModelPrivate::_q_fileSystemChanged(const QString &path,
-                                                   const QList<QPair<QString, QFileInfo>> &updates)
+                                                   const QVector<QPair<QString, QFileInfo>> &updates)
 {
 #if QT_CONFIG(filesystemwatcher)
     Q_Q(LSFSModel);

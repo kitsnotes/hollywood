@@ -40,12 +40,15 @@ Surface::Surface(QWaylandSurface *surface)
     connect(m_surface, &QWaylandSurface::sourceGeometryChanged, this, &Surface::onSurfaceSourceGeometryChanged);
     connect(m_surface, &QWaylandSurface::destinationSizeChanged, this, &Surface::onDestinationSizeChanged);
     connect(m_surface, &QWaylandSurface::bufferScaleChanged, this, &Surface::onBufferScaleChanged);
+    connect(m_surface, &QWaylandSurface::childAdded, this, &Surface::onChildAdded);
+
 
     // TODO: multi-monitor suppot
 }
 
 Surface::~Surface()
 {
+
     if(m_parentSurface)
         m_parentSurface->recycleChildSurfaceObject(this);
 
@@ -192,6 +195,11 @@ SurfaceView *Surface::primaryView() const
     return view;
 }
 
+void Surface::onChildAdded(QWaylandSurface *child)
+{
+    Q_UNUSED(child)
+}
+
 Surface::SurfaceType Surface::surfaceType() const { return m_surfaceType; }
 
 WlrLayerSurfaceV1::Anchors Surface::anchors()
@@ -201,9 +209,11 @@ WlrLayerSurfaceV1::Anchors Surface::anchors()
 
 bool Surface::isSpecialShellObject() const
 {
-    if(surface())
-        if(surface()->isCursorSurface())
-            return true;
+    if(m_surface == nullptr)
+        return false;
+
+    if(m_cursor)
+        return true;
 
     if(m_surfaceType == Desktop)
         return true;
@@ -267,8 +277,41 @@ OriginullMenuServer *Surface::menuServer() const
 
 void Surface::setPosition(const QPointF &pos)
 {
-    m_surfacePosition = hwComp->correctedPosition(pos);
+    //auto oldPos = m_surfacePosition;
+    auto newPos = hwComp->correctedPosition(pos);
 
+    // If we are in a move and then...
+    // If we have a sudden jump in X or Y, as in, over 80% of the display, lets ignore it
+    //if(m_moving)
+    //{
+    //    QPoint nf(pos.toPoint());
+        /*if(hwComp->outputAtPosition(nf) == nullptr)
+            goto move_finish;
+
+        QScreen *sc = hwComp->outputAtPosition(nf)->screen();
+        if(sc != nullptr)
+        {
+            int max_x = (sc->availableSize().width() * 0.80);
+            int max_y = (sc->availableSize().height() * 0.80);
+
+            if(newPos.y()-oldPos.y() > max_y)
+                m_surfacePosition = oldPos;
+            else
+                m_surfacePosition = newPos;
+
+            if(newPos.x()-oldPos.x() > max_x)
+                m_surfacePosition = oldPos;
+            else
+                m_surfacePosition = newPos;
+        }
+        else
+            m_surfacePosition = oldPos;
+    }
+    else
+        m_surfacePosition = newPos;
+
+move_finish:*/
+        m_surfacePosition = newPos;
     if(m_qt != nullptr && m_qt_moveserial != 0)
     {
         auto x = m_surfacePosition.x();
@@ -355,7 +398,7 @@ QSize Surface::renderSize() const
 
 QRectF Surface::windowRect() const
 {
-    return QRectF(surfacePosition(), QSizeF(surfaceSize()));
+    return QRectF(surfacePosition(), QSizeF(surfaceSize()*surface()->bufferScale()));
 }
 
 QRectF Surface::decoratedRect() const
@@ -432,7 +475,7 @@ SurfaceView* Surface::createViewForOutput(Output *o)
 
         return view;
     }
-    qDebug() << "ACSurfaceObject::createView() failed. returning nullptr";
+    qDebug() << "Surface::createView() failed. returning nullptr";
     return nullptr;
 }
 
@@ -446,10 +489,23 @@ QPointF Surface::parentPosition() const
 {
     return m_parentSurface ?
                 (m_parentSurface->surfacePosition() + m_parentSurface->parentPosition())
-              : QPointF();
+                           : QPointF();
+}
+
+QPointF Surface::mapToSurface(const QPointF &pos) const
+{
+    if(!surface() || surface()->destinationSize().isEmpty())
+        return pos / surface()->bufferScale();
+
+    qreal xScale = windowRect().width() / surface()->bufferSize().width();
+    qreal yScale = windowRect().height() / surface()->bufferSize().height();
+
+    return QPointF(pos.x() / xScale, pos.y() / yScale);
 }
 
 QList<Surface *> Surface::childSurfaceObjects() const { return m_children; }
+
+QList<Surface *> Surface::childXdgSurfaceObjects() const { return m_xdgChildren; }
 
 bool Surface::surfaceReadyToRender() const
 {
@@ -525,6 +581,7 @@ void Surface::createPlasmaWindowControl()
     connect(m_wndctl, &PlasmaWindowControl::minimizedRequested, this, &Surface::toggleMinimize);
     connect(m_wndctl, &PlasmaWindowControl::maximizedRequested, this, &Surface::toggleMaximize);
     connect(m_wndctl, &PlasmaWindowControl::activeRequested, this, &Surface::toggleActive);
+    connect(m_wndctl, &PlasmaWindowControl::closeRequested, this, &Surface::sendClose);
     QIcon icon = QIcon::fromTheme(QLatin1String("process-working"));
     m_wndctl->setIcon(icon);
 }
@@ -788,7 +845,6 @@ void Surface::handleLayerShellPopupPositioning()
 
 void Surface::onSurfaceSourceGeometryChanged()
 {
-    qDebug() << "Surface::onSurfaceSourceGeometryChanged" << surface()->sourceGeometry();
     //m_viewport = surface()->sourceGeometry();
 }
 
@@ -1032,6 +1088,7 @@ void Surface::createXdgTopLevelSurface(HWWaylandXdgToplevel *topLevel)
     connect(m_xdgTopLevel, &HWWaylandXdgToplevel::parentToplevelChanged, this, &Surface::onXdgParentTopLevelChanged);
     connect(m_xdgTopLevel, &HWWaylandXdgToplevel::titleChanged, this, &Surface::onXdgTitleChanged);
     connect(m_xdgTopLevel, &HWWaylandXdgToplevel::appIdChanged, this, &Surface::onXdgAppIdChanged);
+    //connect(m_xdgTopLevel, &HWWaylandXdgToplevel::resizingChanged, this, &Surface::completeXdgConfigure);
     connect(m_xdgTopLevel, &HWWaylandXdgToplevel::maximizedChanged, this, &Surface::completeXdgConfigure);
     connect(m_xdgTopLevel, &HWWaylandXdgToplevel::fullscreenChanged, this, &Surface::completeXdgConfigure);
 }
@@ -1100,9 +1157,9 @@ void Surface::createMenuServer(OriginullMenuServer *menu)
 
 void Surface::surfaceDestroyed()
 {
-    hwComp->recycleSurfaceObject(this);
     if(m_wndctl)
         m_wndctl->destroy();
+    hwComp->recycleSurfaceObject(this);
     hwComp->triggerRender();
 }
 
@@ -1168,7 +1225,6 @@ void Surface::completeXdgConfigure()
         if(!hwComp->useAnimations() || m_maximized_complete)
         {
             setPosition(pos);
-            qDebug() << "setPosition" << pos;
             hwComp->triggerRender();
         }
         else
@@ -1198,6 +1254,8 @@ void Surface::completeXdgConfigure()
                 connect(group, &QParallelAnimationGroup::finished, [this]() {
                     m_maximized_complete = true;
                     m_resize_animation = false;
+                    renderDecoration();
+                    hwComp->triggerRender();
                 });
             }
         }
@@ -1241,6 +1299,8 @@ void Surface::completeXdgConfigure()
                 group->start(QPropertyAnimation::DeleteWhenStopped);
                 connect(group, &QParallelAnimationGroup::finished, [this]() {
                     m_resize_animation = false;
+                    renderDecoration();
+                    hwComp->triggerRender();
                 });
             }
         }
@@ -1316,7 +1376,6 @@ void Surface::onXdgWindowGeometryChanged()
     if(!m_surfaceInit)
     {
         // TODO: reposition
-        qDebug() << surfaceSize();
         m_surfaceInit = true;
     }
 }

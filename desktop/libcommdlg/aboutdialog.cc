@@ -60,7 +60,8 @@ HWAboutDialog::HWAboutDialog(QWidget *parent)
     ,q(new AboutDialogPrivate(this))
 {
     setMinimumWidth(250);
-    setMaximumWidth(250);
+    setMaximumWidth(252);
+    setMinimumHeight(320);
     setWindowFlag(Qt::Dialog, true);
     setWindowFlag(Qt::WindowMinimizeButtonHint, false);
     setWindowFlag(Qt::WindowMaximizeButtonHint, false);
@@ -71,8 +72,7 @@ HWAboutDialog::HWAboutDialog(QWidget *parent)
     setAppDescription("");
     setAppVersion(tr("Version %1").arg(qApp->applicationVersion()));
     setAppCopyright(tr("Copyright © %1 %2").arg(QString(copyBuildYear)).arg(qApp->organizationName()));
-    //setMaximumSize(minimumSize());
-    setFixedSize(minimumSize());
+    setMaximumSize(minimumSize().grownBy(QMargins(1,1,1,1)));
 }
 
 QString HWAboutDialog::appName() const
@@ -85,7 +85,6 @@ void HWAboutDialog::setAppName(const QString &name)
     q->m_name = name;
     q->m_appName->setText(q->m_name);
     setWindowTitle(tr("About %1").arg(q->m_name));
-    //setMaximumSize(minimumSize().grownBy(QMargins(1,1,1,1)));
     setFixedSize(minimumSize());
     emit appNameChanged(q->m_name);
 }

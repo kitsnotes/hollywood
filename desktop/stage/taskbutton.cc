@@ -25,6 +25,22 @@ TaskButton::TaskButton(PlasmaWindow *wnd, QWidget *parent)
     m_context->addSeparator();
     m_close = m_context->addAction(tr("&Close Window"));
 
+    m_move->setEnabled(false);
+    m_size->setEnabled(false);
+
+    connect(m_restore, &QAction::triggered,
+            this, &TaskButton::restore);
+    connect(m_move, &QAction::triggered,
+            this, &TaskButton::move);
+    connect(m_size, &QAction::triggered,
+            this, &TaskButton::size);
+    connect(m_minimize, &QAction::triggered,
+            this, &TaskButton::minimize);
+    connect(m_maximize, &QAction::triggered,
+            this, &TaskButton::maximize);
+    connect(m_close, &QAction::triggered,
+            this, &TaskButton::close);
+
     connect(wnd, &PlasmaWindow::windowTitleChanged,
             this, &TaskButton::titleChanged);
 
@@ -72,7 +88,7 @@ void TaskButton::size()
 
 void TaskButton::minimize()
 {
-
+    m_window->toggleMinimize();
 }
 
 void TaskButton::maximize()
@@ -82,5 +98,5 @@ void TaskButton::maximize()
 
 void TaskButton::close()
 {
-
+    m_window->requestClose();
 }

@@ -40,7 +40,10 @@ public:
         FilePathRole = Qt::UserRole + 1,
         FileNameRole = Qt::UserRole + 2,
         FilePermissions = Qt::UserRole + 3,
-        FileInfoRole = Qt::UserRole + 4
+        FileHidden = Qt::UserRole + 4,
+        FileSymlink = Qt::UserRole + 5,
+        FileAbsolutePath = Qt::UserRole + 6,
+        FileInfoRole = Qt::UserRole + 99
     };
 
     enum Column
@@ -142,6 +145,9 @@ public:
     QFile::Permissions permissions(const QModelIndex &index) const;
     QFileInfo fileInfo(const QModelIndex &index) const;
     bool remove(const QModelIndex &index);
+    bool isHidden(const QModelIndex &index) const;
+    bool isSymlink(const QModelIndex &index) const;
+    QString absolutePath(const QModelIndex &index) const;
 
 protected:
     LSFSModel(LSFSModelPrivate &, QObject *parent = Q_NULLPTR);

@@ -8,7 +8,7 @@
 #include <QUuid>
 
 #include <QWaylandCompositorExtensionTemplate>
-#include <QWaylandQuickExtension>
+//#include <QWaylandQuickExtension>
 #include <QWaylandCompositor>
 #include <QIcon>
 
@@ -79,6 +79,8 @@ protected:
     void org_kde_plasma_window_set_state(Resource *resource, uint32_t flags, uint32_t state) override;
     void org_kde_plasma_window_set_virtual_desktop(Resource *resource, uint32_t number) override;
     void org_kde_plasma_window_get_icon(Resource *resource, int32_t fd) override;
+    void org_kde_plasma_window_close(Resource *resource) override;
+
     void org_kde_plasma_window_destroy(Resource *resource) override;
 private:
     void unmap();

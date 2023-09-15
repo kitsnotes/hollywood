@@ -121,17 +121,17 @@ public:
 class SvcEnable : public Key {
 private:
     const std::string _svc;
-    const std::string _runlevel;
+    const bool _userglobal;
 
     SvcEnable(const Script *_s, const ScriptLocation &_pos,
-              const std::string &_sv, const std::string &_r) : Key(_s, _pos),
-        _svc(_sv), _runlevel(_r) {}
+              const std::string &_sv, const bool &_ug) : Key(_s, _pos),
+        _svc(_sv), _userglobal(_ug) {}
 public:
     static Key *parseFromData(const std::string &, const ScriptLocation &,
                               int *, int *, const Script *);
 
     const std::string service() const { return this->_svc; }
-    const std::string runlevel() const { return this->_runlevel; }
+    const bool userGlobal() const { return this->_userglobal; }
     bool validate() const override;
     bool execute() const override;
 };

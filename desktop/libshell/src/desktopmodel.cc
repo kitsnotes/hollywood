@@ -71,9 +71,16 @@ QVariant LSDesktopModel::data(const QModelIndex &index, int role) const
             return QVariant(Qt::AlignTrailing | Qt::AlignVCenter);
         break;
     case Qt::UserRole+4:
+        return (bool)isHidden(index);
+    case Qt::UserRole+5:
+        return (bool)isSymlink(index);
+// TODO: hack. fix?
+#if QT_VERSION >= 0x060000
+    case Qt::UserRole+99:
             if(index.row() > p->m_files.count()-1)
                 return QVariant();
             return QVariant::fromValue(p->m_files.at(index.row())->info);
+#endif
     }
 
     return QVariant();
@@ -96,7 +103,28 @@ QString LSDesktopModel::name(const QModelIndex &index) const
         return p->m_files.at(index.row())->desktopFileNameEntry();
 
     return p->m_files.at(index.row())->fileName;
-    return QString("");
+}
+
+bool LSDesktopModel::isHidden(const QModelIndex &index) const
+{
+    if(index.row() > p->m_files.count()-1)
+        return false;
+
+    if(p->m_files.at(index.row()))
+        return p->m_files.at(index.row())->isHidden();
+
+    return false;
+}
+
+bool LSDesktopModel::isSymlink(const QModelIndex &index) const
+{
+    if(index.row() > p->m_files.count()-1)
+        return false;
+
+    if(p->m_files.at(index.row()))
+        return p->m_files.at(index.row())->isSymLink();
+
+    return false;
 }
 
 QString LSDesktopModel::description(const QModelIndex &index) const

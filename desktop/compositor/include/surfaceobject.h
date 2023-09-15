@@ -65,12 +65,15 @@ public:
     // This is only used for popup windows
     Surface* parentSurfaceObject() const;
     QPointF parentPosition() const;
+    QPointF mapToSurface(const QPointF &pos) const;
     QList<Surface*> childSurfaceObjects() const;
     QList<Surface*> childXdgSurfaceObjects() const;
 
     QString appId() const { return m_appid; }
     QString themedIcon() const { return m_icontheme; }
 
+    bool isSubsurface() const { return m_subsurface; }
+    void setSubsurface(const bool subsurface) { m_subsurface = subsurface; }
     bool surfaceReadyToRender() const;
     bool serverDecorated() const;
     QPointF renderPosition() const;
@@ -78,6 +81,7 @@ public:
     QPointF decorationPosition() const;
     void setPosition(const QPointF &pos);
     uint shadowSize() const;
+    bool inhibitsIdle() const;
 
     QSize surfaceSize() const;
     QSize decoratedSize() const;
@@ -99,7 +103,6 @@ public:
     bool canMaximize() const;
     bool canMinimize() const;
     bool canClose() const;
-    void sendClose();
     void setMaximized();
     void unsetMaximized();
     void setMinimized();
@@ -141,6 +144,7 @@ public slots:
     void toggleMinimize();
     void toggleMaximize();
     void toggleActive();
+    void sendClose();
 protected:
     // only callable by Compostior
     void setAnimatedSurfaceSize(QSize size);
@@ -163,6 +167,7 @@ protected:
     void setLayerShellParent(Surface *surface);
     void handleLayerShellPopupPositioning();
 private slots:
+    void onChildAdded(QWaylandSurface *child);
     void onSurfaceSourceGeometryChanged();
     void onDestinationSizeChanged();
     void onBufferScaleChanged();
@@ -214,6 +219,8 @@ private:
     bool m_cursor = false;
 
     bool m_active = false;
+
+    bool m_subsurface = false;
 
     bool m_canMaximize = true;
     bool m_canMinimize = true;

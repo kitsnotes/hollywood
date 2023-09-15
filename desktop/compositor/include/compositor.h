@@ -48,6 +48,8 @@ class GtkShell;
 class GtkSurface;
 class QtShell;
 class QtSurface;
+class ShortcutManager;
+class XdgActivation;
 class Compositor : public QWaylandCompositor
 {
     Q_OBJECT
@@ -63,6 +65,8 @@ public:
     Output* primaryOutput() const;
     bool legacyRender() const;
     bool useAnimations() const;
+
+    void resetIdle();
 
     QList<Surface*> surfaceObjects() const { return m_surfaces; }
     QVector<Surface*> surfaceByZOrder() { return m_zorder; }
@@ -102,6 +106,7 @@ public:
     bool processHasTwilightMode(quint64 pid) const;
     bool isRunningLoginManager() const { return m_sddm; }
     QPointF correctedPosition(const QPointF &point);
+    ShortcutManager* shortcuts();
 protected:
     void adjustCursorSurface(QWaylandSurface *surface, int hotspotX, int hotspotY);
     void recycleSurfaceObject(Surface *obj);
@@ -113,7 +118,7 @@ signals:
     void settingsChanged();
 public slots:
     void triggerRender();
-
+    void lockSession();
 protected slots:
     void surfaceHasContentChanged();
     void onStartMove(QWaylandSeat *seat);
@@ -137,12 +142,16 @@ protected slots:
 
     void onSubsurfaceChanged(QWaylandSurface *child, QWaylandSurface *parent);
     void onSubsurfacePositionChanged(const QPoint &position);
+    void onXdgSurfaceActivated(QWaylandSurface *surface);
     void updateCursor();
+    void onRotateWallpaper();
 private slots:
     void appMenuCreated(AppMenu *m);
     void menuServerDestroyed();
     void configChanged();
     void loadSettings();
+    void setupIdleTimer();
+    void idleTimeout();
 private:
     void sendWindowUUID(QUuid &uuid);
 private:
@@ -161,11 +170,15 @@ private:
     uint m_decorationSize = 30;
     uint m_borderSize = 1;
     uint m_apperance = 0;
+    QColor m_accent;
+    QColor m_desktop_bg;
 
     QList<Output*> m_outputs;
     uint m_id = 0;
     // Our list of surfaces
     QList<Surface*> m_surfaces;
+
+    // Top level surfaces to worry about z-order
     QVector<Surface*> m_zorder;
 
     // Our wl_shell protocol support
@@ -188,7 +201,10 @@ private:
     QtShell *m_qt = nullptr;
     // fullscreen-shell protocol support
     FullscreenShell *m_fs = nullptr;
+    // XDG Activation Manager
+    XdgActivation *m_activation = nullptr;
 
+    // running under user 'sddm'
     bool m_sddm = false;
 
     // Our cursor
@@ -199,9 +215,8 @@ private:
     OriginullMenuServer *m_menuServer = nullptr;
     uint m_menuServerReserved = 0;
     QList<Surface*> m_desktops;
-    QColor m_accent;
-    QColor m_desktop_bg;
 
+    // layer shell objects
     QList<Surface*> m_layer_bg;
     QList<Surface*> m_layer_bottom;
     QList<Surface*> m_layer_top;
@@ -218,6 +233,17 @@ private:
 
     bool m_hasFullscreenSurface = false;
     Surface *m_fullscreenSurface = nullptr;
+
+    // global hotkey / shortcuts
+    ShortcutManager *m_shortcuts = nullptr;
+
+    // idle tracking and timeouts
+    uint m_timeout_display;
+    uint m_timeout_sleep;
+    uint m_lock_after_sleep;
+    QTimer *m_timeout = nullptr;
+    bool m_display_sleeping = false;
+    bool m_idle_inhibit = false;
 };
 
 #endif // WINDOWCOMPOSITOR_H

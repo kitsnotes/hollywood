@@ -6,6 +6,7 @@
 #include "outputwnd.h"
 #include "compositor.h"
 #include "output.h"
+
 #include <sys/types.h>
 #include <pwd.h>
 #include <errno.h>
@@ -113,7 +114,6 @@ int main(int argc, char *argv[])
     else
     {
         QString xdg = QString("/run/user/%1").arg(getuid());
-        qDebug() << "setting xdg runtime dir:" << xdg;
         qputenv("XDG_RUNTIME_DIR", xdg.toUtf8().data());
         qputenv("QT_QPA_PLATFORM", "hollywood-eglfs");
     }

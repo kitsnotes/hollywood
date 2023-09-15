@@ -140,10 +140,10 @@ bool SMApplication::startSession()
     m_socket->removeServer(xdg_runtime_sock);
     m_socket->listen(xdg_runtime_sock);
 
-    connect(m_dbusSessionProcess, &ManagedProcess::dbusSessionBusAddressAvailable,
+    /* connect(m_dbusSessionProcess, &ManagedProcess::dbusSessionBusAddressAvailable,
             this, &SMApplication::dbusAvailable);
 
-    m_dbusSessionProcess->initialize();
+    m_dbusSessionProcess->initialize(); */
 
     connect(m_compositorProcess, &ManagedProcess::compositorDied,
             this, &SMApplication::compositorDied);
@@ -153,7 +153,8 @@ bool SMApplication::startSession()
         return false;
     }
 
-    auto dbusenv = qgetenv("DBUS_SESSION_BUS_ADDRESS");
+    startDBusReliantServices();
+/*    auto dbusenv = qgetenv("DBUS_SESSION_BUS_ADDRESS");
     if(!m_useDBus)
     {
         qCInfo(lcSession) << "Not supervising a dbus-session by user request.";
@@ -163,7 +164,7 @@ bool SMApplication::startSession()
     {
         qCInfo(lcSession) << "Not supervising a dbus-session as one exists.";
         startDBusReliantServices();
-    }
+    }*/
     return true;
 }
 
@@ -241,6 +242,22 @@ bool SMApplication::openFileWithDefault(const QString &file)
     return res;
 }
 
+bool SMApplication::openSettingsApplet(const QString &settings)
+{
+    LSExecutor *e = new LSExecutor(this);
+    if(e->setDesktopFile(HOLYWOOD_SETTINGS_APP))
+    {
+        e->addArgument(settings);
+        e->launch();
+        return true;
+    }
+    else
+    {
+        return false;
+        delete e;
+    }
+}
+
 bool SMApplication::haveSDDMAutoStart()
 {
     // TODO: this
@@ -308,15 +325,15 @@ bool SMApplication::isBatteryPowered() const
 
 void SMApplication::startDBusReliantServices()
 {
-    m_pipewireProcess->initialize();
+    //m_pipewireProcess->initialize();
+    //m_wireplumberProcess->initialize();
+    //m_pipewirePulseProcess->initialize();
     m_elevatorProcess->initialize();
 
-    m_wireplumberProcess->initialize();
     m_stageProcess->initialize();
     m_desktopProcess->initialize();
     m_notificationProcess->initialize();
 
-    m_pipewirePulseProcess->initialize();
     m_sessionStarted = true;
     m_dbus = new SessionDBus(this);
     QDBusConnection::sessionBus().registerService(QLatin1String(HOLLYWOOD_SESSION_DBUS));
@@ -373,15 +390,15 @@ bool SMApplication::stopSession()
     terminateUserProcesses();
     m_desktopProcess->deconstruct();
     m_elevatorProcess->deconstruct();
-    m_pipewirePulseProcess->deconstruct();
-    m_wireplumberProcess->deconstruct();
-    m_pipewireProcess->deconstruct();
+    //m_pipewirePulseProcess->deconstruct();
+    //m_wireplumberProcess->deconstruct();
+    //m_pipewireProcess->deconstruct();
     // insert more sub-processes HERE
 
     // stop the stage ,compositor, dbus-session at the end, in that order
     m_stageProcess->deconstruct();
     m_compositorProcess->deconstruct();
-    m_dbusSessionProcess->deconstruct();
+    //m_dbusSessionProcess->deconstruct();
 
     m_socket->close();
     return true;
@@ -503,15 +520,12 @@ int main(int argc, char *argv[])
          QCoreApplication::translate("main", "Do not launch the notification daemon with this session.")},
      {"no-pipewire",
          QCoreApplication::translate("main", "Do not launch pipewire daemon with this session.")},
-     {"no-dbus",
-         QCoreApplication::translate("main", "Do not launch a dbus-daemon for session bus with this session.")},
     });
     p.process(a);
 
     if(p.isSet("no-elevator"))
         a.setUseElevator(false);
-    if(p.isSet("no-dbus"))
-        a.setUseDBus(false);
+    a.setUseDBus(false);
     if(p.isSet("no-pipewire"))
         a.setUsePipewire(false);
 

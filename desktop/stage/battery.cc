@@ -1,8 +1,9 @@
 #include "battery.h"
 #include "upower.h"
+#include "app.h"
 #include <QMenu>
 #include <QAction>
-
+#include <hollywood/hollywood.h>
 BatteryMonitor::BatteryMonitor(QWidget *parent)
     : QToolButton(parent)
     , m_menu(new QMenu(this))
@@ -24,7 +25,10 @@ BatteryMonitor::BatteryMonitor(QWidget *parent)
     m_time->setVisible(false);
     m_time->setDisabled(true);
     m_menu->addSeparator();
-    m_menu->addAction(tr("Energy Settings..."));
+    auto energy = m_menu->addAction(tr("Energy Settings..."));
+    connect(energy, &QAction::triggered, []() {
+        StageApplication::instance()->openSettingsApplet(HOLLYWOOD_ENERGY_APPLET);
+    });
     setMenu(m_menu);
     if(!m_upower && !m_upower->isValid())
         qDebug() << "Invalid UPower state";
@@ -45,13 +49,14 @@ BatteryMonitor::BatteryMonitor(QWidget *parent)
                delete device;
         }
     }
-    //if(m_battery == nullptr)
-     //   setVisible(false);
+    if(m_battery == nullptr)
+        setVisible(false);
 }
 
 void BatteryMonitor::batteryChanged()
 {
-    auto str = QString(" %1%").arg(QString::number(m_battery->percent(),'G',2));
+    auto percent = QString::number(m_battery->percent(),'G',3);
+    auto str = QString(" %1%").arg(percent);
     setText(str);
     setIcon(QIcon::fromTheme(m_battery->displayIcon()));
     QString state;
@@ -82,7 +87,7 @@ void BatteryMonitor::batteryChanged()
         state = tr("Unknown: %1");
         break;
     }
-    state = state.arg(QString::number(m_battery->percent(),'G',2) + "%");
+    state = state.arg(QString::number(m_battery->percent(),'G',3) + "%");
     m_state->setText(state);
     if(time.isEmpty())
         m_time->setVisible(false);

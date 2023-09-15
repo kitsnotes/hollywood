@@ -27,6 +27,8 @@ public:
     QFileInfo fileInfo(const QModelIndex &index) const;
     bool isTrash(const QModelIndex &index) const;
     bool isDesktop(const QModelIndex &index) const;
+    bool isHidden(const QModelIndex &index) const;
+    bool isSymlink(const QModelIndex &index) const;
     LSDesktopEntry *desktopFileForIndex(const QModelIndex &index);
 private slots:
     void refreshDesktopFolder();

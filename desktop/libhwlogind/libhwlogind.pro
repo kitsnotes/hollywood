@@ -7,7 +7,7 @@ TEMPLATE = lib
 TARGET = hwlogind-$${HOLLYWOOD_APIVERSION}
 CONFIG += link_pkgconfig compile_libtool create_libtool create_pc create_prl no_install_prl
 
-PKGCONFIG += libelogind
+PKGCONFIG += libsystemd
 INCLUDEPATH += hollywood/
 
 SOURCES += \

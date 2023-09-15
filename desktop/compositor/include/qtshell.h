@@ -6,7 +6,7 @@
 #define QTSHELL_H
 
 #include <QWaylandCompositorExtensionTemplate>
-#include <QWaylandQuickExtension>
+//#include <QWaylandQuickExtension>
 #include <QWaylandCompositor>
 #include <QWaylandResource>
 

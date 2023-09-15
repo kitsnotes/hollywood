@@ -82,7 +82,6 @@ void MenuServer::show()
 
 void MenuServer::createStatusButton(StatusNotifierButton *btn)
 {
-    auto idx = vl_opposite->indexOf(m_trayspacer);
     vl_opposite->insertWidget(vl_opposite->indexOf(m_trayspacer), btn);
 }
 

@@ -8,6 +8,7 @@ VERSION = $${HOLLYWOOD_APIVERSION}
 SEMVER_VERSION = $${HOLLYWOOD_MAJOR_VERSION}.$${HOLLYWOOD_MINOR_VERSION}.$${HOLLYWOOD_PATCH_VERSION}
 QT += multimedia
 INCLUDEPATH += private/
+INCLUDEPATH += $$PWD $$PWD/hollywood/ $$PWD/hollywood/private
 
 SOURCES += \
     aboutdialog.cc \
@@ -15,13 +16,13 @@ SOURCES += \
     preferencedialog.cc
 
 HEADERS += \
-    aboutdialog.h \
-    libcommdlg_global.h \
-    messagebox.h \
-    private/aboutdialog_p.h \
-    private/messagebox_p.h \
-    preferencedialog.h \
-    private/preferencedialog_p.h
+    hollywood/aboutdialog.h \
+    hollywood/libcommdlg_global.h \
+    hollywood/messagebox.h \
+    hollywood/private/aboutdialog_p.h \
+    hollywood/private/messagebox_p.h \
+    hollywood/preferencedialog.h \
+    hollywood/private/preferencedialog_p.h
 
 QMAKE_PKGCONFIG_DESCRIPTION = Hollywood Common Dialog Library
 !versionAtLeast(QT_VERSION, 6.0.0) {
