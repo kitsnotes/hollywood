@@ -51,11 +51,14 @@ public:
     QIcon icon() const;
     QWidget* applet() const;
     Category category() const;
+private slots:
+    void widgetUpdate();
 private:
     void setupWidget();
     bool queryForPortability();
     void enumerateUPower();
     uint normalizeValue(uint minutes);
+    void checkForExcessConsumption();
 
     QList<BatteryMeterWidget*> m_batteries;
     QList<BatteryMeterWidget*> m_ups_batteries;

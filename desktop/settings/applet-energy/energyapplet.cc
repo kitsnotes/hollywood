@@ -22,6 +22,7 @@ bool EnergyApplet::init()
         m_preventsleeplid->setVisible(false);
     }
     loadSettings();
+    checkForExcessConsumption();
     return true;
 }
 
@@ -33,7 +34,7 @@ bool EnergyApplet::loadSettings()
     settings.beginGroup("Energy");
     bool preventSleepDisplay = settings.value("PreventSleepDisplayOffAC", false).toBool();
     bool preventSleepLid = settings.value("PreventSleepLidCloseAC", false).toBool();
-    // TODO: global config
+    // TODO: HDPARM integration
     //bool hardDiskSleep = settings.value("HardDiskSleepAC", true).toBool();
 
     uint displaySleepBattery = normalizeValue(settings.value("DisplaySleepBattery", 5).toUInt());
@@ -54,6 +55,25 @@ bool EnergyApplet::loadSettings()
 
 bool EnergyApplet::saveSettings()
 {
+    if(m_host == nullptr)
+        return false;
+
+    QSettings settings(QSettings::UserScope,
+                       QLatin1String("originull"), QLatin1String("hollywood"));
+
+    settings.beginGroup("Energy");
+    settings.setValue("PreventSleepDisplayOffAC", m_preventsleep->isChecked());
+    settings.setValue("PreventSleepLidCloseAC", m_preventsleeplid->isChecked());
+
+    settings.setValue("DisplaySleepBattery",
+                      m_batt_disp_sleep->valueFromSliderPosition(m_batt_disp_sleep->value()));
+    settings.setValue("DisplaySleepAC",
+                      m_mains_disp_sleep->valueFromSliderPosition(m_mains_disp_sleep->value()));
+
+    settings.endGroup();
+    settings.beginGroup("Stage");
+    settings.setValue("ShowBatteryMeter", m_showinmenu->isChecked());
+
     return true;
 }
 
@@ -98,6 +118,12 @@ SettingsAppletInterface::Category EnergyApplet::category() const
     return System;
 }
 
+void EnergyApplet::widgetUpdate()
+{
+    checkForExcessConsumption();
+    saveSettings();
+}
+
 void EnergyApplet::setupWidget()
 {
     m_host = new QWidget(0);
@@ -116,11 +142,23 @@ void EnergyApplet::setupWidget()
     connect(m_mains_disp_sleep, &SleepSlider::valueChanged, this, [this](){
         auto val = m_mains_disp_sleep->valueFromSliderPosition(m_mains_disp_sleep->value());
         m_disp_sleep_val->setText(m_mains_disp_sleep->formatTime(val));
+        widgetUpdate();
+    });
+    connect(m_mains_disp_sleep, &SleepSlider::sliderMoved, this, [this](int val){
+        auto val2 = m_mains_disp_sleep->valueFromSliderPosition(val);
+        m_disp_sleep_val->setText(m_mains_disp_sleep->formatTime(val2));
     });
 
     m_preventsleep = new QCheckBox(tr("Prevent computer from sleeping automatically when the display is off"), m_mainssettings);
     m_preventsleeplid = new QCheckBox(tr("Prevent computer from sleeping automatically when the lid is closed"), m_mainssettings);
     m_harddisks = new QCheckBox(tr("Put hard disks to sleep when possible"), m_mainssettings);
+
+    connect(m_preventsleep, &QCheckBox::toggled, this, &EnergyApplet::widgetUpdate);
+    connect(m_preventsleeplid, &QCheckBox::toggled, this, &EnergyApplet::widgetUpdate);
+    connect(m_harddisks, &QCheckBox::toggled, this, &EnergyApplet::widgetUpdate);
+    // TODO: hdparm
+    m_harddisks->setDisabled(true);
+
     fl_mains->setLabelAlignment(Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter);
     fl_mains->setFormAlignment(Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop);
 
@@ -142,6 +180,11 @@ void EnergyApplet::setupWidget()
     connect(m_batt_disp_sleep, &SleepSlider::valueChanged, this, [this](){
         auto val = m_batt_disp_sleep->valueFromSliderPosition(m_batt_disp_sleep->value());
         m_disp_bat_sleep_val->setText(m_batt_disp_sleep->formatTime(val));
+        widgetUpdate();
+    });
+    connect(m_batt_disp_sleep, &SleepSlider::sliderMoved, this, [this](int val){
+        auto val2 = m_batt_disp_sleep->valueFromSliderPosition(val);
+        m_disp_bat_sleep_val->setText(m_batt_disp_sleep->formatTime(val2));
     });
     m_showinmenu = new QCheckBox(m_host);
 
@@ -237,6 +280,38 @@ uint EnergyApplet::normalizeValue(uint minutes)
     return minutes;
 }
 
+void EnergyApplet::checkForExcessConsumption()
+{
+    bool excess = false;
+
+    if(m_preventsleep->isChecked())
+        excess = true;
+
+    if(m_mains_disp_sleep->valueFromSliderPosition(m_mains_disp_sleep->value())
+        > 60)
+        excess = true;
+
+    if(queryForPortability())
+    {
+        if(m_preventsleeplid->isChecked())
+            excess = true;
+
+        if(m_batt_disp_sleep->valueFromSliderPosition(m_batt_disp_sleep->value())
+            > 30)
+            excess = true;
+    }
+    if(!excess)
+    {
+        m_warning_icon->setVisible(false);
+        m_energy_warning->setVisible(false);
+    }
+    else
+    {
+        m_warning_icon->setVisible(true);
+        m_energy_warning->setVisible(true);
+    }
+}
+
 SleepSlider::SleepSlider(QWidget *parent)
     :LabeledSlider(parent)
 {
@@ -255,6 +330,9 @@ SleepSlider::SleepSlider(QWidget *parent)
     tickLabels.insert(70,tr("4h"));
     tickLabels.insert(75,tr("Never"));
     setTickLabels(tickLabels);
+
+    // don't want to constantly update our settings while moving a slider
+    setTracking(false);
 
     connect(this, &QAbstractSlider::sliderMoved, this, [this](uint value) {
         if(value > 70 && value < 75)
