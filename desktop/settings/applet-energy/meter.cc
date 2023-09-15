@@ -24,6 +24,14 @@ BatteryMeterWidget::BatteryMeterWidget(UPowerDeviceInterface *up, QWidget *paren
             this, &BatteryMeterWidget::upowerChanged);
 }
 
+BatteryMeterWidget::~BatteryMeterWidget()
+{
+    disconnect(m_upower, &UPowerDeviceInterface::changed,
+               this, &BatteryMeterWidget::upowerChanged);
+
+    m_upower->deleteLater();
+}
+
 void BatteryMeterWidget::upowerChanged()
 {
     m_info->setText(tr("System Battery: %1").arg(m_upower->stateString()));

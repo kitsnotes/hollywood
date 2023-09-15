@@ -81,6 +81,16 @@ bool EnergyApplet::closeUp()
 {
     delete m_host;
     m_host = nullptr;
+    // TODO: fix cleanup, crashes
+    /*for(auto bat : m_batteries)
+        delete bat;
+    for(auto bat : m_ups_batteries)
+        delete bat;*/
+
+    m_batteries.clear();
+    m_ups_batteries.clear();
+
+    m_upower = nullptr;
     return true;
 }
 

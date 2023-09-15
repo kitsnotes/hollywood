@@ -13,6 +13,7 @@ class BatteryMeterWidget : public QWidget
     Q_OBJECT
 public:
     explicit BatteryMeterWidget(UPowerDeviceInterface *up, QWidget *parent = nullptr);
+    ~BatteryMeterWidget();
 private slots:
     void upowerChanged();
 private:
@@ -24,6 +25,7 @@ private:
     QLabel *m_info = nullptr;
     QProgressBar *m_level = nullptr;
     QLabel *m_health = nullptr;
+    QPushButton *m_details = nullptr;
 };
 
 #endif // BATTERYMETERWIDGET_H
