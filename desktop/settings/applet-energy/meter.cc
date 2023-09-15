@@ -20,6 +20,8 @@ BatteryMeterWidget::BatteryMeterWidget(UPowerDeviceInterface *up, QWidget *paren
     m_mainLayout->addLayout(m_detailLayout);
     setLayout(m_mainLayout);
     upowerChanged();
+    connect(m_upower, &UPowerDeviceInterface::changed,
+            this, &BatteryMeterWidget::upowerChanged);
 }
 
 void BatteryMeterWidget::upowerChanged()

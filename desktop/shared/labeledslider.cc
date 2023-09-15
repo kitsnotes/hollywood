@@ -2,19 +2,23 @@
 
 #include <QStylePainter>
 #include <QStyleOptionSlider>
+#include <QMouseEvent>
 
 LabeledSlider::LabeledSlider(QWidget *parent)
-    :QSlider(parent) {}
+    :QSlider(parent)
+{
+    // TODO: test this class on touch
+    QFont font;
+    QFontMetrics fm(font);
+    m_offset = fm.height();
+    setContentsMargins(0,0,0,m_offset);
+}
 
 QSize LabeledSlider::minimumSizeHint() const
 {
     auto size = QSlider::minimumSizeHint();
-    QFont font;
-    QFontMetrics fm(font);
-    int fontOffset = fm.height();
-
     if(orientation() == Qt::Horizontal)
-        size.setHeight(size.height()+fontOffset+5);
+        size.setHeight(size.height()+m_offset+5);
 
     return size;
 }
@@ -23,6 +27,39 @@ void LabeledSlider::setTickLabels(QMap<int, QString> &labels)
 {
     m_tickLabels = labels;
     m_drawNums = false;
+}
+
+void LabeledSlider::mouseMoveEvent(QMouseEvent *ev)
+{
+    if (tickPosition() == NoTicks)
+    {
+        QSlider::mouseMoveEvent(ev);
+        return;
+    }
+    auto pos = ev->pos();
+    pos.setY(pos.y()+m_offset);
+    auto gpos = ev->globalPosition();
+    gpos.setY(gpos.y()+m_offset);
+    ev->accept();
+    QMouseEvent *ev2 = new QMouseEvent(ev->type(), pos, gpos, ev->button(), ev->buttons(), ev->modifiers());
+    QSlider::mouseMoveEvent(ev2);
+}
+
+
+void LabeledSlider::mousePressEvent(QMouseEvent *ev)
+{
+    if (tickPosition() == NoTicks)
+    {
+        QSlider::mousePressEvent(ev);
+        return;
+    }
+    auto pos = ev->pos();
+    pos.setY(pos.y()+m_offset);
+    auto gpos = ev->globalPosition();
+    gpos.setY(gpos.y()+m_offset);
+    ev->accept();
+    QMouseEvent *ev2 = new QMouseEvent(ev->type(), pos, gpos, ev->button(), ev->buttons(), ev->modifiers());
+    QSlider::mousePressEvent(ev2);
 }
 
 void LabeledSlider::paintEvent(QPaintEvent *ev)
