@@ -16,7 +16,14 @@ build-qt5/*
 *.so
 *.so.*
 *.o
-Makefile
+desktop/*Makefile
+hwbootstrap/*Makefile
+installer/*Makefile
+iso/*Makefile
+packages/*Makefile
+
 */output
 */build-qt*
 *.a
+help/build/*
+help/.venv/*
