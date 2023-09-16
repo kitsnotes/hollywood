@@ -20,11 +20,12 @@ class HelpWindow : public QMainWindow
 public:
     HelpWindow(QString helpFile, QWidget *parent = nullptr);
     ~HelpWindow();
+public slots:
+    void loadUrl(const QUrl &url);
 private:
     void loadHelp();
 private slots:
     void openIndex();
-    void loadUrl(const QUrl &url);
 private:
     QMenuBar *m_menubar;
     QToolBar *m_toolbar;

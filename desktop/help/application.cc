@@ -36,6 +36,8 @@ void HelpViewerApp::showMainWindow(const QUrl &url)
 {
     createMainWindow();
     m_mainWnd->show();
+    if(url.isValid())
+        m_mainWnd->loadUrl(url);
 }
 
 void HelpViewerApp::activate()
@@ -49,7 +51,7 @@ void HelpViewerApp::openUrl(const QUrl &url)
 {
     createMainWindow();
     activate();
-    //m_mainWnd->showAppletById(prefpane);
+    m_mainWnd->loadUrl(url);
 }
 
 void HelpViewerApp::openIndex()

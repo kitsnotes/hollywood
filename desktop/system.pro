@@ -16,6 +16,7 @@ SUBDIRS = \
     editor \
     eglfs \
     elevator \
+    help \
     style \
     session \
     shellfm \

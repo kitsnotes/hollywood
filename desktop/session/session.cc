@@ -258,6 +258,15 @@ bool SMApplication::openSettingsApplet(const QString &settings)
     }
 }
 
+bool SMApplication::openHelpTopic(const QString &topic)
+{
+    QUrl url(QString("qthelp://%1/doc/%2.html").arg(HOLLYWOOD_HELP_BOOK,
+                                   topic.isEmpty() ? "index" : topic));
+
+    return executeDesktop(QString(HOLLYWOOD_HELP_APP), QStringList() << url.toString(),
+                          QStringList());
+}
+
 bool SMApplication::haveSDDMAutoStart()
 {
     // TODO: this

@@ -12,6 +12,8 @@
 #define HOLYWOOD_SETTINGS_APP       "org.originull.hwsettings.desktop"
 #define HOLYWOOD_SYSMON_APP         "org.originull.hwsysmon.desktop"
 #define HOLYWOOD_TERMINULL_APP      "org.originull.terminull.desktop"
+#define HOLLYWOOD_HELP_APP          "org.originull.help.desktop"
+#define HOLLYWOOD_HELP_BOOK         "org.originull.hollywood.edge"
 
 #define HOLLYWOOD_WP_APPLET         "org.originull.wallpaper"
 #define HOLLYWOOD_DT_APPLET         "org.originull.datetime"

@@ -46,6 +46,7 @@ public:
     bool executeDesktop(const QString &desktop, const QStringList &arguments, const QStringList &env);
     bool openFileWithDefault(const QString &file);
     bool openSettingsApplet(const QString &settings);
+    bool openHelpTopic(const QString &topic);
     bool useDbus() const { return m_useDBus; }
     void setUseDBus(bool use) { m_useDBus = use; }
     bool useElevator() const { return m_useElevator; }

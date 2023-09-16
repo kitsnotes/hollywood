@@ -74,6 +74,11 @@ public slots:
     {
         return m_parent->openSettingsApplet(settings);
     }
+
+    bool openHelpTopic(const QString &topic)
+    {
+        return m_parent->openHelpTopic(topic);
+    }
 private:
     SMApplication *m_parent;
 };
