@@ -17,13 +17,13 @@
 #include <QToolButton>
 #include <QStringList>
 
-ASDateTimeApplet::ASDateTimeApplet(QObject *parent)
+HWDateTimeApplet::HWDateTimeApplet(QObject *parent)
     : QObject(parent)
     , SettingsAppletInterface()
 {
 }
 
-ASDateTimeApplet::~ASDateTimeApplet()
+HWDateTimeApplet::~HWDateTimeApplet()
 {
     if(m_timer)
     {
@@ -32,18 +32,18 @@ ASDateTimeApplet::~ASDateTimeApplet()
     }
 }
 
-bool ASDateTimeApplet::init()
+bool HWDateTimeApplet::init()
 {
     setupWidget();
     getCurrentTimezone();
     loadSettings();
     m_timer = new QTimer(this);
-    connect(m_timer, &QTimer::timeout, this, &ASDateTimeApplet::updateTime);
+    connect(m_timer, &QTimer::timeout, this, &HWDateTimeApplet::updateTime);
     m_timer->start(100);
     return true;
 }
 
-bool ASDateTimeApplet::closeUp()
+bool HWDateTimeApplet::closeUp()
 {
     if(m_timer)
         m_timer->stop();
@@ -54,7 +54,7 @@ bool ASDateTimeApplet::closeUp()
     return true;
 }
 
-bool ASDateTimeApplet::loadSettings()
+bool HWDateTimeApplet::loadSettings()
 {
     readNtpConfig();
     m_ntp->setChecked(ntpServiceConfigEnabled());
@@ -62,33 +62,33 @@ bool ASDateTimeApplet::loadSettings()
     return true;
 }
 
-bool ASDateTimeApplet::saveSettings()
+bool HWDateTimeApplet::saveSettings()
 {
     return true;
 }
 
-QString ASDateTimeApplet::id() const
+QString HWDateTimeApplet::id() const
 {
     return QLatin1String("org.originull.datetime");
 }
 
-QString ASDateTimeApplet::name() const
+QString HWDateTimeApplet::name() const
 {
     return tr("Date & Time");
 }
 
-QString ASDateTimeApplet::description() const
+QString HWDateTimeApplet::description() const
 {
     return tr("Date, Time, Time Zone, and NTP Configuration");
 }
 
-QIcon ASDateTimeApplet::icon() const
+QIcon HWDateTimeApplet::icon() const
 {
     const QIcon mine(QIcon::fromTheme("preferences-system-time"));
     return mine;
 }
 
-QWidget *ASDateTimeApplet::applet() const
+QWidget *HWDateTimeApplet::applet() const
 {
     // return a const version of our m_host applet
     if(!m_host)
@@ -97,12 +97,21 @@ QWidget *ASDateTimeApplet::applet() const
     return const_cast<QWidget*>(m_host);
 }
 
-SettingsAppletInterface::Category ASDateTimeApplet::category() const
+SettingsAppletInterface::Category HWDateTimeApplet::category() const
 {
     return System;
 }
 
-void ASDateTimeApplet::updateTime()
+QStringList HWDateTimeApplet::searchTokens() const
+{
+    QStringList tokens;
+    tokens << tr("Change date & time");
+    tokens << tr("Change system timezone");
+
+    return tokens;
+}
+
+void HWDateTimeApplet::updateTime()
 {
     auto dt = QDateTime::currentDateTime();
     m_time->setTime(dt.time());
@@ -110,14 +119,14 @@ void ASDateTimeApplet::updateTime()
     m_calendar->setSelectedDate(dt.date());
 }
 
-void ASDateTimeApplet::polkitActivate()
+void HWDateTimeApplet::polkitActivate()
 {
     PolkitQt1::Gui::Action *action
             = qobject_cast<PolkitQt1::Gui::Action *>(sender());
     action->activate();
 }
 
-void ASDateTimeApplet::polkitActivated()
+void HWDateTimeApplet::polkitActivated()
 {
     PolkitQt1::Gui::Action *action = qobject_cast<PolkitQt1::Gui::Action *>(sender());
     qDebug() << "pretending to be the mechanism for action:" << action->actionId();
@@ -139,7 +148,7 @@ void ASDateTimeApplet::polkitActivated()
     }
 }
 
-void ASDateTimeApplet::enableElevated(bool enable)
+void HWDateTimeApplet::enableElevated(bool enable)
 {
     m_ntp->setEnabled(enable);
     m_ntpservers->setEnabled(enable);
@@ -149,7 +158,7 @@ void ASDateTimeApplet::enableElevated(bool enable)
     m_timezones->setEnabled(enable);
 }
 
-void ASDateTimeApplet::setupWidget()
+void HWDateTimeApplet::setupWidget()
 {
     m_host = new QWidget(0);
     m_host->setObjectName(QString::fromUtf8("DateTimeAppletHost"));
@@ -261,11 +270,11 @@ void ASDateTimeApplet::setupWidget()
     m_bt = new PolkitQt1::Gui::ActionButton(m_polkit_lock,
                "org.originull.hwsettings.datetime.auth", this);
     connect(m_bt, &PolkitQt1::Gui::ActionButton::triggered,
-            this,  &ASDateTimeApplet::polkitActivate);
+            this,  &HWDateTimeApplet::polkitActivate);
     connect(m_bt, &PolkitQt1::Gui::ActionButton::clicked,
             m_bt, &PolkitQt1::Gui::ActionButton::activate);
     connect(m_bt, &PolkitQt1::Gui::ActionButton::authorized,
-            this, &ASDateTimeApplet::polkitActivated);
+            this, &HWDateTimeApplet::polkitActivated);
     m_bt->setIcon(QIcon::fromTheme("emblem-locked"));
 
     auto polkit_layout = new QHBoxLayout();
@@ -281,7 +290,7 @@ void ASDateTimeApplet::setupWidget()
     enableElevated(false);
 }
 
-void ASDateTimeApplet::readNtpConfig()
+void HWDateTimeApplet::readNtpConfig()
 {
     QString server, pool;
     QFile file(NTP_CONFIG_FILE);
@@ -327,7 +336,7 @@ void ASDateTimeApplet::readNtpConfig()
     }
 }
 
-bool ASDateTimeApplet::hasNtpService()
+bool HWDateTimeApplet::hasNtpService()
 {
     QProcess ps;
     QByteArray ba;
@@ -364,7 +373,7 @@ bool ASDateTimeApplet::hasNtpService()
     return false;
 }
 
-bool ASDateTimeApplet::ntpServiceConfigEnabled()
+bool HWDateTimeApplet::ntpServiceConfigEnabled()
 {
     QProcess ps;
     QByteArray ba;
@@ -386,7 +395,7 @@ bool ASDateTimeApplet::ntpServiceConfigEnabled()
     return false;
 }
 
-void ASDateTimeApplet::getCurrentTimezone()
+void HWDateTimeApplet::getCurrentTimezone()
 {
     QFile f("/etc/localtime");
     if(!f.exists())

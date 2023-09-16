@@ -59,6 +59,17 @@ SettingsAppletInterface::Category WallpaperApplet::category() const
     return Personal;
 }
 
+QStringList WallpaperApplet::searchTokens() const
+{
+    QStringList tokens;
+    tokens << tr("Change Desktop Wallpaper");
+    tokens << tr("Background Settings");
+    tokens << tr("Rotate Wallpaper");
+    tokens << tr("Background Color Settings");
+
+    return tokens;
+}
+
 void WallpaperApplet::setupWidget()
 {
     auto s = QApplication::primaryScreen();

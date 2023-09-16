@@ -25,6 +25,8 @@
 
 #include <connman.h>
 
+#define HW_APP_HELP_TOPIC "settings/23-network"
+
 class NetworkApplet : public QObject, SettingsAppletInterface
 {
     Q_OBJECT
@@ -44,6 +46,8 @@ public:
     QIcon icon() const;
     QWidget* applet() const;
     Category category() const;
+    QString helpTopic() const  { return QString(HW_APP_HELP_TOPIC); }
+    QStringList searchTokens() const;
 private slots:
     void interfaceSelectionChanged();
     void ip4ConfigSelectionChanged();

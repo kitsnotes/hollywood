@@ -17,7 +17,7 @@ HelpViewerApp::HelpViewerApp(int &argc, char **argv)
     setOrganizationDomain(HOLLYWOOD_OS_DOMAIN);
     setOrganizationName(HOLLYWOOD_OS_ORGNAME);
     setApplicationName("Help Viewer");
-    setWindowIcon(QIcon::fromTheme("help-browser"));
+    setWindowIcon(QIcon::fromTheme("system-help"));
     setDesktopFileName(QLatin1String("org.originull.help"));
     setStyle(new HelpProxyStyle);
 }

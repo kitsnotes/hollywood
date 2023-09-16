@@ -16,6 +16,8 @@
 #include <QLineEdit>
 #include <QSortFilterProxyModel>
 
+#define HW_APP_HELP_TOPIC "settings/04-defaults"
+
 class LSMimeApplications;
 class MimeTypeModel;
 class DefaultsApplet : public QObject, SettingsAppletInterface
@@ -37,6 +39,8 @@ public:
     QIcon icon() const;
     QWidget* applet() const;
     Category category() const;
+    QString helpTopic() const  { return QString(HW_APP_HELP_TOPIC); }
+    QStringList searchTokens() const;
 private:
     void setupWidget();
     LSMimeApplications *m_mime = nullptr;

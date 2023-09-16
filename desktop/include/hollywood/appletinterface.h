@@ -28,6 +28,8 @@ public:
     virtual QIcon icon() const = 0;
     virtual QWidget* applet() const = 0;
     virtual Category category() const = 0;
+    virtual QString helpTopic() const = 0;
+    virtual QStringList searchTokens() const = 0;
 };
 
 #define SettingsAppletInterfaceIID "org.orignull.settings-applet/1.0"

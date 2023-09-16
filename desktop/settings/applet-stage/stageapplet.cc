@@ -104,6 +104,11 @@ SettingsAppletInterface::Category StageApplet::category() const
     return Personal;
 }
 
+QStringList StageApplet::searchTokens() const
+{
+    return QStringList();
+}
+
 void StageApplet::layoutSelectionChanged()
 {
     if(m_layout->checkedButton() == m_northern)

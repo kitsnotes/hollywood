@@ -12,6 +12,8 @@
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
 
+#define HW_APP_HELP_TOPIC "settings/01-wallpaper"
+
 class WPChooserWidget;
 class WallpaperApplet : public QObject, SettingsAppletInterface
 {
@@ -32,6 +34,8 @@ public:
     QIcon icon() const;
     QWidget* applet() const;
     Category category() const;
+    QString helpTopic() const  { return QString(HW_APP_HELP_TOPIC); }
+    QStringList searchTokens() const;
 private:
     void setupWidget();
     void wallpaperChanged();

@@ -1,5 +1,7 @@
 #include "chooser.h"
 #include "wpmodel.h"
+#include "shellfunc.h"
+#include "wpapplet.h"
 
 #include <hollywood/hollywood.h>
 
@@ -201,8 +203,10 @@ void WPChooserWidget::setupUi()
     m_help->setIcon(QIcon::fromTheme("help-contextual"));
     m_help->setIconSize(QSize(22,22));
 
-    // TODO: implement and remove these
-    m_help->setEnabled(false);
+    connect(m_help, &QToolButton::pressed, this, []() {
+        hw_shell::openHelpTopic(QString(HW_APP_HELP_TOPIC));
+    });
+
     m_add_folder->setEnabled(false);
     m_rotate->setEnabled(false);
 

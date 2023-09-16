@@ -102,6 +102,11 @@ SettingsAppletInterface::Category MouseApplet::category() const
     return System;
 }
 
+QStringList MouseApplet::searchTokens() const
+{
+
+}
+
 void MouseApplet::widgetUpdate()
 {
     saveSettings();

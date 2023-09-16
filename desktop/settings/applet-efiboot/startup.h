@@ -29,6 +29,8 @@
 #include <polkitqt1-gui-actionbuttons.h>
 #include <polkitqt1-authority.h>
 
+#define HW_APP_HELP_TOPIC "settings/26-startup"
+
 class QLabel;
 class BootEntryListModel;
 class EFIStartupSettingsApplet : public QObject, SettingsAppletInterface
@@ -51,6 +53,8 @@ public:
     QIcon icon() const;
     QWidget* applet() const;
     Category category() const;
+    QString helpTopic() const  { return QString(HW_APP_HELP_TOPIC); }
+    QStringList searchTokens() const;
 private slots:
     void polkitActivate();
     void polkitActivated();

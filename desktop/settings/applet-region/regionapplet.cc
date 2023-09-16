@@ -257,6 +257,11 @@ SettingsAppletInterface::Category RegionalApplet::category() const
     return Personal;
 }
 
+QStringList RegionalApplet::searchTokens() const
+{
+    return QStringList();
+}
+
 void RegionalApplet::restartSession()
 {
     HWMessageBox msg(QMessageBox::Question, tr("Restart Session"), tr("Are you ready to restart your session now?"));

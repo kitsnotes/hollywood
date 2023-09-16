@@ -1,5 +1,6 @@
 #include "energyapplet.h"
 #include "meter.h"
+#include "shellfunc.h"
 
 #include <QFile>
 #include <QKeyEvent>
@@ -128,6 +129,11 @@ SettingsAppletInterface::Category EnergyApplet::category() const
     return System;
 }
 
+QStringList EnergyApplet::searchTokens() const
+{
+    return QStringList();
+}
+
 void EnergyApplet::widgetUpdate()
 {
     checkForExcessConsumption();
@@ -216,8 +222,9 @@ void EnergyApplet::setupWidget()
     m_help->setIcon(QIcon::fromTheme("help-contextual"));
     m_help->setIconSize(QSize(22,22));
 
-    // TODO: implement and remove these
-    m_help->setEnabled(false);
+    connect(m_help, &QToolButton::pressed, this, []() {
+        hw_shell::openHelpTopic(QString(HW_APP_HELP_TOPIC));
+    });
 
     m_warning_icon = new QLabel(m_host);
     m_energy_warning = new QLabel(m_host);

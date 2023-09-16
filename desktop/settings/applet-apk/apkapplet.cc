@@ -47,6 +47,15 @@ SettingsAppletInterface::Category APKUpdateApplet::category() const
     return System;
 }
 
+QStringList APKUpdateApplet::searchTokens() const
+{
+    QStringList tokens;
+    tokens << tr("Check for software updates");
+    tokens << tr("Set up automatic updates");
+
+    return tokens;
+}
+
 void APKUpdateApplet::setupWidget()
 {
     m_host = new QWidget(0);

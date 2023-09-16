@@ -167,6 +167,11 @@ SettingsAppletInterface::Category KeyboardApplet::category() const
     return System;
 }
 
+QStringList KeyboardApplet::searchTokens() const
+{
+    return QStringList();
+}
+
 void KeyboardApplet::addLayout()
 {
     m_layoutSelector = new LayoutSelector(knownLayouts_, m_host);

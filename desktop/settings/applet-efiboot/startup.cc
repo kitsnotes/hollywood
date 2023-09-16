@@ -91,6 +91,11 @@ SettingsAppletInterface::Category EFIStartupSettingsApplet::category() const
     return System;
 }
 
+QStringList EFIStartupSettingsApplet::searchTokens() const
+{
+    return QStringList();
+}
+
 void EFIStartupSettingsApplet::polkitActivate()
 {
 

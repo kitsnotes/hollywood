@@ -14,6 +14,8 @@
 
 #include <QtApkDatabaseAsync.h>
 
+#define HW_APP_HELP_TOPIC "settings/25-swupdate"
+
 class APKUpdateApplet : public QObject, SettingsAppletInterface
 {
     Q_OBJECT
@@ -33,6 +35,8 @@ public:
     QIcon icon() const;
     QWidget* applet() const;
     Category category() const;
+    QString helpTopic() const  { return QString(HW_APP_HELP_TOPIC); }
+    QStringList searchTokens() const;
 private:
     void setupWidget();
     void checkForUpdates();

@@ -62,6 +62,11 @@ SettingsAppletInterface::Category DisplaysApplet::category() const
     return System;
 }
 
+QStringList DisplaysApplet::searchTokens() const
+{
+    return QStringList();
+}
+
 void DisplaysApplet::setupWidget()
 {
     m_host = new QWidget(0);

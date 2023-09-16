@@ -2,20 +2,20 @@
 #include <QSettings>
 #include <hollywood/hollywood.h>
 
-ASGeneralApplet::ASGeneralApplet(QObject *parent)
+HWGeneralApplet::HWGeneralApplet(QObject *parent)
     : QObject(parent)
     , SettingsAppletInterface()
 {
 }
 
-bool ASGeneralApplet::init()
+bool HWGeneralApplet::init()
 {
     setupWidget();
     loadSettings();
     return true;
 }
 
-bool ASGeneralApplet::loadSettings()
+bool HWGeneralApplet::loadSettings()
 {
     QSettings settings(QSettings::UserScope,
        QLatin1String("originull"), QLatin1String("hollywood"));
@@ -85,7 +85,7 @@ bool ASGeneralApplet::loadSettings()
     return true;
 }
 
-bool ASGeneralApplet::saveSettings()
+bool HWGeneralApplet::saveSettings()
 {
     QSettings settings(QSettings::UserScope,
        QLatin1String("originull"), QLatin1String("hollywood"));
@@ -136,28 +136,28 @@ bool ASGeneralApplet::saveSettings()
     return true;
 }
 
-QString ASGeneralApplet::id() const
+QString HWGeneralApplet::id() const
 {
     return QLatin1String("org.originull.hwsettings.general");
 }
 
-QString ASGeneralApplet::name() const
+QString HWGeneralApplet::name() const
 {
     return tr("General");
 }
 
-QString ASGeneralApplet::description() const
+QString HWGeneralApplet::description() const
 {
     return tr("General Settings");
 }
 
-QIcon ASGeneralApplet::icon() const
+QIcon HWGeneralApplet::icon() const
 {
     const QIcon mine(QIcon::fromTheme("preferences-desktop"));
     return mine;
 }
 
-QWidget *ASGeneralApplet::applet() const
+QWidget *HWGeneralApplet::applet() const
 {
     // return a const version of our m_host applet
     if(!m_host)
@@ -166,17 +166,24 @@ QWidget *ASGeneralApplet::applet() const
     return const_cast<QWidget*>(m_host);
 }
 
-SettingsAppletInterface::Category ASGeneralApplet::category() const
+SettingsAppletInterface::Category HWGeneralApplet::category() const
 {
     return Personal;
 }
 
-void ASGeneralApplet::widgetUpdate()
+QStringList HWGeneralApplet::searchTokens() const
+{
+    QStringList tokens;
+
+    return tokens;
+}
+
+void HWGeneralApplet::widgetUpdate()
 {
     saveSettings();
 }
 
-void ASGeneralApplet::fontSliderValueChanged()
+void HWGeneralApplet::fontSliderValueChanged()
 {
     if(m_currentFontSize == m_fontSize->value())
         m_fontApply->setEnabled(false);
@@ -204,7 +211,7 @@ void ASGeneralApplet::fontSliderValueChanged()
     m_fontPreview->setFont(font);
 }
 
-void ASGeneralApplet::fontSizeApplyClicked()
+void HWGeneralApplet::fontSizeApplyClicked()
 {
     QSettings settings(QSettings::UserScope,
        QLatin1String("originull"), QLatin1String("hollywood"));
@@ -215,7 +222,7 @@ void ASGeneralApplet::fontSizeApplyClicked()
     m_fontApply->setEnabled(false);
 }
 
-void ASGeneralApplet::setupWidget()
+void HWGeneralApplet::setupWidget()
 {
     m_host = new QWidget(0);
     if (m_host->objectName().isEmpty())
@@ -386,14 +393,14 @@ void ASGeneralApplet::setupWidget()
     m_def_font->setEditable(false);
     m_def_fixedsys->setEditable(false);
 
-    connect(m_fontApply, &QPushButton::clicked, this, &ASGeneralApplet::fontSizeApplyClicked);
-    connect(m_fontSize, &QSlider::valueChanged, this, &ASGeneralApplet::fontSliderValueChanged);
+    connect(m_fontApply, &QPushButton::clicked, this, &HWGeneralApplet::fontSizeApplyClicked);
+    connect(m_fontSize, &QSlider::valueChanged, this, &HWGeneralApplet::fontSliderValueChanged);
 
     for(auto btn : bg_apperance->buttons())
-        connect(btn, &QAbstractButton::toggled, this, &ASGeneralApplet::widgetUpdate);
+        connect(btn, &QAbstractButton::toggled, this, &HWGeneralApplet::widgetUpdate);
 
     for(auto b : bg_accentcolor->buttons())
-        connect(b, &QAbstractButton::toggled, this, &ASGeneralApplet::widgetUpdate);
+        connect(b, &QAbstractButton::toggled, this, &HWGeneralApplet::widgetUpdate);
 
 }
 

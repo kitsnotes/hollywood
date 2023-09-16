@@ -21,6 +21,8 @@
 #include <QVBoxLayout>
 #include <QListWidget>
 
+#define HW_APP_HELP_TOPIC "settings/22-keyboard"
+
 struct LayoutVariantInfo {
   QString name;
   QString description;
@@ -73,6 +75,8 @@ public:
     QIcon icon() const;
     QWidget* applet() const;
     Category category() const;
+    QString helpTopic() const  { return QString(HW_APP_HELP_TOPIC); }
+    QStringList searchTokens() const;
 private slots:
     void addLayout();
     void removeLayout();

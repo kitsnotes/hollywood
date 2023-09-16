@@ -92,6 +92,11 @@ SettingsAppletInterface::Category NetworkApplet::category() const
     return System;
 }
 
+QStringList NetworkApplet::searchTokens() const
+{
+    return QStringList();
+}
+
 void NetworkApplet::interfaceSelectionChanged()
 {
     if(m_interfaces->selectionModel()->selectedIndexes().isEmpty())

@@ -16,6 +16,8 @@
 #include <QRadioButton>
 #include <QButtonGroup>
 
+#define HW_APP_HELP_TOPIC "settings/02-stage"
+
 class StageApplet : public QObject, SettingsAppletInterface
 {
     Q_OBJECT
@@ -35,6 +37,9 @@ public:
     QIcon icon() const;
     QWidget* applet() const;
     Category category() const;
+    QString helpTopic() const  { return QString(HW_APP_HELP_TOPIC); }
+    QStringList searchTokens() const;
+
 private slots:
     void layoutSelectionChanged();
     void stageSizeChanged();

@@ -32,18 +32,20 @@
 #define OPENRC_NTP_SVC      "openntpd"
 #define NTP_CONFIG_FILE     "/etc/ntpd.conf"
 
+#define HW_APP_HELP_TOPIC "settings/20-datetime"
+
 class QLabel;
 class ASAnalogClock;
 class TimeZoneWidget;
 class ZonesModel;
-class ASDateTimeApplet : public QObject, SettingsAppletInterface
+class HWDateTimeApplet : public QObject, SettingsAppletInterface
 {
     Q_OBJECT
     Q_PLUGIN_METADATA(IID SettingsAppletInterfaceIID FILE "applet-dt.json")
     Q_INTERFACES(SettingsAppletInterface)
 public:
-    explicit ASDateTimeApplet(QObject *parent = nullptr);
-    ~ASDateTimeApplet();
+    explicit HWDateTimeApplet(QObject *parent = nullptr);
+    ~HWDateTimeApplet();
     bool init();
     bool closeUp();
     bool available() const { return true; }
@@ -56,6 +58,8 @@ public:
     QIcon icon() const;
     QWidget* applet() const;
     Category category() const;
+    QString helpTopic() const  { return QString(HW_APP_HELP_TOPIC); }
+    QStringList searchTokens() const;
 private slots:
     void updateTime();
     void polkitActivate();

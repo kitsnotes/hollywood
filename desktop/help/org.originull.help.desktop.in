@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
 Exec=hwhelp
-Icon=help-browser
+Icon=system-help
 Terminal=false
 Name=Hollywood Help
 GenericName=Hollywood Help

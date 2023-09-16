@@ -55,6 +55,11 @@ SettingsAppletInterface::Category DefaultsApplet::category() const
     return Personal;
 }
 
+QStringList DefaultsApplet::searchTokens() const
+{
+    return QStringList();
+}
+
 void DefaultsApplet::setupWidget()
 {
     m_host = new QWidget(0);

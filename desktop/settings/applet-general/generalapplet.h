@@ -19,13 +19,15 @@
 #include <QtWidgets/QFontComboBox>
 #include <QtWidgets/QPushButton>
 
-class ASGeneralApplet : public QObject, SettingsAppletInterface
+#define HW_APP_HELP_TOPIC "settings/01-general"
+
+class HWGeneralApplet : public QObject, SettingsAppletInterface
 {
     Q_OBJECT
     Q_PLUGIN_METADATA(IID SettingsAppletInterfaceIID FILE "applet.json")
     Q_INTERFACES(SettingsAppletInterface)
 public:
-    explicit ASGeneralApplet(QObject *parent = nullptr);
+    explicit HWGeneralApplet(QObject *parent = nullptr);
 
     // Reflect enums in platformtheme.h
     enum SettingApperance {
@@ -52,6 +54,8 @@ public:
     QIcon icon() const;
     QWidget* applet() const;
     Category category() const;
+    QString helpTopic() const  { return QString(HW_APP_HELP_TOPIC); }
+    QStringList searchTokens() const;
 private slots:
     void widgetUpdate();
     void fontSliderValueChanged();

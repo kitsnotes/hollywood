@@ -19,6 +19,8 @@
 #include "upower.h"
 #include "labeledslider.h"
 
+#define HW_APP_HELP_TOPIC "settings/24-energy"
+
 class BatteryMeterWidget;
 class SleepSlider : public LabeledSlider
 {
@@ -51,6 +53,8 @@ public:
     QIcon icon() const;
     QWidget* applet() const;
     Category category() const;
+    QString helpTopic() const  { return QString(HW_APP_HELP_TOPIC); }
+    QStringList searchTokens() const;
 private slots:
     void widgetUpdate();
 private:
