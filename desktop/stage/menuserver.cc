@@ -5,6 +5,8 @@
 #include "battery.h"
 #include "client/privateprotocol.h"
 
+#include <dbusmenuimporter.h>
+
 MenuServer::MenuServer(StageClock *clock, BatteryMonitor *battery, QScreen *screen, QWidget *parent)
     : QWidget(parent)
     , m_screen(screen)

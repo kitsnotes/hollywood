@@ -5,7 +5,8 @@
 #include "stageclock.h"
 
 #include "menuserver.h"
-#include "dbusmenu/dbusmenuimporter.h"
+#include <dbusmenuimporter.h>
+
 #include "dbusmenu/menuimporter.h"
 #include "notifierhost.h"
 #include "battery.h"
@@ -358,6 +359,7 @@ void StageApplication::loadSettings()
     QSettings settings(QSettings::UserScope,
        QLatin1String("originull"), QLatin1String("hollywood"));
     m_configfile = settings.fileName();
+    qDebug() << m_configfile;
 
     settings.beginGroup("Bell");
     auto bell = settings.value("AudioFile", "/usr/share/sounds/Hollywood/Bell.wav").toString();
@@ -365,6 +367,11 @@ void StageApplication::loadSettings()
     settings.endGroup();
     settings.beginGroup("Stage");
     bool southern = settings.value("UseSouthernMode", false).toBool();
+
+#ifdef DEBUG
+    southern = true;
+#endif
+
     auto show_clock = settings.value("ShowClock", HOLLYWOOD_STCLK_SHOW).toBool();
     auto show_date = settings.value("ShowDateInClock", HOLLYWOOD_STCLK_USEDATE).toBool();
     auto show_seconds = settings.value("ShowSecondsInClock", HOLLYWOOD_STCLK_USESECONDS).toBool();
@@ -483,8 +490,9 @@ void StageApplication::menuChanged(const QString &serviceName, const QString &ob
     m_importer = new DBusMenuImporter(serviceName, objectPath, this);
     QMetaObject::invokeMethod(m_importer, "updateMenu", Qt::QueuedConnection);
 
-    connect(m_importer.data(), &DBusMenuImporter::menuUpdated, this, [=](QMenu *menu)
+    connect(m_importer.data(), &DBusMenuImporter::menuUpdated, this, [=]()
     {
+        QMenu *menu = m_importer->menu();
         // filter out a submenu
         if(!m_importer->menu() || m_importer->menu() != menu)
             return;

@@ -17,6 +17,7 @@
 
 #include <hollywood/layershellinterface.h>
 
+#include <dbusmenuimporter.h>
 class AIPrivateWaylandProtocol;
 class PlasmaWindowManagement;
 class PlasmaWindow;
@@ -43,6 +44,7 @@ public:
     bool callSessionDBus(const QString &exec);
     bool displayManagerStart() { return m_started_dm; }
     QMenu* systemMenu() { return m_context; }
+    DBusMenuImporter* importer() { return qobject_cast<DBusMenuImporter*>(m_importer.data()); }
     void playBell();
     AIPrivateWaylandProtocol* privateProtocol() { return m_protocol; }
     bool isSouthernMode() const { return m_southern; }

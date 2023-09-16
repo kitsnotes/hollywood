@@ -23,8 +23,7 @@
 */
 
 #include "menuimporter.h"
-#include "dbusmenutypes_p.h"
-#include "dbusmenu_interface.h"
+#include <dbusmenuimporter.h>
 
 #include <QDBusMessage>
 #include <QDBusServiceWatcher>
@@ -67,7 +66,7 @@ MenuImporter::MenuImporter(QObject *parent)
     : QObject(parent)
     , m_serviceWatcher(new QDBusServiceWatcher(this))
 {
-    qDBusRegisterMetaType<DBusMenuLayoutItem>();
+    //qDBusRegisterMetaType<DBusMenuLayoutItem>();
     m_serviceWatcher->setConnection(QDBusConnection::sessionBus());
     m_serviceWatcher->setWatchMode(QDBusServiceWatcher::WatchForUnregistration);
     connect(m_serviceWatcher, &QDBusServiceWatcher::serviceUnregistered, this, &MenuImporter::slotServiceUnregistered);

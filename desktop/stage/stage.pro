@@ -9,10 +9,11 @@ INCLUDEPATH += ../libshell/include
 INCLUDEPATH += ../libcommdlg/
 INCLUDEPATH += ../libcompositor/include/
 INCLUDEPATH += ../shellintegration/
+INCLUDEPATH += /usr/include/dbusmenu-qt6/
 
 # TODO: prefix with -APIVERSION
-CONFIG(debug): LIBS += -L../output -lshell-$${HOLLYWOOD_APIVERSION} -lcompositor-$${HOLLYWOOD_APIVERSION} -lcommdlg-$${HOLLYWOOD_APIVERSION} -lhw-layer-shell
-CONFIG(release): LIBS += -L/usr/lib/qt6/plugins/wayland-shell-integration -lshell-$${HOLLYWOOD_APIVERSION} -lcompositor-$${HOLLYWOOD_APIVERSION} -lcommdlg-$${HOLLYWOOD_APIVERSION} -lhw-layer-shell
+CONFIG(debug): LIBS += -ldbusmenu-qt6 -L../output -lshell-$${HOLLYWOOD_APIVERSION} -lcompositor-$${HOLLYWOOD_APIVERSION} -lcommdlg-$${HOLLYWOOD_APIVERSION} -lhw-layer-shell
+CONFIG(release): LIBS += -ldbusmenu-qt6 -L/usr/lib/qt6/plugins/wayland-shell-integration -lshell-$${HOLLYWOOD_APIVERSION} -lcompositor-$${HOLLYWOOD_APIVERSION} -lcommdlg-$${HOLLYWOOD_APIVERSION} -lhw-layer-shell
 
 WAYLANDCLIENTSOURCES += ../compositor/protocols/originull-privateapi.xml
 WAYLANDCLIENTSOURCES += ../compositor/protocols/plasma-window-management.xml
@@ -24,10 +25,6 @@ DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000
 SOURCES += \
     app.cc \
     battery.cc \
-    dbusmenu/dbusmenu_interface.cc \
-    dbusmenu/dbusmenuimporter.cc \
-    dbusmenu/dbusmenushortcut.cc \
-    dbusmenu/dbusmenutypes.cc \
     dbusmenu/menuimporter.cc \
     dbusmenu/utils.cc \
     menuserver.cc \
@@ -48,11 +45,6 @@ SOURCES += \
 HEADERS += \
     app.h \
     battery.h \
-    dbusmenu/dbusmenu_interface.h \
-    dbusmenu/dbusmenuimporter.h \
-    dbusmenu/dbusmenuimporter_p.h \
-    dbusmenu/dbusmenushortcut_p.h \
-    dbusmenu/dbusmenutypes_p.h \
     dbusmenu/menuimporter.h \
     dbusmenu/utils.h \
     menuserver.h \

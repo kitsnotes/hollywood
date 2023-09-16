@@ -30,7 +30,7 @@
 
 #include <QDir>
 #include <QFile>
-#include "../dbusmenu/dbusmenuimporter.h"
+#include <dbusmenuimporter.h>
 #include "sniasync.h"
 #include "../stagehost.h"
 
@@ -325,6 +325,7 @@ void StatusNotifierButton::mouseReleaseEvent(QMouseEvent *event)
     {
         if (mMenu)
         {
+            mMenu->popup(event->position().toPoint());
             //mPlugin->willShowWindow(mMenu);
             //mMenu->popup(mPlugin->panel()->calculatePopupWindowPos(QCursor::pos(), mMenu->sizeHint()).topLeft());
         } else
