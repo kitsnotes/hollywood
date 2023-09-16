@@ -9,23 +9,20 @@ Welcome to Hollywood Help!
 .. toctree::
    :maxdepth: 1
    :caption: Installing Hollywood
-   :glob:
 
-   install/*
+   install
    
 .. toctree::
    :maxdepth: 2
    :caption: Desktop basics
-   :glob:
 
-   basics/*
+   basics
 
 .. toctree::
    :maxdepth: 2
    :caption: Customizing your system
-   :glob:
 
-   settings/*
+   settings
 
 Indices and tables
 ==================

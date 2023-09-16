@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Exec=hwhelp
+Icon=help-browser
+Terminal=false
+Name=Hollywood Help
+GenericName=Hollywood Help
+Comment=Get Help with the Hollywood System
+Categories=Settings;DesktopSettings;Qt;Hollywood;HardwareSettings;
