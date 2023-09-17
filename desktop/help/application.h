@@ -7,7 +7,7 @@
 #include <QDBusAbstractAdaptor>
 #include <hollywood/hollywood.h>
 
-#define HW_DEFAULT_HELP "/usr/share/qhelp/org.originull.hollywood.qhc"
+#define HW_DEFAULT_HELP "/usr/share/qhelp/org.originull.hollywood.qch"
 #define HW_GUIDE_URN "org.originull.hollywood.edge"
 
 class HelpWindow;

@@ -519,27 +519,43 @@ void Compositor::idleTimeout()
 
 void Compositor::raiseNextInLine()
 {
-    qDebug() << "raiseNextInLine: zorder count" << m_zorder.count();
     m_tl_raised = nullptr;
 
+    int sc = m_zorder.count();
     bool raised = false;
     if(m_zorder.count() > 0)
     {
-        for(auto i = m_zorder.count(); i >= 0; --i)
+        for(auto i = m_zorder.count()-1; i >= 0; --i)
         {
-            Surface* obj = m_zorder.at(i);
-            if(obj)
+            if(m_zorder.count() != sc)
+                return raiseNextInLine();
+
+            if(m_zorder.at(i))
             {
-                if(obj->isInitialized() && !obj->isMinimized())
+                Surface* obj = m_zorder.at(i);
+                if(obj && obj->isInitialized())
                 {
-                    raise(obj);
-                    raised = true;
-                    qDebug() << "object raised:" << obj->uuid().toString(QUuid::WithoutBraces);
+                    if(obj->xdgTopLevel() != nullptr ||
+                        obj->qtSurface() != nullptr ||
+                        obj->gtkSurface() != nullptr)
+                    {
+                        if(obj->isInitialized() && !obj->isMinimized())
+                        {
+                            raise(obj);
+                            raised = true;
+                            qDebug() << "object raised:" <<
+                                obj->uuid().toString(QUuid::WithoutBraces) <<
+                                obj->windowTitle();
+                            break;
+                        }
+                    }
                 }
             }
         }
     }
-    // TODO: raise desktop
+
+    if(raised)
+        return;
 
     if(!raised && m_desktops.count() > 0)
         activate(m_desktops.last());
@@ -931,7 +947,13 @@ QWaylandClient *Compositor::popupClient() const
 
 void Compositor::raise(Surface *obj)
 {
+    if(!obj)
+    {
+        qWarning() << "request to raise invalid surface";
+        return;
+    }
     qDebug() << "Raising surface" << obj->uuid().toString();
+
 
     if(obj->isSpecialShellObject())
         return;
@@ -965,10 +987,12 @@ void Compositor::raise(Surface *obj)
 
 void Compositor::activate(Surface *obj)
 {
-    qDebug() << "Activating surface" << obj->uuid().toString();
     if(!obj)
+    {
+        qWarning() << "request to activate invalid surface";
         return;
-
+    }
+    qDebug() << "Activating surface" << obj->uuid().toString();
     if(!obj->surface())
         return;
 
