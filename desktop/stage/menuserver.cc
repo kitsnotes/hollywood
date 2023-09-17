@@ -55,6 +55,10 @@ void MenuServer::installMenu(QMenu *menu)
         if(m != nullptr)
         {
             m_menuBar->addMenu(m);
+            connect(m, &QMenu::aboutToShow, [this](){
+                activateWindow();
+                setFocus();
+            });
             auto c = connect(m, &QMenu::triggered, [](QAction *act){
                 qDebug() << act->text();
             });
@@ -74,6 +78,7 @@ void MenuServer::cleanMenu()
             auto m = QMenu::menuInAction(a);
             auto c= m_connections.value(m);
             disconnect(m, &QMenu::triggered, nullptr, nullptr);
+            disconnect(m, &QMenu::aboutToShow, nullptr, nullptr);
             m_menuBar->removeAction(a);
         }
     }

@@ -519,27 +519,23 @@ void Compositor::idleTimeout()
 
 void Compositor::raiseNextInLine()
 {
+    qDebug() << "raiseNextInLine: zorder count" << m_zorder.count();
     m_tl_raised = nullptr;
-
-    if(m_zorder.count() > 0)
-        raise(m_zorder.last());
-
-    return;
 
     bool raised = false;
     if(m_zorder.count() > 0)
     {
-        for(auto it = m_zorder.rend(); it != m_zorder.rbegin(); --it)
+        for(auto i = m_zorder.count(); i >= 0; --i)
         {
-            auto obj = qobject_cast<Surface*>(*it);
-            if(obj == nullptr)
-                continue;
-            if(obj->isMinimized())
-                continue;
-            else
+            Surface* obj = m_zorder.at(i);
+            if(obj)
             {
-                raise(obj);
-                raised = true;
+                if(obj->isInitialized() && !obj->isMinimized())
+                {
+                    raise(obj);
+                    raised = true;
+                    qDebug() << "object raised:" << obj->uuid().toString(QUuid::WithoutBraces);
+                }
             }
         }
     }
@@ -746,7 +742,6 @@ void Compositor::onRotateWallpaper()
 
 void Compositor::appMenuCreated(AppMenu *m)
 {
-    qDebug() << "appMenuCreated" << m->surface()->uuid();
     m->surface()->setAppMenu(m);
 }
 
@@ -936,19 +931,16 @@ QWaylandClient *Compositor::popupClient() const
 
 void Compositor::raise(Surface *obj)
 {
-    qDebug() << "raising window" << obj->uuid().toString();
+    qDebug() << "Raising surface" << obj->uuid().toString();
 
-    /*if(obj->m_xdgPopup != nullptr)
-        return;*/
     if(obj->isSpecialShellObject())
         return;
 
     if(!m_zorder.contains(obj))
     {
-	activate(obj);
+        activate(obj);
         return;
     }
-
 
     m_zorder.removeOne(obj);
     m_zorder.push_back(obj);
@@ -973,6 +965,7 @@ void Compositor::raise(Surface *obj)
 
 void Compositor::activate(Surface *obj)
 {
+    qDebug() << "Activating surface" << obj->uuid().toString();
     if(!obj)
         return;
 
@@ -985,7 +978,6 @@ void Compositor::activate(Surface *obj)
          obj->m_gtk ||
          obj->m_qt)&& !obj->isSpecialShellObject())
     {
-        qDebug() << "menuServer: activate" << obj->uuid().toString();
         // TODO: handle popups??
         if(m_menuServer)
            m_menuServer->setTopWindowForMenuServer(obj);

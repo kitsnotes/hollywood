@@ -17,7 +17,7 @@ DesktopWindow::DesktopWindow(QWidget *parent)
 {
     m_menuBar = new QMenuBar(this);
     setMenuBar(m_menuBar);
-
+    m_menuBar->setVisible(false);
     setWindowFlags(Qt::Window|Qt::FramelessWindowHint|Qt::X11BypassWindowManagerHint);
     setObjectName("DesktopWindow");
     setCentralWidget(m_view);

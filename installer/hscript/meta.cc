@@ -96,8 +96,8 @@ bool Hostname::execute() const {
         /* no-op; we don't want to set the image builder's hostname */
     } else {
         if(sethostname(actual.c_str(), actual.size()) == -1) {
-            output_error(pos, "hostname: failed to set host name",
-                         ::strerror(errno));
+            output_error(pos, "hostname: failed to set host name"
+                         /* ::strerror(errno)*/);
             return false;
         }
     }

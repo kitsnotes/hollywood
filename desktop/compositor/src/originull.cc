@@ -45,7 +45,6 @@ OriginullMenuServer::OriginullMenuServer(struct ::wl_client *client, uint32_t id
 
 void OriginullMenuServer::setTopWindowForMenuServer(Surface *surface)
 {
-    qDebug() << "setTopWindowMenu";
     if(surface->appMenu() == nullptr)
         return;
 
@@ -58,7 +57,6 @@ void OriginullMenuServer::setTopWindowForMenuServer(Surface *surface)
     auto serviceName = surface->appMenu()->serviceName();
     auto objectPath = surface->appMenu()->objectPath();
 
-    qDebug() << "setTopWindow" << serviceName << objectPath;
     send_appmenu_top_level_window_changed(serviceName, objectPath);
     for (auto r : resourceMap())
         send_appmenu_top_level_window_changed(r->handle, serviceName, objectPath);

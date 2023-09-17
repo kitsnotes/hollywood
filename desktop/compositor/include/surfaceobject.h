@@ -72,6 +72,7 @@ public:
     QString appId() const { return m_appid; }
     QString themedIcon() const { return m_icontheme; }
 
+    bool isInitialized() const { return m_surfaceInit; }
     bool isSubsurface() const { return m_subsurface; }
     void setSubsurface(const bool subsurface) { m_subsurface = subsurface; }
     bool surfaceReadyToRender() const;

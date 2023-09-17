@@ -35,6 +35,7 @@ Surface::Surface(QWaylandSurface *surface)
 {
     m_uuid = QUuid::createUuid();
     m_id = hwComp->nextId();
+    qDebug() << "Creating surface" << m_uuid.toString(QUuid::WithoutBraces);
     connect(m_surface, &QWaylandSurface::surfaceDestroyed, this, &Surface::surfaceDestroyed);
     connect(m_surface, &QWaylandSurface::hasContentChanged, hwComp, &Compositor::surfaceHasContentChanged);
     connect(m_surface, &QWaylandSurface::redraw, hwComp, &Compositor::triggerRender);    
@@ -50,6 +51,7 @@ Surface::Surface(QWaylandSurface *surface)
 
 Surface::~Surface()
 {
+    qDebug() << "Destroying surface" << m_uuid.toString(QUuid::WithoutBraces);
     if(m_loadTimer)
     {
         m_loadTimer->stop();
@@ -858,6 +860,28 @@ void Surface::onSurfaceSourceGeometryChanged()
 
 void Surface::onDestinationSizeChanged()
 {
+    // if we are initializing an xdg toplevel we should set a
+    // better initial position
+    if(!m_surfaceInit)
+    {
+        if(!hwComp->isRunningLoginManager() && m_xdgTopLevel != nullptr)
+        {
+            auto rect = windowRect().toRect();
+            // TODO: dual monitor support - grab output of cursor
+            auto outputRect = hwComp->defaultOutput()->availableGeometry();
+            int x = 50;
+            int y = 50;
+            if(outputRect.width() > rect.width())
+            x = (outputRect.width() - rect.width())/2;
+
+                if(outputRect.height() > rect.height())
+                    y = (outputRect.height() - rect.height())/2;
+
+                 setPosition(QPointF(x,y));
+        }
+        m_surfaceInit = true;
+    }
+
     renderDecoration();
     hwComp->triggerRender();
 }
@@ -1102,6 +1126,8 @@ void Surface::createXdgTopLevelSurface(HWWaylandXdgToplevel *topLevel)
     m_loadTimer = new QTimer(this);
     m_loadTimer->setSingleShot(true);
     m_loadTimer->setInterval(190);
+    // a temporary bit so we can at least know where we are
+    setPosition(QPoint(80,80));
     connect(m_loadTimer, &QTimer::timeout, this, [this](){
         hwComp->raise(this);
     });
@@ -1230,6 +1256,7 @@ void Surface::onXdgSetMinimized()
     hwComp->triggerRender();
     if(m_wndctl)
         m_wndctl->setMinimized(true);
+    hwComp->raiseNextInLine();
 }
 
 void Surface::completeXdgConfigure()
@@ -1390,13 +1417,6 @@ void Surface::onXdgAppIdChanged()
 void Surface::onXdgWindowGeometryChanged()
 {
     renderDecoration();
-    // if we are initializing an xdg toplevel we should set a
-    // better initial position
-    if(!m_surfaceInit)
-    {
-        // TODO: reposition
-        m_surfaceInit = true;
-    }
 }
 
 // Layer Shell Functions
