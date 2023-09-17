@@ -9,4 +9,5 @@ isEmpty(LAUNCHER_INSTALL_PATH):LAUNCHER_INSTALL_PATH = /usr/share/applications
 isEmpty(APPDATA_INSTALL_PATH):APPDATA_INSTALL_PATH = /usr/share/metainfo
 isEmpty(APP_DIR_DATA_PATH):APP_DIR_DATA_PATH = data
 
-CONFIG += c++11
+CONFIG += c++17
+DEFINES += _GUN_SOURCE
