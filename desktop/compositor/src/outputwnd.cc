@@ -384,8 +384,8 @@ void OutputWindow::drawDesktopInfoString()
 
     QOpenGLTexture texture(*img);
     texture.bind();
-    QPoint startPoint(m_output->wlOutput()->availableGeometry().size().width()-img->width()
-                      ,m_output->wlOutput()->availableGeometry().size().height()-img->height());
+    QPoint startPoint(m_output->wlOutput()->availableGeometry().right()-img->width()
+                      ,m_output->wlOutput()->availableGeometry().bottom()-img->height());
 
     QMatrix4x4 tf = QOpenGLTextureBlitter::targetTransform(QRect(startPoint, img->size()),
                                                  QRect(QPoint(0,0), size()));
@@ -697,16 +697,18 @@ void OutputWindow::mousePressEvent(QMouseEvent *e)
                 m_initialSize = m_mouseSelectedSurfaceObject->surfaceSize();
                 return;
             }
-            if(m_mouseSelectedSurfaceObject->surfaceType() == Surface::TopLevel)
+            if(m_mouseSelectedSurfaceObject->surfaceType() == Surface::TopLevel &&
+                !m_mouseSelectedSurfaceObject->isShellDesktop())
                 hwComp->raise(m_mouseSelectedSurfaceObject);
-
-            if(m_mouseSelectedSurfaceObject->surfaceType() == Surface::Desktop)
-                hwComp->activate(m_mouseSelectedSurfaceObject);
         }
         else
         {
-            if(m_mouseSelectedSurfaceObject->surfaceType() == Surface::TopLevel)
+            if(m_mouseSelectedSurfaceObject->surfaceType() == Surface::TopLevel &&
+                !m_mouseSelectedSurfaceObject->isShellDesktop())
                 hwComp->raise(m_mouseSelectedSurfaceObject);
+            if(m_mouseSelectedSurfaceObject->surfaceType() == Surface::Desktop ||
+                m_mouseSelectedSurfaceObject->isShellDesktop())
+                hwComp->activate(m_mouseSelectedSurfaceObject);
         }
 
         m_initialMousePos = adjustedPoint;
@@ -827,12 +829,10 @@ void OutputWindow::sendMouseEvent(QMouseEvent *e, SurfaceView *target)
     QPoint adjustedPoint(m_output->wlOutput()->position().x()+e->position().x(),
                  m_output->wlOutput()->position().y()+e->position().y());
 
-    qDebug() << "mappedPos:" << adjustedPoint;
     QPointF mappedPos = adjustedPoint;
     if (target)
         mappedPos -= target->surfaceObject()->surfacePosition();
 
-    qDebug() << "mappedPos2:" << mappedPos;
     QMouseEvent viewEvent(e->type(), mappedPos,
                           adjustedPoint, e->button(), e->buttons(), e->modifiers());
     hwComp->handleMouseEvent(target, &viewEvent);

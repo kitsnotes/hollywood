@@ -235,7 +235,9 @@ int main(int argc, char *argv[])
     if(!a.checkSocket())
         return 0;
     a.createDBusInterfaces();
-    a.createDesktop();
+    QTimer::singleShot(1100, [&a]() {
+        a.createDesktop();
+    });
 #else
     a.newFileWindow();
 #endif

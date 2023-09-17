@@ -15,6 +15,9 @@ DesktopWindow::DesktopWindow(QWidget *parent)
     , m_actions(new LSActionManager(this))
     , m_rightclick(new QMenu(this))
 {
+    m_menuBar = new QMenuBar(this);
+    setMenuBar(m_menuBar);
+
     setWindowFlags(Qt::Window|Qt::FramelessWindowHint|Qt::X11BypassWindowManagerHint);
     setObjectName("DesktopWindow");
     setCentralWidget(m_view);
@@ -26,8 +29,6 @@ DesktopWindow::DesktopWindow(QWidget *parent)
 
     //connect(qApp->primaryScreen(), &QScreen::geometryChanged, this, &FileWindow::desktopGeometryChanged);
 
-    setWindowFlag(Qt::Widget, true);
-    setWindowFlag(Qt::FramelessWindowHint, true);
     setWindowFlag(Qt::WindowStaysOnBottomHint, true);
 
     m_view->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -231,8 +232,6 @@ void DesktopWindow::setupMenuBar()
     /* We do the menu bar separate because it can be used
      * by both a browser window and the root desktop window
      * over dbusmenu */
-    m_menuBar = new QMenuBar(0);
-    m_menuBar->setObjectName(QString::fromUtf8("m_menuBar"));
     menu_File = new QMenu(m_menuBar);
     menu_Edit = new QMenu(m_menuBar);
     menu_View = new QMenu(m_menuBar);

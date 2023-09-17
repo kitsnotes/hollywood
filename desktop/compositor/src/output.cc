@@ -31,8 +31,10 @@ bool Output::reserveLayerShellRegion(Surface *surface)
         return false;
 
     m_reserved.append(surface);
-    connect(surface->layerSurface(), &WlrLayerSurfaceV1::exclusiveZoneChanged, this, &Output::reservedRegionsChanged);
-    connect(surface->layerSurface(), &WlrLayerSurfaceV1::exclusiveZoneChanged, this, &Output::reservedRegionsChanged);
+    connect(surface->layerSurface(), &WlrLayerSurfaceV1::exclusiveZoneChanged, this,
+            &Output::reservedRegionsChanged);
+    connect(surface->layerSurface(), &WlrLayerSurfaceV1::exclusiveZoneChanged, this,
+            &Output::reservedRegionsChanged);
     updateUsableGeometry();
     Q_EMIT reservedRegionsChanged();
     return true;
@@ -44,8 +46,10 @@ bool Output::removeLayerShellReservation(Surface *surface)
         return false;
 
     m_reserved.removeOne(surface);
-    disconnect(surface->layerSurface(), &WlrLayerSurfaceV1::exclusiveZoneChanged, this, &Output::reservedRegionsChanged);
-    disconnect(surface->layerSurface(), &WlrLayerSurfaceV1::exclusiveZoneChanged, this, &Output::reservedRegionsChanged);
+    disconnect(surface->layerSurface(), &WlrLayerSurfaceV1::exclusiveZoneChanged,
+               this, &Output::reservedRegionsChanged);
+    disconnect(surface->layerSurface(), &WlrLayerSurfaceV1::exclusiveZoneChanged,
+               this, &Output::reservedRegionsChanged);
 
     updateUsableGeometry();
     Q_EMIT reservedRegionsChanged();
@@ -136,6 +140,7 @@ void Output::updateUsableGeometry()
 
         // TODO: scope out multiple anchors based on height/width?
     }
+    qDebug() << "setAvailableGeom" << margins << rect.marginsRemoved(margins);
     m_wlOutput->setAvailableGeometry(rect.marginsRemoved(margins));
 }
 

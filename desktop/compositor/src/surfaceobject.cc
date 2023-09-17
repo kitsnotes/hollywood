@@ -13,6 +13,7 @@
 #include "hwc.h"
 #include "gtkshell.h"
 #include "qtshell.h"
+#include "originull.h"
 
 #include <QWaylandXdgDecorationManagerV1>
 #include <QDateTime>
@@ -48,7 +49,6 @@ Surface::Surface(QWaylandSurface *surface)
 
 Surface::~Surface()
 {
-
     if(m_parentSurface)
         m_parentSurface->recycleChildSurfaceObject(this);
 
@@ -213,9 +213,6 @@ bool Surface::isSpecialShellObject() const
         return false;
 
     if(m_cursor)
-        return true;
-
-    if(m_surfaceType == Desktop)
         return true;
 
     return false;
@@ -475,13 +472,17 @@ SurfaceView* Surface::createViewForOutput(Output *o)
 
         return view;
     }
-    qDebug() << "Surface::createView() failed. returning nullptr";
+    qWarning() << "Surface::createView() failed. returning nullptr";
     return nullptr;
 }
 
 void Surface::setAppMenu(AppMenu *m)
 {
     m_appMenu = m;
+    if(hwComp->raisedSurface() == this)
+    {
+        QTimer::singleShot(2, [this](){hwComp->raise(this);});
+    }
 }
 
 
@@ -988,6 +989,7 @@ void Surface::onQtWindowFlagsChanged(const Qt::WindowFlags &f)
     if(f.testFlag(Qt::X11BypassWindowManagerHint))
     {
         hwComp->onDesktopRequest(this->surface());
+        m_isShellDesktop = true;
         m_surfaceType = TopLevel;
     }
 
@@ -1088,9 +1090,9 @@ void Surface::createXdgTopLevelSurface(HWWaylandXdgToplevel *topLevel)
     connect(m_xdgTopLevel, &HWWaylandXdgToplevel::parentToplevelChanged, this, &Surface::onXdgParentTopLevelChanged);
     connect(m_xdgTopLevel, &HWWaylandXdgToplevel::titleChanged, this, &Surface::onXdgTitleChanged);
     connect(m_xdgTopLevel, &HWWaylandXdgToplevel::appIdChanged, this, &Surface::onXdgAppIdChanged);
-    //connect(m_xdgTopLevel, &HWWaylandXdgToplevel::resizingChanged, this, &Surface::completeXdgConfigure);
     connect(m_xdgTopLevel, &HWWaylandXdgToplevel::maximizedChanged, this, &Surface::completeXdgConfigure);
     connect(m_xdgTopLevel, &HWWaylandXdgToplevel::fullscreenChanged, this, &Surface::completeXdgConfigure);
+
 }
 
 void Surface::createXdgPopupSurface(HWWaylandXdgPopup *popup)
@@ -1148,6 +1150,9 @@ void Surface::createQtSurface(QtSurface *qt)
     connect(m_qt, &QtSurface::windowFlagsChanged, this, &Surface::onQtWindowFlagsChanged);
 
     m_surfaceType = TopLevel;
+    QTimer::singleShot(50, [this]() {
+        hwComp->raise(this);
+    });
 }
 
 void Surface::createMenuServer(OriginullMenuServer *menu)
@@ -1377,6 +1382,9 @@ void Surface::onXdgWindowGeometryChanged()
     {
         // TODO: reposition
         m_surfaceInit = true;
+        QTimer::singleShot(800,[this](){
+            hwComp->raise(this);
+        });
     }
 }
 

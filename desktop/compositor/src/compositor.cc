@@ -304,8 +304,8 @@ void Compositor::onSurfaceCreated(QWaylandSurface *surface)
         outputAt = m_outputs.first();
 
     obj->createViewForOutput(outputAt);
-    m_surfaces << obj;
-    m_zorder << obj;
+    m_surfaces << (obj);
+    m_zorder << (obj);
 }
 
 void Compositor::recycleSurfaceObject(Surface *obj)
@@ -333,6 +333,9 @@ void Compositor::recycleSurfaceObject(Surface *obj)
         defaultSeat()->setKeyboardFocus(parent->surface());
         defaultSeat()->setMouseFocus(parent->surface()->primaryView());
     }
+
+    if(m_tl_raised == obj)
+        raiseNextInLine();
 
     delete obj;
 }
@@ -512,6 +515,38 @@ void Compositor::idleTimeout()
         lockSession();
         // TODO: tell session to put system to sleep
     }
+}
+
+void Compositor::raiseNextInLine()
+{
+    m_tl_raised = nullptr;
+
+    if(m_zorder.count() > 0)
+        raise(m_zorder.last());
+
+    return;
+
+    bool raised = false;
+    if(m_zorder.count() > 0)
+    {
+        for(auto it = m_zorder.rend(); it != m_zorder.rbegin(); --it)
+        {
+            auto obj = qobject_cast<Surface*>(*it);
+            if(obj == nullptr)
+                continue;
+            if(obj->isMinimized())
+                continue;
+            else
+            {
+                raise(obj);
+                raised = true;
+            }
+        }
+    }
+    // TODO: raise desktop
+
+    if(!raised && m_desktops.count() > 0)
+        activate(m_desktops.last());
 }
 
 void Compositor::onWlShellSurfaceCreated(QWaylandWlShellSurface *wlShellSurface)
@@ -711,6 +746,7 @@ void Compositor::onRotateWallpaper()
 
 void Compositor::appMenuCreated(AppMenu *m)
 {
+    qDebug() << "appMenuCreated" << m->surface()->uuid();
     m->surface()->setAppMenu(m);
 }
 
@@ -892,42 +928,39 @@ QWaylandClient *Compositor::popupClient() const
 }
 
 void Compositor::raise(Surface *obj)
-{    
+{
+    qDebug() << "raising window" << obj->uuid().toString();
+
     /*if(obj->m_xdgPopup != nullptr)
         return;*/
     if(obj->isSpecialShellObject())
         return;
 
     if(!m_zorder.contains(obj))
-        return;
-
-    // Since the compositor is only tracking unparented objects
-    // we leave the ordering of children to SurfaceObject
-    if((obj->m_xdgTopLevel ||
-       obj->m_gtk ||
-       obj->m_qt)&& !obj->isSpecialShellObject())
     {
-        // TODO: handle popups??
-        if(m_menuServer)
-            m_menuServer->setTopWindowForMenuServer(obj);
+        qDebug() << "raise failed, not in zorder";
+        return;
     }
+
 
     m_zorder.removeOne(obj);
     m_zorder.push_back(obj);
 
     obj->activate();
-    defaultSeat()->setKeyboardFocus(obj->surface());
-    defaultSeat()->setMouseFocus(obj->surface()->primaryView());
+    activate(obj);
+    // Since the compositor is only tracking unparented objects
+    // we leave the ordering of children to SurfaceObject
 
     if(m_wndmgr)
     {
         if(m_wndmgr->isInitialized())
            m_wndmgr->updateZOrder(surfaceZOrderByUUID());
     }
-    // if we have a subchild, then raise that further
+    m_tl_raised = obj;
+    // if we have a subchild, then activate further
     if(obj->childXdgSurfaceObjects().count() > 0)
     {
-        raise(obj->childXdgSurfaceObjects().first());
+        activate(obj->childXdgSurfaceObjects().first());
     }
 }
 
@@ -936,15 +969,19 @@ void Compositor::activate(Surface *obj)
     // Since the compositor is only tracking unparented objects
     // we leave the ordering of children to SurfaceObject
     if((obj->m_xdgTopLevel ||
-       obj->m_qt))
+         obj->m_gtk ||
+         obj->m_qt)&& !obj->isSpecialShellObject())
     {
+        qDebug() << "menuServer: activate" << obj->uuid().toString();
         // TODO: handle popups??
         if(m_menuServer)
-            m_menuServer->setTopWindowForMenuServer(obj);
+           m_menuServer->setTopWindowForMenuServer(obj);
     }
     defaultSeat()->setKeyboardFocus(obj->surface());
     defaultSeat()->setMouseFocus(obj->surface()->primaryView());
     obj->activate();
+
+    m_activated = obj;
 }
 
 void Compositor::addOutput(Output *output)
@@ -969,7 +1006,8 @@ bool Compositor::useAnimations() const
 
 void Compositor::resetIdle()
 {
-    m_timeout->stop();
+    if(m_timeout)
+        m_timeout->stop();
     if(!m_idle_inhibit)
         setupIdleTimer();
 }

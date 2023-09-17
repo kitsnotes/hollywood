@@ -8,6 +8,7 @@
 #include <QWindow>
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
+#include <QMenuBar>
 
 #include <unistd.h>
 #include <sys/utsname.h>
@@ -495,6 +496,12 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     a.setApplicationVersion("1.0");
+
+    auto menubar = new QMenuBar(nullptr);
+    menubar->addMenu(a.tr("&File"));
+    menubar->addMenu(a.tr("&Window"));
+    menubar->addMenu(a.tr("&Help"));
+    menubar->setVisible(false);
     AboutWindow w;
     w.show();
     return a.exec();

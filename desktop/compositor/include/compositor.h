@@ -99,6 +99,8 @@ public:
     QList<Surface*> topLayerSurfaces() { return m_layer_top; }
     QList<Surface*> overlayLayerSurfaces() { return m_layer_overlay; }
 
+    Surface* activatedSurface() { return m_activated; }
+    Surface* raisedSurface() { return m_tl_raised; }
     QString surfaceZOrderByUUID() const;
     void generateDesktopInfoLabelImage();
     QImage *desktopLabelImage();
@@ -154,6 +156,7 @@ private slots:
     void idleTimeout();
 private:
     void sendWindowUUID(QUuid &uuid);
+    void raiseNextInLine();
 private:
     friend class CompositorApp;
     friend class OutputWindow; // TEMPORARY!
@@ -221,6 +224,9 @@ private:
     QList<Surface*> m_layer_bottom;
     QList<Surface*> m_layer_top;
     QList<Surface*> m_layer_overlay;
+
+    Surface *m_activated = nullptr;
+    Surface *m_tl_raised = nullptr;
 
     QFileSystemWatcher *m_cfgwatch = nullptr;
     QString m_configfile;

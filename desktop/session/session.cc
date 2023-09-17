@@ -22,6 +22,7 @@
 #include <desktopentry.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <QTimer>
 
 #include "dbus.h"
 #include "process.h"
@@ -334,20 +335,18 @@ bool SMApplication::isBatteryPowered() const
 
 void SMApplication::startDBusReliantServices()
 {
-    //m_pipewireProcess->initialize();
-    //m_wireplumberProcess->initialize();
-    //m_pipewirePulseProcess->initialize();
     m_elevatorProcess->initialize();
-
     m_stageProcess->initialize();
-    m_desktopProcess->initialize();
-    m_notificationProcess->initialize();
+    QTimer::singleShot(300, [this](){
+        m_desktopProcess->initialize();
+        m_notificationProcess->initialize();
+        m_sessionStarted = true;
+        qCInfo(lcSession) << "Session Initilaized";
+    });
 
-    m_sessionStarted = true;
     m_dbus = new SessionDBus(this);
     QDBusConnection::sessionBus().registerService(QLatin1String(HOLLYWOOD_SESSION_DBUS));
     QDBusConnection::sessionBus().registerObject(QLatin1String(HOLLYWOOD_SESSION_DBUSOBJ), this);
-    qCInfo(lcSession) << "Session Initilaized";
 }
 
 bool SMApplication::verifyXdgRuntime()

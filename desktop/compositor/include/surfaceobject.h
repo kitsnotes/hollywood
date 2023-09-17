@@ -138,6 +138,7 @@ public:
     QIcon icon() const { return m_icon; }
     bool isFullscreenShell() const { return m_fullscreenShell; }
     void setTwilight(bool twilight) { m_twilight = twilight; }
+    bool isShellDesktop() const { return m_isShellDesktop; }
 public slots:
     void activate();
     void deactivate();
@@ -236,6 +237,8 @@ private:
     bool m_maximized_complete = true;
 
     bool m_ssd = false;
+
+    bool m_isShellDesktop = false;
 
     bool m_moving = false;
     bool m_resize_animation = false;

@@ -281,8 +281,8 @@ void ManagedProcess::setEnvironmentForProcess()
 
     // setup specific processes with qt-shell
     if(m_process == Elevator ||
-       m_process == NetworkAgent ||
-       m_process == Shell)
+       m_process == Shell ||
+       m_process == NetworkAgent)
         env.insert("QT_WAYLAND_SHELL_INTEGRATION", "qt-shell");
 
     // setup stage with layer-shell and twilight
