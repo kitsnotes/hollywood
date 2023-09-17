@@ -63,7 +63,6 @@ protected slots:
 private slots:
     void setupPrivateProtocolResponder();
     void configChanged();
-    void slotWindowRegistered(WId id, const QString &serviceName, const QDBusObjectPath &menuObjectPath);
     void menuChanged(const QString &serviceName, const QString &objectPath);
     void createStatusButton(StatusNotifierButton *btn);
     void statusButtonRemoved(StatusNotifierButton *btn);

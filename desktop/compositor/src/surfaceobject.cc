@@ -480,9 +480,10 @@ void Surface::setAppMenu(AppMenu *m)
 {
     m_appMenu = m;
     if(hwComp->raisedSurface() == this)
-    {
         QTimer::singleShot(2, [this](){hwComp->raise(this);});
-    }
+
+    if(isShellDesktop())
+        QTimer::singleShot(2, [this](){hwComp->activate(this);});
 }
 
 
@@ -1224,7 +1225,8 @@ void Surface::completeXdgConfigure()
     renderDecoration();
     if(m_maximized)
     {
-        auto pos = primaryView()->output()->position();
+        //auto pos = primaryView()->output()->position();
+        auto pos = primaryView()->output()->availableGeometry().topLeft();
         pos.setX(pos.x()+hwComp->borderSize());
         pos.setY(pos.y()+hwComp->decorationSize());
         if(!hwComp->useAnimations() || m_maximized_complete)

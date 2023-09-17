@@ -313,11 +313,6 @@ void StageApplication::configChanged()
     loadSettings();
 }
 
-void StageApplication::slotWindowRegistered(WId id, const QString &serviceName, const QDBusObjectPath &menuObjectPath)
-{
-    //menuChanged(serviceName, menuObjectPath.path());
-}
-
 bool StageApplication::callSessionDBus(const QString &exec)
 {
     QDBusInterface ldb(HOLLYWOOD_SESSION_DBUS, HOLLYWOOD_SESSION_DBUSOBJ, HOLLYWOOD_SESSION_DBUSPATH);
@@ -416,14 +411,14 @@ void StageApplication::setupMenuServer()
     setupPrivateProtocolResponder();
     // Setup a menu importer if needed
     if (!m_menuImporter) {
-        QDBusConnection::sessionBus().connect({}, {},
+        /*QDBusConnection::sessionBus().connect({}, {},
                                           QStringLiteral("com.canonical.dbusmenu"),
                                           QStringLiteral("ItemActivationRequested"),
                                           this,
-                                          SLOT(itemActivationRequested(int, uint)));
+                                          SLOT(itemActivationRequested(int, uint)));*/
 
         m_menuImporter = new MenuImporter(this);
-        connect(m_menuImporter, &MenuImporter::WindowRegistered, this, &StageApplication::slotWindowRegistered);
+        //connect(m_menuImporter, &MenuImporter::WindowRegistered, this, &StageApplication::slotWindowRegistered);
         m_menuImporter->connectToBus();
     }
     if(!m_menu)
