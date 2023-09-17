@@ -14,11 +14,6 @@ OriginullProtocol::OriginullProtocol(Compositor *compositor)
     , QtWaylandServer::org_originull_privateapi(compositor->display(), 1)
     , m_compositor(compositor)
 {
-}
-void OriginullProtocol::initialize()
-{
-    QWaylandCompositorExtensionTemplate::initialize();
-    QWaylandCompositor *compositor = static_cast<QWaylandCompositor *>(extensionContainer());
     init(compositor->display(), 1);
 }
 

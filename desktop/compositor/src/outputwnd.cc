@@ -800,13 +800,15 @@ void OutputWindow::mouseMoveEvent(QMouseEvent *e)
         break;
     case MoveGrab: {
         //qDebug() << "moving window: " << adjustedPoint - m_mouseOffset << " mouseOffset: " << m_mouseOffset;
-        m_mouseSelectedSurfaceObject->setPosition(adjustedPoint - m_mouseOffset);
+        if(m_mouseSelectedSurfaceObject)
+            m_mouseSelectedSurfaceObject->setPosition(adjustedPoint - m_mouseOffset);
         update();
     }
         break;
     case ResizeGrab: {
         QPoint delta = (adjustedPoint - m_initialMousePos).toPoint();
-        hwComp->handleResize(m_mouseSelectedSurfaceObject->primaryView(), m_initialSize, delta, m_resizeEdge);
+        if(m_mouseSelectedSurfaceObject)
+            hwComp->handleResize(m_mouseSelectedSurfaceObject->primaryView(), m_initialSize, delta, m_resizeEdge);
     }
         break;
     case DragGrab: {

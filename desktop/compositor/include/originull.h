@@ -20,7 +20,6 @@ class OriginullProtocol : public QWaylandCompositorExtensionTemplate<OriginullPr
     Q_OBJECT
 public:
     OriginullProtocol(Compositor *compositor);
-    void initialize();
 signals:
     void menuServerSet(OriginullMenuServer *menu);
     void wallpaperRotationRequested();

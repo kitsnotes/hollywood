@@ -482,7 +482,7 @@ void StageApplication::menuChanged(const QString &serviceName, const QString &ob
     if(m_importer != nullptr)
         m_importer->deleteLater();
 
-    m_importer = new DBusMenuImporter(serviceName, objectPath, this);
+    m_importer = new DBusMenuImporter(serviceName, objectPath, m_menu->menuBar());
     QMetaObject::invokeMethod(m_importer, "updateMenu", Qt::QueuedConnection);
 
     connect(m_importer.data(), &DBusMenuImporter::menuUpdated, this, [=]()

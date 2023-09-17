@@ -53,7 +53,13 @@ void MenuServer::installMenu(QMenu *menu)
     {
         auto m = QMenu::menuInAction(a);
         if(m != nullptr)
+        {
             m_menuBar->addMenu(m);
+            auto c = connect(m, &QMenu::triggered, [](QAction *act){
+                qDebug() << act->text();
+            });
+            m_connections.insert(m, c);
+        }
         else
             m_menuBar->addAction(a);
     }
@@ -64,7 +70,12 @@ void MenuServer::cleanMenu()
     for(auto a : m_menuBar->actions())
     {
         if(a->data() != 9195521)
+        {
+            auto m = QMenu::menuInAction(a);
+            auto c= m_connections.value(m);
+            disconnect(m, &QMenu::triggered, nullptr, nullptr);
             m_menuBar->removeAction(a);
+        }
     }
 }
 

@@ -22,6 +22,7 @@
 #include <QPainterPath>
 #include <QPropertyAnimation>
 #include <QParallelAnimationGroup>
+#include <QTimer>
 
 #include <hollywood/hollywood.h>
 
@@ -49,6 +50,11 @@ Surface::Surface(QWaylandSurface *surface)
 
 Surface::~Surface()
 {
+    if(m_loadTimer)
+    {
+        m_loadTimer->stop();
+        m_loadTimer->deleteLater();
+    }
     if(m_parentSurface)
         m_parentSurface->recycleChildSurfaceObject(this);
 
@@ -1093,7 +1099,13 @@ void Surface::createXdgTopLevelSurface(HWWaylandXdgToplevel *topLevel)
     connect(m_xdgTopLevel, &HWWaylandXdgToplevel::appIdChanged, this, &Surface::onXdgAppIdChanged);
     connect(m_xdgTopLevel, &HWWaylandXdgToplevel::maximizedChanged, this, &Surface::completeXdgConfigure);
     connect(m_xdgTopLevel, &HWWaylandXdgToplevel::fullscreenChanged, this, &Surface::completeXdgConfigure);
-
+    m_loadTimer = new QTimer(this);
+    m_loadTimer->setSingleShot(true);
+    m_loadTimer->setInterval(190);
+    connect(m_loadTimer, &QTimer::timeout, this, [this](){
+        hwComp->raise(this);
+    });
+    m_loadTimer->start();
 }
 
 void Surface::createXdgPopupSurface(HWWaylandXdgPopup *popup)
@@ -1384,9 +1396,6 @@ void Surface::onXdgWindowGeometryChanged()
     {
         // TODO: reposition
         m_surfaceInit = true;
-        QTimer::singleShot(800,[this](){
-            hwComp->raise(this);
-        });
     }
 }
 

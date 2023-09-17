@@ -37,6 +37,8 @@ private:
     BatteryMonitor *m_battery = nullptr;
     QWidget *m_opposite = nullptr;
     QHBoxLayout *vl_opposite = nullptr;
+
+    QMap<QMenu*,QMetaObject::Connection> m_connections;
 };
 
 #endif // MENUSERVER_H

@@ -260,7 +260,7 @@ private:
     QString m_windowTitle;
 
     // the point at where the actual wayland surface is visible
-    QPointF m_surfacePosition;
+    QPointF m_surfacePosition = QPointF(0,0);
     QSize m_resize_animation_size;
     QSize m_resize_animation_start_size;
 
@@ -297,6 +297,8 @@ private:
     QIcon m_icon = QIcon();
 
     bool m_twilight = false;
+
+    QTimer* m_loadTimer = nullptr;
 };
 
 #endif // SURFACEOBJECT_H

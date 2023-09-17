@@ -327,7 +327,7 @@ void Compositor::recycleSurfaceObject(Surface *obj)
 
     // if we delete a popup object lets raise our parent
     // and set keyboard focus
-    if(parent)
+    if(parent && parent->surface())
     {
         raise(parent);
         defaultSeat()->setKeyboardFocus(parent->surface());
@@ -820,6 +820,9 @@ void Compositor::handleMouseEvent(QWaylandView *target, QMouseEvent *me)
 
     QWaylandSeat *seat = defaultSeat();
     QWaylandSurface *surface = target ? target->surface() : nullptr;
+    if(!surface)
+        return;
+
     switch (me->type()) {
         case QEvent::MouseButtonPress:
             seat->sendMousePressEvent(me->button());
@@ -841,7 +844,11 @@ void Compositor::handleMouseEvent(QWaylandView *target, QMouseEvent *me)
          seat->sendMouseReleaseEvent(me->button());
          break;
     case QEvent::MouseMove:
-         seat->sendMouseMoveEvent(target, findSurfaceObject(surface)->mapToSurface(me->position()), me->globalPosition());
+         if(findSurfaceObject(surface) != nullptr)
+         {
+             seat->sendMouseMoveEvent(target, findSurfaceObject(surface)->mapToSurface(me->position()), me->globalPosition());
+         }
+         break;
     default:
         break;
     }
@@ -938,7 +945,7 @@ void Compositor::raise(Surface *obj)
 
     if(!m_zorder.contains(obj))
     {
-        qDebug() << "raise failed, not in zorder";
+	activate(obj);
         return;
     }
 
@@ -966,6 +973,12 @@ void Compositor::raise(Surface *obj)
 
 void Compositor::activate(Surface *obj)
 {
+    if(!obj)
+        return;
+
+    if(!obj->surface())
+        return;
+
     // Since the compositor is only tracking unparented objects
     // we leave the ordering of children to SurfaceObject
     if((obj->m_xdgTopLevel ||
