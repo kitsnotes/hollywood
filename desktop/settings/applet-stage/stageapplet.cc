@@ -12,6 +12,11 @@ bool StageApplet::init()
 {
     setupWidget();
     loadSettings();
+    connect(m_showclock, &QCheckBox::toggled, this, &StageApplet::showClockChecked);
+    connect(m_showclock, &QCheckBox::toggled, this, &StageApplet::saveSettings);
+    connect(m_showdate, &QCheckBox::toggled, this, &StageApplet::saveSettings);
+    connect(m_seconds, &QCheckBox::toggled, this, &StageApplet::saveSettings);
+    connect(m_24hour, &QCheckBox::toggled, this, &StageApplet::saveSettings);
     return true;
 }
 
@@ -19,6 +24,12 @@ bool StageApplet::loadSettings()
 {
     QSettings settings("originull","hollywood");
     settings.beginGroup("Stage");
+    m_showclock->setChecked(settings.value("ShowClock", HOLLYWOOD_STCLK_SHOW).toBool());
+    m_showdate->setChecked(settings.value("ShowDateInClock", HOLLYWOOD_STCLK_USEDATE).toBool());
+    m_seconds->setChecked(settings.value("ShowSecondsInClock", HOLLYWOOD_STCLK_USESECONDS).toBool());
+    m_24hour->setChecked(settings.value("Use24HourClock", HOLLYWOOD_STCLK_24HOUR).toBool());
+
+
     auto layout = settings.value("UseSouthernMode", HOLLYWOOD_STAGE_LAYOUT).toBool();
     if(layout == 0)
         m_northern->setChecked(true);
@@ -37,16 +48,8 @@ bool StageApplet::loadSettings()
 
     updatePositionOptions();
 
-    auto show_clock = settings.value("ShowClock", HOLLYWOOD_STCLK_SHOW).toBool();
-    auto show_date = settings.value("ShowDateInClock", HOLLYWOOD_STCLK_USEDATE).toBool();
-    auto show_seconds = settings.value("ShowSecondsInClock", HOLLYWOOD_STCLK_USESECONDS).toBool();
-    auto clock_24hr = settings.value("Use24HourClock", HOLLYWOOD_STCLK_24HOUR).toBool();
-    auto clock_ampm = settings.value("ShowAMPMInClock", HOLLYWOOD_STCLK_USEAMPM).toBool();
+    //auto clock_ampm = settings.value("ShowAMPMInClock", HOLLYWOOD_STCLK_USEAMPM).toBool();
 
-    m_showclock->setChecked(show_clock);
-    m_showdate->setChecked(show_date);
-    m_seconds->setChecked(show_seconds);
-    m_24hour->setChecked(clock_24hr);
     showClockChecked();
 
     return true;
@@ -283,7 +286,6 @@ void StageApplet::setupWidget()
 
     m_showclock = new QCheckBox(m_host);
 
-    connect(m_showclock, &QCheckBox::toggled, this, &StageApplet::showClockChecked);
     m_showdate = new QCheckBox(m_host);
 
     fl_main->setLayout(0, QFormLayout::FieldRole, vl_ns);
@@ -307,10 +309,7 @@ void StageApplet::setupWidget()
 
     fl_main->setWidget(4, QFormLayout::LabelRole, lbl_clock);
 
-    connect(m_showclock, &QCheckBox::toggled, this, &StageApplet::saveSettings);
-    connect(m_showdate, &QCheckBox::toggled, this, &StageApplet::saveSettings);
-    connect(m_seconds, &QCheckBox::toggled, this, &StageApplet::saveSettings);
-    connect(m_24hour, &QCheckBox::toggled, this, &StageApplet::saveSettings);
+
 
     mainLayout->addLayout(fl_main);
     mainLayout->addItem(new QSpacerItem(149, 20, QSizePolicy::Expanding, QSizePolicy::Minimum));

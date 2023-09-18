@@ -35,7 +35,6 @@ Surface::Surface(QWaylandSurface *surface)
 {
     m_uuid = QUuid::createUuid();
     m_id = hwComp->nextId();
-    qDebug() << "Creating surface" << m_uuid.toString(QUuid::WithoutBraces);
     connect(m_surface, &QWaylandSurface::surfaceDestroyed, this, &Surface::surfaceDestroyed);
     connect(m_surface, &QWaylandSurface::hasContentChanged, hwComp, &Compositor::surfaceHasContentChanged);
     connect(m_surface, &QWaylandSurface::redraw, hwComp, &Compositor::triggerRender);    
@@ -51,7 +50,6 @@ Surface::Surface(QWaylandSurface *surface)
 
 Surface::~Surface()
 {
-    qDebug() << "Destroying surface" << m_uuid.toString(QUuid::WithoutBraces);
     if(m_loadTimer)
     {
         m_loadTimer->stop();

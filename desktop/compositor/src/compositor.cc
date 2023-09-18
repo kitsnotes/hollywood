@@ -520,7 +520,9 @@ void Compositor::idleTimeout()
 void Compositor::raiseNextInLine()
 {
     m_tl_raised = nullptr;
+    m_activated = nullptr;
 
+    return;
     int sc = m_zorder.count();
     bool raised = false;
     if(m_zorder.count() > 0)
@@ -543,9 +545,6 @@ void Compositor::raiseNextInLine()
                         {
                             raise(obj);
                             raised = true;
-                            qDebug() << "object raised:" <<
-                                obj->uuid().toString(QUuid::WithoutBraces) <<
-                                obj->windowTitle();
                             break;
                         }
                     }
@@ -695,9 +694,15 @@ void Compositor::onSubsurfacePositionChanged(const QPoint &position)
 
 void Compositor::onXdgSurfaceActivated(QWaylandSurface *surface)
 {
+    if(surface->isDestroyed())
+        return;
+
     auto sf = findSurfaceObject(surface);
     if(sf)
-        raise(sf);
+    {
+        if(m_activated != sf && m_tl_raised != sf)
+            raise(sf);
+    }
 }
 
 void Compositor::triggerRender()
@@ -952,8 +957,6 @@ void Compositor::raise(Surface *obj)
         qWarning() << "request to raise invalid surface";
         return;
     }
-    qDebug() << "Raising surface" << obj->uuid().toString();
-
 
     if(obj->isSpecialShellObject())
         return;
@@ -967,7 +970,6 @@ void Compositor::raise(Surface *obj)
     m_zorder.removeOne(obj);
     m_zorder.push_back(obj);
 
-    obj->activate();
     activate(obj);
     // Since the compositor is only tracking unparented objects
     // we leave the ordering of children to SurfaceObject
@@ -992,7 +994,6 @@ void Compositor::activate(Surface *obj)
         qWarning() << "request to activate invalid surface";
         return;
     }
-    qDebug() << "Activating surface" << obj->uuid().toString();
     if(!obj->surface())
         return;
 
@@ -1006,9 +1007,13 @@ void Compositor::activate(Surface *obj)
         if(m_menuServer)
            m_menuServer->setTopWindowForMenuServer(obj);
     }
-    defaultSeat()->setKeyboardFocus(obj->surface());
-    defaultSeat()->setMouseFocus(obj->surface()->primaryView());
-    obj->activate();
+    if(!obj->surface()->isDestroyed())
+    {
+        defaultSeat()->setKeyboardFocus(obj->surface());
+        defaultSeat()->setMouseFocus(obj->surface()->primaryView());
+    }
+    // TODO: fix this
+    //obj->activate();
 
     m_activated = obj;
 }
