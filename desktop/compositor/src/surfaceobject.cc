@@ -1422,7 +1422,6 @@ void Surface::onXdgWindowGeometryChanged()
 void Surface::createLayerShellSurface(WlrLayerSurfaceV1 *surface)
 {
     m_layerSurface = surface;
-    connect(m_layerSurface, &WlrLayerSurfaceV1::anchorsChanged, this, &Surface::onAnchorsChanged);
     connect(m_layerSurface, &WlrLayerSurfaceV1::layerChanged, this, &Surface::onLayerChanged);
     connect(m_layerSurface, &WlrLayerSurfaceV1::exclusiveZoneChanged, this, &Surface::onExclusiveZoneChanged);
     connect(m_layerSurface, &WlrLayerSurfaceV1::anchorsChanged, this, &Surface::onAnchorsChanged);
@@ -1435,7 +1434,7 @@ void Surface::createLayerShellSurface(WlrLayerSurfaceV1 *surface)
 
 void Surface::onAnchorsChanged()
 {
-    recalculateAnchorPosition();
+    recalculateLayerShellAnchorPosition();
 }
 
 void Surface::onExclusiveZoneChanged()
@@ -1471,7 +1470,7 @@ void Surface::onLayerShellSizeChanged()
     if(!m_layerSurface->size().isValid())
         return;
     m_ls_size = m_layerSurface->size();
-    recalculateAnchorPosition();
+    recalculateLayerShellAnchorPosition();
     reconfigureLayerSurface();
 }
 
@@ -1485,70 +1484,112 @@ void Surface::onLayerShellXdgPopupParentChanged(HWWaylandXdgPopup *popup)
 
 }
 
-void Surface::recalculateAnchorPosition()
+void Surface::recalculateLayerShellAnchorPosition()
 {
+    qDebug() << "recalculateLayerShellAnchorPosition" << m_uuid.toString() << m_ls_size;
     if(!m_ls_size.isValid())
         return;
 
     auto anchors = m_layerSurface->anchors();
-    if(anchors & WlrLayerSurfaceV1::TopAnchor || anchors & WlrLayerSurfaceV1::BottomAnchor)
+    auto view = primaryView();
+
+    qDebug() << "placing";
+    if(anchors == WlrLayerSurfaceV1::TopAnchor)
     {
-        if(m_ls_size.width() == 0)
-        {
-            auto view = primaryView();
-            m_ls_size.setWidth(view->output()->geometry().width());
-        }
+        qDebug() << "placing top";
+        // center on the top (OK)
+        auto pos = primaryView()->output()->availableGeometry().topLeft();
+        auto x = floor((primaryView()->output()->availableGeometry().width() - m_ls_size.width())/2);
+        pos.setX(x);
+        m_surfacePosition = pos;
+        qDebug() << "m_surfacePosition";
+    }
+    if(anchors == WlrLayerSurfaceV1::LeftAnchor)
+    {
+        // center on the left (OK)
+        auto pos = primaryView()->output()->geometry().topLeft();
+        auto y = floor((primaryView()->output()->geometry().height()
+                        - m_ls_size.height())/2);
+        pos.setY(y);
+        m_surfacePosition = pos;
+    }
+    if(anchors == WlrLayerSurfaceV1::RightAnchor)
+    {
+        // center on the right (OK)
+        auto pos = primaryView()->output()->geometry().topRight();
+        auto y = floor((primaryView()->output()->geometry().height()
+                        - m_ls_size.height())/2);
+        pos.setY(y);
+        pos.setX(pos.x() - m_ls_size.width());
+        m_surfacePosition = pos;
+    }
+    if(anchors == WlrLayerSurfaceV1::BottomAnchor)
+    {
+        // center on the bottom (OK)
+        auto pos = primaryView()->output()->geometry().bottomLeft();
+        auto x = floor((primaryView()->output()->geometry().width() - m_ls_size.width())/2);
+        pos.setX(x);
+        pos.setY(pos.y() - m_ls_size.height());
+        m_surfacePosition = pos;
     }
 
-    if(anchors & WlrLayerSurfaceV1::LeftAnchor || anchors & WlrLayerSurfaceV1::RightAnchor)
+    if(anchors == WlrLayerSurfaceV1::TopAnchor+WlrLayerSurfaceV1::LeftAnchor+WlrLayerSurfaceV1::RightAnchor)
     {
-        if(m_ls_size.height() == 0)
-            m_ls_size.setHeight(primaryView()->output()->geometry().height());
+        // spread out on the top (OK)
+        m_ls_size.setWidth(view->output()->geometry().width());
+        m_surfacePosition = primaryView()->output()->geometry().topLeft();
+    }
+    if(anchors == WlrLayerSurfaceV1::BottomAnchor+WlrLayerSurfaceV1::LeftAnchor+WlrLayerSurfaceV1::RightAnchor)
+    {
+        // spread out on the bottom
+        m_ls_size.setWidth(view->output()->geometry().width());
+        auto pos = primaryView()->output()->geometry().bottomLeft();
+        pos.setY(pos.y() - m_ls_size.height());
+        m_surfacePosition = pos;
+    }
+
+    if(anchors == WlrLayerSurfaceV1::LeftAnchor+WlrLayerSurfaceV1::TopAnchor+WlrLayerSurfaceV1::BottomAnchor)
+    {
+        // spread out on the left
+        m_ls_size.setHeight(view->output()->geometry().height());
+        m_surfacePosition = primaryView()->output()->geometry().topLeft();
+    }
+    if(anchors == WlrLayerSurfaceV1::RightAnchor+WlrLayerSurfaceV1::TopAnchor+WlrLayerSurfaceV1::BottomAnchor)
+    {
+        // spread out on the right
+        auto pos = primaryView()->output()->geometry().topRight();
+        pos.setX(pos.x()-m_ls_size.width());
+        m_surfacePosition = pos;
+        m_ls_size.setHeight(view->output()->geometry().height());
     }
 
     if(anchors == WlrLayerSurfaceV1::TopAnchor+WlrLayerSurfaceV1::LeftAnchor)
     {
-        m_surfacePosition = primaryView()->output()->position();
-        return;
+        // corner top-left
+        m_surfacePosition = primaryView()->output()->geometry().topLeft();
     }
-
-    if(anchors == WlrLayerSurfaceV1::TopAnchor)
-    {
-        QPoint pos = primaryView()->output()->position();
-        if(m_ls_size.width() < primaryView()->output()->geometry().width())
-        {
-            uint viewdiff = primaryView()->output()->geometry().width() - m_ls_size.width();
-            pos.setX(pos.x() + viewdiff/2);
-        }
-        m_surfacePosition = pos;
-        return;
-    }
-
     if(anchors == WlrLayerSurfaceV1::TopAnchor+WlrLayerSurfaceV1::RightAnchor)
     {
-        m_surfacePosition = primaryView()->output()->position();
-        return;
+        // corner top-right
+        auto pos = primaryView()->output()->geometry().topRight();
+        pos.setX(pos.x()-m_ls_size.width());
+        m_surfacePosition = pos;
     }
 
-    if(anchors == WlrLayerSurfaceV1::BottomAnchor)
+    if(anchors == WlrLayerSurfaceV1::TopAnchor+WlrLayerSurfaceV1::LeftAnchor)
     {
-        QPoint btmpos = primaryView()->output()->position();
-        if(m_ls_size.width() < primaryView()->output()->geometry().width())
-        {
-            uint viewdiff = primaryView()->output()->geometry().width() - m_ls_size.width();
-            btmpos.setY(btmpos.y() + viewdiff/2);
-        }
-        btmpos.setY(primaryView()->output()->geometry().height() - m_ls_size.height());
-        m_surfacePosition = btmpos;
-        return;
+        // corner bottom-left
+        auto pos = primaryView()->output()->geometry().bottomLeft();
+        pos.setY(pos.y()-m_ls_size.height());
+        m_surfacePosition = pos;
     }
-
-    if(anchors == WlrLayerSurfaceV1::BottomAnchor+WlrLayerSurfaceV1::LeftAnchor)
+    if(anchors == WlrLayerSurfaceV1::TopAnchor+WlrLayerSurfaceV1::RightAnchor)
     {
-        QPoint btmpos = primaryView()->output()->position();
-        btmpos.setX(primaryView()->output()->geometry().height() - m_ls_size.height());
-        m_surfacePosition = btmpos;
-        return;
+        // corner bottom-right
+        auto pos = primaryView()->output()->geometry().bottomRight();
+        pos.setX(pos.x()-m_ls_size.width());
+        pos.setY(pos.y()-m_ls_size.height());
+        m_surfacePosition = pos;
     }
 }
 

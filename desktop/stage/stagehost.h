@@ -45,7 +45,7 @@ private:
     bool m_ready = false;
     LayerShellQt::Window *m_lswnd;
     QScreen *m_screen = nullptr;
-    Alignment m_align = Horizontal;
+    Alignment m_align = Vertical;
     QVBoxLayout *m_vbox = nullptr;
     QHBoxLayout *m_hbox = nullptr;
     QSpacerItem *m_spacer = nullptr;

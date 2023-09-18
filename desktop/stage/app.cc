@@ -107,13 +107,13 @@ StageApplication::StageApplication(int &argc, char **argv)
 
     connect(m_notifier, &NotifierHost::buttonAdded, this, &StageApplication::createStatusButton);
     connect(m_notifier, &NotifierHost::buttonRemoved, this, &StageApplication::statusButtonRemoved);
+    if(m_southern)
+        setupMenuServer();
 
     m_host = new StageHost(primaryScreen());
     m_host->setClock(m_clock);
     m_host->setBattery(m_battery);
-    if(m_southern)
-        setupMenuServer();
-    else
+    if(!m_southern)
     {
         m_host->takeBattery();
         m_host->takeClock();

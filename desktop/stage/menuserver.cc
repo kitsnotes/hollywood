@@ -7,6 +7,8 @@
 
 #include <dbusmenuimporter.h>
 
+using namespace LayerShellQt;
+
 MenuServer::MenuServer(StageClock *clock, BatteryMonitor *battery, QScreen *screen, QWidget *parent)
     : QWidget(parent)
     , m_screen(screen)
@@ -21,8 +23,7 @@ MenuServer::MenuServer(StageClock *clock, BatteryMonitor *battery, QScreen *scre
     setWindowFlag(Qt::FramelessWindowHint, true);
     setMinimumHeight(1);
     setMaximumHeight(25);
-    setMaximumWidth(99999);
-    setMinimumWidth(300);
+    setMinimumWidth(StageApplication::primaryScreen()->geometry().width());
     //m_opposite->setMaximumHeight(25);
     m_menuBar->addMenu(StageApplication::instance()->systemMenu());
     m_menuBar->setStyleSheet("QMenuBar { height: 20px; }  ");
@@ -89,11 +90,11 @@ void MenuServer::show()
     QWidget::show();
     StageApplication::instance()->privateProtocolReady();
 
-    m_lswnd = LayerShellQt::Window::get(windowHandle());
-    m_lswnd->setAnchors(LayerShellQt::Window::AnchorTop);
+    m_lswnd = Window::get(windowHandle());
+    m_lswnd->setAnchors((Window::Anchors)Window::AnchorTop|LayerShellQt::Window::AnchorLeft|Window::AnchorRight);
     m_lswnd->setExclusiveZone(size().height());
+    m_lswnd->setSize(QSize(size().width(), size().height()));
     m_ready = true;
-    m_lswnd->setSize(QSize(0, size().height()));
     m_menuBar->setFixedHeight(this->size().height());
     m_menuBar->setMinimumHeight(size().height());
 }
