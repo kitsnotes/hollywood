@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=org.originull.updated
+Exec=/usr/libexec/hollywood/updated
+User=root
