@@ -1,5 +1,6 @@
 include(../../include/global-applet.pri)
 TEMPLATE = lib
+QT += dbus
 CONFIG += link_pkgconfig
 TARGET=49-sys-update
 INCLUDEPATH += /usr/include/ApkQt/

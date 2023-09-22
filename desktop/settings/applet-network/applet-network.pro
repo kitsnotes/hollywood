@@ -2,6 +2,7 @@ include(../../include/global-applet.pri)
 
 TEMPLATE = lib
 TARGET=54-network
+INCLUDEPATH += ../../shared/
 
 CONFIG(debug) {
     INCLUDEPATH += ../../libcmctl
@@ -12,10 +13,12 @@ CONFIG(release) {
 }
 
 SOURCES += \
-    netapplet.cc
+    netapplet.cc \
+    ../../shared/settingsdelegate.cc
 
 HEADERS += \
-    netapplet.h
+    netapplet.h \
+    ../../shared/settingsdelegate.h
 
 DISTFILES += \
     applet-network.json

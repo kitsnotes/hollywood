@@ -96,7 +96,8 @@ void SettingsWindow::menuAppletTriggered()
     QAction *action = qobject_cast<QAction*>(sender());
     Q_ASSERT(action);
 
-    showAppletWidget(m_appletActions.key(action));
+    auto actionKey = m_appletActions.key(action);
+    showAppletWidget(actionKey);
 }
 
 void SettingsWindow::setSingleMode(bool single)
@@ -220,7 +221,7 @@ void SettingsWindow::setupMenu()
     auto settings = m_menuBar->addMenu(tr("&Settings"));
     for(auto applet : m_model->applets())
     {
-        auto action = new QAction(applet->icon(), applet->name());
+        auto action = new QAction(applet->icon(), applet->name().replace("&", "&&"));
         action->setCheckable(true);
         m_appletActionGroup->addAction(action);
         m_appletActions.insert(applet,action);

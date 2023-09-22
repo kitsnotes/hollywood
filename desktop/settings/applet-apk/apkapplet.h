@@ -11,6 +11,7 @@
 #include <QtWidgets/QSpacerItem>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
+#include <QDBusInterface>
 
 #include <QtApkDatabaseAsync.h>
 
@@ -47,6 +48,8 @@ private:
     QLabel *lb_desc;
     QPushButton *m_update;
     QPushButton *m_select;
+
+    QDBusInterface* m_dbus;
 };
 
 #endif // APKAPPLET_H

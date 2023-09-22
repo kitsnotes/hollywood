@@ -13,6 +13,7 @@ StageHost::StageHost(QScreen *screen, QWidget *parent)
     , m_menu(new QToolButton(this))
     , m_sm(new SurfaceManager(this))
 {
+    qDebug() << "dpi ratio:" << window()->devicePixelRatio();
     m_spacer = new QSpacerItem(1,1,QSizePolicy::Expanding);
     m_trayspacer = new QSpacerItem(1,1,QSizePolicy::Fixed,QSizePolicy::Fixed);
     connect(m_sm, &SurfaceManager::windowCreated, this, &StageHost::createWindowButton);

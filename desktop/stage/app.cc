@@ -311,6 +311,7 @@ void StageApplication::configChanged()
 {
     qDebug() << "Stage: configChanged";
     loadSettings();
+    m_cfgwatch->addPath(m_configfile);
 }
 
 bool StageApplication::callSessionDBus(const QString &exec)
@@ -353,8 +354,11 @@ void StageApplication::loadSettings()
     qDebug() << "Stage: Loading Settings";
     QSettings settings(QSettings::UserScope,
        QLatin1String("originull"), QLatin1String("hollywood"));
-    m_configfile = settings.fileName();
-    qDebug() << m_configfile;
+    if(m_configfile.isEmpty())
+    {
+        m_configfile = settings.fileName();
+        qDebug() << m_configfile;
+    }
 
     settings.beginGroup("Bell");
     auto bell = settings.value("AudioFile", "/usr/share/sounds/Hollywood/Bell.wav").toString();

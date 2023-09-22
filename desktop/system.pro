@@ -6,6 +6,7 @@ include(include/global.pri)
 greaterThan(QT_MAJOR_VERSION, 5) {
 SUBDIRS = \
     about \
+    apkd \
     libcmctl \
     libcommdlg \
     libcompositor \

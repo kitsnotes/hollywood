@@ -194,6 +194,7 @@ void NetworkApplet::wifiMenuSelected(const QModelIndex &idx)
 
 void NetworkApplet::setupWidget()
 {
+    m_delegate = new SettingsSidebarDelegate(this);
     m_host = new QWidget(0);
     auto main_layout = new QHBoxLayout(m_host);
     m_interfaces = new QListView(m_host);
@@ -203,6 +204,7 @@ void NetworkApplet::setupWidget()
     sizePolicy.setHeightForWidth(m_interfaces->sizePolicy().hasHeightForWidth());
     m_interfaces->setSizePolicy(sizePolicy);
 
+    m_interfaces->setItemDelegate(m_delegate);
     m_details = new QFrame(m_host);
     m_details->setFrameShape(QFrame::StyledPanel);
     m_details->setFrameShadow(QFrame::Raised);
@@ -295,12 +297,14 @@ void NetworkApplet::setupWidget()
     lb_gateway->setText(QCoreApplication::translate("NetworkApplet", "Gateway:", nullptr));
     lb_dns->setText(QCoreApplication::translate("NetworkApplet", "DNS:", nullptr));
     lb_searchdom->setText(QCoreApplication::translate("NetworkApplet", "Search Domain:", nullptr));
-    m_wifiStatus->setText(QCoreApplication::translate("NetworkApplet", "Show Wi-Fi in menu bar", nullptr));
+    m_wifiStatus->setText(QCoreApplication::translate("NetworkApplet", "Show Wi-Fi in stage", nullptr));
     m_advanced->setText(QCoreApplication::translate("NetworkApplet", "Advanced...", nullptr));
     m_help->setIcon(QIcon::fromTheme("help-contextual"));
     m_help->setIconSize(QSize(22,22));
     l_wifiname->setText(QCoreApplication::translate("NetworkApplet", "Network Name:", nullptr));
     m_autoJoinWifi->setText(QCoreApplication::translate("NetworkApplet", "Automatically join this network", nullptr));
+
+    m_interfaces->setIconSize(QSize(64,64));
 
     m_wifiStatus->setVisible(false);
 

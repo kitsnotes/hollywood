@@ -1,5 +1,5 @@
 #include "apkapplet.h"
-
+#include <QDBusInterface>
 APKUpdateApplet::APKUpdateApplet(QObject *parent)
     : QObject(parent)
     , SettingsAppletInterface()
@@ -8,7 +8,12 @@ APKUpdateApplet::APKUpdateApplet(QObject *parent)
 
 bool APKUpdateApplet::init()
 {
+    m_dbus =
+        new QDBusInterface("org.originull.updated", "/", "org.originull.updated",
+                 QDBusConnection::systemBus(), this);
+
     setupWidget();
+    m_dbus->call("update");
     checkForUpdates();
     return true;
 }

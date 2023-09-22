@@ -25,8 +25,11 @@
 
 #include <connman.h>
 
+#include <settingsdelegate.h>
+
 #define HW_APP_HELP_TOPIC "settings/23-network"
 
+class SettingsSidebarDelegate;
 class NetworkApplet : public QObject, SettingsAppletInterface
 {
     Q_OBJECT
@@ -88,6 +91,8 @@ private:
     QCheckBox *m_wifiStatus;
     QPushButton *m_advanced;
     QToolButton *m_help;
+
+    SettingsSidebarDelegate *m_delegate;
 };
 
 #endif // NETAPPLET_H
