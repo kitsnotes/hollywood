@@ -14,12 +14,6 @@ StageClock::StageClock(QWidget *parent)
     , m_timer(new QTimer(this))
     , m_cal(new QCalendarWidget(this))
 {
-    QFont myFont = font();
-    myFont.setPointSize(myFont.pointSize()+1);
-    auto size = myFont.pointSize()+1;
-    size *= parent->window()->devicePixelRatio();
-    myFont.setPointSize(size);
-    setFont(myFont);
     m_cal->setDateEditEnabled(false);
     m_cal->setVerticalHeaderFormat(QCalendarWidget::NoVerticalHeader);
     QMenu *menu = new QMenu(this);
@@ -44,7 +38,6 @@ StageClock::StageClock(QWidget *parent)
     QSettings settings(QSettings::UserScope,
        QLatin1String("originull"), QLatin1String("hollywood"));
     settings.beginGroup("Stage");
-    //auto show_clock = settings.value("ShowClock", HOLLYWOOD_STCLK_SHOW).toBool();
     show_date = settings.value("ShowDateInClock", HOLLYWOOD_STCLK_USEDATE).toBool();
     show_seconds = settings.value("ShowSecondsInClock", HOLLYWOOD_STCLK_USESECONDS).toBool();
     show_24hr = settings.value("Use24HourClock", HOLLYWOOD_STCLK_24HOUR).toBool();
@@ -69,6 +62,23 @@ StageClock::StageClock(QWidget *parent)
     connect(m_timer, &QTimer::timeout, this, &StageClock::updateClock);
     updateClock();
     m_timer->start();
+}
+
+void StageClock::updateDpiAwareSettings()
+{
+    if(parent() == nullptr)
+        return;
+
+    auto w = qobject_cast<QWidget*>(parent());
+    if(w == nullptr)
+        return;
+
+    QFont myFont = font();
+    auto size = myFont.pointSize()+1;
+    size *= w->window()->devicePixelRatio();
+    myFont.setPointSize(qMax(10,size));
+    setFont(myFont);
+    qDebug() << "setting font size" << qMax(10,size) << w->window()->devicePixelRatio();
 }
 
 void StageClock::clockSettingsChanged(bool showClock, bool showDate, bool showSeconds, bool use24hr, bool ampm)

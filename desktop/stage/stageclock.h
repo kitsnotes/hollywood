@@ -11,6 +11,7 @@ class StageClock : public QToolButton
 public:
     explicit StageClock(QWidget *parent = nullptr);
 public slots:
+    void updateDpiAwareSettings();
     void clockSettingsChanged(bool showClock, bool showDate, bool showSeconds, bool use24hr, bool ampm);
 private slots:
     void updateClock();

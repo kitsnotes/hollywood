@@ -111,6 +111,7 @@ void StageHost::takeClock()
         m_hbox->addWidget(m_clock);
     else
         m_vbox->addWidget(m_clock);
+    m_clock->updateDpiAwareSettings();
 }
 
 void StageHost::setBattery(BatteryMonitor *battery)
@@ -125,6 +126,7 @@ void StageHost::takeBattery()
         m_hbox->addWidget(m_battery);
     else
         m_vbox->addWidget(m_battery);
+    m_battery->updateDpiAwareSettings();
 }
 
 void StageHost::setMainEnabled(bool enabled)

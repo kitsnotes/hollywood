@@ -10,6 +10,8 @@ class BatteryMonitor : public QToolButton
 {
 public:
     BatteryMonitor(QWidget *parent = nullptr);
+public slots:
+    void updateDpiAwareSettings();
 private slots:
     void batteryChanged();
 private:

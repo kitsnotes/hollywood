@@ -9,12 +9,6 @@ BatteryMonitor::BatteryMonitor(QWidget *parent)
     , m_menu(new QMenu(this))
     , m_upower(new UPowerInterface(this))
 {
-/*    QFont myFont = font();
-    myFont.setPointSize(myFont.pointSize()+1);
-    auto size = myFont.pointSize()+1;
-    size *= parent->window()->devicePixelRatio();
-    myFont.setPointSize(size);
-    setFont(myFont);*/
     setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     setAutoRaise(true);
     setPopupMode(QToolButton::InstantPopup);
@@ -54,6 +48,22 @@ BatteryMonitor::BatteryMonitor(QWidget *parent)
     }
     if(m_battery == nullptr)
         setVisible(false);
+}
+
+void BatteryMonitor::updateDpiAwareSettings()
+{
+    if(parent() == nullptr)
+        return;
+
+    auto w = qobject_cast<QWidget*>(parent());
+    if(w == nullptr)
+        return;
+
+    QFont myFont = font();
+    auto size = myFont.pointSize()+1;
+    size *= w->window()->devicePixelRatio();
+    myFont.setPointSize(qMax(10,size));
+    setFont(myFont);
 }
 
 void BatteryMonitor::batteryChanged()
