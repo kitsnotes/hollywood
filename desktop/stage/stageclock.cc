@@ -14,6 +14,12 @@ StageClock::StageClock(QWidget *parent)
     , m_timer(new QTimer(this))
     , m_cal(new QCalendarWidget(this))
 {
+    QFont myFont = font();
+    myFont.setPointSize(myFont.pointSize()+1);
+    auto size = myFont.pointSize()+1;
+    size *= parent->window()->devicePixelRatio();
+    myFont.setPointSize(size);
+    setFont(myFont);
     m_cal->setDateEditEnabled(false);
     m_cal->setVerticalHeaderFormat(QCalendarWidget::NoVerticalHeader);
     QMenu *menu = new QMenu(this);

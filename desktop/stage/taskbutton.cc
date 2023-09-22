@@ -8,10 +8,13 @@ TaskButton::TaskButton(PlasmaWindow *wnd, QWidget *parent)
     ,m_window(wnd)
     ,m_context(new QMenu(this))
 {
-    setMinimumHeight(20);
+    //setMinimumHeight(20);
 
     QFont myFont = font();
     myFont.setPointSize(myFont.pointSize()+1);
+    auto size = myFont.pointSize()+1;
+    size *= parent->window()->devicePixelRatio();
+    myFont.setPointSize(size);
     setFont(myFont);
     setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     connect(wnd, &PlasmaWindow::themeIconChanged,

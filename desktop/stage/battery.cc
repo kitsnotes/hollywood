@@ -9,9 +9,12 @@ BatteryMonitor::BatteryMonitor(QWidget *parent)
     , m_menu(new QMenu(this))
     , m_upower(new UPowerInterface(this))
 {
-    QFont myFont = font();
+/*    QFont myFont = font();
     myFont.setPointSize(myFont.pointSize()+1);
-    setFont(myFont);
+    auto size = myFont.pointSize()+1;
+    size *= parent->window()->devicePixelRatio();
+    myFont.setPointSize(size);
+    setFont(myFont);*/
     setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     setAutoRaise(true);
     setPopupMode(QToolButton::InstantPopup);

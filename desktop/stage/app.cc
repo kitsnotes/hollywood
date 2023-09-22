@@ -45,10 +45,6 @@ StageApplication::StageApplication(int &argc, char **argv)
     setApplicationName("Stage");
     setWindowIcon(QIcon::fromTheme("system-file-manager"));
 
-    QFont font = m_clock->font();
-    font.setPointSize(font.pointSize()+1);
-    m_clock->setFont(font);
-
     m_context->menuAction()->setData(9195521);
     m_context->menuAction()->setIcon(QIcon::fromTheme("hollywood-logo"));
 

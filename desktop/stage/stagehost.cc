@@ -21,6 +21,8 @@ StageHost::StageHost(QScreen *screen, QWidget *parent)
 
     auto app = StageApplication::instance();
     setWindowFlag(Qt::FramelessWindowHint, true);
+    auto iconsize = QSize(32,32);
+    iconsize *= window()->devicePixelRatio();
     m_menu->setIcon(QIcon::fromTheme("hollywood-logo"));
     m_menu->setAutoRaise(true);
     m_menu->setPopupMode(QToolButton::InstantPopup);
@@ -32,7 +34,11 @@ StageHost::StageHost(QScreen *screen, QWidget *parent)
     setMinimumWidth(650);
 
     QFont font = m_menu->font();
-    font.setPointSize(font.pointSize()+1);
+    auto size = font.pointSize()+1;
+    qDebug() << size;
+    size *= window()->devicePixelRatio();    
+    qDebug() << size;
+    font.setPointSize(size);
     if(m_clock)
         m_clock->setFont(font);
     m_menu->setFont(font);
@@ -84,7 +90,9 @@ void StageHost::setAlignment(Alignment align)
         }
         //m_hbox->addWidget(m_shutdown);
         setLayout(m_hbox);
-        setMinimumHeight(32);
+	auto minheight = 30;
+	minheight *= window()->devicePixelRatio();
+        setMinimumHeight(minheight);
         setMaximumWidth(99999);
         setMinimumWidth(650);
         break;
@@ -138,8 +146,8 @@ void StageHost::show()
     setMinimumWidth(StageApplication::primaryScreen()->geometry().width());
     QWidget::show();
     m_lswnd = LayerShellQt::Window::get(windowHandle());
-    //m_lswnd->setAnchors(LayerShellQt::Window::AnchorBottom);
-    m_lswnd->setAnchors((LayerShellQt::Window::Anchors)LayerShellQt::Window::AnchorBottom|LayerShellQt::Window::AnchorLeft|LayerShellQt::Window::AnchorRight);
+    m_lswnd->setAnchors(LayerShellQt::Window::AnchorBottom);
+    //m_lswnd->setAnchors((LayerShellQt::Window::Anchors)LayerShellQt::Window::AnchorBottom|LayerShellQt::Window::AnchorLeft|LayerShellQt::Window::AnchorRight);
     m_lswnd->setExclusiveZone(size().height());
 
     m_ready = true;
