@@ -20,15 +20,31 @@ MenuServer::MenuServer(StageClock *clock, BatteryMonitor *battery, QScreen *scre
     , m_battery(battery)
     , vl_opposite(new QHBoxLayout)
 {
+    m_clock->setParent(this);
+    m_battery->setParent(this);
+    m_clock->updateDpiAwareSettings();
+    m_battery->updateDpiAwareSettings();
+
     setWindowFlag(Qt::FramelessWindowHint, true);
     setMinimumHeight(1);
     setMaximumHeight(25);
-    setMinimumWidth(StageApplication::primaryScreen()->geometry().width());
+    auto w = StageApplication::primaryScreen()->geometry().width();
+    w *= window()->devicePixelRatio();
+    setMinimumWidth(w);
+    QFont font = m_menuBar->font();
+    auto size = font.pointSize()+1;
+    size *= window()->devicePixelRatio();
+    font.setPointSize(size);
+    QFontMetrics m(font);
+    auto minheight = m.height()+2;
+    setMinimumHeight(minheight);
     //m_opposite->setMaximumHeight(25);
+    
     m_menuBar->addMenu(StageApplication::instance()->systemMenu());
-    m_menuBar->setStyleSheet("QMenuBar { height: 20px; }  ");
+    
+    m_menuBar->setStyleSheet("QMenuBar { height: 22px; }  ");
     m_menuBar->setFixedHeight(this->size().height());
-    m_menuBar->setMinimumHeight(size().height());
+    m_menuBar->setFont(font);
     // TODO: RTL Layout
     m_layout->addWidget(m_menuBar);
     m_layout->setStretch(0,1);
@@ -91,7 +107,8 @@ void MenuServer::show()
     StageApplication::instance()->privateProtocolReady();
 
     m_lswnd = Window::get(windowHandle());
-    m_lswnd->setAnchors((Window::Anchors)Window::AnchorTop|LayerShellQt::Window::AnchorLeft|Window::AnchorRight);
+    m_lswnd->setAnchors((Window::Anchors)Window::AnchorTop);
+//    m_lswnd->setAnchors((Window::Anchors)Window::AnchorTop|LayerShellQt::Window::AnchorLeft|Window::AnchorRight);
     m_lswnd->setExclusiveZone(size().height());
     m_lswnd->setSize(QSize(size().width(), size().height()));
     m_ready = true;
