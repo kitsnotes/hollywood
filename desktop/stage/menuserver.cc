@@ -27,7 +27,7 @@ MenuServer::MenuServer(StageClock *clock, BatteryMonitor *battery, QScreen *scre
 
     setWindowFlag(Qt::FramelessWindowHint, true);
     setMinimumHeight(1);
-    setMaximumHeight(25);
+    setMaximumHeight(30);
     auto w = StageApplication::primaryScreen()->geometry().width();
     w *= window()->devicePixelRatio();
     setMinimumWidth(w);
@@ -36,13 +36,16 @@ MenuServer::MenuServer(StageClock *clock, BatteryMonitor *battery, QScreen *scre
     size *= window()->devicePixelRatio();
     font.setPointSize(size);
     QFontMetrics m(font);
-    auto minheight = m.height()+2;
+    auto minheight = m.height()+8;
     setMinimumHeight(minheight);
+    setMaximumHeight(minheight);
+
+    qDebug() << "minimumheight" << minheight;
     //m_opposite->setMaximumHeight(25);
     
     m_menuBar->addMenu(StageApplication::instance()->systemMenu());
     
-    m_menuBar->setStyleSheet("QMenuBar { height: 22px; }  ");
+    m_menuBar->setStyleSheet(QString("QMenuBar { height: %1px; }  ").arg(QString::number(minheight-7)));
     m_menuBar->setFixedHeight(this->size().height());
     m_menuBar->setFont(font);
     // TODO: RTL Layout
