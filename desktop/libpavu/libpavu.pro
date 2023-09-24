@@ -3,10 +3,11 @@ QT += gui widgets
 
 TEMPLATE = lib
 DEFINES += LIBPAVU_LIBRARY
-TARGET = libpavu-$${HOLLYWOOD_APIVERSION}
+TARGET = pavu-$${HOLLYWOOD_APIVERSION}
 CONFIG += c++17 link_pkgconfig
 DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000
 PKGCONFIG += glib-2.0 libpulse libpulse-mainloop-glib
+INCLUDEPATH += /usr/include/glib-2.0 /usr/include/glib-2.0/include
 INCLUDEPATH += $$PWD $$PWD/hollywood/
 
 SOURCES += \

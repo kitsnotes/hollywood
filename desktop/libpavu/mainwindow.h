@@ -24,7 +24,7 @@
 #include "pulsecontrol.h"
 
 #include <QDialog>
-#include "ui_mainwindow.h"
+#include <ui_mainwindow.h>
 
 class CardWidget;
 class SinkWidget;

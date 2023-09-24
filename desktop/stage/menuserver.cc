@@ -79,9 +79,13 @@ void MenuServer::installMenu(QMenu *menu)
                 activateWindow();
                 setFocus();
             });
-            auto c = connect(m, &QMenu::triggered, [](QAction *act){
+            /* auto c = connect(m, &QMenu::triggered, [](QAction *act){
                 qDebug() << act->text();
-            });
+                auto id = act->property("_dbusmenu_id").toInt();
+                auto impoter = StageApplication::instance()->importer();
+                if(importer)
+                    importer->
+            }); */
             m_connections.insert(m, c);
         }
         else

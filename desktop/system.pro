@@ -33,7 +33,8 @@ SUBDIRS = \
     calculator \
     popular \
     appstub \
-    notificationd
+    notificationd \
+    volctl
 
     libshell.depends = libcompositor libcommdlg
     eglfs.depends = libhwudev libhwlogind
@@ -49,6 +50,7 @@ SUBDIRS = \
     session.depends = libshell
     sysmon.depends = libshell libcommdlg
     popular.depends = libshell libcommdlg
+    volctl.dependns = libpavu
 }
 
 # We only build libraries on Qt5

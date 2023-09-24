@@ -31,7 +31,7 @@ void PulseControl::connectToPulse()
 
     pa_proplist *proplist = pa_proplist_new();
     pa_proplist_sets(proplist, PA_PROP_APPLICATION_NAME, QObject::tr("Volume Control").toUtf8().constData());
-    pa_proplist_sets(proplist, PA_PROP_APPLICATION_ID, "org.originull.soundsettings");
+    pa_proplist_sets(proplist, PA_PROP_APPLICATION_ID, "org.PulseAudio.soundsettings");
     pa_proplist_sets(proplist, PA_PROP_APPLICATION_ICON_NAME, "audio-card");
     pa_proplist_sets(proplist, PA_PROP_APPLICATION_VERSION, PACKAGE_VERSION);
 
