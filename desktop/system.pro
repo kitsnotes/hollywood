@@ -12,6 +12,7 @@ SUBDIRS = \
     libcompositor \
     libhwlogind \
     libhwudev \
+    libpavu \
     platformtheme \
     platformplugin \
     editor \
@@ -34,17 +35,17 @@ SUBDIRS = \
     appstub \
     notificationd
 
-    libshell.depends = libcompositor
+    libshell.depends = libcompositor libcommdlg
     eglfs.depends = libhwudev libhwlogind
     compositor.depends = libcompositor libshell eglfs
     shellfm.depends = libshell libcompositor libcommdlg
     editor.depends = libcommdlg
     calculator.depends = libcommdlg
     platformtheme.depends = libcommdlg libshell
-    settings.depends = libshell libcommdlg
+    settings.depends = libshell libcommdlg libpavu
     menuserver.depends = libshell libcompositor
     terminal.depends = libcommdlg
-    stage.depends = libcompositor libshell
+    stage.depends = libcompositor libshell libpavu
     session.depends = libshell
     sysmon.depends = libshell libcommdlg
     popular.depends = libshell libcommdlg
