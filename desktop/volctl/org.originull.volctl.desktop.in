@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Exec=volctl
+Name=Volume Control
+GenericName=Volume Control
+Terminal=false
+Icon=multimedia-volume-control
+StartupNotify=true
+Type=Application
+Categories=Qt;AudioVideo;Audio;Settings;DesktopSettings;
