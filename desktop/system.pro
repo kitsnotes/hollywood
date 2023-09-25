@@ -34,7 +34,8 @@ SUBDIRS = \
     popular \
     appstub \
     notificationd \
-    volctl
+    volctl \
+    quickweb
 
     libshell.depends = libcompositor libcommdlg
     eglfs.depends = libhwudev libhwlogind
@@ -50,7 +51,8 @@ SUBDIRS = \
     session.depends = libshell
     sysmon.depends = libshell libcommdlg
     popular.depends = libshell libcommdlg
-    volctl.dependns = libpavu
+    volctl.depends = libpavu
+    quickweb.depends = libcommdlg
 }
 
 # We only build libraries on Qt5

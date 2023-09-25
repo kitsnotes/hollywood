@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Exec=quickweb
+Icon=internet-web-browser
+Name=QuickWeb
+Comment=Basic Web Browser
+Categories=Network;WebBrowser;Qt;Holywood;
+MimeType=text/html;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/ftp;application/x-mimearchive;
+Terminal=false
