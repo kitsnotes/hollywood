@@ -193,8 +193,18 @@ void OutputWindow::recursiveDrawTextureForObject(Surface *obj)
 
 void OutputWindow::drawTextureForObject(Surface *obj)
 {
+    if(obj == nullptr)
+        return;
+
     if(!obj->surfaceReadyToRender())
         return;
+
+    if(!hwComp->surfaceObjects().contains(obj))
+    {
+        qDebug() << "OutputWindow::drawTextureForObject: attempting to render recycled object";
+        return;
+    }
+
     bool useShadow = obj->shadowSize() > 1 ? true : false;
     QRect dispRect(m_output->wlOutput()->position(), m_output->size());
     QRect objRect(obj->decoratedRect().toRect());
@@ -582,12 +592,22 @@ Surface* OutputWindow::surfaceAt(const QPointF &point)
 
 void OutputWindow::startMove()
 {
+    if(m_mouseSelectedSurfaceObject == nullptr)
+    {
+        qDebug() << "OutputWindow::startMove: mouseSelectedSurfaceObject is null";
+        return;
+    }
     m_grabState = MoveGrab;
     m_mouseSelectedSurfaceObject->startMove();
 }
 
 void OutputWindow::startResize(int edge, bool anchored)
 {
+    if(m_mouseSelectedSurfaceObject == nullptr)
+    {
+        qDebug() << "OutputWindow::startMove: mouseSelectedSurfaceObject is null";
+        return;
+    }
     m_initialSize = m_mouseSelectedSurfaceObject->surfaceSize();
     m_grabState = ResizeGrab;
     m_resizeEdge = edge;
@@ -598,6 +618,11 @@ void OutputWindow::startResize(int edge, bool anchored)
 
 void OutputWindow::startDrag(Surface *dragIcon)
 {
+    if(m_mouseSelectedSurfaceObject == nullptr)
+    {
+        qDebug() << "OutputWindow::startMove: mouseSelectedSurfaceObject is null";
+        return;
+    }
     m_grabState = DragGrab;
     m_dragIconSurfaceObject = dragIcon;
     hwComp->raise(dragIcon);

@@ -124,9 +124,6 @@ void WlrScreencopyFrameV1::zwlr_screencopy_frame_v1_copy_with_damage(Resource *r
 
 void WlrScreencopyFrameV1::handleCopy(Resource *resource, wl_resource *buffer, bool handleDamage)
 {
-    // TODO: fix this to handle damage regions
-    Q_UNUSED(handleDamage);
-
     auto *shm = wl_shm_buffer_get(buffer);
     if(!shm)
     {
@@ -139,5 +136,18 @@ void WlrScreencopyFrameV1::handleCopy(Resource *resource, wl_resource *buffer, b
     int32_t height = wl_shm_buffer_get_height(shm);
     int32_t stride = wl_shm_buffer_get_stride(shm);
 
+    if (format != m_requestedBufferFormat || width != m_region.width() ||
+        height != m_region.height() || stride != stride) {
+        qWarning("WlrScreencopyFrameV1: Invalid buffer attributes");
+        wl_resource_post_error(resource->handle, error_invalid_buffer,
+                               "invalid buffer attributes");
+        return;
+    }
 
+    if (m_withDamage)
+        send_damage(m_damageRect.x(), m_damageRect.y(), m_damageRect.width(), m_damageRect.height());
+
+    m_ready = true;
+    m_buffer = shm;
+    emit ready();
 }

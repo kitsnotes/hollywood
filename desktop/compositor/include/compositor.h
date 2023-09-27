@@ -23,6 +23,7 @@
 #include <QFileSystemWatcher>
 #include <QDebug>
 #include <QOpenGLContext>
+#include <QLoggingCategory>
 
 #define BUTTON_SPACING 5
 #define BUTTON_WIDTH 18

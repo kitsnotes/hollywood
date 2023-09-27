@@ -10,7 +10,7 @@
 //#include <QWaylandQuickExtension>
 #include <QWaylandCompositor>
 #include <QWaylandResource>
-
+#include <wayland-server.h>
 #include "qwayland-server-wlr-screencopy-unstable-v1.h"
 
 class Compositor;
@@ -46,6 +46,8 @@ protected:
     void zwlr_screencopy_frame_v1_copy(Resource *resource, struct ::wl_resource *buffer) override;
     void zwlr_screencopy_frame_v1_destroy(Resource *resource) override;
     void zwlr_screencopy_frame_v1_copy_with_damage(Resource *resource, struct ::wl_resource *buffer) override;
+signals:
+    void ready();
 private:
     void handleCopy(Resource *resource, struct ::wl_resource *buffer, bool handleDamage);
 private:
@@ -55,6 +57,15 @@ private:
     int32_t m_overlayCursor;
     bool m_capRegion = false;
     QRect m_region;
+    bool m_ready = false;
+
+    bool m_withDamage = false;
+    QRect m_damageRect;
+    wl_shm_format m_requestedBufferFormat = WL_SHM_FORMAT_ARGB8888;
+
+    quint32 m_tv_sec_hi = 0, m_tv_sec_lo = 0;
+
+    struct ::wl_shm_buffer *m_buffer = nullptr;
 };
 
 #endif // WLRSCREENCOPYV1_H

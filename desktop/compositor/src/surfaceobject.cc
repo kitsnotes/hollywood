@@ -28,6 +28,8 @@
 
 #include "../libshell/include/desktopentry.h"
 
+QLoggingCategory lcs("surface");
+
 Surface::Surface(QWaylandSurface *surface)
     : QObject(nullptr)
     ,  m_surfaceType(Unknown)
@@ -35,6 +37,7 @@ Surface::Surface(QWaylandSurface *surface)
 {
     m_uuid = QUuid::createUuid();
     m_id = hwComp->nextId();
+    qDebug(lcs) << QString("Surface::Surface %1").arg(m_uuid.toString(QUuid::WithoutBraces));
     connect(m_surface, &QWaylandSurface::surfaceDestroyed, this, &Surface::surfaceDestroyed);
     connect(m_surface, &QWaylandSurface::hasContentChanged, hwComp, &Compositor::surfaceHasContentChanged);
     connect(m_surface, &QWaylandSurface::redraw, hwComp, &Compositor::triggerRender);    
@@ -43,13 +46,12 @@ Surface::Surface(QWaylandSurface *surface)
     connect(m_surface, &QWaylandSurface::destinationSizeChanged, this, &Surface::onDestinationSizeChanged);
     connect(m_surface, &QWaylandSurface::bufferScaleChanged, this, &Surface::onBufferScaleChanged);
     connect(m_surface, &QWaylandSurface::childAdded, this, &Surface::onChildAdded);
-
-
     // TODO: multi-monitor suppot
 }
 
 Surface::~Surface()
 {
+    qDebug(lcs) << QString("Surface::~Surface %1").arg(m_uuid.toString(QUuid::WithoutBraces));
     if(m_loadTimer)
     {
         m_loadTimer->stop();
@@ -582,6 +584,7 @@ void Surface::setParentSurfaceObject(Surface *parent)
 
 void Surface::createPlasmaWindowControl()
 {
+    qDebug(lcs) << QString("Surface::createPlasmaWindowControl %1").arg(m_uuid.toString(QUuid::WithoutBraces));
     m_wndctl = hwComp->m_wndmgr->createWindowControl(this);
     m_wndctl->setCloseable(true);
     m_wndctl->setMinimizable(true);
@@ -1486,23 +1489,20 @@ void Surface::onLayerShellXdgPopupParentChanged(HWWaylandXdgPopup *popup)
 
 void Surface::recalculateLayerShellAnchorPosition()
 {
-    qDebug() << "recalculateLayerShellAnchorPosition" << m_uuid.toString() << m_ls_size;
+    qDebug(lcs) << "Surface::recalculateLayerShellAnchorPosition" << m_uuid.toString(QUuid::WithoutBraces) << m_ls_size;
     if(!m_ls_size.isValid())
         return;
 
     auto anchors = m_layerSurface->anchors();
     auto view = primaryView();
 
-    qDebug() << "placing";
     if(anchors == WlrLayerSurfaceV1::TopAnchor)
     {
-        qDebug() << "placing top";
         // center on the top (OK)
         auto pos = primaryView()->output()->availableGeometry().topLeft();
         auto x = floor((primaryView()->output()->availableGeometry().width() - m_ls_size.width())/2);
         pos.setX(x);
         m_surfacePosition = pos;
-        qDebug() << "m_surfacePosition";
     }
     if(anchors == WlrLayerSurfaceV1::LeftAnchor)
     {
