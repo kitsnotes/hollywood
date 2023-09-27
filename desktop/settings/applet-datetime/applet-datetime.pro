@@ -2,7 +2,7 @@ include(../../include/global-applet.pri)
 
 TEMPLATE = lib
 CONFIG += link_pkgconfig
-TARGET=50-datetime
+TARGET=51-datetime
 
 PKGCONFIG += polkit-qt6-1 polkit-qt6-gui-1
 SOURCES += \

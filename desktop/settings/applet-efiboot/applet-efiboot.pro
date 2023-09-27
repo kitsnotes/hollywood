@@ -2,7 +2,7 @@ include(../../include/global-applet.pri)
 TEMPLATE = lib
 QT += network core5compat
 CONFIG += link_pkgconfig
-TARGET=56-efiboot
+TARGET=61-efiboot
 
 INCLUDEPATH += /usr/include/efivar
 

@@ -16,7 +16,6 @@ void SettingsSidebarDelegate::drawText(QPainter *painter, QStyleOptionViewItem &
     QTextOption textOption;
     textOption.setAlignment(opt.displayAlignment);
     textOption.setWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
-    // FIXME:     textOption.setTextDirection(opt.direction); ?
     if(opt.text.isRightToLeft())
         textOption.setTextDirection(Qt::RightToLeft);
     else
@@ -28,6 +27,7 @@ void SettingsSidebarDelegate::drawText(QPainter *painter, QStyleOptionViewItem &
     int visibleLines = 0;
     layout.beginLayout();
     QString elidedText;
+
     textRect.adjust(2, 2, -2, -2); // a 2-px margin is considered at FolderView::updateGridSize()
     for(;;) {
         QTextLine line = layout.createLine();
@@ -134,13 +134,6 @@ QSize SettingsSidebarDelegate::sizeHint(const QStyleOptionViewItem &option, cons
     if(value.isValid())
         return qvariant_cast<QSize>(value);
 
-
-    if(option.decorationPosition == QStyleOptionViewItem::Top ||
-        option.decorationPosition == QStyleOptionViewItem::Bottom) {
-        // we handle vertical layout just by returning our item size
-        return m_itemSize;
-    }
-
     // The default size hint of the horizontal layout isn't reliable
     // because Qt calculates the row size based on the real icon size,
     // which may not be equal to the requested icon size on various occasions.
@@ -161,47 +154,45 @@ void SettingsSidebarDelegate::paint(QPainter *painter, const QStyleOptionViewIte
     QStyleOptionViewItem opt = option;
     initStyleOption(&opt, index);
 
-    // vertical layout (icon mode, thumbnail mode)
-    if(option.decorationPosition == QStyleOptionViewItem::Top ||
-        option.decorationPosition == QStyleOptionViewItem::Bottom) {
-        painter->save();
-        painter->setClipRect(option.rect);
-
-        opt.decorationAlignment = Qt::AlignHCenter | Qt::AlignTop;
-        opt.displayAlignment = Qt::AlignTop | Qt::AlignHCenter;
-
-        // draw the icon
-        QIcon::Mode iconMode = QIcon::Normal; //iconModeFromState(opt.state & ~QStyle::State_Selected);
-        QPoint iconPos(opt.rect.x() + (opt.rect.width() - option.decorationSize.width()) / 2, opt.rect.y()
-                                                                                                  /*+ p->m_margins.height()*/);
-        QRect iconRect(iconPos, option.decorationSize);
-        opt.icon.paint(painter, iconRect, Qt::AlignCenter, iconMode);
-
-        // draw the text
-        QSize drawAreaSize = itemSize(); //p->m_itemSize - 2 * p->m_margins;
-        // The text rect dimensions should be exactly as they were in sizeHint()
-        QRectF textRect(opt.rect.x() + (opt.rect.width() - drawAreaSize.width()) / 2,
-                        opt.rect.y() /*+ p->m_margins.height()*/ + option.decorationSize.height(),
-                        drawAreaSize.width(),
-                        drawAreaSize.height() - option.decorationSize.height());
-        drawText(painter, opt, textRect);
-        painter->restore();
-    }
-    else
+    if(option.state & QStyle::State_Selected)
     {
-        // horizontal layout (list view)
-
-        const QWidget* widget = opt.widget;
-        QStyle* style = widget ? widget->style() : QApplication::style();
-        style->drawControl(QStyle::CE_ItemViewItem, &opt, painter, widget);
-
-        // draw some emblems for the item if needed
-        QRect iconRect = style->subElementRect(QStyle::SE_ItemViewItemDecoration, &opt, widget);
-        iconRect.setSize(option.decorationSize / 2);
-/*        if(symlink)
-            p->m_symlinkIcon.paint(painter, iconRect, Qt::AlignCenter, iconMode);*/
-
+        painter->fillRect(opt.rect, option.palette.highlight());
+        painter->setBrush(option.palette.highlightedText());
+        painter->setPen(Qt::white);
     }
+    // paint the icon
+    QPoint iconPos(opt.rect.topLeft());
+    iconPos.setX(iconPos.x()+1);
+    iconPos.setY(iconPos.y()+1);
+    QRect iconRect(iconPos, option.decorationSize);
+    opt.icon.paint(painter, iconRect, Qt::AlignCenter);
+
+    QString title = index.data(Qt::DisplayRole).toString();
+    QString description = index.data(Qt::UserRole + 1).toString();
+
+    QPoint textStart(iconPos.x()+55,iconPos.y());
+    QSize textSize(option.rect.size());
+    textSize.setWidth(textSize.width()-55);
+    QRect textRect(textStart, textSize);
+    opt.font.setBold(true);
+    opt.font.setPointSize(opt.font.pointSize()+1);
+    painter->setFont(opt.font);
+    QFontMetrics m(opt.font);
+    textRect.setHeight(m.height()+2);
+    QRect out;
+    painter->drawText(textRect.left(), textRect.top(),
+                      textRect.width(), textRect.height(),
+                      Qt::AlignTop|Qt::AlignLeft|Qt::TextWordWrap,
+                      title, &out);
+
+    opt.font.setBold(false);
+    opt.font.setPointSize(opt.font.pointSize()-2);
+    painter->setFont(opt.font);
+    painter->drawText(textRect.left(), textRect.top()+m.height()+1,
+                      textRect.width(), textRect.height(),
+                      Qt::AlignTop|Qt::AlignLeft|Qt::TextWordWrap,
+                      description, &out);
+//    /painter->restore();
 }
 
 QIcon::Mode SettingsSidebarDelegate::iconModeFromState(QStyle::State state)
