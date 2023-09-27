@@ -33,6 +33,7 @@ void ApkUpdateDaemon::update()
 
     m_currentTransaction = m_db->updatePackageIndex();
     connect(m_currentTransaction, &QtApk::Transaction::finished, [this]() {
+        m_busy = false;
         m_currentTransaction->deleteLater();
         m_currentTransaction = nullptr;
     });
@@ -45,6 +46,7 @@ void ApkUpdateDaemon::update()
     connect(m_currentTransaction, &QtApk::Transaction::errorOccured, [this](QString msg) {
         emit errorOccured(msg);
     });
+    m_busy = true;
     m_currentTransaction->start();
     touchUpdateConf();
 }
@@ -76,7 +78,8 @@ void ApkUpdateDaemon::touchUpdateConf()
 
 void ApkUpdateDaemon::upgrade(int flags)
 {
-    Q_UNUSED(flags)
+    qDebug() << "ApkUpdateDaemon::upgrade" << flags;
+//    Q_UNUSED(flags)
     if(m_currentTransaction)
     {
         emit errorOccured(tr("Can not proceed with package installation. Transaction already in progress"));
@@ -96,6 +99,11 @@ void ApkUpdateDaemon::upgrade(int flags)
     connect(m_currentTransaction, &QtApk::Transaction::finished, [this]() {
         m_currentTransaction->deleteLater();
         m_currentTransaction = nullptr;
+        m_busy = false;
+        if(m_close)
+        {
+            // TODO: timer to close up
+        }
     });
     connect(m_currentTransaction, &QtApk::Transaction::descChanged, [this]() {
         emit transactionMessage(m_currentTransaction->desc());
@@ -106,7 +114,16 @@ void ApkUpdateDaemon::upgrade(int flags)
     connect(m_currentTransaction, &QtApk::Transaction::errorOccured, [this](QString msg) {
         emit errorOccured(msg);
     });
+    m_busy = true;
     m_currentTransaction->start();
+}
+
+void ApkUpdateDaemon::closeWhenReady()
+{
+    if(!m_busy)
+        qApp->quit();
+    else
+        m_close = true;
 }
 
 void ApkUpdateDaemon::addPackage(QString package)

@@ -17,9 +17,11 @@ public:
 public slots:
     void update();
     void upgrade(int flags);
+    void closeWhenReady();
     void addPackage(QString package);
     void delPackage(QString package);
     void startHelper();
+    bool isBusy() { return m_busy; }
 signals:
     void transactionProgress(float progress);
     void transactionMessage(QString msg);
@@ -29,6 +31,7 @@ private:
     void touchUpdateConf();
 private:
     bool m_busy = false;
+    bool m_close = false;
     QtApk::DatabaseAsync *m_db = nullptr;
     QtApk::Transaction *m_currentTransaction = nullptr;
 };
