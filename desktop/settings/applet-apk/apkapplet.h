@@ -12,7 +12,7 @@
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
 #include <QDBusInterface>
-
+#include <QProgressBar>
 #include <QtApkDatabaseAsync.h>
 
 #define HW_APP_HELP_TOPIC "settings/25-swupdate"
@@ -38,18 +38,29 @@ public:
     Category category() const;
     QString helpTopic() const  { return QString(HW_APP_HELP_TOPIC); }
     QStringList searchTokens() const;
+private slots:
+    void transactionFinished();
+    void transactionProgress(double progress);
+    void transactionMessage(QString message);
+    void startUpdates();
+    void doUpdateCheck();
 private:
     void setupWidget();
     void checkForUpdates();
+    bool isCurrentlyRunning();
+    bool connectForUpdates();
     QWidget* m_host = nullptr;
     QVBoxLayout *mainLayout = nullptr;
 
     QLabel *lb_updates;
     QLabel *lb_desc;
     QPushButton *m_update;
-    QPushButton *m_select;
+    QPushButton *m_details;
 
+    QProgressBar *m_progress = nullptr;
     QDBusInterface* m_dbus;
 };
+
+
 
 #endif // APKAPPLET_H
