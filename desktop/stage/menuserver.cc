@@ -86,7 +86,7 @@ void MenuServer::installMenu(QMenu *menu)
                 if(importer)
                     importer->
             }); */
-            m_connections.insert(m, c);
+            //m_connections.insert(m, c);
         }
         else
             m_menuBar->addAction(a);
