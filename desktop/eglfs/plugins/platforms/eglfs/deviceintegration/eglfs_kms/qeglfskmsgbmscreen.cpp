@@ -436,3 +436,9 @@ void HWEglFSKmsGbmScreen::updateFlipStatus()
     m_gbm_bo_current = m_gbm_bo_next;
     m_gbm_bo_next = nullptr;
 }
+
+bool HWEglFSKmsGbmScreen::setNewMode(const QSize size, const int refresh)
+{
+    qDebug() << "HWEglFSKmsGbmScreen::setNewMode" << size << refresh;
+    return m_output.setMode(m_device, size, refresh);
+}

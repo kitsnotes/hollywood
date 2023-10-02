@@ -53,6 +53,8 @@ public:
 QPlatformIntegration* HollywoodEglFSIntegrationPlugin::create(const QString& system, const QStringList& paramList)
 {
     Q_UNUSED(paramList);
+    qDebug() << "HollywoodEglFSIntegrationPlugin::create" << system;
+
     if (!system.compare(QLatin1String("hollywood-eglfs"), Qt::CaseInsensitive))
         return new HWEglFSIntegration;
 

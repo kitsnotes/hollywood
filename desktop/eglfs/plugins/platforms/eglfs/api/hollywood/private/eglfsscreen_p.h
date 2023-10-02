@@ -96,6 +96,7 @@ public:
     bool isRecordingEnabled() const { return m_recordingEnabled; }
     void setRecordingEnabled(bool enabled) { m_recordingEnabled = enabled; }
 
+    virtual bool setNewMode(const QSize size, const int refresh);
 protected:
     bool m_modeChangeRequested = false;
 

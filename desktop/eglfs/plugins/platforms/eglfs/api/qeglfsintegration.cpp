@@ -83,6 +83,9 @@ static void initResources()
 #endif
 }
 
+Q_LOGGING_CATEGORY(qLcDebug, "originull.qpa", QtInfoMsg)
+
+
 HWEglFSIntegration::HWEglFSIntegration()
     : m_display(EGL_NO_DISPLAY),
       m_inputContext(0),
@@ -91,6 +94,8 @@ HWEglFSIntegration::HWEglFSIntegration()
       m_logindHandler(nullptr),
       m_disableInputHandlers(false)
 {
+    qDebug() << "HWEglFSIntegration::HWEglFSIntegration";
+
     m_disableInputHandlers = qEnvironmentVariableIntValue("QT_QPA_EGLFS_DISABLE_INPUT");
     initResources();
 }
@@ -332,6 +337,8 @@ void *HWEglFSIntegration::nativeResourceForScreen(const QByteArray &resource, QS
 
 void *HWEglFSIntegration::nativeResourceForWindow(const QByteArray &resource, QWindow *window)
 {
+    qDebug() << "HWEglFSIntegration::nativeResourceForWindow";
+
     void *result = 0;
 
     switch (resourceType(resource)) {
@@ -407,6 +414,7 @@ QPlatformNativeInterface::NativeResourceForContextFunction HWEglFSIntegration::n
 
 QFunctionPointer HWEglFSIntegration::platformFunction(const QByteArray &function) const
 {
+    qDebug() << "HWEglFSIntegration::platformFunction" << function;
     if (function == Originull::Platform::EglFSFunctions::setCursorThemeIdentifier())
         return QFunctionPointer(setCursorThemeStatic);
     else if (function == Originull::Platform::EglFSFunctions::getPowerStateIdentifier())
@@ -417,6 +425,8 @@ QFunctionPointer HWEglFSIntegration::platformFunction(const QByteArray &function
         return QFunctionPointer(enableScreenCastStatic);
     else if (function == Originull::Platform::EglFSFunctions::disableScreenCastIdentifier())
         return QFunctionPointer(disableScreenCastStatic);
+    else if (function == Originull::Platform::EglFSFunctions::applyScreenChangesIdentifier())
+        return QFunctionPointer(applyScreenChangesStatic);
 
     return qt_egl_device_integration()->platformFunction(function);
 }
@@ -467,6 +477,23 @@ void HWEglFSIntegration::setPowerStateStatic(QScreen *screen, Originull::Platfor
         screen->handle()->setPowerState(QPlatformScreen::PowerStateSuspend);
         break;
     }
+}
+
+bool HWEglFSIntegration::testScreenChangesStatic(const QVector<Originull::Platform::ScreenChange> &changes)
+{
+    return false;
+}
+
+bool HWEglFSIntegration::applyScreenChangesStatic(const QVector<Originull::Platform::ScreenChange> &changes)
+{
+    qCDebug(qLcDebug) << "HWEglFSIntegration::applyScreenChangesStatic";
+    bool success = true;
+    for(auto chg : changes)
+    {
+        HWEglFSScreen *platformScreen = static_cast<HWEglFSScreen *>(chg.screen->handle());
+        platformScreen->setNewMode(chg.resolution, chg.refreshRate);
+    }
+    return success;
 }
 
 void HWEglFSIntegration::enableScreenCastStatic(QScreen *screen)

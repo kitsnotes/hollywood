@@ -218,6 +218,7 @@ struct HWKmsOutput
     void cleanup(HWKmsDevice *device);
     QPlatformScreen::SubpixelAntialiasingType subpixelAntialiasingTypeHint() const;
     void setPowerState(HWKmsDevice *device, QPlatformScreen::PowerState state);
+    bool setMode(HWKmsDevice *m_device, const QSize resolution, const uint32_t refreshRate);
 };
 
 class HWKmsDevice

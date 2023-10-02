@@ -435,5 +435,4 @@ void VtHandler::activate(quint32 nr)
 } // namespace Platform
 
 } // namespace Liri
-
 #include "moc_vthandler.cpp"

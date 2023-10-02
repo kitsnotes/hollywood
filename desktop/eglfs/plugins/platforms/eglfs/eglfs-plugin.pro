@@ -1,4 +1,8 @@
 include(../../../../include/global.pri)
+include(../../../../include/global.pri)
+TEMPLATE=lib
+CONFIG += internal_module link_pkgconfig
+
 TARGET = hweglfs
 TEMPLATE = lib
 QT += core-private gui-private

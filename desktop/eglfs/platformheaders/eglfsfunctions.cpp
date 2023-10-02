@@ -68,7 +68,7 @@ void EglFSFunctions::setPowerState(QScreen *screen, PowerState state)
 
 QByteArray EglFSFunctions::testScreenChangesIdentifier()
 {
-    return "LiriEglFSTestScreenChanges";
+    return QByteArrayLiteral("HollywoodEglFSTestScreenChanges");
 }
 
 bool EglFSFunctions::testScreenChanges(const QVector<ScreenChange> &changes)
@@ -81,7 +81,7 @@ bool EglFSFunctions::testScreenChanges(const QVector<ScreenChange> &changes)
 
 QByteArray EglFSFunctions::applyScreenChangesIdentifier()
 {
-    return "LiriEglFSApplyScreenChanges";
+    return QByteArrayLiteral("HollywoodEglFSApplyScreenChanges");
 }
 
 bool EglFSFunctions::applyScreenChanges(const QVector<ScreenChange> &changes)

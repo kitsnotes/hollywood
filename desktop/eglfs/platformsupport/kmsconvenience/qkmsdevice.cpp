@@ -1166,3 +1166,38 @@ void HWKmsOutput::setPowerState(HWKmsDevice *device, QPlatformScreen::PowerState
         drmModeConnectorSetProperty(device->fd(), connector_id,
                                     dpms_prop->prop_id, (int) state);
 }
+
+bool HWKmsOutput::setMode(HWKmsDevice *device, const QSize resolution, const uint32_t refreshRate)
+{
+    qDebug() << "HWKmsOutput::setMode" << resolution << refreshRate;
+    bool has_mode = false;
+    int wanted_mode = 0;
+    for(int i = 0; i < modes.count(); i++)
+    {
+        drmModeModeInfo m = modes[i];
+        if(m.hdisplay == resolution.width() &&
+           m.vdisplay == resolution.height() &&
+           m.vrefresh == refreshRate)
+        {
+            wanted_mode = i;
+            has_mode = true;
+            break;
+        }
+    }
+
+    if(has_mode)
+    {
+        qDebug() << "hasMode" << has_mode << "wanted:" << wanted_mode;
+        auto crtc = drmModeGetCrtc(device->fd(), crtc_id);
+        int ret = drmModeSetCrtc(device->fd(),
+                       crtc_id,
+                       crtc->buffer_id,
+                       0, 0,
+                       &connector_id, 1,
+                       &modes[wanted_mode]);
+        qDebug() << ret;
+        return true;
+    }
+
+    return false;
+}

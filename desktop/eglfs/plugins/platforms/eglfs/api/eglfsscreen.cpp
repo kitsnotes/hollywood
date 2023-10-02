@@ -190,6 +190,15 @@ void HWEglFSScreen::setCursorTheme(const QString &name, int size)
         cursor->setCursorTheme(name, size);
 }
 
+bool HWEglFSScreen::setNewMode(const QSize size, const int refresh)
+{
+    qDebug() << "HWEglfsScreen::setNewMode" << size << refresh;
+    //qt_egl_device_integration()->chooseConfig();
+    //return qt_egl_device_integration()->screenSize();
+    return false;
+
+}
+
 QPixmap HWEglFSScreen::grabWindow(WId wid, int x, int y, int width, int height) const
 {
 #ifndef QT_NO_OPENGL
