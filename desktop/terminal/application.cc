@@ -19,6 +19,7 @@ TerminalApplication::TerminalApplication(int &argc, char **argv)
     setOrganizationDomain(HOLLYWOOD_OS_DOMAIN);
     setWindowIcon(QIcon::fromTheme("utilities-terminal"));
     setOrganizationName(HOLLYWOOD_OS_ORGNAME);
+    setDesktopFileName("org.originull.terminull");
     setAttribute(Qt::AA_DontShowIconsInMenus, true);
     loadProfiles();
 }

@@ -16,8 +16,8 @@ public:
     TerminalProfile* profile();
     bool canClose();
     bool hasBlockingTasks();
-    QString generateTabTitle();
-    QString generateWindowTitle();
+    QString tabTitle();
+    QString windowTitle();
     void setProfile(TerminalProfile* profile);
     bool canCopy();
     bool hasSelection();
@@ -25,8 +25,7 @@ private:
     explicit TerminalHost(TerminalProfile *profile, QWidget *parent = nullptr);
 signals:
     void requestClose();
-    void windowTitleChanged(const QString &title);
-    void tabTitleChanged(const QString &title);
+    void titleChanged();
     void canCopyChanged(bool canCopy);
 private slots:
     void terminalTitleChanged();

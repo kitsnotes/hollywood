@@ -26,6 +26,7 @@ private slots:
     void clipboardDataChanged();
     void saveToFile();
     void contextMenuRequested(const QPoint &pos);
+    void windowTitleChanged(const QString &title);
 private:
     TabHost *m_tabs = nullptr;
 

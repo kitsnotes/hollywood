@@ -46,8 +46,7 @@ TerminalHost::~TerminalHost()
 void TerminalHost::terminalTitleChanged()
 {
     qDebug() << m_widget->title();
-    emit windowTitleChanged(generateWindowTitle());
-    emit tabTitleChanged(generateTabTitle());
+    emit titleChanged();
 }
 
 void TerminalHost::profileChanged()
@@ -265,7 +264,7 @@ bool TerminalHost::hasBlockingTasks()
     return false;
 }
 
-QString TerminalHost::generateTabTitle()
+QString TerminalHost::tabTitle()
 {
     auto title = m_widget->title();
     if(title.isEmpty())
@@ -274,6 +273,8 @@ QString TerminalHost::generateTabTitle()
     auto tflags = m_profile->tabTitleFlags();
     auto windowtitle = QStringList();
     auto tabtitle = QStringList();
+    windowtitle << title;
+    tabtitle << title;
     auto currentcwd = QString();
     if(tflags & TerminalProfile::WorkingDirDocumentTab ||
         tflags & TerminalProfile::WorkingDirDocumentPathTab)
@@ -284,7 +285,7 @@ QString TerminalHost::generateTabTitle()
         procname = getProcessLoop(m_widget->getShellPID());
 
     // figure out our tab title
-    if(tflags & TerminalProfile::WorkingDirDocumentTab)
+    /*if(tflags & TerminalProfile::WorkingDirDocumentTab)
     {
         if(tflags & TerminalProfile::WorkingDirDocumentPathTab)
             tabtitle.append(currentcwd);
@@ -295,12 +296,12 @@ QString TerminalHost::generateTabTitle()
             else
                 tabtitle.append(currentcwd.split('/').last());
         }
-    }
+    }*/
 
-    return tabtitle.join('-');
+    return tabtitle.join(" - ");
 }
 
-QString TerminalHost::generateWindowTitle()
+QString TerminalHost::windowTitle()
 {
     auto title = m_widget->title();
     if(title.isEmpty())
@@ -309,6 +310,8 @@ QString TerminalHost::generateWindowTitle()
     auto wflags = m_profile->windowTitleFlags();
     auto wndtitle = QStringList();
     auto currentcwd = QString();
+
+    wndtitle << title;
     if(wflags & TerminalProfile::WorkingDirDocument ||
         wflags & TerminalProfile::WorkingDirDocumentPath)
         currentcwd = getCwd();
@@ -320,7 +323,7 @@ QString TerminalHost::generateWindowTitle()
         wndtitle.append(procname);
     }
     // figure out our tab title
-    if(wflags & TerminalProfile::WorkingDirDocument)
+    /*if(wflags & TerminalProfile::WorkingDirDocument)
     {
         if(wflags & TerminalProfile::WorkingDirDocumentPath)
             wndtitle.append(currentcwd);
@@ -331,9 +334,9 @@ QString TerminalHost::generateWindowTitle()
             else
                 wndtitle.append(currentcwd.split('/').last());
         }
-    }
+    }*/
 
-    return wndtitle.join('-');
+    return wndtitle.join(" - ");
 }
 
 void TerminalHost::setProfile(TerminalProfile *profile)

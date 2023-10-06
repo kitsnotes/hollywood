@@ -44,8 +44,8 @@ void TabHost::newDefaultTab()
     m_tabs->setTabData(tabidx, term->id());
     m_tabs->setCurrentIndex(tabidx);
     tabChanged(tabidx);
-    connect(term, &TerminalHost::tabTitleChanged,
-            this, &TabHost::tabTitleChanged);
+    connect(term, &TerminalHost::titleChanged,
+            this, &TabHost::titleChanged);
     connect(term, &TerminalHost::requestClose,
             this, &TabHost::termRequestClose);
     connect(term->widget(), &QTermWidget::customContextMenuRequested,
@@ -159,6 +159,9 @@ void TabHost::tabChanged(int idx)
         m_current = m_terminals[id]->widget();
         m_current->setVisible(true);
     }
+
+    auto wndtitle = m_current->windowTitle();
+    emit windowTitleChanged(wndtitle);
 }
 
 void TabHost::tabCloseRequest(int idx)
@@ -257,23 +260,22 @@ void TabHost::termRequestClose()
         removeTab(tab);
 }
 
-void TabHost::windowTitleChanged(const QString &title)
-{
-
-}
-
-void TabHost::tabTitleChanged(const QString &title)
+void TabHost::titleChanged()
 {
     auto *host = qobject_cast<TerminalHost*>(sender());
     Q_ASSERT(host);
 
     auto tab = indexForTab(host->id());
+    auto title = m_terminals.value(host->id())->tabTitle();
+    auto wndtitle = m_terminals.value(host->id())->windowTitle();
+
     m_tabs->setTabText(tab,title);
+    if(m_tabs->currentIndex() == tab)
+        emit windowTitleChanged(wndtitle);
 }
 
 void TabHost::termCopyAvailable(bool copy)
 {
-    qDebug() << "termCopyAvailable: " << copy;
     Q_UNUSED(copy);
     emit selectionChanged();
 }

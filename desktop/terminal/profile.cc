@@ -13,9 +13,9 @@ TerminalProfile::TerminalProfile()
 {
     m_profilename = tr("Untitled");
     m_font = QFont(QLatin1String("monospace"), 12);
-    m_textcolor = QColor(0,0,0);
-    m_boldcolor = QColor(0,0,0);
-    m_bgcolor = QColor(255,255,255);
+    m_textcolor = QColor(255,255,255);
+    m_boldcolor = QColor(255,255,255);
+    m_bgcolor = QColor(0,0,0);
     QPalette p = qApp->palette();
     m_selcolor = qApp->palette().color(QPalette::Active, QPalette::Highlight);
 
@@ -27,7 +27,7 @@ TerminalProfile::TerminalProfile()
     m_bgimg = QString();
     m_bgtrans = 1.0;
 
-    m_windowtitle = QString("Terminal");
+    m_windowtitle = QString("Terminull");
     m_wndflags = WorkingDirDocument|
                  ActiveProcessName|
                  ShellCommandName;
@@ -114,9 +114,10 @@ bool TerminalProfile::loadProfileFromSettings(const QString &profileName)
     m_ansi[BrightWhite] = settings.value("ANSIColorBrightWhite", QColor(Qt::white)).toString();
 
     int cursortype = settings.value("CursorType", 0).toInt();
-    if(cursortype < 0 || cursortype > 2)
+    if(cursortype < 0)
         cursortype = 0;
-
+    if(cursortype > 2)
+        cursortype = 0;
     m_cursor = (CursorType)cursortype;
     m_cursorcolor = settings.value("CursorColor").toString();
     m_blinkCursor = settings.value("BlinkCursor", true).toBool();

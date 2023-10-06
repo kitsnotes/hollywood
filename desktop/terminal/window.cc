@@ -43,6 +43,7 @@ TerminalWindow::TerminalWindow(QWidget *parent)
             this, &TerminalWindow::clipboardDataChanged);
     connect(m_tabs, &TabHost::requestWindowClose, this, &TerminalWindow::close);
     connect(m_tabs, &TabHost::customContextMenuRequested, this, &TerminalWindow::contextMenuRequested);
+    connect(m_tabs, &TabHost::windowTitleChanged, this, &TerminalWindow::windowTitleChanged);
 }
 
 TerminalWindow::~TerminalWindow()
@@ -184,6 +185,7 @@ void TerminalWindow::newTab()
     m_tabs->newDefaultTab();
     m_tabs->currentHost()->widget()->activateWindow();
     m_tabs->currentHost()->widget()->setFocus();
+    setWindowTitle(m_tabs->currentHost()->windowTitle());
 }
 
 void TerminalWindow::currentTabChanged()
@@ -191,6 +193,7 @@ void TerminalWindow::currentTabChanged()
     auto tw = m_tabs->currentHost();
     m_tabs->currentHost()->widget()->activateWindow();
     m_tabs->currentHost()->widget()->setFocus();
+    setWindowTitle(m_tabs->currentHost()->windowTitle());
 }
 
 void TerminalWindow::showPreferences()
@@ -293,4 +296,9 @@ void TerminalWindow::contextMenuRequested(const QPoint &pos)
     auto act = menu.exec(mapToGlobal(pos));
     if(act == nullptr)
         return;
+}
+
+void TerminalWindow::windowTitleChanged(const QString &title)
+{
+    setWindowTitle(title);
 }

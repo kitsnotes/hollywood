@@ -28,13 +28,13 @@ signals:
     void currentTabChanged();
     void contextMenuRequested(const QPoint &pos);
     void selectionChanged();
+    void windowTitleChanged(const QString &title);
 private slots:
     void tabChanged(int idx);
     void tabCloseRequest(int idx);
     void removeTab(int idx);
     void termRequestClose();
-    void windowTitleChanged(const QString &title);
-    void tabTitleChanged(const QString &title);
+    void titleChanged();
     void termCopyAvailable(bool copy);
 protected:
     TerminalHost* currentHost();
