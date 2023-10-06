@@ -26,34 +26,36 @@ versionAtLeast(QT_VERSION, 6.0.0) {
 }
 
 SOURCES += \
-    src/appmodel.cc \
-    src/executor.cc \
-    src/actionmanager.cc \
-    src/columnpreview.cc \
-    src/desktopentry.cc \
-    src/desktopmodel.cc \
-    src/directories.cc \
-    src/fileinfo.cc \
-    src/fileinfogatherer.cc \
-    src/filesystemmodel.cc \
-    src/fsitemdelegate.cc \
-    src/fsnode.cc \
-    src/getinfodialog.cc \
-    src/hwfileiconprovider.cc \
-    src/locationbar.cpp \
-    src/mdnsbrowser.cc \
-    src/mdnsresolver.cc \
-    src/mimeapps.cc \
-    src/placemodel.cc \
-    src/placeview.cc \
-    src/progresswidget.cc \
-    src/shellhost.cc \
-    src/viewoptionsdialog.cc \
-    src/trashmodel.cc \
-    src/iconviewoptions.cc
+    src/core/actionmanager.cc \
+    src/core/operationthread.cc \
+    src/dialogs/getinfodialog.cc \
+    src/dialogs/viewoptionsdialog.cc \
+    src/filesystem/fileinfo.cc \
+    src/filesystem/fileinfogatherer.cc \
+    src/filesystem/fsitemdelegate.cc \
+    src/filesystem/fsnode.cc \
+    src/filesystem/hwfileiconprovider.cc \
+    src/mdns/mdnsbrowser.cc \
+    src/mdns/mdnsresolver.cc \
+    src/models/appmodel.cc \
+    src/models/desktopmodel.cc \
+    src/models/filesystemmodel.cc \
+    src/models/placemodel.cc \
+    src/models/trashmodel.cc \
+    src/widgets/columnpreview.cc \
+    src/widgets/iconviewoptions.cc \
+    src/widgets/locationbar.cpp \
+    src/widgets/placeview.cc \
+    src/widgets/progresswidget.cc \
+    src/widgets/shellhost.cc \
+    src/xdg/directories.cc \
+    src/xdg/desktopentry.cc \
+    src/xdg/executor.cc  \
+    src/xdg/mimeapps.cc
 
 HEADERS += \
     include/getinfodialog.h \
+    include/operationthread.h \
     include/private/fileinfo.h \
     include/private/actionmanager_p.h \
     include/private/appmodel_p.h \
