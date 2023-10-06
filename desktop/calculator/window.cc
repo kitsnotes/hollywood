@@ -68,6 +68,11 @@ CalculatorWindow::CalculatorWindow(QWidget *parent)
     graph->setCheckable(true);
     dev->setCheckable(true);
 
+    sci->setEnabled(false);
+    graph->setEnabled(false);
+    dev->setEnabled(false);
+
+
     basic->setShortcut(QKeySequence("Ctrl+1"));
     sci->setShortcut(QKeySequence("Ctrl+2"));
     graph->setShortcut(QKeySequence("Ctrl+3"));
