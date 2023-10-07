@@ -470,7 +470,7 @@ SurfaceView* Surface::createViewForOutput(Output *o)
     SurfaceView *view = new SurfaceView(this);
     if(view)
     {
-        connect(view, &QWaylandView::surfaceDestroyed, this, &Surface::viewSurfaceDestroyed);
+        //connect(view, &QWaylandView::surfaceDestroyed, this, &Surface::viewSurfaceDestroyed);
 
         //connect(m_surface, &QWaylandSurface::offsetForNextFrame, view, &ACView::onOffsetForNextFrame);
 
@@ -1202,6 +1202,7 @@ void Surface::createMenuServer(OriginullMenuServer *menu)
 
 void Surface::surfaceDestroyed()
 {
+    qDebug() << "Surface::surfaceDestroyed" << m_uuid.toString();
     if(m_wndctl)
         m_wndctl->destroy();
     hwComp->recycleSurfaceObject(this);
@@ -1210,6 +1211,7 @@ void Surface::surfaceDestroyed()
 
 void Surface::viewSurfaceDestroyed()
 {
+    qDebug() << "Surface::viewSurfaceDestroyed" << m_uuid.toString();
     bool requestRecycle = false;
     SurfaceView *view = qobject_cast<SurfaceView*>(sender());
     m_viewList.remove(m_viewList.key(view));
@@ -1217,6 +1219,7 @@ void Surface::viewSurfaceDestroyed()
         requestRecycle = true;
 
     delete view;
+
     if(requestRecycle)
         hwComp->recycleSurfaceObject(this);
 

@@ -45,10 +45,16 @@ OriginullMenuServer::OriginullMenuServer(struct ::wl_client *client, uint32_t id
 
 void OriginullMenuServer::setTopWindowForMenuServer(Surface *surface)
 {
+    if(!surface)
+        return;
+
     if(!m_compositor->hasMenuServer())
         return;
 
     if(surface->appMenu() == nullptr)
+        return;
+
+    if(!surface->surface())
         return;
 
     if(!surface->surface()->isInitialized())

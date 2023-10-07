@@ -56,6 +56,23 @@ Compositor::Compositor(bool sddm)
     connect(m_cfgwatch, &QFileSystemWatcher::fileChanged,
             this, &Compositor::configChanged);
 
+    generateDesktopInfoLabelImage();
+    connect(m_timeout, &QTimer::timeout, this, &Compositor::idleTimeout);
+}
+
+Compositor::~Compositor()
+{
+
+}
+
+void Compositor::create()
+{
+    QWaylandCompositor::create();
+    connect(this, &QWaylandCompositor::surfaceCreated, this, &Compositor::onSurfaceCreated);
+    connect(this, &QWaylandCompositor::subsurfaceChanged, this, &Compositor::onSubsurfaceChanged);
+    connect(defaultSeat(), &QWaylandSeat::cursorSurfaceRequest, this, &Compositor::adjustCursorSurface);
+    connect(defaultSeat()->drag(), &QWaylandDrag::dragStarted, this, &Compositor::startDrag);
+
     m_hwPrivate->setExtensionContainer(this);
     m_hwPrivate->initialize();
     m_appMenu->initialize();
@@ -77,24 +94,6 @@ Compositor::Compositor(bool sddm)
     connect(m_fs, &FullscreenShell::surfacePresented, this, &Compositor::onFullscreenSurfaceRequested);
 
     connect(m_activation, &XdgActivation::surfaceActivated, this, &Compositor::onXdgSurfaceActivated);
-    generateDesktopInfoLabelImage();
-    connect(m_timeout, &QTimer::timeout, this, &Compositor::idleTimeout);
-}
-
-Compositor::~Compositor()
-{
-
-}
-
-void Compositor::create()
-{
-    QWaylandCompositor::create();
-
-    connect(this, &QWaylandCompositor::surfaceCreated, this, &Compositor::onSurfaceCreated);
-    connect(this, &QWaylandCompositor::subsurfaceChanged, this, &Compositor::onSubsurfaceChanged);
-    connect(defaultSeat(), &QWaylandSeat::cursorSurfaceRequest, this, &Compositor::adjustCursorSurface);
-    connect(defaultSeat()->drag(), &QWaylandDrag::dragStarted, this, &Compositor::startDrag);
-
 }
 
 bool Compositor::hasMenuServer()
@@ -355,7 +354,7 @@ void Compositor::surfaceHasContentChanged()
         if (surface->role() == QWaylandWlShellSurface::role()
                 || surface->role() == HWWaylandXdgToplevel::role()
                 || surface->role() == QtSurface::role()
-                || surface->role() == HWWaylandXdgPopup::role()) {
+                /*|| surface->role() == HWWaylandXdgPopup::role()*/) {
             defaultSeat()->setKeyboardFocus(surface);
             defaultSeat()->setMouseFocus(surface->primaryView());
         }
@@ -760,8 +759,15 @@ QColor Compositor::primaryBackgroundColor() const
 
 void Compositor::updateCursor()
 {
-    return;
-    m_cursorObject->primaryView()->advance();
+    // TODO: is there any leakage here?
+    if(!m_cursorObject)
+    {
+        qDebug() << "Compositor::updateCursor null m_cursorObject";
+    }
+    if(m_cursorObject->primaryView())
+        m_cursorObject->primaryView()->advance();
+    else
+        qDebug() << "Compositor::updateCursor null m_cursorObject primaryView";
     QImage image = m_cursorObject->primaryView()->currentBuffer().image();
     if (!image.isNull())
         primaryOutput()->window()->setCursor(QCursor(QPixmap::fromImage(image), m_cursorHotspotX, m_cursorHotspotY));
@@ -801,10 +807,12 @@ void Compositor::adjustCursorSurface(QWaylandSurface *surface, int hotspotX, int
     {
         if(m_cursorObject->surface() != surface)
         {
+	    qDebug() << "Compositor::adjustCursorSurface: changing surface";
             if (m_cursorObject->surface())
             {
                 try
                 {
+		    qDebug() << "Compositor::adjustCursorSurface: disconnecting updateCursor";
                     disconnect(this, SLOT(updateCursor()));
                 }
                 catch(int e)
@@ -813,29 +821,44 @@ void Compositor::adjustCursorSurface(QWaylandSurface *surface, int hotspotX, int
                 }
             }
             if(m_surfaces.contains(m_cursorObject))
+	    {
+		qDebug() << "Compositor::adjustCursorSurface: removing old cursor from surface list";
                 m_surfaces.removeOne(m_cursorObject);
+	    }
 
             if(m_cursorObject)
             {
                 //TODO: Fix me i leak
-                //m_cursorObject->deleteLater();
+//                m_cursorObject->deleteLater();
                 m_cursorObject = nullptr;
+                qDebug() << "Compositor::adjustCursorSurface: m_cursorObject == nullptr";
             }
         }
     }
     if(!m_cursorObject)
     {
         m_cursorObject = new Surface(surface);
+        auto outputAt = outputAtPosition(m_cursorObject->surfacePosition().toPoint());
+        if(outputAt == nullptr)
+            outputAt = m_outputs.first();
+
+        m_cursorObject->createViewForOutput(outputAt);
         m_surfaces.append(m_cursorObject);
-        if (surface)
+        if(surface)
+        {
+            m_cursorObject->surface()->markAsCursorSurface(true);
             connect(surface, &QWaylandSurface::redraw, this, &Compositor::updateCursor);
+        }
     }
 
     m_cursorHotspotX = hotspotX;
     m_cursorHotspotY = hotspotY;
 
     if (surface && surface->hasContent())
+    {
+        qDebug() << "Compositor::adjustCursorSurface: updating new cursor";
         updateCursor();
+    }
 }
 
 void Compositor::handleMouseEvent(QWaylandView *target, QMouseEvent *me)
@@ -861,10 +884,9 @@ void Compositor::handleMouseEvent(QWaylandView *target, QMouseEvent *me)
                         || surface->role() == QWaylandWlShellSurface::role()
                         || surface->role() == HWWaylandXdgToplevel::role()
                         || surface->role() == QtSurface::role()
-                        || findSurfaceObject(surface)->isFullscreenShell()
-                        || surface->role() == HWWaylandXdgPopup::role()) {
+                        || findSurfaceObject(surface)->isFullscreenShell()) {
                     seat->setKeyboardFocus(surface);
-                    defaultSeat()->setMouseFocus(surface->primaryView());
+                    seat->setMouseFocus(surface->primaryView());
                 }
             }
             break;
@@ -935,6 +957,7 @@ void Compositor::startDrag()
     QWaylandDrag *currentDrag = defaultSeat()->drag();
     Q_ASSERT(currentDrag);
     Surface *iconSurface = findSurfaceObject(currentDrag->icon());
+    SurfaceView *view = findView(currentDrag->icon());
     iconSurface->setPosition(primaryOutput()->window()->mapFromGlobal(QCursor::pos()));
 
     emit dragStarted(iconSurface);
@@ -949,8 +972,11 @@ void Compositor::handleDrag(SurfaceView *target, QMouseEvent *me)
         pos -= findSurfaceObject(surface)->renderPosition();
     }
     QWaylandDrag *currentDrag = defaultSeat()->drag();
-    currentDrag->dragMove(surface, pos);
+    // TODO: properly handle drag/drop icon surface
+    if(surface)
+        currentDrag->dragMove(surface, pos);
     if (me->buttons() == Qt::NoButton) {
+        // TODO: destroy surface??
         m_surfaces.removeOne(findSurfaceObject(currentDrag->icon()));
         currentDrag->drop();
     }
@@ -989,7 +1015,6 @@ void Compositor::raise(Surface *obj)
 
     m_zorder.removeOne(obj);
     m_zorder.push_back(obj);
-
     activate(obj);
     // Since the compositor is only tracking unparented objects
     // we leave the ordering of children to SurfaceObject
@@ -1034,8 +1059,6 @@ void Compositor::activate(Surface *obj)
         defaultSeat()->setKeyboardFocus(obj->surface());
         defaultSeat()->setMouseFocus(obj->surface()->primaryView());
     }
-    // TODO: fix this
-    //obj->activate();
 
     m_activated = obj;
 }

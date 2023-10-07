@@ -206,6 +206,7 @@ void OutputWindow::drawTextureForObject(Surface *obj)
     }
 
     bool useShadow = obj->shadowSize() > 1 ? true : false;
+
     QRect dispRect(m_output->wlOutput()->position(), m_output->size());
     QRect objRect(obj->decoratedRect().toRect());
 
@@ -441,7 +442,7 @@ SurfaceView *OutputWindow::viewAt(const QPointF &point)
     Surface *surface = surfaceAt(point);
     if(surface)
     {
-        SurfaceView* view = surface->primaryView();
+        SurfaceView* view = surface->viewForOutput(m_output);
         if(view)
             return view;
     }
@@ -540,6 +541,8 @@ Surface* OutputWindow::surfaceAt(const QPointF &point)
             if (surface == m_dragIconSurfaceObject)
                 continue;
             if(surface->isMinimized())
+                continue;
+            if(!surface->surface())
                 continue;
             if (surface->decoratedRect().contains(point))
                 ret = surface;
@@ -647,8 +650,10 @@ void OutputWindow::mousePressEvent(QMouseEvent *e)
             return;
         }
 
-        auto mouseedge = m_mouseSelectedSurfaceObject->primaryView()->nearEdge(adjustedPoint);
-        if (e->modifiers() == Qt::AltModifier || e->modifiers() == Qt::MetaModifier)
+        auto mouseedge = m_mouseSelectedSurfaceObject->viewForOutput(m_output)
+                             ->nearEdge(adjustedPoint);
+        if (e->modifiers() == Qt::AltModifier
+            || e->modifiers() == Qt::MetaModifier)
         {
             m_grabState = MoveGrab; //start move
             m_mouseSelectedSurfaceObject->startMove();
@@ -741,9 +746,9 @@ void OutputWindow::mousePressEvent(QMouseEvent *e)
 
         QMouseEvent moveEvent(QEvent::MouseMove, adjustedPoint, e->globalPosition(),
                               Qt::NoButton, Qt::NoButton, e->modifiers());
-        sendMouseEvent(&moveEvent, m_mouseSelectedSurfaceObject->primaryView());
+        sendMouseEvent(&moveEvent, m_mouseSelectedSurfaceObject->viewForOutput(m_output));
     }
-    sendMouseEvent(&e2, m_mouseSelectedSurfaceObject->primaryView()); //(m_output));
+    sendMouseEvent(&e2, m_mouseSelectedSurfaceObject->viewForOutput(m_output));
     hwComp->resetIdle();
 }
 
@@ -759,9 +764,7 @@ void OutputWindow::mouseReleaseEvent(QMouseEvent *e)
         {
             SurfaceView *view = m_mouseSelectedSurfaceObject->primaryView();
             if(view)
-            {
                 sendMouseEvent(e2, view);
-            }
         }
     }
     if (e->buttons() == Qt::NoButton) {
@@ -797,7 +800,6 @@ void OutputWindow::mouseMoveEvent(QMouseEvent *e)
             setCursor(Qt::ArrowCursor);
         else
         {
-
             auto mouseedge = view->nearEdge(adjustedPoint);
             if(mouseedge == 0x0)
             {
@@ -824,7 +826,6 @@ void OutputWindow::mouseMoveEvent(QMouseEvent *e)
     }
         break;
     case MoveGrab: {
-        //qDebug() << "moving window: " << adjustedPoint - m_mouseOffset << " mouseOffset: " << m_mouseOffset;
         if(m_mouseSelectedSurfaceObject)
             m_mouseSelectedSurfaceObject->setPosition(adjustedPoint - m_mouseOffset);
         update();
@@ -853,6 +854,7 @@ void OutputWindow::mouseMoveEvent(QMouseEvent *e)
 
 void OutputWindow::sendMouseEvent(QMouseEvent *e, SurfaceView *target)
 {
+    hwComp->resetIdle();
     QPoint adjustedPoint(m_output->wlOutput()->position().x()+e->position().x(),
                  m_output->wlOutput()->position().y()+e->position().y());
 
@@ -863,14 +865,13 @@ void OutputWindow::sendMouseEvent(QMouseEvent *e, SurfaceView *target)
     QMouseEvent viewEvent(e->type(), mappedPos,
                           adjustedPoint, e->button(), e->buttons(), e->modifiers());
     hwComp->handleMouseEvent(target, &viewEvent);
-    hwComp->resetIdle();
 }
 
 void OutputWindow::keyPressEvent(QKeyEvent *e)
 {
+    hwComp->resetIdle();
     if(!hwComp->shortcuts()->checkAndHandleCombo(e->keyCombination()))
         hwComp->defaultSeat()->sendKeyPressEvent(e->nativeScanCode());
-    hwComp->resetIdle();
 }
 
 void OutputWindow::keyReleaseEvent(QKeyEvent *e)
