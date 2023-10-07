@@ -256,6 +256,8 @@ private:
     QSize m_ls_size;
     QSize m_qt_size;
 
+    QSize m_animation_minmax_target_size;
+
     Qt::WindowFlags m_qt_wndflags;
     uint m_qt_moveserial;
     uint m_qt_sizeserial;
@@ -266,6 +268,8 @@ private:
     QPointF m_surfacePosition = QPointF(0,0);
     QSize m_resize_animation_size;
     QSize m_resize_animation_start_size;
+    // Store our previous restore state size
+    QSize m_prior_normal_size;
 
     // used for restoring window
     QPointF m_priorNormalPos;

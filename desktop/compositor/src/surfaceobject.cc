@@ -470,10 +470,7 @@ SurfaceView* Surface::createViewForOutput(Output *o)
     SurfaceView *view = new SurfaceView(this);
     if(view)
     {
-        //connect(view, &QWaylandView::surfaceDestroyed, this, &Surface::viewSurfaceDestroyed);
-
-        //connect(m_surface, &QWaylandSurface::offsetForNextFrame, view, &ACView::onOffsetForNextFrame);
-
+        connect(view, &QWaylandView::surfaceDestroyed, this, &Surface::viewSurfaceDestroyed);
         view->setOutput(o->wlOutput());
         view->setSurface(m_surface);
         m_viewList.insert(o, view);
@@ -1091,6 +1088,7 @@ void Surface::toggleActive()
 
 void Surface::setAnimatedSurfaceSize(QSize size)
 {
+    qDebug() << "Surface::setAnimatedSurfaceSize" << size;
     m_resize_animation_size = size;
 }
 
@@ -1240,6 +1238,7 @@ void Surface::onXdgSetMaximized()
     m_minimized = false;
     m_maximized = true;
     m_priorNormalPos = m_surfacePosition;
+    m_prior_normal_size = surfaceSize();
     m_resize_animation_start_size = surfaceSize();
     auto size = primaryView()->output()->availableGeometry();
     if(this->serverDecorated())
@@ -1248,6 +1247,7 @@ void Surface::onXdgSetMaximized()
         size.setWidth(size.width() - hwComp->borderSize()*2);
     }
     m_maximized_complete = false;
+    m_animation_minmax_target_size = size.size();
     m_xdgTopLevel->sendMaximized(size.size());
     if(m_wndctl)
         m_wndctl->setMaximized(true);
@@ -1257,10 +1257,12 @@ void Surface::onXdgUnsetMaximized()
 {
     m_maximized = false;
     m_resize_animation_start_point = surfacePosition();
-    m_xdgTopLevel->sendUnmaximized();
     m_resize_animation_start_size = surfaceSize();
+    m_animation_minmax_target_size = m_prior_normal_size;
+    m_xdgTopLevel->sendUnmaximized();
+
     if(m_wndctl)
-        m_wndctl->setMaximized(true);
+        m_wndctl->setMaximized(false);
 }
 
 void Surface::onXdgSetMinimized()
@@ -1274,10 +1276,12 @@ void Surface::onXdgSetMinimized()
 
 void Surface::completeXdgConfigure()
 {
+    if(m_resize_animation)
+        return;
+
     renderDecoration();
     if(m_maximized)
     {
-        //auto pos = primaryView()->output()->position();
         auto pos = primaryView()->output()->availableGeometry().topLeft();
         pos.setX(pos.x()+hwComp->borderSize());
         pos.setY(pos.y()+hwComp->decorationSize());
@@ -1290,6 +1294,7 @@ void Surface::completeXdgConfigure()
         {
             if(!m_resize_animation)
             {
+                    qDebug() << "maximize animation" << surfaceSize();
                 auto group = new QParallelAnimationGroup;
                 QPropertyAnimation *posAnimation = new QPropertyAnimation(this, "surfacePosition");
                 posAnimation->setStartValue(m_priorNormalPos);
@@ -1299,11 +1304,13 @@ void Surface::completeXdgConfigure()
                 connect(posAnimation, &QPropertyAnimation::valueChanged, hwComp, &Compositor::triggerRender);
                 QPropertyAnimation *sizeAnimation = new QPropertyAnimation(this, "animatedSurfaceSize");
                 sizeAnimation->setStartValue(m_resize_animation_start_size);
-                sizeAnimation->setEndValue(surfaceSize());
+                sizeAnimation->setEndValue(m_animation_minmax_target_size);
                 sizeAnimation->setDuration(190);
                 sizeAnimation->setEasingCurve(QEasingCurve::InOutQuad);
+
                 connect(posAnimation, &QPropertyAnimation::valueChanged, [this](){
                     renderDecoration();
+                    m_xdgTopLevel->sendResizing(m_resize_animation_size);
                     hwComp->triggerRender();
                 });
                 m_resize_animation = true;
@@ -1313,6 +1320,10 @@ void Surface::completeXdgConfigure()
                 connect(group, &QParallelAnimationGroup::finished, [this]() {
                     m_maximized_complete = true;
                     m_resize_animation = false;
+
+                    QList<int> states;
+                    states << HWWaylandXdgToplevel::State::MaximizedState;
+                    m_xdgTopLevel->sendConfigure(m_animation_minmax_target_size, states);
                     renderDecoration();
                     hwComp->triggerRender();
                 });
@@ -1345,11 +1356,12 @@ void Surface::completeXdgConfigure()
                 connect(posAnimation, &QPropertyAnimation::valueChanged, hwComp, &Compositor::triggerRender);
                 QPropertyAnimation *sizeAnimation = new QPropertyAnimation(this, "animatedSurfaceSize");
                 sizeAnimation->setStartValue(m_resize_animation_start_size);
-                sizeAnimation->setEndValue(surfaceSize());
+                sizeAnimation->setEndValue(m_animation_minmax_target_size);
                 sizeAnimation->setDuration(190);
                 sizeAnimation->setEasingCurve(QEasingCurve::InOutQuad);
                 connect(posAnimation, &QPropertyAnimation::valueChanged, [this](){
-                    renderDecoration();
+                    //renderDecoration();
+                    m_xdgTopLevel->sendConfigure(m_resize_animation_size, m_xdgTopLevel->states());
                     hwComp->triggerRender();
                 });
                 m_resize_animation = true;

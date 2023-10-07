@@ -60,10 +60,7 @@ Compositor::Compositor(bool sddm)
     connect(m_timeout, &QTimer::timeout, this, &Compositor::idleTimeout);
 }
 
-Compositor::~Compositor()
-{
-
-}
+Compositor::~Compositor() {}
 
 void Compositor::create()
 {
@@ -343,8 +340,7 @@ void Compositor::surfaceHasContentChanged()
         // TODO: if we support more compositor protocols we need to add roles here
         if (surface->role() == QWaylandWlShellSurface::role()
                 || surface->role() == HWWaylandXdgToplevel::role()
-                || surface->role() == QtSurface::role()
-                /*|| surface->role() == HWWaylandXdgPopup::role()*/) {
+                || surface->role() == QtSurface::role()) {
             defaultSeat()->setKeyboardFocus(surface);
             defaultSeat()->setMouseFocus(surface->primaryView());
         }
@@ -749,7 +745,6 @@ QColor Compositor::primaryBackgroundColor() const
 
 void Compositor::updateCursor()
 {
-    // TODO: is there any leakage here?
     if(!m_cursorObject)
     {
         qDebug() << "Compositor::updateCursor null m_cursorObject";
@@ -1046,9 +1041,8 @@ void Compositor::activate(Surface *obj)
              obj->m_gtk ||
              obj->m_qt)&& !obj->isSpecialShellObject())
         {
-            // TODO: handle popups??
-            //if(m_menuServer)
-            //   m_menuServer->setTopWindowForMenuServer(obj);
+            if(m_menuServer)
+               m_menuServer->setTopWindowForMenuServer(obj);
         }
 
         if(obj->surface() && !obj->surface()->isDestroyed())
