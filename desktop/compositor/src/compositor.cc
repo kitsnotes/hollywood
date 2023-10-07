@@ -380,15 +380,20 @@ void Compositor::onDesktopRequest(QWaylandSurface *surface)
 {
     auto *sf = findSurfaceObject(surface);
     Q_ASSERT(sf);
+    qDebug() << "Compositor::onDesktopRequest" << sf->uuid().toString();
 
     if(m_zorder.contains(sf))
         m_zorder.removeOne(sf);
 
-    sf->m_surfaceType = Surface::Desktop;
-
     delete sf->m_wndctl;
-
     m_desktops.append(sf);
+    sf->m_surfaceType = Surface::Desktop;
+    sf->m_isShellDesktop = true;
+    sf->m_ssd = false;
+    auto start = sf->primaryView()->output()->availableGeometry().topLeft();
+    qDebug() << "start point for desktop" << start;
+    sf->m_surfacePosition = start;
+    sf->setPosition(start);
 }
 
 
@@ -623,7 +628,7 @@ void Compositor::onXdgTopLevelCreated(HWWaylandXdgToplevel *topLevel, HWWaylandX
     mySurface->createXdgTopLevelSurface(topLevel);
     qDebug(lc) << QString("Compositor::onXdgTopLevelCreated %1").arg(mySurface->uuid().toString(QUuid::WithoutBraces));
     // this is temporary and will be better calculated in onXdgWindowGeometryChanged
-    mySurface->setPosition(QPointF(35,50));
+    mySurface->setPosition(QPointF(1,1));
 }
 
 void Compositor::onStartMove(QWaylandSeat *seat)
@@ -780,19 +785,6 @@ void Compositor::menuServerDestroyed()
     m_menuServer = nullptr;
 }
 
-void Compositor::desktopSurfaceMarked(QWaylandSurface *surface)
-{
-    if(!surface)
-        return;
-
-    auto s = findSurfaceObject(surface);
-    if(!s)
-        return;
-
-    qDebug() << "Compositor::desktopSurfaceMarked" << s->uuid().toString();
-    s->m_isShellDesktop = true;
-    m_zorder.removeOne(s);
-}
 
 void Compositor::configChanged()
 {

@@ -316,7 +316,8 @@ void Surface::setPosition(const QPointF &pos)
         m_surfacePosition = newPos;
 
 move_finish:*/
-        m_surfacePosition = newPos;
+    qDebug() << "Surface::setPosition" << newPos;
+    m_surfacePosition = newPos;
     if(m_qt != nullptr && m_qt_moveserial != 0)
     {
         auto x = m_surfacePosition.x();
@@ -864,6 +865,11 @@ void Surface::onDestinationSizeChanged()
     {
         if(!hwComp->isRunningLoginManager() && m_xdgTopLevel != nullptr)
         {
+            if(m_isShellDesktop)
+            {
+                m_surfaceInit = true;
+                return;
+            }
             auto rect = windowRect().toRect();
             // TODO: dual monitor support - grab output of cursor
             auto outputRect = hwComp->defaultOutput()->availableGeometry();
@@ -1048,12 +1054,6 @@ void Surface::removeXdgTopLevelChild(Surface *s)
     }
 }
 
-void Surface::setShellDesktop()
-{
-    m_isShellDesktop = true;
-    delete m_wndctl;
-}
-
 void Surface::activate()
 {
     if(m_xdgTopLevel)
@@ -1094,7 +1094,6 @@ void Surface::toggleActive()
 
 void Surface::setAnimatedSurfaceSize(QSize size)
 {
-    qDebug() << "Surface::setAnimatedSurfaceSize" << size;
     m_resize_animation_size = size;
 }
 
@@ -1141,7 +1140,7 @@ void Surface::createXdgTopLevelSurface(HWWaylandXdgToplevel *topLevel)
     m_loadTimer->setSingleShot(true);
     m_loadTimer->setInterval(190);
     // a temporary bit so we can at least know where we are
-    setPosition(QPoint(80,80));
+    setPosition(QPoint(0,0));
     connect(m_loadTimer, &QTimer::timeout, this, [this](){
         hwComp->raise(this);
     });
@@ -1300,7 +1299,6 @@ void Surface::completeXdgConfigure()
         {
             if(!m_resize_animation)
             {
-                    qDebug() << "maximize animation" << surfaceSize();
                 auto group = new QParallelAnimationGroup;
                 QPropertyAnimation *posAnimation = new QPropertyAnimation(this, "surfacePosition");
                 posAnimation->setStartValue(m_priorNormalPos);
