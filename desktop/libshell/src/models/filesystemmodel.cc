@@ -381,6 +381,8 @@ QVariant LSFSModel::data(const QModelIndex &index, int role) const
     case Qt::EditRole:
         if (index.column() == 0)
             return d->name(index);
+        else
+            return QVariant();
     case Qt::DisplayRole:
         switch (index.column()) {
         case 0: return d->displayName(index);
@@ -860,6 +862,8 @@ bool LSFSModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
 
     bool success = true;
     QString to = filePath(parent) + QDir::separator();
+
+    qDebug() << data->urls();
 
     QList<QUrl> urls = data->urls();
     QList<QUrl>::const_iterator it = urls.constBegin();

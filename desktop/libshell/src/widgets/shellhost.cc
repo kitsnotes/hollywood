@@ -137,6 +137,11 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
     p->m_mainSplitter->addWidget(p->m_tabWndHost);
     p->m_viewOptions->attachIconView(p->m_filesList);
 
+    // Enable Drag & Drop (TODO: common dialog)
+    p->m_filesColumn->setDragEnabled(true);
+    p->m_filesTable->setDragEnabled(true);
+    p->m_filesList->setDragEnabled(true);
+
     swapToModel(Filesystem);
     connect(p->m_model, &LSFSModel::sortingChanged,
             this, &LSEmbeddedShellHost::filesystemSortingChanged);

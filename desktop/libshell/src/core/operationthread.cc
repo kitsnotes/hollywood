@@ -1,9 +1,12 @@
 #include "operationthread.h"
 
 #include <sys/file.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/mount.h>
 
-OperationWorker::OperationWorker(const QList<OpItem> &sources, const OperationType type, const QUrl target, QObject *parent)
-    :QThread(parent)
+OperationWorker::OperationWorker(const QList<OpItem> &sources, const OperationManager::OperationType type, const QUrl target, QObject *parent)
+    :QObject(parent)
     ,m_sources(sources)
     ,m_optype(type)
     ,m_targetPath(target)
@@ -32,11 +35,8 @@ OperationWorker::OperationWorker(const QList<OpItem> &sources, const OperationTy
 
 }
 
-void OperationWorker::run()
+void OperationWorker::startWorker()
 {
-    //QMutexLocker ml(&m_mutex);
-    //ml.lock();
-
     // See if either our source/dest operations involve libarchive
     auto src = m_sources.first();
     if(m_readarchive.contains(src.u.scheme().toLower()))
@@ -53,21 +53,14 @@ void OperationWorker::run()
     prepareFiles();
 
     // Check to make sure we have ample space on the target
-    if(m_optype == Copy ||
-        (m_optype == Move && moveCrossingFilesystem()))
+    if(m_optype == OperationManager::Copy ||
+        (m_optype == OperationManager::Move && moveCrossingFilesystem()))
     {
         auto cost = copyDataCost();
+
     }
 
-    // Do our action
-    if(m_optype == Copy)
-        fsCopyOperation();
-    else if(m_optype == Move)
-        fsMoveOperation();
-    else if(m_optype == Symlink)
-        fsSymlinkOperation();
-    else if(m_optype == Trash)
-        fsTrashOperation();
+    doWork();
 }
 
 void OperationWorker::prepareFiles()
@@ -85,25 +78,63 @@ void OperationWorker::prepareFiles()
                 i.inode = s.st_ino;
                 i.gid = s.st_gid;
                 i.uid = s.st_uid;
-
             }
         }
     }
 }
 
+void OperationWorker::doWork()
+{
+    // Do our action
+    if(m_optype == OperationManager::Copy)
+        fsCopyOperation();
+    else if(m_optype == OperationManager::Move)
+        fsMoveOperation();
+    else if(m_optype == OperationManager::Symlink)
+        fsSymlinkOperation();
+    else if(m_optype == OperationManager::Trash)
+        fsTrashOperation();
+}
+
 void OperationWorker::fsMoveOperation()
 {
-
+    // "Move" does not work in libarchives
 }
 
 void OperationWorker::fsCopyOperation()
 {
+    for(auto f : m_sources)
+    {
+        if(m_targetPath.scheme() == "file")
+        {
+            bool success = false;
+            if(f.u.scheme() == "file")
+            {
+                // FS to FS copy
 
+                // See if we're on the same filesystem
+                if(!fileCrossFilesystem(f.u))
+                {
+                    //rename()
+                }
+                success = true;
+            }
+            if(success)
+            {
+                //m_sources.removeOne(f);
+                //m_processed.append(f);
+            }
+        }
+        else
+        {
+            // Handle a target of archive
+        }
+    }
 }
 
 void OperationWorker::fsSymlinkOperation()
 {
-
+    // "Symlink" does not work in libarchives
 }
 
 void OperationWorker::fsDeleteOperation()
@@ -113,7 +144,35 @@ void OperationWorker::fsDeleteOperation()
 
 void OperationWorker::fsTrashOperation()
 {
+    // "Trash" does not work in libarchives
+    for(auto f : m_sources)
+    {
+        if(m_targetPath.scheme() == "file")
+        {
+            bool success = false;
+            if(f.u.scheme() == "file")
+            {
+                QFile file(f.u.toLocalFile());
+                success = file.moveToTrash();
+                if(success)
+                {
+                    //m_sources.removeOne(f);
+                    //m_processed.append(f);
+                }
+                else
+                {
+                    // Had an error trashing the file,
+                    // throw an error and stop
 
+                    return;
+                }
+            }
+        }
+        else
+        {
+            // requested from archive, emit an error
+        }
+    }
 }
 
 void OperationWorker::archiveCopyOperation()
@@ -129,9 +188,15 @@ void OperationWorker::archiveDeleteOperation()
 bool OperationWorker::moveCrossingFilesystem()
 {
 
+    return false;
 }
 
 quint64 OperationWorker::copyDataCost()
 {
+    return 0;
+}
 
+bool OperationWorker::fileCrossFilesystem(const QUrl &url)
+{
+    return true;
 }

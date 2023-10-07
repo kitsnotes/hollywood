@@ -27,7 +27,10 @@ versionAtLeast(QT_VERSION, 6.0.0) {
 
 SOURCES += \
     src/core/actionmanager.cc \
+    src/core/disks.cc \
     src/core/operationthread.cc \
+    src/core/opmanager.cc \
+    src/core/udisks2.cc \
     src/dialogs/getinfodialog.cc \
     src/dialogs/viewoptionsdialog.cc \
     src/filesystem/fileinfo.cc \
@@ -56,11 +59,15 @@ SOURCES += \
 HEADERS += \
     include/getinfodialog.h \
     include/operationthread.h \
+    include/opmanager.h \
     include/private/fileinfo.h \
     include/private/actionmanager_p.h \
     include/private/appmodel_p.h \
     include/private/columnpreview_p.h \
     include/private/desktopmodel_p.h \
+    include/private/disks.h \
+    include/private/opmanager_p.h \
+    include/private/udisks2.h \
     include/private/fileinfogatherer_p.h \
     include/private/filesystemmodel_p.h \
     include/private/fsitemdelegate_p.h \

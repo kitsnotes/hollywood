@@ -233,11 +233,16 @@ void OutputWindow::drawTextureForObject(Surface *obj)
                 obj->setPosition(getAnchoredPosition(m_resizeAnchorPosition, m_resizeEdge, s)); */
 
             auto surfaceOrigin = obj->primaryView()->textureOrigin();
-
             if(m_fbo != nullptr)
             {
-                delete m_fbo;
-                m_fbo = nullptr;
+                try {
+                    delete m_fbo;
+                    m_fbo = nullptr;
+                }
+                catch(int e)
+                {
+                    qDebug() << "failed to delete m_fbo" << e;
+                }
             }
 
             bool use_fbo = true;

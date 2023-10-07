@@ -7,6 +7,7 @@
 #include "client/privateprotocol.h"
 #include "filemanager1_adaptor.h"
 #include "getinfodialog.h"
+#include "opmanager.h"
 
 FMApplication::FMApplication(int &argc, char **argv)
     :QApplication(argc, argv)
@@ -21,6 +22,8 @@ FMApplication::FMApplication(int &argc, char **argv)
     setOrganizationDomain(HOLLYWOOD_OS_DOMAIN);
     setWindowIcon(QIcon::fromTheme("system-file-manager"));
     setOrganizationName(HOLLYWOOD_OS_ORGNAME);
+    // The first call to this will provision the libshell operation manager
+    operationManager();
 }
 
 void FMApplication::aboutApplication()

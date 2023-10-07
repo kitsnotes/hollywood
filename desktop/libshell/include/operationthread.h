@@ -9,17 +9,14 @@
 
 #include <sys/file.h>
 #include <sys/stat.h>
-class OperationWorker : public QThread
+
+#include "opmanager.h"
+
+class OperationWorker : public QObject
 {
     Q_OBJECT
 public:
-    enum OperationType {
-        Move,
-        Copy,
-        Symlink,
-        Delete,
-        Trash
-    };
+
     struct OpItem {
         ino_t inode;
         mode_t mode;
@@ -30,13 +27,17 @@ public:
         int fd = -1;
     };
 
-    explicit OperationWorker(const QList<OpItem> &sources, const OperationType type, const QUrl target, QObject *parent = nullptr);
-    void run();
+    explicit OperationWorker(const QList<OpItem> &sources, const OperationManager::OperationType type, const QUrl target, QObject *parent = nullptr);
+public slots:
+    void startWorker();
 signals:
     void progressChanged(const uint progress);
     void statusChanged(const QString &status);
+    void errorOccured(const QUrl &file, const OperationManager::Error error);
+    void finished();
 private:
     void prepareFiles();
+    void doWork();
     void fsMoveOperation();
     void fsCopyOperation();
     void fsSymlinkOperation();
@@ -47,12 +48,12 @@ private:
     void archiveDeleteOperation();
 
     bool moveCrossingFilesystem();
+    bool fileCrossFilesystem(const QUrl &url);
     quint64 copyDataCost();
 private:
-    QMutex m_mutex;
-
     QList<OpItem> m_sources;
-    OperationType m_optype;
+    QList<OpItem> m_processed;
+    OperationManager::OperationType m_optype;
     QUrl m_targetPath;
 
     bool m_source_archive = false;
@@ -63,7 +64,6 @@ private:
 
     QVector<QString> m_readarchive;
     QVector<QString> m_writearchive;
-
 };
 
 #endif // OPERATIONTHREAD_H
