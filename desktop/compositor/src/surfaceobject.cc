@@ -1048,6 +1048,12 @@ void Surface::removeXdgTopLevelChild(Surface *s)
     }
 }
 
+void Surface::setShellDesktop()
+{
+    m_isShellDesktop = true;
+    delete m_wndctl;
+}
+
 void Surface::activate()
 {
     if(m_xdgTopLevel)

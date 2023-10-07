@@ -18,6 +18,12 @@
             Trigger a request to rotate the wallpaper.
           </description>
         </request>
+        <request name="register_desktop">
+            <description summary="Register Desktop">
+              Register a surface as the Hollywood Shell desktop surface.
+            </description>
+            <arg name="surface" type="object" interface="wl_surface"/>
+        </request>
     </interface>
     <interface name="org_originull_menuserver" version="1">
         <event name="appmenu_top_level_window_changed">

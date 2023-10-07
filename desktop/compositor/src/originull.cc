@@ -35,6 +35,13 @@ void OriginullProtocol::org_originull_privateapi_rotate_wallpaper(Resource *reso
     emit wallpaperRotationRequested();
 }
 
+void OriginullProtocol::org_originull_privateapi_register_desktop(Resource *resource, wl_resource *surface)
+{
+    qDebug() << "OriginullProtocol::org_originull_privateapi_register_desktop";
+    Q_UNUSED(resource);
+    emit desktopSurfaceMarked(QWaylandSurface::fromResource(surface));
+}
+
 OriginullMenuServer::OriginullMenuServer(struct ::wl_client *client, uint32_t id, OriginullProtocol *proto, Compositor *c)
                    : QObject(nullptr)
                    , QtWaylandServer::org_originull_menuserver(client, id, 1)

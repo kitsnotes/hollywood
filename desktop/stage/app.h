@@ -18,7 +18,7 @@
 #include <hollywood/layershellinterface.h>
 
 #include <dbusmenuimporter.h>
-class AIPrivateWaylandProtocol;
+class HWPrivateWaylandProtocol;
 class PlasmaWindowManagement;
 class PlasmaWindow;
 class StageHost;
@@ -46,7 +46,7 @@ public:
     QMenu* systemMenu() { return m_context; }
     DBusMenuImporter* importer() { return qobject_cast<DBusMenuImporter*>(m_importer.data()); }
     void playBell();
-    AIPrivateWaylandProtocol* privateProtocol() { return m_protocol; }
+    HWPrivateWaylandProtocol* privateProtocol() { return m_protocol; }
     bool isSouthernMode() const { return m_southern; }
 public slots:
     void launchSysmon();
@@ -92,7 +92,7 @@ private:
     bool m_has_menu_responder = false;
     NotifierHost *m_notifier = nullptr;
     QDBusServiceWatcher *m_menuViewWatcher;
-    AIPrivateWaylandProtocol *m_protocol = nullptr;
+    HWPrivateWaylandProtocol *m_protocol = nullptr;
     MenuImporter* m_menuImporter = nullptr;
     QPointer<DBusMenuImporter> m_importer;
     QString m_serviceName;

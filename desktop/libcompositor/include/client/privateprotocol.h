@@ -14,16 +14,16 @@ class QWaylandDisplay;
 class QWaylandIntegration;
 
 class OriginullMenuServerClient;
-class LIBCOMPOSITOR_EXPORT AIPrivateWaylandProtocol
-        : public QWaylandClientExtensionTemplate<AIPrivateWaylandProtocol>
+class LIBCOMPOSITOR_EXPORT HWPrivateWaylandProtocol
+        : public QWaylandClientExtensionTemplate<HWPrivateWaylandProtocol>
         , public QtWayland::org_originull_privateapi
 {
     Q_OBJECT
 public:
-    AIPrivateWaylandProtocol();
+    HWPrivateWaylandProtocol();
     Q_INVOKABLE OriginullMenuServerClient* createMenuServerResponder();
     Q_INVOKABLE void rotateWallpaper();
-
+    Q_INVOKABLE void registerDesktopSurface(QWindow *window);
 private:
     void windowForSurface();
 };

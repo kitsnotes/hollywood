@@ -142,6 +142,7 @@ public:
     bool isFullscreenShell() const { return m_fullscreenShell; }
     void setTwilight(bool twilight) { m_twilight = twilight; }
     bool isShellDesktop() const { return m_isShellDesktop; }
+    void setShellDesktop();
 public slots:
     void activate();
     void deactivate();

@@ -9,7 +9,7 @@
 
 #include "filewindow.h"
 
-class AIPrivateWaylandProtocol;
+class HWPrivateWaylandProtocol;
 class DesktopWindow;
 class FileWindow;
 class FMApplication : public QApplication
@@ -25,6 +25,7 @@ public:
     };
     void createDBusInterfaces();
     bool checkSocket();
+    HWPrivateWaylandProtocol *protocol() { return m_protocol; }
 public slots:
     bool executeDesktopOverDBus(const QString &desktop);
     void ShowFolders(const QStringList& urlList, const QString& startupId);
@@ -43,7 +44,7 @@ private slots:
 private:
     void checkForSessionStartup();
 private:
-    AIPrivateWaylandProtocol *m_protocol = nullptr;
+    HWPrivateWaylandProtocol *m_protocol = nullptr;
     QStringList m_args;
     QList<FileWindow*> m_fileWindows;
     DesktopWindow *m_desktop = nullptr;

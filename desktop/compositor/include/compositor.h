@@ -151,6 +151,7 @@ protected slots:
 private slots:
     void appMenuCreated(AppMenu *m);
     void menuServerDestroyed();
+    void desktopSurfaceMarked(QWaylandSurface *surface);
     void configChanged();
     void loadSettings();
     void setupIdleTimer();

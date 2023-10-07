@@ -184,10 +184,6 @@ QString ManagedProcess::processExecutablePath()
         return QString("/usr/libexec/hollywood/notificationd");
     case XDGPortal:
         return QString("/usr/libexec/hollywood/portald");
-    case Conelrad:
-        return QString("/usr/libexec/hollywood/conelrad");
-    case UpdateAgent:
-        return QString("/usr/libexec/hollywood/updated");
     case Shell:
         return QString("/usr/bin/shellfm");
     default:
@@ -280,10 +276,10 @@ void ManagedProcess::setEnvironmentForProcess()
     }
 
     // setup specific processes with qt-shell
-    if(m_process == Elevator ||
+    /*if(m_process == Elevator ||
        m_process == Shell ||
        m_process == NetworkAgent)
-        env.insert("QT_WAYLAND_SHELL_INTEGRATION", "qt-shell");
+        env.insert("QT_WAYLAND_SHELL_INTEGRATION", "qt-shell"); */
 
     // setup stage with layer-shell and twilight
     if(m_process == Stage)

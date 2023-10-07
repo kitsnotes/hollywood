@@ -23,9 +23,11 @@ public:
 signals:
     void menuServerSet(OriginullMenuServer *menu);
     void wallpaperRotationRequested();
+    void desktopSurfaceMarked(QWaylandSurface *surface);
 protected:
     void org_originull_privateapi_provision_menu_server(Resource *resource, uint32_t id) override;
     void org_originull_privateapi_rotate_wallpaper(Resource *resource) override;
+    void org_originull_privateapi_register_desktop(Resource *resource, struct ::wl_resource *surface) override;
 private:
     Compositor *m_compositor = nullptr;
     OriginullMenuServer *m_menu = nullptr;

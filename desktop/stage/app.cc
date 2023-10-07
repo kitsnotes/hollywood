@@ -35,7 +35,7 @@ StageApplication::StageApplication(int &argc, char **argv)
     , m_context(new QMenu(0))
     , m_notifier(new NotifierHost(0))
     , m_menuViewWatcher(new QDBusServiceWatcher(this))
-    , m_protocol(new AIPrivateWaylandProtocol())
+    , m_protocol(new HWPrivateWaylandProtocol())
     , m_clock(new StageClock(0))
     , m_battery(new BatteryMonitor(0))
 {
@@ -57,7 +57,7 @@ StageApplication::StageApplication(int &argc, char **argv)
     connect(m_cfgwatch, &QFileSystemWatcher::fileChanged,
             this, &StageApplication::configChanged);
 
-    connect(m_protocol, &AIPrivateWaylandProtocol::activeChanged,
+    connect(m_protocol, &HWPrivateWaylandProtocol::activeChanged,
             this, &StageApplication::privateProtocolReady);
 
     auto aboutSys = m_context->addAction(tr("&About This Computer..."));

@@ -3,20 +3,11 @@
 
 #include "qwayland-originull-privateapi.h"
 
-AIPrivateWaylandProtocol::AIPrivateWaylandProtocol()
+HWPrivateWaylandProtocol::HWPrivateWaylandProtocol()
     :QWaylandClientExtensionTemplate(1)
-    ,QtWayland::org_originull_privateapi()
-{
+    ,QtWayland::org_originull_privateapi() {}
 
-}
-
-static inline struct ::wl_surface *getWlSurface(QWindow *window)
-{
-    void *surf = QGuiApplication::platformNativeInterface()->nativeResourceForWindow("surface", window);
-    return static_cast<struct ::wl_surface *>(surf);
-}
-
-OriginullMenuServerClient* AIPrivateWaylandProtocol::createMenuServerResponder()
+OriginullMenuServerClient* HWPrivateWaylandProtocol::createMenuServerResponder()
 {
     if(!isActive())
         return nullptr;
@@ -25,9 +16,15 @@ OriginullMenuServerClient* AIPrivateWaylandProtocol::createMenuServerResponder()
     return mp;
 }
 
-void AIPrivateWaylandProtocol::rotateWallpaper()
+void HWPrivateWaylandProtocol::rotateWallpaper()
 {
     rotate_wallpaper();
+}
+
+void HWPrivateWaylandProtocol::registerDesktopSurface(QWindow *window)
+{
+    void *surface = QGuiApplication::platformNativeInterface()->nativeResourceForWindow("surface", window);
+    register_desktop(static_cast<struct ::wl_surface *>(surface));
 }
 
 OriginullMenuServerClient::OriginullMenuServerClient(struct ::org_originull_menuserver *menu)

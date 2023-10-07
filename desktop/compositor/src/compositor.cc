@@ -81,6 +81,7 @@ void Compositor::create()
     connect(m_appMenu, &AppMenuManager::appMenuCreated, this, &Compositor::appMenuCreated);
     connect(m_hwPrivate, &OriginullProtocol::menuServerSet, this, &Compositor::onMenuServerRequest);
     connect(m_hwPrivate, &OriginullProtocol::wallpaperRotationRequested, this, &Compositor::onRotateWallpaper);
+    connect(m_hwPrivate, &OriginullProtocol::desktopSurfaceMarked, this, &Compositor::onDesktopRequest);
     connect(m_wlShell, &QWaylandWlShell::wlShellSurfaceCreated, this, &Compositor::onWlShellSurfaceCreated);
     connect(m_xdgShell, &HWWaylandXdgShell::xdgSurfaceCreated, this, &Compositor::onXdgSurfaceCreated);
     connect(m_xdgShell, &HWWaylandXdgShell::toplevelCreated, this, &Compositor::onXdgTopLevelCreated);
@@ -377,15 +378,17 @@ void Compositor::onMenuServerRequest(OriginullMenuServer *menu)
 
 void Compositor::onDesktopRequest(QWaylandSurface *surface)
 {
-    auto *acSurface = findSurfaceObject(surface);
-    Q_ASSERT(acSurface);
+    auto *sf = findSurfaceObject(surface);
+    Q_ASSERT(sf);
 
-    if(m_zorder.contains(acSurface))
-        m_zorder.removeOne(acSurface);
+    if(m_zorder.contains(sf))
+        m_zorder.removeOne(sf);
 
-    acSurface->m_surfaceType = Surface::Desktop;
+    sf->m_surfaceType = Surface::Desktop;
 
-    m_desktops.append(acSurface);
+    delete sf->m_wndctl;
+
+    m_desktops.append(sf);
 }
 
 
@@ -775,6 +778,20 @@ void Compositor::menuServerDestroyed()
                this, &Compositor::menuServerDestroyed);
     delete m_menuServer;
     m_menuServer = nullptr;
+}
+
+void Compositor::desktopSurfaceMarked(QWaylandSurface *surface)
+{
+    if(!surface)
+        return;
+
+    auto s = findSurfaceObject(surface);
+    if(!s)
+        return;
+
+    qDebug() << "Compositor::desktopSurfaceMarked" << s->uuid().toString();
+    s->m_isShellDesktop = true;
+    m_zorder.removeOne(s);
 }
 
 void Compositor::configChanged()

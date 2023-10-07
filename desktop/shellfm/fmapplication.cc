@@ -11,7 +11,7 @@
 
 FMApplication::FMApplication(int &argc, char **argv)
     :QApplication(argc, argv)
-    , m_protocol(new AIPrivateWaylandProtocol())
+    , m_protocol(new HWPrivateWaylandProtocol())
 {
 #ifdef HW_BUILD_VER
     setApplicationVersion(QString("%1.%2").arg(HOLLYWOOD_OS_VERSION, QString::number(HW_BUILD_VER)));
@@ -69,6 +69,7 @@ void FMApplication::createDesktop()
     connect(w, &DesktopWindow::openFolder, this,
             &FMApplication::openFolderFromDesktop);
     w->show();
+    m_protocol->registerDesktopSurface(w->windowHandle());
     m_desktop = w;
 }
 

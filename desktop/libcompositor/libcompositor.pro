@@ -26,7 +26,6 @@ HEADERS += \
 
 WAYLANDCLIENTSOURCES += ../compositor/protocols/originull-privateapi.xml
 WAYLANDSERVERSOURCES += \
-    ../compositor/protocols/originull-privateapi.xml \
     ../compositor/protocols/wlr-layer-shell-unstable-v1.xml \
     ../compositor/protocols/appmenu.xml
 
