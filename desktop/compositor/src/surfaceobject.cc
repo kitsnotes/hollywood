@@ -1042,6 +1042,15 @@ QImage* Surface::decorationImage()
     return m_ssdimg;
 }
 
+void Surface::removeXdgTopLevelChild(Surface *s)
+{
+    if(m_xdgChildren.contains(s))
+    {
+        qDebug() << "Surface::removeXdgTopLevelChild" << s->uuid().toString();
+        m_xdgChildren.removeOne(s);
+    }
+}
+
 void Surface::activate()
 {
     if(m_xdgTopLevel)

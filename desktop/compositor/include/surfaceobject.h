@@ -136,6 +136,8 @@ public:
     void endMove();
     QImage* decorationImage();
     Surface *topLevelSurface() const { return m_parentTopLevelSurface; }
+    Surface *xdgTopLevelParent() const { return m_parentTopLevelSurface; }
+    void removeXdgTopLevelChild(Surface *s);
     QIcon icon() const { return m_icon; }
     bool isFullscreenShell() const { return m_fullscreenShell; }
     void setTwilight(bool twilight) { m_twilight = twilight; }

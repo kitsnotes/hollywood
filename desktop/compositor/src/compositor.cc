@@ -312,13 +312,11 @@ void Compositor::onSurfaceCreated(QWaylandSurface *surface)
 
 void Compositor::recycleSurfaceObject(Surface *obj)
 {
-    Surface *parent = nullptr;
+    m_recycling.append(obj);
     qDebug(lc) << QString("Compositor::recycleSurfaceObject %1").arg(obj->uuid().toString(QUuid::WithoutBraces));
-    if(obj->parentSurfaceObject() != nullptr)
-    {
-        if(obj->surfaceType() == Surface::Popup)
-            parent = obj->parentSurfaceObject();
-    }
+
+    if(obj->xdgTopLevelParent())
+        obj->xdgTopLevelParent()->removeXdgTopLevelChild(obj);
 
     m_surfaces.removeOne(obj);
     m_zorder.removeOne(obj);
@@ -328,20 +326,12 @@ void Compositor::recycleSurfaceObject(Surface *obj)
     m_layer_top.removeOne(obj);
     m_layer_overlay.removeOne(obj);
 
-    // if we delete a popup object lets raise our parent
-    // and set keyboard focus
-    if(parent && parent->surface())
-    {
-        raise(parent);
-        defaultSeat()->setKeyboardFocus(parent->surface());
-        defaultSeat()->setMouseFocus(parent->surface()->primaryView());
-        goto recycle_end;
-    }
-
+    // TODO: check if we just destroyed an xdg toplevel modal dialog
+    // and raise our parent
     if(m_tl_raised == obj)
         raiseNextInLine();
 
-recycle_end:
+    m_recycling.removeOne(obj);
     delete obj;
     obj = nullptr;
 }
@@ -1034,6 +1024,11 @@ void Compositor::raise(Surface *obj)
 
 void Compositor::activate(Surface *obj)
 {
+    if(m_recycling.contains(obj))
+    {
+        qWarning() << "request to activate surface being recycled";
+        return;
+    }
     if(!obj)
     {
         qWarning() << "request to activate invalid surface";
@@ -1042,25 +1037,32 @@ void Compositor::activate(Surface *obj)
     if(!obj->surface())
         return;
 
-    qDebug(lc) << QString("Compositor::activate %1").arg(obj->uuid().toString(QUuid::WithoutBraces));
+    try {
+        qDebug(lc) << QString("Compositor::activate %1").arg(obj->uuid().toString(QUuid::WithoutBraces));
 
-    // Since the compositor is only tracking unparented objects
-    // we leave the ordering of children to SurfaceObject
-    if((obj->m_xdgTopLevel ||
-         obj->m_gtk ||
-         obj->m_qt)&& !obj->isSpecialShellObject())
-    {
-        // TODO: handle popups??
-        if(m_menuServer)
-           m_menuServer->setTopWindowForMenuServer(obj);
-    }
-    if(!obj->surface()->isDestroyed())
-    {
-        defaultSeat()->setKeyboardFocus(obj->surface());
-        defaultSeat()->setMouseFocus(obj->surface()->primaryView());
-    }
+        // Since the compositor is only tracking unparented objects
+        // we leave the ordering of children to SurfaceObject
+        if((obj->m_xdgTopLevel ||
+             obj->m_gtk ||
+             obj->m_qt)&& !obj->isSpecialShellObject())
+        {
+            // TODO: handle popups??
+            //if(m_menuServer)
+            //   m_menuServer->setTopWindowForMenuServer(obj);
+        }
 
-    m_activated = obj;
+        if(obj->surface() && !obj->surface()->isDestroyed())
+        {
+           defaultSeat()->setKeyboardFocus(obj->surface());
+           defaultSeat()->setMouseFocus(obj->surface()->primaryView());
+        }
+
+        m_activated = obj;
+    }
+    catch(int e)
+    {
+        qDebug() << "Compositor::activate: error activating surface" << e;
+    }
 }
 
 void Compositor::addOutput(Output *output)
