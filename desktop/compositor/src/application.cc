@@ -29,6 +29,7 @@ CompositorApp::CompositorApp(bool use_sddm, int &argc, char **argv)
     setOrganizationDomain(HOLLYWOOD_OS_DOMAIN);
     setOrganizationName(HOLLYWOOD_OS_ORGNAME);
     Originull::Platform::EglFSFunctions::setCursorTheme(QLatin1String("neutral"), 32);
+
     Originull::Platform::ScreenChange chg;
     chg.screen = QGuiApplication::primaryScreen();
     chg.position = QPoint(0,0);
@@ -55,7 +56,8 @@ QWaylandCompositor* CompositorApp::waylandCompositor()
 void CompositorApp::doInit()
 {
     if(platformName() == QLatin1String("hollywood") ||
-       platformName() == QLatin1String("wayland"))
+       platformName() == QLatin1String("wayland") ||
+         platformName() == QLatin1String("xcb"))
     {
         /* right now we don't support nested wayland so error out */
         QMessageBox::critical(0, tr("Unsupported Compositor Action"),
@@ -65,30 +67,13 @@ void CompositorApp::doInit()
     if(platformName() == QLatin1String("eglfs") ||
        platformName() == QLatin1String("hollywood-eglfs"))
         createForDisplays();
-    else
-        createDummyDebugWindow();
 }
 
 void CompositorApp::createForDisplays()
 {
     auto ps = primaryScreen();
-    auto output = new Output();
-    output->configureForScreen(ps);
+    auto output = new Output(ps, true);
     output->window()->show();
-}
-
-void CompositorApp::createDummyDebugWindow()
-{
-    Output *output = new Output();
-    output->setPrimary(true);
-    output->configureDebugWindow();
-    output->window()->show();
-
-    return;
-
-    Output *output2 = new Output();
-    output2->configureDebugWindow2();
-    output2->window()->show();
 }
 
 int main(int argc, char *argv[])

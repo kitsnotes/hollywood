@@ -391,6 +391,7 @@ void OutputWindow::drawShadowForObject(uint shadowOffset, Surface *obj)
 
 void OutputWindow::drawDesktopInfoString()
 {
+    return;
     QImage* img = hwComp->desktopLabelImage();
 
     QOpenGLFunctions *functions = context()->functions();

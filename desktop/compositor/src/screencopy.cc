@@ -4,6 +4,7 @@
 
 #include "screencopy.h"
 #include "hwc.h"
+#include "output.h"
 #include <wayland-server.h>
 
 #define SCREENCOPY_VERSION  1
@@ -61,6 +62,7 @@ void WlrScreencopyManagerV1::zwlr_screencopy_manager_v1_capture_output(Resource 
     }
     auto hwl = hwComp->outputFor(qwl);
     WlrScreencopyFrameV1 *nf = new WlrScreencopyFrameV1(this, frame, overlay_cursor, hwl);
+    nf->init(resource->client(), frame, resource->version());
     m_frames.append(nf);
     emit frameCaptureRequest(nf);
 }
@@ -79,9 +81,11 @@ void WlrScreencopyManagerV1::zwlr_screencopy_manager_v1_capture_output_region(Re
         return;
     }
     WlrScreencopyFrameV1 *nf = new WlrScreencopyFrameV1(this, frame, overlay_cursor, hwl);
+    nf->init(resource->client(), frame, resource->version());
     m_frames.append(nf);
-    emit  frameCaptureRequest(nf);
+    emit frameCaptureRequest(nf);
 }
+
 
 WlrScreencopyFrameV1::WlrScreencopyFrameV1(WlrScreencopyManagerV1 *parent, uint32_t frame, int32_t overlay_cursor,
                                            Output *output)
@@ -91,6 +95,7 @@ WlrScreencopyFrameV1::WlrScreencopyFrameV1(WlrScreencopyManagerV1 *parent, uint3
     , m_frame(frame)
     , m_overlayCursor(overlay_cursor)
 {
+    m_region = output->wlOutput()->geometry();
     m_capRegion = false;
 }
 
@@ -104,11 +109,12 @@ WlrScreencopyFrameV1::WlrScreencopyFrameV1(WlrScreencopyManagerV1 *parent, uint3
 {
     m_region = QRect(x,y,width,height);
     m_capRegion = true;
+    send_buffer(m_requestedBufferFormat, m_region.width(), m_region.width(),m_stride);
 }
 
 void WlrScreencopyFrameV1::zwlr_screencopy_frame_v1_copy(Resource *resource, wl_resource *buffer)
 {
-    handleCopy(resource, buffer, false);
+    initCopy(resource, buffer, false);
 }
 
 void WlrScreencopyFrameV1::zwlr_screencopy_frame_v1_destroy(Resource *resource)
@@ -119,10 +125,10 @@ void WlrScreencopyFrameV1::zwlr_screencopy_frame_v1_destroy(Resource *resource)
 
 void WlrScreencopyFrameV1::zwlr_screencopy_frame_v1_copy_with_damage(Resource *resource, wl_resource *buffer)
 {
-    handleCopy(resource, buffer, true);
+    initCopy(resource, buffer, true);
 }
 
-void WlrScreencopyFrameV1::handleCopy(Resource *resource, wl_resource *buffer, bool handleDamage)
+void WlrScreencopyFrameV1::initCopy(Resource *resource, wl_resource *buffer, bool handleDamage)
 {
     auto *shm = wl_shm_buffer_get(buffer);
     if(!shm)
@@ -150,4 +156,23 @@ void WlrScreencopyFrameV1::handleCopy(Resource *resource, wl_resource *buffer, b
     m_ready = true;
     m_buffer = shm;
     emit ready();
+}
+
+
+void WlrScreencopyFrameV1::copy()
+{
+    if(m_ready)
+    {
+        wl_shm_buffer_begin_access(m_buffer);
+        void *data = wl_shm_buffer_get_data(m_buffer);
+
+        QRect rect = m_region.translated(m_output->wlOutput()->position());
+
+        glPixelStorei(GL_PACK_ALIGNMENT, 1);
+        glReadPixels(rect.x(), rect.y(), rect.width(), rect.height(), GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+        wl_shm_buffer_end_access(m_buffer);
+        //send_flags(static_cast<uint32_t>(m_flags));
+        send_ready(m_tv_sec_hi, m_tv_sec_lo, 0);
+    }
 }

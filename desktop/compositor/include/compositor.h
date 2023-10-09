@@ -9,21 +9,21 @@
 #include <QWaylandSurface>
 #include <QWaylandView>
 #include <QWaylandWlShellSurface>
-#include "xdgshell.h"
 #include <QWaylandXdgDecorationManagerV1>
-#include <QTimer>
+#include <QtWaylandCompositor/qwaylandseat.h>
+#include <QtWaylandCompositor/qwaylanddrag.h>
+#include <QWaylandXdgOutputManagerV1>
 #include <QOpenGLTextureBlitter>
-
+#include <QTimer>
 #include <QMouseEvent>
 #include <QKeyEvent>
 #include <QTouchEvent>
-
-#include <QtWaylandCompositor/qwaylandseat.h>
-#include <QtWaylandCompositor/qwaylanddrag.h>
 #include <QFileSystemWatcher>
 #include <QDebug>
 #include <QOpenGLContext>
 #include <QLoggingCategory>
+
+#include "xdgshell.h"
 
 #define BUTTON_SPACING 5
 #define BUTTON_WIDTH 18
@@ -51,6 +51,7 @@ class QtShell;
 class QtSurface;
 class ShortcutManager;
 class XdgActivation;
+class WlrScreencopyManagerV1;
 class Compositor : public QWaylandCompositor
 {
     Q_OBJECT
@@ -110,6 +111,7 @@ public:
     bool isRunningLoginManager() const { return m_sddm; }
     QPointF correctedPosition(const QPointF &point);
     ShortcutManager* shortcuts();
+    QWaylandXdgOutputManagerV1 *xdgOutputManager() { return m_outputmgr; }
 protected:
     void adjustCursorSurface(QWaylandSurface *surface, int hotspotX, int hotspotY);
     void recycleSurfaceObject(Surface *obj);
@@ -207,7 +209,10 @@ private:
     FullscreenShell *m_fs = nullptr;
     // XDG Activation Manager
     XdgActivation *m_activation = nullptr;
-
+    // XDG output manager
+    QWaylandXdgOutputManagerV1 *m_outputmgr = nullptr;
+    // wlroots screencopy protocol
+    WlrScreencopyManagerV1 *m_screencopy = nullptr;
     // running under user 'sddm'
     bool m_sddm = false;
 

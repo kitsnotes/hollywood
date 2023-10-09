@@ -39,6 +39,8 @@ class WlrScreencopyFrameV1 : public QWaylandCompositorExtensionTemplate<WlrScree
         , public QtWaylandServer::zwlr_screencopy_frame_v1
 {
     Q_OBJECT
+public slots:
+    void copy();
 protected:
     friend class WlrScreencopyManagerV1;
     WlrScreencopyFrameV1(WlrScreencopyManagerV1 *parent, uint32_t frame, int32_t overlay_cursor, Output *output);
@@ -49,7 +51,7 @@ protected:
 signals:
     void ready();
 private:
-    void handleCopy(Resource *resource, struct ::wl_resource *buffer, bool handleDamage);
+    void initCopy(Resource *resource, struct ::wl_resource *buffer, bool handleDamage);
 private:
     WlrScreencopyManagerV1 *m_parent = nullptr;
     Output *m_output = nullptr;
@@ -59,6 +61,7 @@ private:
     QRect m_region;
     bool m_ready = false;
 
+    uint32_t m_stride;
     bool m_withDamage = false;
     QRect m_damageRect;
     wl_shm_format m_requestedBufferFormat = WL_SHM_FORMAT_ARGB8888;

@@ -8,6 +8,7 @@
 #include <QObject>
 #include <QWaylandOutput>
 #include <QWaylandOutputMode>
+#include <QWaylandXdgOutputManagerV1>
 #include <QScreen>
 
 class Surface;
@@ -16,13 +17,13 @@ class Output : public QObject
 {
     Q_OBJECT
 public:
-    explicit Output(QObject *parent = nullptr);
+    explicit Output(QScreen *s, bool defaultScreen = false);
     OutputWindow* window() { return m_window; }
     QWaylandOutput* wlOutput() { return m_wlOutput; }
     QScreen* screen() { return m_screen; }
     QSize size() const;
     bool primary() const { return m_primary; }
-    void setPrimary(bool primary) { m_primary = primary; };
+    void setPrimary(bool primary) { m_primary = primary; }
     bool reserveLayerShellRegion(Surface *surface);
     bool removeLayerShellReservation(Surface *surface);
 signals:
@@ -33,9 +34,6 @@ private:
     void reloadConfiguration();
     uint defaultScaleFactor();
     void updateUsableGeometry();
-    void configureForScreen(QScreen *s, bool defaultScreen = false);
-    void configureDebugWindow();
-    void configureDebugWindow2();
 private:
     friend class CompositorApp;
     friend class OutputWindow;
@@ -45,6 +43,8 @@ private:
     OutputWindow *m_window;
     QWaylandOutput *m_wlOutput;
     QList<Surface*> m_reserved;
+
+    QWaylandXdgOutputV1 *m_xdgOutput = nullptr;
 };
 
 #endif // OUTPUT_H

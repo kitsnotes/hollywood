@@ -12,12 +12,39 @@
 #include <QSettings>
 #include <QDateTime>
 
-Output::Output(QObject *parent)
-    : QObject(parent)
+Output::Output(QScreen *s, bool defaultScreen)
+    : QObject(nullptr)
     , m_window(new OutputWindow(this))
 {
     m_wlOutput = new QWaylandOutput(wcApp->waylandCompositor(), m_window);
     wcApp->compositor()->addOutput(this);
+    m_screen = s;
+    m_wlOutput->setManufacturer(s->manufacturer());
+    m_wlOutput->setModel(s->model());
+
+    // set our preferred mode
+    QWaylandOutputMode mode(s->size(), s->refreshRate());
+    m_wlOutput->addMode(mode, true);
+    m_wlOutput->setCurrentMode(mode);
+
+    if(defaultScreen)
+        wcApp->waylandCompositor()->setDefaultOutput(m_wlOutput);
+
+    if(defaultScreen)
+        m_wlOutput->setPosition(QPoint(0,0));
+    m_wlOutput->setSizeFollowsWindow(false);
+
+    reloadConfiguration();
+    touchConfiguration();
+
+    m_window->resize(s->size());
+    m_window->show();
+
+    m_xdgOutput = new QWaylandXdgOutputV1(m_wlOutput, wcApp->compositor()->xdgOutputManager());
+    m_xdgOutput->setName(s->name());
+    m_xdgOutput->setLogicalPosition(QPoint(0,0));
+    m_xdgOutput->setLogicalSize(s->size());
+    m_xdgOutput->setDescription(QString("%1 %2").arg(s->manufacturer(), s->model()));
 }
 
 QSize Output::size() const
@@ -144,45 +171,3 @@ void Output::updateUsableGeometry()
     m_wlOutput->setAvailableGeometry(rect.marginsRemoved(margins));
 }
 
-void Output::configureForScreen(QScreen *s, bool defaultScreen)
-{
-    m_screen = s;
-    m_wlOutput->setManufacturer(s->manufacturer());
-    m_wlOutput->setModel(s->model());
-
-    // set our preferred mode
-    QWaylandOutputMode mode(s->size(), s->refreshRate());
-    m_wlOutput->addMode(mode, true);
-    m_wlOutput->setCurrentMode(mode);
-
-    if(defaultScreen)
-        wcApp->waylandCompositor()->setDefaultOutput(m_wlOutput);
-
-    if(defaultScreen)
-        m_wlOutput->setPosition(QPoint(0,0));
-    m_wlOutput->setSizeFollowsWindow(false);
-
-    reloadConfiguration();
-    touchConfiguration();
-
-    m_window->resize(s->size());
-    m_window->show();
-}
-
-void Output::configureDebugWindow()
-{
-    QWaylandOutputMode mode(QSize(1024,768), 60000);
-    m_wlOutput->addMode(mode, true);
-    m_wlOutput->setCurrentMode(mode);
-    m_wlOutput->setManufacturer(tr("Originull"));
-    m_wlOutput->setModel(tr("Debug Wnd 1"));
-
-    wcApp->waylandCompositor()->setDefaultOutput(m_wlOutput);
-    m_wlOutput->setPosition(QPoint(0,0));
-    m_wlOutput->setSizeFollowsWindow(true);
-    m_window->resize(1024,768);
-    m_window->show();
-    if(m_primary)
-        m_window->setTitle(tr("Primary Display"));
-
-}

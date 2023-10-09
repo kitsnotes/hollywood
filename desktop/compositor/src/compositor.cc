@@ -19,6 +19,7 @@
 #include "qtshell.h"
 #include "fullscreen.h"
 #include "activation.h"
+#include "screencopy.h"
 
 #include "surfaceobject.h"
 #include "shortcuts.h"
@@ -45,6 +46,8 @@ Compositor::Compositor(bool sddm)
     , m_qt(new QtShell(this))
     , m_fs(new FullscreenShell(this))
     , m_activation(new XdgActivation(this))
+    , m_outputmgr(new QWaylandXdgOutputManagerV1(this))
+    , m_screencopy(new WlrScreencopyManagerV1(this))
     , m_sddm(sddm)
     , m_shortcuts(new ShortcutManager(this))
     , m_timeout(new QTimer(this))
@@ -78,6 +81,10 @@ void Compositor::create()
     m_xdgDecoration->setExtensionContainer(this);
     m_xdgDecoration->initialize();
     m_xdgDecoration->setPreferredMode(QWaylandXdgToplevel::ServerSideDecoration);
+    m_outputmgr->setExtensionContainer(this);
+    m_outputmgr->initialize();
+    m_screencopy->setExtensionContainer(this);
+    m_screencopy->initialize();
     connect(m_appMenu, &AppMenuManager::appMenuCreated, this, &Compositor::appMenuCreated);
     connect(m_hwPrivate, &OriginullProtocol::menuServerSet, this, &Compositor::onMenuServerRequest);
     connect(m_hwPrivate, &OriginullProtocol::wallpaperRotationRequested, this, &Compositor::onRotateWallpaper);
