@@ -141,7 +141,10 @@ void Output::reloadConfiguration()
 
 uint Output::defaultScaleFactor()
 {
-    // TODO: see if this is high dpi, adjust accordingly
+    qDebug() << "Output::defaultScaleFactor" << m_screen->physicalDotsPerInch();
+    if(m_screen->physicalDotsPerInch() > 190)
+        return 2;
+
     return 1;
 }
 

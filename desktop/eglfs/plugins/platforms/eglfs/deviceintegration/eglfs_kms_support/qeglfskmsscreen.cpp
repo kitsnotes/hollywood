@@ -164,6 +164,17 @@ QDpi HWEglFSKmsScreen::logicalDpi() const
 
 QDpi HWEglFSKmsScreen::logicalBaseDpi() const
 {
+    qDebug() << "HWEglFSKmsScreen::logicalBaseDpi" << m_output.physical_size << geometry();;
+    if(!m_output.physical_size.isEmpty())
+    {
+        auto h_in = m_output.physical_size.height() / 22.4;
+        auto w_in = m_output.physical_size.width() / 22.4;
+
+        auto ppi_height = h_in / geometry().height();
+        auto ppi_width = w_in / geometry().width();
+
+        return QDpi((int)ppi_width, (int)ppi_height);
+    }
     return QDpi(100, 100);
 }
 
