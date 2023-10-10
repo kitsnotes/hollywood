@@ -305,7 +305,7 @@ void BlitterPrivate::blit(GLuint texture,
     program->glProgram->setUniformValue(program->textureTransformUniformPos, textureTransform);
     program->textureMatrixUniformState = User;
 
-    if(format == QOpenGLTexture::RGB)
+    if(format == QOpenGLTexture::RGBFormat)
         program->glProgram->setUniformValue(program->isrgbUniformPos, true);
 
     QOpenGLContext::currentContext()->functions()->glDrawArrays(GL_TRIANGLE_STRIP, 0, 6);
@@ -339,7 +339,7 @@ void BlitterPrivate::blit(GLuint texture,
         program->textureMatrixUniformState = Identity;
     }
 
-    if(format == QOpenGLTexture::RGB)
+    if(format == QOpenGLTexture::RGBFormat)
         program->glProgram->setUniformValue(program->isrgbUniformPos, true);
 
     QOpenGLContext::currentContext()->functions()->glDrawArrays(GL_TRIANGLE_STRIP, 0, 6);

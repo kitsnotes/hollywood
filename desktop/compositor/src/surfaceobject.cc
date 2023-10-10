@@ -425,8 +425,11 @@ QRectF Surface::closeButtonRect() const
 
     auto ds = hwComp->decorationSize()*surface()->bufferScale();
     const int windowRight = decoratedRect().right() + 1;
-    return QRectF(windowRight - BUTTON_WIDTH - BUTTON_SPACING * 0 - BUTTONS_RIGHT_MARGIN,
-                   decorationPosition().y()+(ds - BUTTON_WIDTH) / 2, BUTTON_WIDTH, BUTTON_WIDTH);
+    int bw = BUTTON_WIDTH*surface()->bufferScale();
+    int bs = BUTTON_SPACING*surface()->bufferScale();
+    int brm = BUTTONS_RIGHT_MARGIN*surface()->bufferScale();
+    return QRectF(windowRight - bw - bs * 0 - brm,
+                   decorationPosition().y()+(ds - bw) / 2, bw, bw);
 }
 
 QRectF Surface::maximizeButtonRect() const
@@ -436,8 +439,11 @@ QRectF Surface::maximizeButtonRect() const
 
     auto ds = hwComp->decorationSize()*surface()->bufferScale();
     const int windowRight = decoratedRect().right() + 1;
-    return QRectF(windowRight - BUTTON_WIDTH * 2 - BUTTON_SPACING * 1 - BUTTONS_RIGHT_MARGIN,
-                   decorationPosition().y()+(ds - BUTTON_WIDTH) / 2, BUTTON_WIDTH, BUTTON_WIDTH);
+    int bw = BUTTON_WIDTH*surface()->bufferScale();
+    int bs = BUTTON_SPACING*surface()->bufferScale();
+    int brm = BUTTONS_RIGHT_MARGIN*surface()->bufferScale();
+    return QRectF(windowRight - bw * 2 - bs * 1 - brm,
+                   decorationPosition().y()+(ds - bw) / 2, bw, bw);
 }
 
 QRectF Surface::minimizeButtonRect() const
@@ -447,8 +453,11 @@ QRectF Surface::minimizeButtonRect() const
 
     auto ds = hwComp->decorationSize()*surface()->bufferScale();
     const int windowRight = decoratedRect().right() + 1;
-    return QRectF(windowRight - BUTTON_WIDTH * 3 - BUTTON_SPACING * 2 - BUTTONS_RIGHT_MARGIN,
-                  decorationPosition().y()+(ds - BUTTON_WIDTH) / 2, BUTTON_WIDTH, BUTTON_WIDTH);
+    int bw = BUTTON_WIDTH*surface()->bufferScale();
+    int bs = BUTTON_SPACING*surface()->bufferScale();
+    int brm = BUTTONS_RIGHT_MARGIN*surface()->bufferScale();
+    return QRectF(windowRight - bw * 3 - bs * 2 - brm,
+                  decorationPosition().y()+(ds - bw) / 2, bw, bw);
 }
 
 QRectF Surface::titleBarRect() const

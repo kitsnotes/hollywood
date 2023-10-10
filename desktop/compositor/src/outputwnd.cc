@@ -133,8 +133,8 @@ void OutputWindow::paintGL()
     for(Surface *obj : hwComp->bottomLayerSurfaces())
         drawTextureForObject(obj);
 
-    if(!hwComp->isRunningLoginManager())
-        drawDesktopInfoString();
+    /*if(!hwComp->isRunningLoginManager())
+        drawDesktopInfoString();*/
 
     // draw standard surfaces
     for(Surface *obj : hwComp->surfaceByZOrder())

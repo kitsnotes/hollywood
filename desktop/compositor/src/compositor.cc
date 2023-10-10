@@ -398,7 +398,6 @@ void Compositor::onDesktopRequest(QWaylandSurface *surface)
     sf->m_isShellDesktop = true;
     sf->m_ssd = false;
     auto start = sf->primaryView()->output()->availableGeometry().topLeft();
-    qDebug() << "start point for desktop" << start;
     sf->m_surfacePosition = start;
     sf->setPosition(start);
 }
@@ -760,14 +759,12 @@ QColor Compositor::primaryBackgroundColor() const
 
 void Compositor::updateCursor()
 {
-    if(!m_cursorObject)
-    {
-        qDebug() << "Compositor::updateCursor null m_cursorObject";
-    }
+    /*if(!m_cursorObject)
+        qDebug() << "Compositor::updateCursor null m_cursorObject";*/
     if(m_cursorObject->primaryView())
         m_cursorObject->primaryView()->advance();
-    else
-        qDebug() << "Compositor::updateCursor null m_cursorObject primaryView";
+    /*else
+        qDebug() << "Compositor::updateCursor null m_cursorObject primaryView";*/
     QImage image = m_cursorObject->primaryView()->currentBuffer().image();
     if (!image.isNull())
         primaryOutput()->window()->setCursor(QCursor(QPixmap::fromImage(image), m_cursorHotspotX, m_cursorHotspotY));
@@ -808,12 +805,12 @@ void Compositor::adjustCursorSurface(QWaylandSurface *surface, int hotspotX, int
     {
         if(m_cursorObject->surface() != surface)
         {
-	    qDebug() << "Compositor::adjustCursorSurface: changing surface";
+            //qDebug() << "Compositor::adjustCursorSurface: changing surface";
             if (m_cursorObject->surface())
             {
                 try
                 {
-		    qDebug() << "Compositor::adjustCursorSurface: disconnecting updateCursor";
+                    //qDebug() << "Compositor::adjustCursorSurface: disconnecting updateCursor";
                     disconnect(this, SLOT(updateCursor()));
                 }
                 catch(int e)
@@ -822,17 +819,17 @@ void Compositor::adjustCursorSurface(QWaylandSurface *surface, int hotspotX, int
                 }
             }
             if(m_surfaces.contains(m_cursorObject))
-	    {
-		qDebug() << "Compositor::adjustCursorSurface: removing old cursor from surface list";
-                m_surfaces.removeOne(m_cursorObject);
-	    }
+            {
+            //qDebug() << "Compositor::adjustCursorSurface: removing old cursor from surface list";
+            m_surfaces.removeOne(m_cursorObject);
+            }
 
             if(m_cursorObject)
             {
                 //TODO: Fix me i leak
 //                m_cursorObject->deleteLater();
                 m_cursorObject = nullptr;
-                qDebug() << "Compositor::adjustCursorSurface: m_cursorObject == nullptr";
+                //qDebug() << "Compositor::adjustCursorSurface: m_cursorObject == nullptr";
             }
         }
     }
@@ -857,7 +854,7 @@ void Compositor::adjustCursorSurface(QWaylandSurface *surface, int hotspotX, int
 
     if (surface && surface->hasContent())
     {
-        qDebug() << "Compositor::adjustCursorSurface: updating new cursor";
+        //qDebug() << "Compositor::adjustCursorSurface: updating new cursor";
         updateCursor();
     }
 }
