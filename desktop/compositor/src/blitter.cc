@@ -122,12 +122,12 @@ static const char fragment_shader150_rectangle[] =
     "   fragcolor = swizzle ? tmpFragColor.bgra : tmpFragColor;"
     "}";
 
-static const GLfloat vertex_buffer_data2[] = {
+/*static const GLfloat vertex_buffer_data2[] = {
     0, 0,
     0, 1,
     1, 0,
     0, 1
-};
+};*/
 
 static const GLfloat vertex_buffer_data[] = {
         -1,-1, 0,

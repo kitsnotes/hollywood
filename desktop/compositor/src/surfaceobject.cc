@@ -570,8 +570,8 @@ QPointF Surface::surfacePosition() const
 
 QPointF Surface::decorationPosition() const
 {
-    auto bs = hwComp->borderSize();
-    auto ds = hwComp->decorationSize();
+    auto bs = hwComp->borderSize()*surface()->bufferScale();
+    auto ds = hwComp->decorationSize()*surface()->bufferScale();
     auto point = m_surfacePosition;
     point.setX(point.x()-bs);
     point.setY(point.y()-ds);
@@ -1176,19 +1176,19 @@ void Surface::createXdgPopupSurface(HWWaylandXdgPopup *popup)
 
     float yPos = 0;
     if(popup->anchorEdges() & Qt::TopEdge)
-        yPos = rect.top();
+        yPos = rect.top()*parentSurface->surface()->bufferScale();
     else if(popup->anchorEdges() & Qt::BottomEdge)
-        yPos = rect.bottom();
+        yPos = rect.bottom()*parentSurface->surface()->bufferScale();
     else
-        yPos = rect.top() + rect.height() / 2;
+        yPos = (rect.top() + rect.height() / 2)*parentSurface->surface()->bufferScale();
 
     float xPos = 0;
     if(popup->anchorEdges() & Qt::LeftEdge)
-        xPos = rect.left();
+        xPos = rect.left()*parentSurface->surface()->bufferScale();
     else if(popup->anchorEdges() & Qt::RightEdge)
-        xPos = rect.right();
+        xPos = rect.right()*parentSurface->surface()->bufferScale();
     else
-        xPos = rect.left() + rect.width() / 2;
+        xPos = (rect.left() + rect.width() / 2)*parentSurface->surface()->bufferScale();
 
     setPosition(QPointF(xPos,yPos));
 
@@ -1252,13 +1252,13 @@ void Surface::onXdgSetMaximized()
     m_minimized = false;
     m_maximized = true;
     m_priorNormalPos = m_surfacePosition;
-    m_prior_normal_size = surfaceSize();
+    m_prior_normal_size = surfaceSize()/surface()->bufferScale();
     m_resize_animation_start_size = surfaceSize();
     auto size = primaryView()->output()->availableGeometry();
     if(this->serverDecorated())
     {
-        size.setHeight(size.height() - hwComp->decorationSize() - hwComp->borderSize());
-        size.setWidth(size.width() - hwComp->borderSize()*2);
+        size.setHeight((size.height()/surface()->bufferScale()) - hwComp->decorationSize() - (hwComp->borderSize()*2));
+        size.setWidth((size.width()/surface()->bufferScale()) - hwComp->borderSize()*2);
     }
     m_maximized_complete = false;
     m_animation_minmax_target_size = size.size();
@@ -1298,7 +1298,7 @@ void Surface::completeXdgConfigure()
     {
         auto pos = primaryView()->output()->availableGeometry().topLeft();
         pos.setX(pos.x()+hwComp->borderSize());
-        pos.setY(pos.y()+hwComp->decorationSize());
+        pos.setY(pos.y()+(hwComp->decorationSize()*surface()->bufferScale()));
         if(!hwComp->useAnimations() || m_maximized_complete)
         {
             setPosition(pos);
