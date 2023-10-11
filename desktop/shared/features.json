@@ -1,0 +1,118 @@
+{
+  "hollywood": {
+    "apk-package": "hollywood-desktop",
+    "description": "Hollywood base system",
+    "help-text": "Installs the base Hollywood system, Qt 6 API and userland tools. (Required)",
+    "optional": false
+  },
+  "kernels": {
+    "description": "Linux kernels",
+    "option": [
+      {
+        "apk-package": "linux-stable",
+        "description": "Stable Linux kernel",
+        "help-text": "Stable Linux kernel from kernel.org with Hollywood patches. Supported by Originull Software."
+      },
+      {
+        "apk-package": "linux-lts",
+        "description": "Long Term Support (LTS) kernel",
+        "help-text": "LTS Linux kernel from kernel.org with Hollywood patches. Supported by Originull Software."
+      },
+      {
+        "apk-package": "linux-asahi",
+        "description": "Asahi Linux Apple Silicon kernel",
+        "help-text": "Kernel from Asahi Linux for Apple Silicon based devices. Derived from linux-stable. Supported by Originull Software.",
+        "arch": "aarch64"
+      }
+    ]
+  },
+  "hwsupport": {
+    "description": "Hardware support",
+    "option": [
+      {
+        "apk-package": "amd-catalyst",
+        "description": "AMD Catalyst driver",
+        "help-text": "Installs AMD Catalyst driver, OpenGL and Vulkan implementations for AMDGPU driver (replaces Mesa 3D).",
+        "arch": "x86_64"
+      },
+      {
+        "apk-package": "apple-silicon-support",
+        "description": "Apple Silicon support",
+        "help-text": "Provides hardware support for Apple Silicon based Macintosh systems.",
+        "arch": "aarch64"
+      },
+      {
+        "apk-package": "apple-t2-support",
+        "description": "Apple T2 support",
+        "help-text": "Provides hardware support for Apple Macintosh systems with T2 chip.",
+        "arch": "x86_64"
+      },
+      {
+        "apk-package": "broadcom-wl",
+        "description": "Broadcom proprietary wireless driver",
+        "help-text": "Installs proprietary Broadcom wireless driver for legacy cards not supported by the Linux kernel open-source driver."
+      },
+      {
+        "apk-package": "nvidia-driver",
+        "description": "nVidia proprietary graphics driver",
+        "help-text": "Installs nVidia proprietary graphics driver."
+      }
+    ]
+  },
+  "devel": {
+    "description": "Development tools",
+    "option": [
+      {
+        "apk-package": "devel-cpp",
+        "description": "C/C++ development tools",
+        "help-text": "Installs clang 16 & GNU compilers for C, C++ and Objective-C, along with cmake, GNU make, GNU autotools/automake, meson, and ninja build systems."
+      },
+      {
+        "apk-package": "devel-java",
+        "description": "Jolt! OpenJDK",
+        "help-text": "Installs Java development tools powered by OpenJDK."
+      },
+      {
+        "apk-package": "devel-sdk",
+        "description": "Hollywood SDK",
+        "help-text": "Installs development packages and libraries for Qt 6 based Hollywood application development, and the Qt Creator IDE, with Hollywood packaging tools."
+      },
+      {
+        "apk-package": "devel-python",
+        "description": "Python 3 development tools",
+        "help-text": "Installs Python 3 development tools."
+      }
+    ]
+  },
+  "android": {
+    "apk-package": "waydroid",
+    "description": "Android application support",
+    "help-text": "Installs the waydroid Android application runtime."
+  },
+  "gtk": {
+    "apk-package": "gnome-support",
+    "description": "GNOME application support",
+    "help-text": "Install components for supporting applications built with GNOME technologies including GTK3, GTK4 & libadwaita."
+  },
+  "jolt": {
+    "apk-package": "openjdk17-jre",
+    "description": "Jolt! 17 JRE",
+    "help-text": "Installs Originull Jolt! OpenJDK Runtime Environment (Version 17 LTS)."
+  },
+  "lsw": {
+    "apk-package": "lsw-support",
+    "description": "Linux subsystem for Windows",
+    "help-text": "Installs the Hollywood Linux subsystem for Windows powered by WINE and Proton.",
+    "arch": "x86_64"
+  },
+  "virt": {
+    "apk-package": "virt-support",
+    "description": "Virtual machine support",
+    "help-text": "Installs Hollywood Virtualization platform powered by KVM/QEMU/libvirt"
+  },
+  "xwayland": {
+    "apk-package": "xwayland-support",
+    "description": "X11 application support",
+    "help-text": "Installs XWayland components for the Hollywood compositor with compatible X server."
+  }
+}
