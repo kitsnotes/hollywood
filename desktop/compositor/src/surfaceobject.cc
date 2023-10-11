@@ -841,6 +841,7 @@ void Surface::handleLayerShellPopupPositioning()
 {
     auto popup = m_xdgPopup;
     auto parent = m_parentSurface->m_layerSurface;
+    qDebug() << parent->anchors();
     if (parent->anchors() & WlrLayerSurfaceV1::TopAnchor)
     {
         float xPos = popup->anchorRect().x();
@@ -851,8 +852,12 @@ void Surface::handleLayerShellPopupPositioning()
 
     if (parent->anchors() & WlrLayerSurfaceV1::BottomAnchor)
     {
+        auto bs = m_parentSurface->surface()->bufferScale();
         float xPos = popup->anchorRect().x();
-        int height = popup->positionerSize().height();
+        if(bs > 1 && xPos > 0)
+            xPos = popup->anchorRect().x() - (popup->positionerSize().width());
+        qDebug() << popup->anchorRect() << popup->positionerSize();
+        int height = popup->positionerSize().height()*bs;
         height = height - height - height;
         setPosition(QPointF(xPos,height));
         return;
