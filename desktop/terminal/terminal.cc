@@ -307,6 +307,9 @@ QString TerminalHost::windowTitle()
     if(title.isEmpty())
         title = m_profile->windowTitle();
 
+    if(title == QString("QTermWidget"))
+        title = QString();
+
     auto wflags = m_profile->windowTitleFlags();
     auto wndtitle = QStringList();
     auto currentcwd = QString();

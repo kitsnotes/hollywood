@@ -226,7 +226,9 @@ const QString uDisks2::mountOptical(QString path)
     // https://bugs.archlinux.org/task/49643
     // https://bugs.freedesktop.org/show_bug.cgi?id=52357
     QProcess proc;
-    proc.start(QString("udisks --mount /dev/%1").arg(path.split("/").takeLast()));
+    proc.setProgram(QString("udisks"));
+    proc.setArguments(QStringList() << "--mount" << QString("/dev/%1").arg((path.split("/").takeLast())));
+    proc.start();
     proc.waitForFinished();
     return QString();
 }
@@ -249,7 +251,9 @@ const QString uDisks2::unmountOptical(QString path)
     // https://bugs.archlinux.org/task/49643
     // https://bugs.freedesktop.org/show_bug.cgi?id=52357
     QProcess proc;
-    proc.start(QString("udisks --unmount /dev/%1").arg(path.split("/").takeLast()));
+    proc.setProgram(QString("udisks"));
+    proc.setArguments(QStringList() << "--unmount" << QString("/dev/%1").arg((path.split("/").takeLast())));
+    proc.start();
     proc.waitForFinished();
     return QString();
 }
