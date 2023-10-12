@@ -70,7 +70,8 @@ void Compositor::create()
     QWaylandCompositor::create();
     connect(this, &QWaylandCompositor::surfaceCreated, this, &Compositor::onSurfaceCreated);
     connect(this, &QWaylandCompositor::subsurfaceChanged, this, &Compositor::onSubsurfaceChanged);
-    connect(defaultSeat(), &QWaylandSeat::cursorSurfaceRequest, this, &Compositor::adjustCursorSurface);
+    // TODO: cursors are leaky & buggy
+    //connect(defaultSeat(), &QWaylandSeat::cursorSurfaceRequest, this, &Compositor::adjustCursorSurface);
     connect(defaultSeat()->drag(), &QWaylandDrag::dragStarted, this, &Compositor::startDrag);
 
     m_hwPrivate->setExtensionContainer(this);
