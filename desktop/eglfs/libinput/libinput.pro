@@ -27,7 +27,8 @@ HEADERS += \
     hollywood/libinputpointer.h \
     hollywood/libinputtouch.h \
     hollywood/private/libinputlogging_p.h \
-    hollywood/eglfsxkb.h
+    hollywood/eglfsxkb.h \
+    hollywood/private/outputmapping_p.h
 
 SOURCES += \
     libinputgesture.cpp \
@@ -36,6 +37,7 @@ SOURCES += \
     libinputpointer.cpp \
     libinputtouch.cpp \
     logging.cpp \
+    outputmapping.cpp \
     ../eglfsxkb/eglfsxkb.cpp
 
 target.path = /usr/lib

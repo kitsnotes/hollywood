@@ -39,7 +39,6 @@
 struct libinput_device;
 struct libinput_event_touch;
 
-class QTouchDevice;
 
 namespace Originull {
 

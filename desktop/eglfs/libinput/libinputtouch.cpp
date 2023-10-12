@@ -42,7 +42,7 @@
 #include <QtGui/QPointingDevice>
 #include <QtGui/private/qhighdpiscaling_p.h>
 #include <QtGui/private/qpointingdevice_p.h>
-
+#include "private/outputmapping_p.h"
 #include "private/libinputlogging_p.h"
 #include "libinputhandler.h"
 #include "libinputtouch.h"
@@ -91,8 +91,11 @@ QRect LibInputTouch::screenGeometry(DeviceState *state)
 
 QPointF LibInputTouch::getPos(libinput_event_touch *e)
 {
-    // TODO: fix me;
-    QPointF(0,0);
+    DeviceState *state = deviceState(e);
+    QRect geom = screenGeometry(state);
+    const double x = libinput_event_touch_get_x_transformed(e, geom.width());
+    const double y = libinput_event_touch_get_y_transformed(e, geom.height());
+    return geom.topLeft() + QPointF(x, y);
 }
 
 LibInputTouch::LibInputTouch(LibInputHandler *h)
@@ -100,32 +103,32 @@ LibInputTouch::LibInputTouch(LibInputHandler *h)
 
 QPointingDevice* LibInputTouch::registerDevice(libinput_device *device)
 {
-    /*QOutputMapping *mapping = QOutputMapping::get();
-    QRect geom;
-    if (mapping->load()) {
-        m_devState[dev].m_screenName = mapping->screenNameForDeviceNode(devNode);
-        if (!m_devState[dev].m_screenName.isEmpty()) {
-            geom = screenGeometry(&m_devState[dev]);
-            qCDebug(qLcLibInput) << "libinput: Mapping device" << devNode
-                                 << "to screen" << m_devState[dev].m_screenName
-                                 << "with geometry" << geom;
-        }
-    }*/
-
     struct udev_device *udev_device;
     udev_device = libinput_device_get_udev_device(device);
     QString devNode = QString::fromUtf8(udev_device_get_devnode(udev_device));
     QString devName = QString::fromUtf8(libinput_device_get_name(device));
-    auto busId = QString::fromLocal8Bit(udev_device_get_syspath(udev_device));
+
+    QOutputMapping *mapping = QOutputMapping::get();
+    QRect geom;
+    if (mapping->load()) {
+        m_devState[device].m_screenName = mapping->screenNameForDeviceNode(devNode);
+        if (!m_devState[device].m_screenName.isEmpty()) {
+            geom = screenGeometry(&m_devState[device]);
+            qCDebug(lcInput) << "libinput: Mapping device" << devNode
+                                 << "to screen" << m_devState[device].m_screenName
+                                 << "with geometry" << geom;
+        }
+    }
+
     auto devnum = udev_device_get_devnum(udev_device);
     QPointingDevice *td =new QPointingDevice(devName, devnum,
                QInputDevice::DeviceType::TouchScreen, QPointingDevice::PointerType::Finger,
                QPointingDevice::Capability::Position | QPointingDevice::Capability::Area,
                                              16, 0);
 
-    /*auto devPriv = QPointingDevicePrivate::get(td);
+    auto devPriv = QPointingDevicePrivate::get(td);
     if (!geom.isNull())
-        devPriv->setAvailableVirtualGeometry(geom);*/
+        devPriv->setAvailableVirtualGeometry(geom);
     m_devState[device].m_touchDevice = td;
 
     return td;
