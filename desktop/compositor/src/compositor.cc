@@ -956,7 +956,7 @@ void Compositor::startDrag()
     QWaylandDrag *currentDrag = defaultSeat()->drag();
     Q_ASSERT(currentDrag);
     Surface *iconSurface = findSurfaceObject(currentDrag->icon());
-    SurfaceView *view = findView(currentDrag->icon());
+    //SurfaceView *view = findView(currentDrag->icon());
     iconSurface->setPosition(primaryOutput()->window()->mapFromGlobal(QCursor::pos()));
 
     emit dragStarted(iconSurface);
@@ -1075,6 +1075,7 @@ void Compositor::activate(Surface *obj)
 
 void Compositor::addOutput(Output *output)
 {
+    //connect(output, &Output::availableGeometryChanged, this, )
     m_outputs.append(output);
 }
 

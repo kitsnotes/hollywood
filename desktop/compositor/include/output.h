@@ -26,8 +26,12 @@ public:
     void setPrimary(bool primary) { m_primary = primary; }
     bool reserveLayerShellRegion(Surface *surface);
     bool removeLayerShellReservation(Surface *surface);
+    void modesetFromConfig();
 signals:
     void reservedRegionsChanged();
+    void availableGeometryChanged(const QRect &geometry);
+private slots:
+    void modeChanged();
 private:
     QString persistentSettingName() const;
     void touchConfiguration();
@@ -39,8 +43,8 @@ private:
     friend class OutputWindow;
     bool m_virtual;
     bool m_primary = false;
-    QScreen *m_screen;
     OutputWindow *m_window;
+    QScreen *m_screen;
     QWaylandOutput *m_wlOutput;
     QList<Surface*> m_reserved;
 

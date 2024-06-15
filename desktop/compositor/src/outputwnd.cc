@@ -76,12 +76,12 @@ OutputWindow::OutputWindow(Output* parent)
 
 int OutputWindow::width()
 {
-    return m_output->size().width();
+    return size().width();
 }
 
 int OutputWindow::height()
 {
-    return m_output->size().height();
+    return size().height();
 }
 
 void OutputWindow::initializeGL()
@@ -133,8 +133,8 @@ void OutputWindow::paintGL()
     for(Surface *obj : hwComp->bottomLayerSurfaces())
         drawTextureForObject(obj);
 
-    /*if(!hwComp->isRunningLoginManager())
-        drawDesktopInfoString();*/
+    if(!hwComp->isRunningLoginManager())
+        drawDesktopInfoString();
 
     // draw standard surfaces
     for(Surface *obj : hwComp->surfaceByZOrder())
@@ -391,7 +391,6 @@ void OutputWindow::drawShadowForObject(uint shadowOffset, Surface *obj)
 
 void OutputWindow::drawDesktopInfoString()
 {
-    return;
     QImage* img = hwComp->desktopLabelImage();
 
     QOpenGLFunctions *functions = context()->functions();

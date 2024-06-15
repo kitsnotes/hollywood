@@ -149,6 +149,9 @@ public slots:
     void toggleMaximize();
     void toggleActive();
     void sendClose();
+    void recalculateLayerShellAnchorPosition();
+    void onLayerShellSizeChanged();
+
 protected:
     // only callable by Compostior
     void setAnimatedSurfaceSize(QSize size);
@@ -191,11 +194,9 @@ private slots:
     void viewSurfaceDestroyed();
     void reconfigureLayerSurface();
     void onLayerChanged();
-    void onLayerShellSizeChanged();
     void onLayerShellXdgPopupParentChanged(HWWaylandXdgPopup *popup);
     void onAnchorsChanged();
     void onExclusiveZoneChanged();
-    void recalculateLayerShellAnchorPosition();
 
     void decorationModeChanged();
     void onQtWindowTitleChanged(const QString&);

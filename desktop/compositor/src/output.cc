@@ -15,10 +15,29 @@
 Output::Output(QScreen *s, bool defaultScreen)
     : QObject(nullptr)
     , m_window(new OutputWindow(this))
+    , m_screen(s)
 {
     m_wlOutput = new QWaylandOutput(wcApp->waylandCompositor(), m_window);
     wcApp->compositor()->addOutput(this);
-    m_screen = s;
+    connect(m_wlOutput, &QWaylandOutput::currentModeChanged, this, &Output::modeChanged);
+    connect(s, &QScreen::availableGeometryChanged, this, [this](const QRect &geometry) {
+        qDebug() << "Output::availableGeometryChanged" << m_screen->size();
+        QWaylandOutputMode mode(m_screen->size(), m_screen->refreshRate());
+        m_wlOutput->addMode(mode, true);
+        m_wlOutput->setCurrentMode(mode);
+        m_window->resize(geometry.width(), geometry.height());
+        updateUsableGeometry();
+        emit availableGeometryChanged(geometry);
+        for(auto lswnd : m_reserved)
+        {
+            lswnd->recalculateLayerShellAnchorPosition();
+            lswnd->onLayerShellSizeChanged();
+        }
+        wcApp->compositor()->triggerRender();
+    });
+    connect(s, &QScreen::refreshRateChanged, this, [this]() {
+        qDebug() << "refreshRateChanged" << m_screen->refreshRate();
+    });
     m_wlOutput->setManufacturer(s->manufacturer());
     m_wlOutput->setModel(s->model());
 
@@ -83,6 +102,11 @@ bool Output::removeLayerShellReservation(Surface *surface)
     return true;
 }
 
+void Output::modeChanged()
+{
+    qDebug() << "Output:: mode changed!";
+}
+
 QString Output::persistentSettingName() const
 {
     // preferred
@@ -139,6 +163,32 @@ void Output::reloadConfiguration()
         m_wlOutput->setScaleFactor(scale);
 }
 
+void Output::modesetFromConfig()
+{
+    QSettings settings(QSettings::UserScope,
+                       QLatin1String("originull"), QLatin1String("hollywood"));
+
+    settings.beginGroup(QLatin1String("Displays"));
+    settings.beginGroup(persistentSettingName());
+
+    Originull::Platform::ScreenChange chg;
+    chg.screen = m_screen;
+    // TODO: fix for multiple monitors
+    chg.position = QPoint(0,0);
+    chg.enabled = true;
+    chg.refreshRate = settings.value("Refresh", 60000).toInt();
+    chg.scale = 1.0;
+    chg.resolution = QSize(settings.value("Width", 1024).toInt()
+                           ,settings.value("Height",768).toInt());
+
+    qDebug() << "Changing Mode:" << chg.resolution << chg.refreshRate;
+    // TODO: test, check if valid mode
+    QVector<Originull::Platform::ScreenChange> changes;
+    changes << chg;
+    Originull::Platform::EglFSFunctions::applyScreenChanges(changes);
+
+}
+
 uint Output::defaultScaleFactor()
 {
     qDebug() << "Output::defaultScaleFactor" << m_screen->physicalDotsPerInch();
@@ -150,7 +200,7 @@ uint Output::defaultScaleFactor()
 
 void Output::updateUsableGeometry()
 {
-    QRect rect = m_wlOutput->geometry();
+    QRect rect = m_screen->geometry();
     QMargins margins(0,0,0,0);
     for(auto r : m_reserved)
     {
