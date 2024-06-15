@@ -425,8 +425,8 @@ QFunctionPointer HWEglFSIntegration::platformFunction(const QByteArray &function
         return QFunctionPointer(enableScreenCastStatic);
     else if (function == Originull::Platform::EglFSFunctions::disableScreenCastIdentifier())
         return QFunctionPointer(disableScreenCastStatic);
-    else if (function == Originull::Platform::EglFSFunctions::applyScreenChangesIdentifier())
-        return QFunctionPointer(applyScreenChangesStatic);
+    /*else if (function == Originull::Platform::EglFSFunctions::applyScreenChangesIdentifier())
+        return QFunctionPointer(c);*/
 
     return qt_egl_device_integration()->platformFunction(function);
 }
@@ -484,7 +484,7 @@ bool HWEglFSIntegration::testScreenChangesStatic(const QVector<Originull::Platfo
     return false;
 }
 
-bool HWEglFSIntegration::applyScreenChangesStatic(const QVector<Originull::Platform::ScreenChange> &changes)
+/*bool HWEglFSIntegration::applyScreenChangesStatic(const QVector<Originull::Platform::ScreenChange> &changes)
 {
     qCDebug(qLcDebug) << "HWEglFSIntegration::applyScreenChangesStatic";
     bool success = true;
@@ -494,7 +494,7 @@ bool HWEglFSIntegration::applyScreenChangesStatic(const QVector<Originull::Platf
         platformScreen->setNewMode(chg.resolution, chg.refreshRate);
     }
     return success;
-}
+}*/
 
 void HWEglFSIntegration::enableScreenCastStatic(QScreen *screen)
 {

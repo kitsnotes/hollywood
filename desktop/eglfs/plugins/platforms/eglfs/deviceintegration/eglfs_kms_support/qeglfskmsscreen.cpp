@@ -215,6 +215,46 @@ void HWEglFSKmsScreen::restoreMode()
     m_output.restoreMode(m_device);
 }
 
+bool HWEglFSKmsScreen::setMode(const QSize &size, qreal refresh)
+{
+    qDebug() << "HWEglFSKmsScreen::setMod2e";
+    int modeIndex = m_output.mode;
+    qDebug() << size << refresh << modeIndex;
+
+    int i = 0;
+    for (const drmModeModeInfo &mode : qAsConst(m_output.modes))
+    {
+        if (size.width() == mode.hdisplay && size.height() == mode.vdisplay)
+        {
+            // Ignore interlaced modes
+            if (mode.flags & DRM_MODE_FLAG_INTERLACE)
+                continue;
+
+            // Verify refresh rate
+            if (mode.vrefresh != refresh)
+                continue;
+
+            modeIndex = i;
+            break;
+        }
+        i++;
+    }
+
+    if (m_output.mode == modeIndex) {
+        qCDebug(qLcEglfsKmsDebug, "Won't change mode because it's already set to %ux%u at %.2f Hz", size.width(), size.height(), refresh);
+        return false;
+    }
+
+    qDebug("Changing mode to %ux%u at %.2f Hz", size.width(), size.height(), refresh);
+
+    // Mode will be changed next flip
+    m_output.mode = modeIndex;
+    m_output.size = size;
+    m_output.mode_set = false;
+
+    return true;
+}
+
 qreal HWEglFSKmsScreen::refreshRate() const
 {
     if (m_headless)

@@ -56,6 +56,7 @@
 #include <hollywood/qeglfskmsintegration.h>
 #include <QtCore/QMap>
 #include <QtCore/QVariant>
+#include <hollywood/eglfsfunctions.h>
 
 namespace QtUdev {
 class Udev;
@@ -76,6 +77,8 @@ public:
     QPlatformCursor *createCursor(QPlatformScreen *screen) const override;
     void presentBuffer(QPlatformSurface *surface) override;
     HWEglFSWindow *createWindow(QWindow *window) const override;
+    static bool applyScreenChangesStatic(const QVector<Originull::Platform::ScreenChange> &changes);
+    QFunctionPointer platformFunction(const QByteArray &function) const;
 
 protected:
     HWKmsDevice *createDevice() override;

@@ -1169,7 +1169,7 @@ void HWKmsOutput::setPowerState(HWKmsDevice *device, QPlatformScreen::PowerState
 
 bool HWKmsOutput::setMode(HWKmsDevice *device, const QSize resolution, const uint32_t refreshRate)
 {
-    qDebug() << "HWKmsOutput::setMode" << resolution << refreshRate;
+    qDebug() << "22 HWKmsOutput::setMode" << resolution << refreshRate;
     bool has_mode = false;
     int wanted_mode = 0;
     for(int i = 0; i < modes.count(); i++)
@@ -1187,17 +1187,27 @@ bool HWKmsOutput::setMode(HWKmsDevice *device, const QSize resolution, const uin
 
     if(has_mode)
     {
-        qDebug() << "hasMode" << has_mode << "wanted:" << wanted_mode;
-        auto crtc = drmModeGetCrtc(device->fd(), crtc_id);
-        int ret = drmModeSetCrtc(device->fd(),
-                       crtc_id,
-                       crtc->buffer_id,
-                       0, 0,
-                       &connector_id, 1,
-                       &modes[wanted_mode]);
-        qDebug() << ret;
+        this->mode = wanted_mode;
+        this->mode_set = false;
         return true;
+        /*drmModeRes *resources = drmModeGetResources(device->fd());
+
+        if(resources)
+        {
+
+            qDebug() << "hasMode" << has_mode << "wanted:" << wanted_mode << device->fd();
+            //auto crtc = drmModeGetCrtc(device->fd(), crtc_id);
+            int ret = drmModeSetCrtc(device->fd(),
+                           crtc_id,
+                           1,
+                           0, 0,
+                           &connector_id, 1,
+                           &modes[wanted_mode]);
+            qDebug() << ret;
+            return true;
+        }
     }
 
-    return false;
+    return false;*/
+    }
 }

@@ -71,6 +71,7 @@ public:
 
     QPlatformCursor *cursor() const override;
 
+    gbm_surface *createGbmSurface(EGLConfig eglConfig, const QSize &size);
     gbm_surface *createSurface(EGLConfig eglConfig);
     void resetSurface();
 
@@ -84,9 +85,11 @@ public:
     void setCursorTheme(const QString &name, int size);
     virtual void updateFlipStatus();
 
+    void setSurface(gbm_surface *surface);
+
     virtual uint32_t gbmFlags() { return GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING; }
 
-    bool setNewMode(const QSize size, const int refresh);
+    //bool setNewMode(const QSize size, const int refresh);
 
 protected:
     void flipFinished();

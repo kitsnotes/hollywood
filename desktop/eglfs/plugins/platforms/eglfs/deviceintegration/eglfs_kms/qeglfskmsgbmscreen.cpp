@@ -148,6 +148,36 @@ QPlatformCursor *HWEglFSKmsGbmScreen::cursor() const
     }
 }
 
+gbm_surface *HWEglFSKmsGbmScreen::createGbmSurface(EGLConfig eglConfig, const QSize &size)
+{
+    qCDebug(qLcEglfsKmsDebug, "Creating gbm_surface for screen %s", qPrintable(name()));
+
+    const auto gbmDevice = static_cast<HWEglFSKmsGbmDevice *>(device())->gbmDevice();
+    EGLint native_format = -1;
+    EGLBoolean success = eglGetConfigAttrib(display(), eglConfig, EGL_NATIVE_VISUAL_ID, &native_format);
+    qCDebug(qLcEglfsKmsDebug) << "Got native format" << Qt::hex << native_format << Qt::dec << "from eglGetConfigAttrib() with return code" << bool(success);
+    gbm_surface *gbmSurface = nullptr;
+
+    if (success)
+        gbmSurface = gbm_surface_create(gbmDevice,
+                                        size.width(),
+                                        size.height(),
+                                        native_format,
+                                        GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING);
+
+    if (!gbmSurface) { // fallback for older drivers
+        uint32_t gbmFormat = drmFormatToGbmFormat(m_output.drm_format);
+        qCDebug(qLcEglfsKmsDebug, "Could not create surface with EGL_NATIVE_VISUAL_ID, falling back to format %x", gbmFormat);
+        gbmSurface = gbm_surface_create(gbmDevice,
+                                        size.width(),
+                                        size.height(),
+                                        gbmFormat,
+                                        GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING);
+    }
+
+    return gbmSurface; // not owned, gets destroyed by the caller
+}
+
 gbm_surface *HWEglFSKmsGbmScreen::createSurface(EGLConfig eglConfig)
 {
     if (!m_gbm_surface) {
@@ -221,6 +251,8 @@ void HWEglFSKmsGbmScreen::ensureModeSet(uint32_t fb)
     HWKmsOutput &op(output());
     const int fd = device()->fd();
 
+    qDebug() << op.mode_set << fd;
+    op.mode_set = false;
     if (!op.mode_set) {
         op.mode_set = true;
 
@@ -263,7 +295,7 @@ void HWEglFSKmsGbmScreen::ensureModeSet(uint32_t fb)
 
 void HWEglFSKmsGbmScreen::waitForFlip()
 {
-    if (m_headless || m_cloneSource)
+    if (m_headless || m_cloneSource || modeChangeRequested())
         return;
 
     // Don't lock the mutex unless we actually need to
@@ -276,6 +308,7 @@ void HWEglFSKmsGbmScreen::waitForFlip()
     m_flipMutex.unlock();
 
     flipFinished();
+
 
 #if QT_CONFIG(drm_atomic)
     device()->threadLocalAtomicReset();
@@ -293,6 +326,9 @@ void HWEglFSKmsGbmScreen::flip()
         qWarning("Screen %s clones another screen. swapBuffers() not allowed.", qPrintable(name()));
         return;
     }
+
+    if(modeChangeRequested())
+        return;
 
     if (!m_gbm_surface) {
         qWarning("Cannot sync before platform init!");
@@ -437,8 +473,19 @@ void HWEglFSKmsGbmScreen::updateFlipStatus()
     m_gbm_bo_next = nullptr;
 }
 
-bool HWEglFSKmsGbmScreen::setNewMode(const QSize size, const int refresh)
+void HWEglFSKmsGbmScreen::setSurface(gbm_surface *surface)
 {
-    qDebug() << "HWEglFSKmsGbmScreen::setNewMode" << size << refresh;
-    return m_output.setMode(m_device, size, refresh);
+    if (m_gbm_bo_current) {
+        gbm_surface_release_buffer(m_gbm_surface,
+                                   m_gbm_bo_current);
+        m_gbm_bo_current = nullptr;
+    }
+    if (m_gbm_bo_next) {
+        gbm_surface_release_buffer(m_gbm_surface,
+                                   m_gbm_bo_next);
+        m_gbm_bo_next = nullptr;
+    }
+
+    m_gbm_surface = surface;
 }
+

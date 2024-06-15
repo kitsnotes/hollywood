@@ -93,3 +93,54 @@ void HWEglFSKmsGbmWindow::invalidateSurface()
     gbmScreen->resetSurface();
 }
 
+bool HWEglFSKmsGbmWindow::resizeSurface(const QSize &size)
+{
+    HWEglFSKmsGbmIntegration *integration = const_cast<HWEglFSKmsGbmIntegration *>(m_integration);
+
+    HWEglFSKmsGbmScreen *gbmScreen = static_cast<HWEglFSKmsGbmScreen *>(screen());
+    EGLDisplay display = gbmScreen->display();
+    QSurfaceFormat platformFormat = m_integration->surfaceFormatFor(window()->requestedFormat());
+    m_config = HWEglFSDeviceIntegration::chooseConfig(display, platformFormat);
+    m_format = q_glFormatFromConfig(display, m_config, platformFormat);
+    // One fullscreen window per screen -> the native window is simply the gbm_surface the screen created.
+    EGLNativeWindowType window = reinterpret_cast<EGLNativeWindowType>(gbmScreen->createGbmSurface(m_config, size));
+
+    PFNEGLCREATEPLATFORMWINDOWSURFACEEXTPROC createPlatformWindowSurface = nullptr;
+    const char *extensions = eglQueryString(EGL_NO_DISPLAY, EGL_EXTENSIONS);
+    if (extensions && (strstr(extensions, "EGL_KHR_platform_gbm") || strstr(extensions, "EGL_MESA_platform_gbm"))) {
+        createPlatformWindowSurface = reinterpret_cast<PFNEGLCREATEPLATFORMWINDOWSURFACEEXTPROC>(
+            eglGetProcAddress("eglCreatePlatformWindowSurfaceEXT"));
+    }
+
+    EGLSurface surface = EGL_NO_SURFACE;
+
+    if (createPlatformWindowSurface) {
+        surface = createPlatformWindowSurface(display, m_config, reinterpret_cast<void *>(window), nullptr);
+    } else {
+        qCDebug(qLcEglfsKmsDebug, "No eglCreatePlatformWindowSurface for GBM, falling back to eglCreateWindowSurface");
+        surface = eglCreateWindowSurface(display, m_config, window, nullptr);
+    }
+
+    if (Q_UNLIKELY(surface == EGL_NO_SURFACE)) {
+        integration->destroyNativeWindow(window);
+        return false;
+    }
+
+    gbmScreen->setSurface(reinterpret_cast<gbm_surface *>(window));
+
+    // Keep track of the old surface
+    EGLSurface oldSurface = m_surface;
+    EGLNativeWindowType oldWindow = m_window;
+
+    // Switch to the new one
+    m_window = window;
+    m_surface = surface;
+
+    // New surface created: destroy the old one
+    if (oldSurface != EGL_NO_SURFACE)
+        eglDestroySurface(display, oldSurface);
+    if (oldWindow)
+        integration->destroyNativeWindow(oldWindow);
+
+    return true;
+}

@@ -51,8 +51,11 @@
 #include <hollywood/udevenumerate.h>
 #include <QtGui/QScreen>
 // #include <QtDeviceDiscoverySupport/private/qdevicediscovery_p.h>
+#include <hollywood/eglfsfunctions.h>
+#include <QtGui/qpa/qwindowsysteminterface.h>
 
 #include <gbm.h>
+
 
 HWEglFSKmsGbmIntegration::HWEglFSKmsGbmIntegration()
 {
@@ -93,6 +96,24 @@ EGLDisplay HWEglFSKmsGbmIntegration::createDisplay(EGLNativeDisplayType nativeDi
     }
 
     return display;
+}
+
+QFunctionPointer HWEglFSKmsGbmIntegration::platformFunction(const QByteArray &function) const
+{
+    qDebug() << "HWEglFSKmsGbmIntegration::platformFunction" << function;
+
+    auto returnValue = HWEglFSKmsIntegration::platformFunction(function);
+    if (returnValue)
+        return returnValue;
+
+    /*if (function == Originull::Platform::EglFSFunctions::testScreenChangesIdentifier())
+        return QFunctionPointer(testScreenChangesStatic);
+    else */
+
+    if (function == Originull::Platform::EglFSFunctions::applyScreenChangesIdentifier())
+        return QFunctionPointer(applyScreenChangesStatic);
+
+    return nullptr;
 }
 
 EGLNativeWindowType HWEglFSKmsGbmIntegration::createNativeOffscreenWindow(const QSurfaceFormat &format)
@@ -161,3 +182,41 @@ HWEglFSWindow *HWEglFSKmsGbmIntegration::createWindow(QWindow *window) const
     return new HWEglFSKmsGbmWindow(window, this);
 }
 
+bool HWEglFSKmsGbmIntegration::applyScreenChangesStatic(const QVector<Originull::Platform::ScreenChange> &changes)
+{
+    for (auto &change : qAsConst(changes)) {
+        if (!change.screen || !change.enabled)
+            continue;
+        qDebug() << change.screen << change.enabled;
+
+        auto *gbmScreen = static_cast<HWEglFSKmsGbmScreen *>(change.screen->handle());
+        if (!gbmScreen)
+            continue;
+
+        gbmScreen->setModeChangeRequested(true);
+
+        bool modeChanged = gbmScreen->setMode(change.resolution, qCeil(change.refreshRate / 1000.0f));
+        if (!modeChanged) {
+            gbmScreen->setModeChangeRequested(false);
+            continue;
+        }
+
+        gbmScreen->setVirtualPosition(change.position);
+        //gbmScreen->setScaleFactor(change.scale);
+
+        const auto windows = QGuiApplication::topLevelWindows();
+        for (auto *window : windows) {
+            if (window->screen() == change.screen) {
+                auto *gbmWindow = static_cast<HWEglFSKmsGbmWindow *>(window->handle());
+                gbmWindow->resizeSurface(gbmScreen->rawGeometry().size());
+                gbmWindow->setGeometry(QRect());
+            }
+        }
+
+        QWindowSystemInterface::handleScreenGeometryChange(change.screen, gbmScreen->geometry(), gbmScreen->availableGeometry());
+
+        gbmScreen->setModeChangeRequested(false);
+    }
+
+    return true;
+}

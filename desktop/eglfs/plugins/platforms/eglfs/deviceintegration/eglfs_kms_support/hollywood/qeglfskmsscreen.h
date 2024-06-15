@@ -94,6 +94,7 @@ public:
 
     HWKmsOutput &output() { return m_output; }
     void restoreMode();
+    bool setMode(const QSize &size, qreal refresh);
 
     SubpixelAntialiasingType subpixelAntialiasingTypeHint() const override;
 
