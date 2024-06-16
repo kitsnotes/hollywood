@@ -217,9 +217,7 @@ void HWEglFSKmsScreen::restoreMode()
 
 bool HWEglFSKmsScreen::setMode(const QSize &size, qreal refresh)
 {
-    qDebug() << "HWEglFSKmsScreen::setMod2e";
     int modeIndex = m_output.mode;
-    qDebug() << size << refresh << modeIndex;
 
     int i = 0;
     for (const drmModeModeInfo &mode : qAsConst(m_output.modes))

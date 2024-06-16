@@ -251,7 +251,6 @@ void HWEglFSKmsGbmScreen::ensureModeSet(uint32_t fb)
     HWKmsOutput &op(output());
     const int fd = device()->fd();
 
-    qDebug() << op.mode_set << fd;
     op.mode_set = false;
     if (!op.mode_set) {
         op.mode_set = true;

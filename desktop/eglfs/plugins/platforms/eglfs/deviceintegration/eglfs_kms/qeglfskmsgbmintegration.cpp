@@ -100,8 +100,6 @@ EGLDisplay HWEglFSKmsGbmIntegration::createDisplay(EGLNativeDisplayType nativeDi
 
 QFunctionPointer HWEglFSKmsGbmIntegration::platformFunction(const QByteArray &function) const
 {
-    qDebug() << "HWEglFSKmsGbmIntegration::platformFunction" << function;
-
     auto returnValue = HWEglFSKmsIntegration::platformFunction(function);
     if (returnValue)
         return returnValue;
@@ -187,7 +185,6 @@ bool HWEglFSKmsGbmIntegration::applyScreenChangesStatic(const QVector<Originull:
     for (auto &change : qAsConst(changes)) {
         if (!change.screen || !change.enabled)
             continue;
-        qDebug() << change.screen << change.enabled;
 
         auto *gbmScreen = static_cast<HWEglFSKmsGbmScreen *>(change.screen->handle());
         if (!gbmScreen)
