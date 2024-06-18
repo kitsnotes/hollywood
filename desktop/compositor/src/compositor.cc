@@ -304,6 +304,9 @@ QList<SurfaceView*> Compositor::views() const
 void Compositor::onSurfaceCreated(QWaylandSurface *surface)
 {
     auto *obj = new Surface(surface);
+    /* connect(surface, &QWaylandSurface::surfaceDestroyed, this, [this,obj]() {
+        recycleSurfaceObject(obj);
+    });*/
     bool twilight = processHasTwilightMode(surface->client()->processId());
     obj->setTwilight(twilight);
     auto outputAt = outputAtPosition(obj->surfacePosition().toPoint());

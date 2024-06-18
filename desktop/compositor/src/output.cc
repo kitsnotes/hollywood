@@ -8,6 +8,7 @@
 #include "compositor.h"
 #include "surfaceobject.h"
 #include "layershell.h"
+#include "wallpaper.h"
 
 #include <QSettings>
 #include <QDateTime>
@@ -19,15 +20,17 @@ Output::Output(QScreen *s, bool defaultScreen)
 {
     m_wlOutput = new QWaylandOutput(wcApp->waylandCompositor(), m_window);
     wcApp->compositor()->addOutput(this);
+    m_wlOutput->setSizeFollowsWindow(true);
     connect(m_wlOutput, &QWaylandOutput::currentModeChanged, this, &Output::modeChanged);
-    connect(s, &QScreen::availableGeometryChanged, this, [this](const QRect &geometry) {
+    connect(s, &QScreen::availableGeometryChanged, this, [this]() {
         qDebug() << "Output::availableGeometryChanged" << m_screen->size();
         QWaylandOutputMode mode(m_screen->size(), m_screen->refreshRate());
         m_wlOutput->addMode(mode, true);
         m_wlOutput->setCurrentMode(mode);
-        m_window->resize(geometry.width(), geometry.height());
+        m_window->resize(m_screen->size().width(), m_screen->size().height());
+        m_window->wallpaperManager()->wallpaperChanged();
         updateUsableGeometry();
-        emit availableGeometryChanged(geometry);
+        emit availableGeometryChanged(QRect(QPoint(0,0), m_screen->size()));
         for(auto lswnd : m_reserved)
         {
             lswnd->recalculateLayerShellAnchorPosition();
@@ -36,7 +39,7 @@ Output::Output(QScreen *s, bool defaultScreen)
         wcApp->compositor()->triggerRender();
     });
     connect(s, &QScreen::refreshRateChanged, this, [this]() {
-        qDebug() << "refreshRateChanged" << m_screen->refreshRate();
+        qDebug() << "Output::refreshRateChanged" << m_screen->refreshRate();
     });
     m_wlOutput->setManufacturer(s->manufacturer());
     m_wlOutput->setModel(s->model());

@@ -52,6 +52,7 @@ void WallpaperManager::wallpaperChanged()
 
     bg.mirror(false, true);
     m_wpStartPoint = QPoint(0,0);
+    qDebug() << "wallpaper: m_parent size" << m_parent->size();
     if(bg.size() != m_parent->size())
     {
         // only if we are equal in size do we not need
