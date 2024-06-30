@@ -389,7 +389,7 @@ void Compositor::onDesktopRequest(QWaylandSurface *surface)
 {
     auto *sf = findSurfaceObject(surface);
     Q_ASSERT(sf);
-    qDebug() << "Compositor::onDesktopRequest" << sf->uuid().toString();
+    qDebug(lc) << "Compositor::onDesktopRequest" << sf->uuid().toString();
 
     if(m_zorder.contains(sf))
         m_zorder.removeOne(sf);
@@ -527,7 +527,7 @@ void Compositor::idleTimeout()
 
 void Compositor::raiseNextInLine()
 {
-    qDebug() << "Compositor::raiseNextInLine";
+    qDebug(lc) << "Compositor::raiseNextInLine";
     m_tl_raised = nullptr;
     m_activated = nullptr;
 
@@ -1004,6 +1004,9 @@ void Compositor::raise(Surface *obj)
         return;
     }
 
+    if(m_activated == obj)
+        return;
+
     qDebug(lc) << QString("Compositor::raise %1").arg(obj->uuid().toString(QUuid::WithoutBraces));
 
     if(obj->isSpecialShellObject())
@@ -1074,7 +1077,7 @@ void Compositor::activate(Surface *obj)
     }
     catch(int e)
     {
-        qDebug() << "Compositor::activate: error activating surface" << e;
+        qDebug(lc) << "Compositor::activate: error activating surface" << e;
     }
 }
 
