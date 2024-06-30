@@ -1004,13 +1004,14 @@ void Compositor::raise(Surface *obj)
         return;
     }
 
+    // we're already raised
     if(m_activated == obj)
         return;
 
-    qDebug(lc) << QString("Compositor::raise %1").arg(obj->uuid().toString(QUuid::WithoutBraces));
-
     if(obj->isSpecialShellObject())
         return;
+
+    qDebug(lc) << QString("Compositor::raise %1").arg(obj->uuid().toString(QUuid::WithoutBraces));
 
     if(!m_zorder.contains(obj))
     {
@@ -1030,11 +1031,11 @@ void Compositor::raise(Surface *obj)
            m_wndmgr->updateZOrder(surfaceZOrderByUUID());
     }
     if(!obj->isXdgPopup())
-    m_tl_raised = obj;
+        m_tl_raised = obj;
     // if we have a subchild, then activate further
     if(obj->childXdgSurfaceObjects().count() > 0)
     {
-        activate(obj->childXdgSurfaceObjects().first());
+        raise(obj->childXdgSurfaceObjects().first());
     }
 }
 
