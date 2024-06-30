@@ -1135,8 +1135,6 @@ void Surface::createXdgTopLevelSurface(HWWaylandXdgToplevel *topLevel)
     m_xdgTopLevel = topLevel;
     m_surfaceType = TopLevel;
 
-    createPlasmaWindowControl();
-    m_wndctl->setTitle(topLevel->title());
     connect(m_xdgTopLevel, &HWWaylandXdgToplevel::decorationModeChanged, this, &Surface::decorationModeChanged);
     connect(m_xdgTopLevel, &HWWaylandXdgToplevel::startMove, hwComp, &Compositor::onStartMove);
     connect(m_xdgTopLevel, &HWWaylandXdgToplevel::startResize, this, &Surface::onXdgStartResize);
@@ -1152,10 +1150,18 @@ void Surface::createXdgTopLevelSurface(HWWaylandXdgToplevel *topLevel)
     connect(m_xdgTopLevel, &HWWaylandXdgToplevel::fullscreenChanged, this, &Surface::completeXdgConfigure);
     m_loadTimer = new QTimer(this);
     m_loadTimer->setSingleShot(true);
-    m_loadTimer->setInterval(190);
+    m_loadTimer->setInterval(20);
     // a temporary bit so we can at least know where we are
     setPosition(QPoint(0,0));
-    connect(m_loadTimer, &QTimer::timeout, this, [this](){
+    connect(m_loadTimer, &QTimer::timeout, this, [this, topLevel](){
+        if(m_parentTopLevelSurface == nullptr)
+        {
+            if(!isShellDesktop())
+            {
+                createPlasmaWindowControl();
+                m_wndctl->setTitle(topLevel->title());
+            }
+        }
         hwComp->raise(this);
     });
     m_loadTimer->start();
@@ -1435,6 +1441,8 @@ void Surface::onXdgParentTopLevelChanged()
     m_parentTopLevelSurface =
             hwComp->findSurfaceObject(m_xdgTopLevel->parentToplevel()->xdgSurface()->surface());
     m_parentTopLevelSurface->addXdgChildSurfaceObject(this);
+    //hwComp->m_zorder.removeOne(this);
+    qDebug() << "Surface::onXdgParentTopLevelChanged: new top level is" << m_parentTopLevelSurface->uuid().toString();
 }
 
 void Surface::onXdgAppIdChanged()
