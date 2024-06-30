@@ -310,7 +310,6 @@ void Surface::setPosition(const QPointF &pos)
         m_surfacePosition = newPos;
 
 move_finish:*/
-    qDebug() << "Surface::setPosition" << newPos;
     m_surfacePosition = newPos;
     if(m_qt != nullptr && m_qt_moveserial != 0)
     {
@@ -684,7 +683,7 @@ void Surface::renderDecoration()
     }
 
     bool active = activated();
-    qDebug() << "Surface::renderDecoration active:" << active;
+
     if(!active)
     {
         bg = bg.lighter(50);
@@ -735,7 +734,7 @@ void Surface::renderDecoration()
     QRectF iconRect(wg.left(), wg.top(), btnsz, btnsz);
     iconRect.adjust(bs + btnsp, 4,
                     bs + btnsp, 4);
-    //QIcon myIcon = QIcon::fromTheme(obj->xdgTopLevel()->appId(), icon);
+
     if (!icon.isNull())
         icon.paint(&p, iconRect.toRect());
 
@@ -839,7 +838,6 @@ void Surface::handleLayerShellPopupPositioning()
 {
     auto popup = m_xdgPopup;
     auto parent = m_parentSurface->m_layerSurface;
-    qDebug() << parent->anchors();
     if (parent->anchors() & WlrLayerSurfaceV1::TopAnchor)
     {
         float xPos = popup->anchorRect().x();
@@ -854,7 +852,6 @@ void Surface::handleLayerShellPopupPositioning()
         float xPos = popup->anchorRect().x();
         if(bs > 1 && xPos > 0)
             xPos = popup->anchorRect().x() - (popup->positionerSize().width());
-        qDebug() << popup->anchorRect() << popup->positionerSize();
         int height = popup->positionerSize().height()*bs;
         height = height - height - height;
         setPosition(QPointF(xPos,height));
@@ -1068,6 +1065,7 @@ void Surface::removeXdgTopLevelChild(Surface *s)
 
 void Surface::activate()
 {
+    qDebug() << "Surface::activate" << m_uuid;
     if(m_xdgTopLevel)
     {
         QList<HWWaylandXdgToplevel::State> states = m_xdgTopLevel->states();

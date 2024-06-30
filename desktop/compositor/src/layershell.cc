@@ -324,10 +324,8 @@ void WlrLayerSurfaceV1::zwlr_layer_surface_v1_get_popup(Resource *resource, wl_r
 {
     Q_UNUSED(resource);
 
-    qDebug() << "attempting xdg_popup";
     HWWaylandXdgPopup *xdgPopup = HWWaylandXdgPopup::fromResource(popup);
     if (xdgPopup) {
-        qDebug() << "xdgPopup succeeded";
         auto *xdgPopupPrivate = HWWaylandXdgPopupPrivate::get(xdgPopup);
         xdgPopupPrivate->setParentLayerSurface(this);
         emit xdgPopupParentChanged(xdgPopup);
