@@ -321,7 +321,6 @@ void Compositor::onSurfaceCreated(QWaylandSurface *surface)
 
 void Compositor::recycleSurfaceObject(Surface *obj)
 {
-    m_recycling.append(obj);
     qDebug(lc) << QString("Compositor::recycleSurfaceObject %1").arg(obj->uuid().toString(QUuid::WithoutBraces));
 
     if(obj->xdgTopLevelParent())
@@ -340,7 +339,6 @@ void Compositor::recycleSurfaceObject(Surface *obj)
     if(m_tl_raised == obj)
         raiseNextInLine();
 
-    m_recycling.removeOne(obj);
     delete obj;
     obj = nullptr;
 }
@@ -529,10 +527,10 @@ void Compositor::idleTimeout()
 
 void Compositor::raiseNextInLine()
 {
+    qDebug() << "Compositor::raiseNextInLine";
     m_tl_raised = nullptr;
     m_activated = nullptr;
 
-    return;
     int sc = m_zorder.count();
     bool raised = false;
     if(m_zorder.count() > 0)
@@ -639,6 +637,8 @@ void Compositor::onXdgTopLevelCreated(HWWaylandXdgToplevel *topLevel, HWWaylandX
     qDebug(lc) << QString("Compositor::onXdgTopLevelCreated %1").arg(mySurface->uuid().toString(QUuid::WithoutBraces));
     // this is temporary and will be better calculated in onXdgWindowGeometryChanged
     mySurface->setPosition(QPointF(1,1));
+
+    m_tl_raised = mySurface;
 }
 
 void Compositor::onStartMove(QWaylandSeat *seat)
@@ -1026,6 +1026,7 @@ void Compositor::raise(Surface *obj)
         if(m_wndmgr->isInitialized())
            m_wndmgr->updateZOrder(surfaceZOrderByUUID());
     }
+    if(!obj->isXdgPopup())
     m_tl_raised = obj;
     // if we have a subchild, then activate further
     if(obj->childXdgSurfaceObjects().count() > 0)
@@ -1036,11 +1037,6 @@ void Compositor::raise(Surface *obj)
 
 void Compositor::activate(Surface *obj)
 {
-    if(m_recycling.contains(obj))
-    {
-        qWarning() << "request to activate surface being recycled";
-        return;
-    }
     if(!obj)
     {
         qWarning() << "request to activate invalid surface";
@@ -1051,6 +1047,7 @@ void Compositor::activate(Surface *obj)
 
     try {
         qDebug(lc) << QString("Compositor::activate %1").arg(obj->uuid().toString(QUuid::WithoutBraces));
+        auto last = m_tl_raised;
 
         // Since the compositor is only tracking unparented objects
         // we leave the ordering of children to SurfaceObject
@@ -1060,6 +1057,10 @@ void Compositor::activate(Surface *obj)
         {
             if(m_menuServer)
                m_menuServer->setTopWindowForMenuServer(obj);
+
+            m_tl_raised = obj;
+            if(last && last != obj)
+               last->deactivate();
         }
 
         if(obj->surface() && !obj->surface()->isDestroyed())
@@ -1068,6 +1069,7 @@ void Compositor::activate(Surface *obj)
            defaultSeat()->setMouseFocus(obj->surface()->primaryView());
         }
 
+        obj->activate();
         m_activated = obj;
     }
     catch(int e)

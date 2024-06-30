@@ -151,7 +151,7 @@ public slots:
     void sendClose();
     void recalculateLayerShellAnchorPosition();
     void onLayerShellSizeChanged();
-
+    void invalidateCachedDecoration();
 protected:
     // only callable by Compostior
     void setAnimatedSurfaceSize(QSize size);

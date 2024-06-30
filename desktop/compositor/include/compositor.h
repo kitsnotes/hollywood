@@ -234,8 +234,6 @@ private:
     Surface *m_activated = nullptr;
     Surface *m_tl_raised = nullptr;
 
-    QList<Surface*> m_recycling;
-
     QFileSystemWatcher *m_cfgwatch = nullptr;
     QString m_configfile;
     QPointF m_globalCursorPos;

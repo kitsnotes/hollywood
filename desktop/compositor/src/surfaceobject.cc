@@ -157,13 +157,7 @@ bool Surface::activated() const
     if(m_minimized)
         return false;
 
-    if(m_xdgTopLevel)
-        return m_xdgTopLevel->activated();
-
-    /*if(m_qt)
-        return m_qt->h();*/
-
-    return false;
+    return hwComp->raisedSurface() == this ? true : false;
 }
 
 QString Surface::windowTitle() const
@@ -680,18 +674,22 @@ void Surface::renderDecoration()
     auto fg = QColor(HOLLYWOOD_TEXTCLR_LIGHT);
     auto bg = QColor(HOLLYWOOD_WNDCLR_LIGHT);
     bg.setAlpha(255);
-    auto fg_inactive = QColor(HOLLYWOOD_TEXTCLR_LIGHT);
     auto stroke = QColor(HOLLYWOOD_WNDCLR_DARK);
 
     if(do_dark)
     {
         fg = QColor(HOLLYWOOD_TEXTCLR_DARK);
         bg = QColor(HOLLYWOOD_WNDCLR_DARK);
-        fg_inactive = QColor(HOLLYWOOD_TEXTCLR_DARK);
         stroke = QColor(HOLLYWOOD_WNDCLR_LIGHT);
     }
 
     bool active = activated();
+    qDebug() << "Surface::renderDecoration active:" << active;
+    if(!active)
+    {
+        bg = bg.lighter(50);
+        fg = fg.lighter();
+    }
 
     auto bs = hwComp->borderSize()*surface()->bufferScale();
     auto ds = hwComp->decorationSize()*surface()->bufferScale();
@@ -761,13 +759,13 @@ void Surface::renderDecoration()
             start.setX(iconRect.x()+iconRect.width()+btnsp);
         start.setY(start.y()+m.height());
         p.save();
-        p.setPen(active ? fg : fg_inactive);
+        p.setPen(fg);
         p.drawText(start, windowTitleText);
         p.restore();
     }
 
     // Default pen
-    QPen pen(active ? fg : fg_inactive);
+    QPen pen(fg);
     p.setPen(pen);
 
     // Close button
@@ -1076,16 +1074,20 @@ void Surface::activate()
         states.append(HWWaylandXdgToplevel::ActivatedState);
         m_xdgTopLevel->sendConfigure(surfaceSize(), states);
     }
+    renderDecoration();
 }
 
 void Surface::deactivate()
 {
+    qDebug() << "Surface::deactivate" << m_uuid;
     if(m_xdgTopLevel)
     {
         QList<HWWaylandXdgToplevel::State> states = m_xdgTopLevel->states();
         states.removeOne(HWWaylandXdgToplevel::ActivatedState);
         m_xdgTopLevel->sendConfigure(surfaceSize(), states);
     }
+
+    renderDecoration();
 }
 
 void Surface::toggleMinimize()
@@ -1517,6 +1519,11 @@ void Surface::onLayerShellSizeChanged()
     m_ls_size = m_layerSurface->size();
     recalculateLayerShellAnchorPosition();
     reconfigureLayerSurface();
+}
+
+void Surface::invalidateCachedDecoration()
+{
+
 }
 
 void Surface::onLayerShellXdgPopupParentChanged(HWWaylandXdgPopup *popup)
