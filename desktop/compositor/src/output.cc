@@ -20,14 +20,13 @@ Output::Output(QScreen *s, bool defaultScreen)
 {
     m_wlOutput = new QWaylandOutput(wcApp->waylandCompositor(), m_window);
     wcApp->compositor()->addOutput(this);
-    m_wlOutput->setSizeFollowsWindow(true);
     connect(m_wlOutput, &QWaylandOutput::currentModeChanged, this, &Output::modeChanged);
     connect(s, &QScreen::availableGeometryChanged, this, [this]() {
-        qDebug() << "Output::availableGeometryChanged" << m_screen->size();
-        QWaylandOutputMode mode(m_screen->size(), m_screen->refreshRate());
+        m_window->resize(m_screen->size().width(), m_screen->size().height());
+        QWaylandOutputMode mode(m_screen->size(), 60);
         m_wlOutput->addMode(mode, true);
         m_wlOutput->setCurrentMode(mode);
-        m_window->resize(m_screen->size().width(), m_screen->size().height());
+        m_xdgOutput->setLogicalSize(mode.size());
         m_window->wallpaperManager()->wallpaperChanged();
         updateUsableGeometry();
         emit availableGeometryChanged(QRect(QPoint(0,0), m_screen->size()));
@@ -47,6 +46,9 @@ Output::Output(QScreen *s, bool defaultScreen)
     // set our preferred mode
     QWaylandOutputMode mode(s->size(), s->refreshRate());
     m_wlOutput->addMode(mode, true);
+    m_wlOutput->addMode(QWaylandOutputMode(QSize(1920,1080), 75), true);
+    m_wlOutput->addMode(QWaylandOutputMode(QSize(1920,1080), 60));
+
     m_wlOutput->setCurrentMode(mode);
 
     if(defaultScreen)
@@ -54,7 +56,6 @@ Output::Output(QScreen *s, bool defaultScreen)
 
     if(defaultScreen)
         m_wlOutput->setPosition(QPoint(0,0));
-    m_wlOutput->setSizeFollowsWindow(false);
 
     reloadConfiguration();
     touchConfiguration();
@@ -108,6 +109,7 @@ bool Output::removeLayerShellReservation(Surface *surface)
 void Output::modeChanged()
 {
     qDebug() << "Output:: mode changed!";
+    updateUsableGeometry();
 }
 
 QString Output::persistentSettingName() const
@@ -189,7 +191,6 @@ void Output::modesetFromConfig()
     QVector<Originull::Platform::ScreenChange> changes;
     changes << chg;
     Originull::Platform::EglFSFunctions::applyScreenChanges(changes);
-
 }
 
 uint Output::defaultScaleFactor()

@@ -1160,6 +1160,8 @@ void Surface::createXdgTopLevelSurface(HWWaylandXdgToplevel *topLevel)
             {
                 createPlasmaWindowControl();
                 m_wndctl->setTitle(topLevel->title());
+                if(m_menuServer)
+                    m_menuServer->setTopWindowForMenuServer(this);
             }
         }
         hwComp->raise(this);
