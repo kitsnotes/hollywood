@@ -6,7 +6,7 @@ QT = core-private gui-private core5compat dbus
 CONFIG += internal_module
 DESTDIR=$${OBJECTS_DIR}../../output/
 
-LIBS += -L../../output -lhwudev-$${HOLLYWOOD_APIVERSION}
+LIBS += -L../../output -lhwudev-$${HOLLYWOOD_APIVERSION} -linput
 
 DEFINES += QT_NO_CAST_FROM_ASCII
 
