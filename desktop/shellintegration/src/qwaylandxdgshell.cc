@@ -483,16 +483,12 @@ void QWaylandXdgSurface::xdg_surface_configure(uint32_t serial)
     if (!m_configured) {
         // We have to do the initial applyConfigure() immediately, since that is the expose.
         applyConfigure();
-        m_exposeRegion = QRegion(QRect(QPoint(), m_window->geometry().size()));
+        if (isExposed())
+            m_window->sendRecursiveExposeEvent();
     } else {
         // Later configures are probably resizes, so we have to queue them up for a time when we
         // are not painting to the window.
         m_window->applyConfigureWhenPossible();
-    }
-
-    if (!m_exposeRegion.isEmpty()) {
-        m_window->handleExpose(m_exposeRegion);
-        m_exposeRegion = QRegion();
     }
 }
 
