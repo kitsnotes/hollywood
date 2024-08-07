@@ -25,7 +25,7 @@
     </method>
 
     <method name="upgrade">
-        <arg name="flags" type="i" direction="in">
+        <arg name="flags" type="i" direction="in" />
     </method>
   </interface>
 </node>
