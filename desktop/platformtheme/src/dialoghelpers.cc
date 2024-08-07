@@ -17,7 +17,7 @@ HWMessageDialogHelper::~HWMessageDialogHelper()
 void HWMessageDialogHelper::exec()
 {
     uint flags = (uint)options()->standardButtons();
-    provision((QMessageBox::Icon)options()->icon(),
+    provision((QMessageBox::Icon)options()->standardIcon(),
               options()->windowTitle(),
               options()->text(),
               QFlags<QMessageBox::StandardButton>(flags));
