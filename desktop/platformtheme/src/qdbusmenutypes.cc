@@ -216,7 +216,7 @@ DBusMenuShortcut DBusMenuItem::convertKeySequence(const QKeySequence &sequence)
         if (key & Qt::KeypadModifier)
             tokens << QStringLiteral("Num");
 
-        QString keyName = QKeySequencePrivate::keyName(key, QKeySequence::PortableText);
+        QString keyName = QKeySequencePrivate::keyName((Qt::Key)key, QKeySequence::PortableText);
         if (keyName == QLatin1String("+"))
             tokens << QStringLiteral("plus");
         else if (keyName == QLatin1String("-"))
