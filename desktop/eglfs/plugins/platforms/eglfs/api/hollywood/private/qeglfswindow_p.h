@@ -84,8 +84,8 @@ public:
     virtual void resetSurface();
     virtual bool resizeSurface(const QSize &size);
 
-    QOpenGLCompositorBackingStore *backingStore() { return m_backingStore; }
-    void setBackingStore(QOpenGLCompositorBackingStore *backingStore) { m_backingStore = backingStore; }
+    QOpenGLCompositorBackingStore *backingStore() const override { return m_backingStore; }
+    void setBackingStore(QOpenGLCompositorBackingStore *backingStore) override { m_backingStore = backingStore; }
     bool isRaster() const;
     QWindow *sourceWindow() const override;
     const QPlatformTextureList *textures() const override;
