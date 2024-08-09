@@ -7,15 +7,17 @@
 #include <QTimer>
 #include <QSettings>
 #include <QPainter>
-#include <QSoundEffect>
 #include <QParallelAnimationGroup>
-
+#if QT_VERSION > 0x060000
+#include <QSoundEffect>
+#endif
 MessageBoxPrivate::MessageBoxPrivate(HWMessageBox *parent)
     : d(parent)
 {
+#if QT_VERSION > 0x060000
     m_bell = new QSoundEffect(parent);
     m_bell->setSource(QUrl::fromLocalFile("/usr/share/sounds/Hollywood/Bell.wav"));
-
+#endif
     verticalLayout = new QVBoxLayout(parent);
     m_icon = new QLabel(parent);
     m_text = new QLabel(parent);
@@ -139,6 +141,7 @@ void MessageBoxPrivate::playBell()
     QSettings settings(QSettings::UserScope,
        QLatin1String("originull"), QLatin1String("hollywood"));
     settings.beginGroup("Bell");
+#if QT_VERSION > 0x060000
     auto bellFile = settings.value("AudioFile", "/usr/share/sounds/Hollywood/Bell.wav").toString();
     settings.endGroup();
     m_bell->setSource(QUrl::fromLocalFile(bellFile));
@@ -149,6 +152,7 @@ void MessageBoxPrivate::playBell()
             m_bell->setSource(QUrl::fromLocalFile("/usr/share/sounds/Hollywood/DoubleBell.wav"));
     }
     //m_bell->play();
+#endif
 }
 
 void MessageBoxPrivate::animateOpenDetails()
