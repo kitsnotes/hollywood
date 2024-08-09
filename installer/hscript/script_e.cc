@@ -590,7 +590,11 @@ bool Script::execute() const {
         std::cout << "apk --root " << targetDirectory() << " --keys-dir "
                   << "etc/apk/keys" << " update" << std::endl;
         std::cout << "apk --root " << targetDirectory() << " --keys-dir "
-                  << "etc/apk/keys" << " add hollywood-desktop" << std::endl;
+                  << "etc/apk/keys" << " add filesystem" << std::endl;
+        std::cout << "apk --root " << targetDirectory() << " --keys-dir "
+                  << "etc/apk/keys" << " add hollywood-keys" << std::endl;
+        std::cout << "apk --root " << targetDirectory() << " --keys-dir "
+                  << "etc/apk/keys" << " add hollywood-base" << std::endl;
         std::cout << "apk --root " << targetDirectory() << " --keys-dir "
                   << "etc/apk/keys" << " add " << pkg_list.str() << std::endl;
     }
@@ -601,9 +605,18 @@ bool Script::execute() const {
             EXECUTE_FAILURE("pkginstall");
             return false;
         }
-
         if(run_command("/usr/sbin/apk", {"--root", targetDirectory(), "--keys-dir",
-                                     "etc/apk/keys", "add", "hollywood-desktop"}) != 0) {
+                                          "etc/apk/keys", "add", "filesystem"}) != 0) {
+            EXECUTE_FAILURE("pkginstall");
+            return false;
+        }
+        if(run_command("/usr/sbin/apk", {"--root", targetDirectory(), "--keys-dir",
+                                          "etc/apk/keys", "add", "hollywood-keys"}) != 0) {
+            EXECUTE_FAILURE("pkginstall");
+            return false;
+        }
+        if(run_command("/usr/sbin/apk", {"--root", targetDirectory(), "--keys-dir",
+                                          "etc/apk/keys", "add", "hollywood-base"}) != 0) {
             EXECUTE_FAILURE("pkginstall");
             return false;
         }

@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
     reset_if_pretty(std::cout);
 #endif
     std::cout << std::endl;
-    std::cout << "Copyright (c) 2022 Originull Software."
+    std::cout << "Copyright (c) 2022-2024 Originull Software."
               << std::endl;
     std::cout << "Copyright (c) 2019-2020 Adélie Linux and contributors."
               << std::endl;
