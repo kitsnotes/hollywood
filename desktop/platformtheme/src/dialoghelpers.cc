@@ -17,10 +17,17 @@ HWMessageDialogHelper::~HWMessageDialogHelper()
 void HWMessageDialogHelper::exec()
 {
     uint flags = (uint)options()->standardButtons();
+#if QT_VERSION >= 0x060600
     provision((QMessageBox::Icon)options()->standardIcon(),
               options()->windowTitle(),
               options()->text(),
               QFlags<QMessageBox::StandardButton>(flags));
+#else
+    provision((QMessageBox::Icon)options()->icon(),
+              options()->windowTitle(),
+              options()->text(),
+              QFlags<QMessageBox::StandardButton>(flags));
+#endif
     m_dlg->setInformativeText(options()->informativeText());
     m_dlg->setDetailedText(options()->detailedText());
     if(options()->customButtons().count() > 0)
