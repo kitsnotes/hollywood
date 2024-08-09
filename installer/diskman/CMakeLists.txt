@@ -16,7 +16,7 @@ set(DISKMAN_INCLUDE
 
 include_directories(${Boost_INCLUDE_DIRS})
 add_library(diskman ${DISKMAN_SOURCE})
-target_link_libraries(diskman ${FDISK_LIBRARIES} ${LIBUDEV_LIBRARIES})
+target_link_libraries(diskman ${FDISK_LIBRARIES} ${LIBUDEV_LIBRARIES} )
 
 install(TARGETS diskman DESTINATION lib)
 install(FILES ${DISKMAN_INCLUDE} DESTINATION include/diskman)

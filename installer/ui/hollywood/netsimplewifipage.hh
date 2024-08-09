@@ -16,7 +16,6 @@
 #include "horizonwizardpage.hh"
 
 #ifdef HAS_INSTALL_ENV
-#   include <bcnm/wpactrl.h>
 #   include <QSocketNotifier>
 #endif  /* HAS_INSTALL_ENV */
 

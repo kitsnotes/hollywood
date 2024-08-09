@@ -15,18 +15,12 @@ set(UI_SOURCES
     avatardialog.cc
     advancedoptionsdialog.cc
     crypt_sha512.c
-
     intropage.cc
     inputpage.cc
     partitiondiskpage.cc
     partitionchoicepage.cc
     partitionmanualpage.cc
     partitionmountpage.cc
-    networkingpage.cc
-    networkifacepage.cc
-    netsimplewifipage.cc
-    netdhcppage.cc
-    netmanualpage.cc
     datetimepage.cc
     hostnamepage.cc
     bootpage.cc
@@ -75,11 +69,6 @@ install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/horizon-qt5.1 DESTINATION share/man/ma
 IF(INSTALL)
     pkg_check_modules(XKBFile REQUIRED xkbfile)
     pkg_check_modules(LibCap REQUIRED libcap)
-    find_library(SKARNET NAMES skarnet)
-    find_library(BCNM NAMES wpactrl PATH_SUFFIXES bcnm)
-    if(BCNM STREQUAL "BCNM-NOTFOUND")
-        message(FATAL_ERROR "BCNM is required for the Installation Environment.")
-    endif()
     target_link_libraries(hollywood-setup ${BCNM} ${SKARNET} ${LIBUDEV_LIBRARIES} ${LibCap_LIBRARIES} ${LIBX11_LIBRARIES} ${XKBFile_LIBRARIES} diskman)
     add_executable(hollywood-setup-run ${RUN_QT_SOURCES})
     target_link_libraries(hollywood-setup-run Qt6::Widgets Qt6::Svg)

@@ -46,13 +46,6 @@ public:
         Page_PartitionChoose,   /* erase, use free, manual, use existing */
         Page_PartitionManual,   /* manual */
         Page_PartitionMount,    /* choose mountpoints - manual and existing */
-        Page_Network,           /* network type selection (DHCP/static) */
-        Page_Network_Iface,     /* network interface selection */
-        Page_Network_Wireless,  /* wireless */
-        Page_Network_CustomAP,  /* custom AP */
-        Page_Network_DHCP,      /* interstitial for DHCP */
-        Page_Network_Portal,    /* shown if captive portal is detected */
-        Page_Network_Manual,    /* static addressing */
         Page_DateTime,          /* date and time, TZ, NTP */
         Page_Hostname,          /* hostname */
         Page_Boot,              /* boot loader configuration */

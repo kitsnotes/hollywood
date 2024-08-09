@@ -16,6 +16,7 @@ if(MSVC)
 else()
   add_compile_options(-Wall -Wextra -Wno-unused-parameter -Wno-unused-function
                       )
+  add_link_options(-Wl,--allow-shlib-undefined)
 endif()
 
 if(POLICY CMP0100)
@@ -84,14 +85,7 @@ ELSE(INSTALL)
 ENDIF(INSTALL)
 
 
-if("cxx_std_17" IN_LIST CMAKE_CXX_COMPILE_FEATURES AND NOT APPLE)
-    SET(FS_LIBRARY stdc++fs)
-    add_definitions(-DFS_IS_STDCXX)
-ELSE()
-    find_package(Boost REQUIRED COMPONENTS filesystem)
-    SET(FS_LIBRARY ${Boost_FILESYSTEM_LIBRARY})
-    add_definitions(-DFS_IS_BOOST)
-ENDIF()
+   add_definitions(-DFS_IS_STDCXX)
 
 
 add_subdirectory(hscript)

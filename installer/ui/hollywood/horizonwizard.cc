@@ -30,9 +30,7 @@
 #   include <libudev.h>
 #   include <net/if.h>      /* ifreq */
 #   include "commitpage.hh"
-extern "C" {
-#   include <skalibs/tai.h> /* STAMP */
-}
+
 #   include <sys/ioctl.h>   /* ioctl */
 #   include <unistd.h>      /* close */
 #else
@@ -50,11 +48,6 @@ extern "C" {
 #include "partitionchoicepage.hh"
 #include "partitionmanualpage.hh"
 #include "partitionmountpage.hh"
-#include "networkingpage.hh"
-#include "networkifacepage.hh"
-#include "netsimplewifipage.hh"
-#include "netmanualpage.hh"
-#include "netdhcppage.hh"
 #include "datetimepage.hh"
 #include "hostnamepage.hh"
 #include "pkgsimple.hh"
@@ -287,7 +280,7 @@ HorizonWizard::HorizonWizard(QWidget *parent) : QWizard(parent) {
 
 #ifdef HAS_INSTALL_ENV
     interfaces = probe_ifaces();
-    tain_now_set_stopwatch_g();
+    //tain_now_set_stopwatch_g();
 
 #   if defined(__aarch64__)
     arch = aarch64;
