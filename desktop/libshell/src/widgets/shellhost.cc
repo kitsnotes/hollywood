@@ -21,7 +21,7 @@
 #include <QAbstractItemModel>
 #include <QMimeDatabase>
 
-LSEmbeddedShellHostPrivate::LSEmbeddedShellHostPrivate(LSEmbeddedShellHost *parent)
+LSEmbeddedShellHostPrivate::LSEmbeddedShellHostPrivate(LSEmbeddedShellHost *parent, OperationManager *ops)
     : d(parent)
     , m_actions(new LSActionManager(parent))
     , m_filesList(new QListView(parent))
@@ -31,7 +31,8 @@ LSEmbeddedShellHostPrivate::LSEmbeddedShellHostPrivate(LSEmbeddedShellHost *pare
     , m_placeModel(new LSPlaceModel(parent))
     , m_viewOptions(new LSViewOptionsDialog(parent))
     , m_delegate(new LSFSItemDelegate(parent))
-    , m_mimeapps(new LSMimeApplications(parent)) {}
+    , m_mimeapps(new LSMimeApplications(parent))
+    , m_opmgr(ops) {}
 
 LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
     : QWidget(parent)

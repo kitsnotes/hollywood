@@ -12,6 +12,7 @@
 class HWPrivateWaylandProtocol;
 class DesktopWindow;
 class FileWindow;
+class OperationManager;
 class FMApplication : public QApplication
 {
     Q_OBJECT
@@ -27,6 +28,7 @@ public:
     bool checkSocket();
     HWPrivateWaylandProtocol *protocol() { return m_protocol; }
 public slots:
+    void setupOperationManager();
     bool executeDesktopOverDBus(const QString &desktop);
     void ShowFolders(const QStringList& urlList, const QString& startupId);
     void ShowItems(const QStringList& urlList, const QString& startupId);
@@ -51,6 +53,8 @@ private:
     bool m_sessionStarted = false;
     QLocalServer* m_socket = nullptr;
     bool m_dbusStarted = false;
+
+    OperationManager* m_ops = nullptr;
 };
 
 #endif // FMAPPLICATION_H

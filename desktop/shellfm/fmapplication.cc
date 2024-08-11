@@ -22,8 +22,6 @@ FMApplication::FMApplication(int &argc, char **argv)
     setOrganizationDomain(HOLLYWOOD_OS_DOMAIN);
     setWindowIcon(QIcon::fromTheme("system-file-manager"));
     setOrganizationName(HOLLYWOOD_OS_ORGNAME);
-    // The first call to this will provision the libshell operation manager
-    operationManager();
 }
 
 void FMApplication::aboutApplication()
@@ -227,6 +225,12 @@ void FMApplication::checkForSessionStartup()
 
 }
 
+void FMApplication::setupOperationManager()
+{
+    if(m_ops == nullptr)
+        m_ops = new OperationManager();
+}
+
 int main(int argc, char *argv[])
 {
     FMApplication a(argc, argv);
@@ -242,7 +246,8 @@ int main(int argc, char *argv[])
     QTimer::singleShot(1100, [&a]() {
         a.createDesktop();
     });
-#else
+#else    
+    a.setupOperationManager();
     a.newFileWindow();
 #endif
     // required so sub-processes do not get qt-shell

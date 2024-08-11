@@ -64,17 +64,17 @@ QUuid OperationManager::moveFiles(const QList<QUrl> &sources, const QUrl &destin
 
 QUuid OperationManager::copyFiles(const QList<QUrl> &sources, const QUrl &destinationPath)
 {
-    return p->operation(sources, OperationType::Move, destinationPath);
+    return p->operation(sources, OperationType::Copy, destinationPath);
 }
 
 QUuid OperationManager::symlinkFiles(const QList<QUrl> &sources, const QUrl &destinationPath)
 {
-    return p->operation(sources, OperationType::Move, destinationPath);
+    return p->operation(sources, OperationType::Symlink, destinationPath);
 }
 
-QUuid OperationManager::trashFiles(const QList<QUrl> &sources, const QUrl &destinationPath)
+QUuid OperationManager::trashFiles(const QList<QUrl> &sources)
 {
-    return p->operation(sources, OperationType::Move, destinationPath);
+    return p->operation(sources, OperationType::Trash, QString());
 }
 
 OperationManager *operationManager()

@@ -28,14 +28,14 @@ class LSColumnPreview;
 class LSFSItemDelegate;
 class LSMimeApplications;
 typedef QList<QUrl> UrlList;
-
+class OperationManager;
 class LSEmbeddedShellHost;
 class LSEmbeddedShellHostPrivate
 {
 private:
     friend class LSEmbeddedShellHost;
     LSEmbeddedShellHost *d;
-    LSEmbeddedShellHostPrivate(LSEmbeddedShellHost *parent);
+    LSEmbeddedShellHostPrivate(LSEmbeddedShellHost *parent, OperationManager *ops = nullptr);
     ~LSEmbeddedShellHostPrivate() = default;
 
     LSEmbeddedShellHost::ShellModel m_currentModel = LSEmbeddedShellHost::Filesystem;
@@ -75,6 +75,8 @@ private:
 
     QItemSelectionModel *m_curSelModel = nullptr;
     LSMimeApplications *m_mimeapps = nullptr;
+
+    OperationManager *m_opmgr = nullptr;
 };
 
 #endif // SHELLHOST_P_H
