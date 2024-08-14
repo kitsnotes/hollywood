@@ -1,11 +1,89 @@
 #include "commonfunctions.h"
+#include "commonfunctions_p.h"
 #include <QDBusInterface>
 #include <QDBusMessage>
+#include <QMessageBox>
 #include <hollywood/hollywood.h>
+#include <QList>
+#include <QMimeData>
+#include <QClipboard>
 
 #include "getinfodialog.h"
+#include "opmanager.h"
+#include "shellundo_p.h"
 
 LSCommonFunctions *g_common_func = nullptr;
+
+LSCommonFunctionsPrivate::LSCommonFunctionsPrivate(LSCommonFunctions *parent)
+    : QObject()
+    , d(parent)
+    , m_undo(new QUndoStack)
+    , m_opmgr(new OperationManager)
+{
+    connect(QApplication::clipboard(), &QClipboard::dataChanged,
+            this, &LSCommonFunctionsPrivate::clipboardDataChanged);
+}
+
+QString LSCommonFunctionsPrivate::nextNewFolderName(const QUrl &path) const
+{
+    if(path.scheme() == "file")
+    {
+        auto local = path.toLocalFile();
+        local.append("/");
+        local.append(QApplication::tr("New Folder"));
+
+        QDir dir(local);
+        if(!dir.exists(local))
+            return QApplication::tr("New Folder");
+
+        uint curnum = 1;
+        for(;;)
+        {
+            if(curnum > 1000)     // infinate loop safeguard
+                return QString(); // clean up your FS ffs....
+
+            auto local = path.toLocalFile();
+            local.append("/");
+            local.append(QApplication::tr("New Folder %1").arg(QString::number(curnum)));
+
+            QDir dir(local);
+            if(!dir.exists(local))
+                return QApplication::tr("New Folder %1").arg(QString::number(curnum));
+
+            curnum++;
+        }
+    }
+
+    // TODO: libarchive schemes, etc
+    return QString();
+}
+
+void LSCommonFunctionsPrivate::clipboardDataChanged()
+{
+    bool enable = false;
+    uint count = 0;
+
+    auto data = QApplication::clipboard()->mimeData();
+    // see if it's something we can handle
+    if(data->hasUrls())
+    {
+        for(auto u : data->urls())
+        {
+            if(u.scheme() == "file")
+            {
+                enable = true;
+                break;
+            }
+        }
+    }
+    if(enable)
+        count = data->urls().count();
+
+    emit d->pasteAvailable(enable, count);
+}
+
+LSCommonFunctions::LSCommonFunctions()
+    :p(new LSCommonFunctionsPrivate(this)) {}
 
 LSCommonFunctions* LSCommonFunctions::instance()
 {
@@ -77,4 +155,80 @@ void LSCommonFunctions::showGetInfoDialog(const QUrl &target, QWidget *parent)
     connect(dlg, &QDialog::accepted, dlg, &QWidget::deleteLater);
     connect(dlg, &QDialog::rejected, dlg, &QWidget::deleteLater);
     dlg->open();
+}
+
+QUrl LSCommonFunctions::newFolder(const QUrl &target, QWidget *parent)
+{
+    if(target.scheme() == "file")
+    {
+        // target should be a folder that we want to make a new folder inside of
+        QDir dir(target.toLocalFile());
+        if(!dir.exists(target.toLocalFile()))
+        {
+            showErrorDialog(tr("The folder %1 no longer exists.").arg(target.toLocalFile()),
+                            tr("You can not create a new folder inside this location."),
+                            parent);
+
+            return QUrl();
+        }
+
+        auto newfolder = p->nextNewFolderName(target);
+        auto fulllist = target.toLocalFile().split('/');
+        fulllist.append(newfolder);
+        auto fullfolder = fulllist.join('/');
+        if(!fullfolder.isEmpty())
+        {
+            bool result = dir.mkdir(newfolder);
+            if(!result)
+            {
+                showErrorDialog(tr("Failed to create folder %1.").arg(fullfolder),
+                                tr("Check to make sure you have proper permissions, or contact your system administrator."),
+                                parent);
+
+                return QUrl();
+            }
+            // We have a new folder, so let's pop this onto the undo stack
+            p->m_undo->beginMacro(tr("New Folder"));
+            p->m_undo->push(new UndoNewFolder(target, newfolder));
+            p->m_undo->endMacro();
+            return newfolder;
+        }
+        else
+        {
+            showErrorDialog(tr("Failed to create folder %1.").arg(fullfolder),
+                            tr("Could not find an elligable new folder name."),
+                            parent);
+        }
+    }
+    else
+    {
+        showErrorDialog(tr("Failed to create a new folder."),
+                        tr("Could not create a folder inside %1: the scheme is unsupported.").arg(target.toString()),
+                        parent);
+    }
+    return QString();
+}
+
+OperationManager *LSCommonFunctions::operationManager()
+{
+    return p->m_opmgr;
+}
+
+QUndoStack *LSCommonFunctions::undoStack()
+{
+    return p->m_undo;
+}
+
+void LSCommonFunctions::showErrorDialog(const QString &heading, const QString &msg, QWidget *parent, const QMessageBox::Icon icon)
+{
+    auto *dialog = new QMessageBox(parent);
+    dialog->setModal(true);
+    dialog->setIcon(icon);
+    dialog->setWindowTitle(" ");
+    dialog->setText(heading);
+    dialog->setInformativeText(msg);
+    dialog->setStandardButtons(QMessageBox::Ok);
+    dialog->exec();
+
+    delete dialog;
 }

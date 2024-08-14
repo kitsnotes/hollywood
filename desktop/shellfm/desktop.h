@@ -13,9 +13,12 @@ class DesktopWindow : public QMainWindow
     Q_OBJECT
 public:
     explicit DesktopWindow(QWidget *parent = nullptr);
-    void enablePaste(bool enable, uint count = 0);
+    void canUndoChanged();
+    void canRedoChanged();
 signals:
     void openFolder(const QUrl &folder);
+public slots:
+    void enablePaste(bool enable, uint count = 0);
 private slots:
     void selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
     void activated(const QModelIndex &idx);

@@ -101,6 +101,9 @@ void FileWindow::setupMenuBar()
     menu_File->addAction(a_Close_Window);
     menu_Edit->addAction(m_shellHost->shellAction(HWShell::ACT_EDIT_UNDO));
     menu_Edit->addAction(m_shellHost->shellAction(HWShell::ACT_EDIT_REDO));
+    m_shellHost->shellAction(HWShell::ACT_EDIT_UNDO)->setEnabled(false);
+    m_shellHost->shellAction(HWShell::ACT_EDIT_REDO)->setEnabled(false);
+
     menu_Edit->addSeparator();
     menu_Edit->addAction(m_shellHost->shellAction(HWShell::ACT_EDIT_CUT));
     menu_Edit->addAction(m_shellHost->shellAction(HWShell::ACT_EDIT_COPY));

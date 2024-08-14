@@ -8,6 +8,7 @@
 #include "filemanager1_adaptor.h"
 #include "getinfodialog.h"
 #include "opmanager.h"
+#include "commonfunctions.h"
 
 FMApplication::FMApplication(int &argc, char **argv)
     :QApplication(argc, argv)
@@ -22,7 +23,11 @@ FMApplication::FMApplication(int &argc, char **argv)
     setOrganizationDomain(HOLLYWOOD_OS_DOMAIN);
     setWindowIcon(QIcon::fromTheme("system-file-manager"));
     setOrganizationName(HOLLYWOOD_OS_ORGNAME);
-    connect(clipboard(), &QClipboard::dataChanged, this, &FMApplication::clipboardDataChanged);
+    LSCommonFunctions::instance();
+    connect(LSCommonFunctions::instance()->undoStack(), &QUndoStack::canUndoChanged, this, &FMApplication::canUndoChanged);
+    connect(LSCommonFunctions::instance()->undoStack(), &QUndoStack::undoTextChanged, this, &FMApplication::canUndoChanged);
+    connect(LSCommonFunctions::instance()->undoStack(), &QUndoStack::canRedoChanged, this, &FMApplication::canRedoChanged);
+    connect(LSCommonFunctions::instance()->undoStack(), &QUndoStack::redoTextChanged, this, &FMApplication::canRedoChanged);
 }
 
 void FMApplication::aboutApplication()
@@ -71,6 +76,7 @@ void FMApplication::createDesktop()
     w->show();
     m_protocol->registerDesktopSurface(w->windowHandle());
     m_desktop = w;
+    connect(LSCommonFunctions::instance(), &LSCommonFunctions::pasteAvailable, m_desktop, &DesktopWindow::enablePaste);
 }
 
 void FMApplication::showWallpaperSettings()
@@ -143,29 +149,14 @@ void FMApplication::settingsChanged()
 
 }
 
-void FMApplication::clipboardDataChanged()
+void FMApplication::canUndoChanged()
 {
-    bool enable = false;
-    uint count = 0;
+    m_desktop->canUndoChanged();
+}
 
-    auto data = clipboard()->mimeData();
-    // see if it's something we can handle
-    if(data->hasUrls())
-    {
-        for(auto u : data->urls())
-        {
-            if(u.scheme() == "file")
-            {
-                enable = true;
-                break;
-            }
-        }
-    }
-    if(enable)
-        count = data->urls().count();
-
-    if(m_desktop)
-        m_desktop->enablePaste(enable, count);
+void FMApplication::canRedoChanged()
+{
+    m_desktop->canRedoChanged();
 }
 
 void FMApplication::createDBusInterfaces()
@@ -212,7 +203,7 @@ bool FMApplication::checkSocket()
 
 OperationManager *FMApplication::operationManager()
 {
-    return __hwshell_operationManager();
+    return LSCommonFunctions::instance()->operationManager();
 }
 
 void FMApplication::removeWindow(FileWindow *wnd)
@@ -336,13 +327,11 @@ int main(int argc, char *argv[])
 #ifndef QT_DEBUG
     if(!a.checkSocket())
         return 0;
-    a.operationManager();
     a.createDBusInterfaces();
     QTimer::singleShot(1100, [&a]() {
         a.createDesktop();
     });
 #else
-    a.operationManager();
     a.newFileWindow();
 #endif
     // required so sub-processes do not get qt-shell

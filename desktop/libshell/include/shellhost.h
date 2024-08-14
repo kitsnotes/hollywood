@@ -75,6 +75,9 @@ private slots:
     void createNewTab();
     void viewContextMenuRequested(const QPoint &pos);
     void filesystemSortingChanged();
+    void enablePaste(bool enable, uint count = 0);
+    void canUndoChanged();
+    void canRedoChanged();
 private:
     // internal functions
     void adjustColumnHeaders();

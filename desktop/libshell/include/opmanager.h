@@ -56,7 +56,4 @@ private:
     OperationManagerPrivate *p;
 };
 
-extern "C" {
-    OperationManager *__hwshell_operationManager();
-}
 #endif // OPMANAGER_H

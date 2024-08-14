@@ -16,6 +16,7 @@
 #include "fileinfo.h"
 #include "desktopentry.h"
 #include "commonfunctions.h"
+#include <QUndoStack>
 
 #include <QDBusInterface>
 #include <hollywood/hollywood.h>
@@ -210,6 +211,20 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
             &QAction::triggered, this, &LSEmbeddedShellHost::actionSortOrderRequested);
     connect(p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_DESC),
             &QAction::triggered, this, &LSEmbeddedShellHost::actionSortOrderRequested);
+
+    connect(p->m_actions->shellAction(HWShell::ACT_EDIT_UNDO), &QAction::toggled,
+            LSCommonFunctions::instance()->undoStack(), &QUndoStack::undo);
+    connect(p->m_actions->shellAction(HWShell::ACT_EDIT_REDO), &QAction::toggled,
+            LSCommonFunctions::instance()->undoStack(), &QUndoStack::redo);
+
+    connect(LSCommonFunctions::instance()->undoStack(), &QUndoStack::canUndoChanged,
+            this, &LSEmbeddedShellHost::canUndoChanged);
+    connect(LSCommonFunctions::instance()->undoStack(), &QUndoStack::undoTextChanged,
+            this, &LSEmbeddedShellHost::canUndoChanged);
+    connect(LSCommonFunctions::instance()->undoStack(), &QUndoStack::canRedoChanged,
+            this, &LSEmbeddedShellHost::canRedoChanged);
+    connect(LSCommonFunctions::instance()->undoStack(), &QUndoStack::redoTextChanged,
+            this, &LSEmbeddedShellHost::canRedoChanged);
 
     restoreViewModeFromSettings();
 }
@@ -807,6 +822,55 @@ void LSEmbeddedShellHost::filesystemSortingChanged()
 
 }
 
+void LSEmbeddedShellHost::enablePaste(bool enable, uint count)
+{
+    if(!enable)
+    {
+        shellAction(HWShell::ACT_EDIT_PASTE)->setText(tr("&Paste"));
+        shellAction(HWShell::ACT_EDIT_PASTE)->setEnabled(enable);
+    }
+    else
+    {
+        if(count == 1)
+            shellAction(HWShell::ACT_EDIT_PASTE)->setText(tr("&Paste %1 Item").arg(QString::number(count)));
+        else
+            shellAction(HWShell::ACT_EDIT_PASTE)->setText(tr("&Paste %1 Items").arg(QString::number(count)));
+        shellAction(HWShell::ACT_EDIT_PASTE)->setEnabled(enable);
+    }
+}
+
+void LSEmbeddedShellHost::canUndoChanged()
+{
+    bool canundo = LSCommonFunctions::instance()->undoStack()->canUndo();
+    if(canundo)
+    {
+        shellAction(HWShell::ACT_EDIT_UNDO)->setEnabled(true);
+        shellAction(HWShell::ACT_EDIT_UNDO)->setText(tr("&Undo %1")
+            .arg(LSCommonFunctions::instance()->undoStack()->undoText()));
+    }
+    else
+    {
+        shellAction(HWShell::ACT_EDIT_UNDO)->setEnabled(false);
+        shellAction(HWShell::ACT_EDIT_UNDO)->setText(tr("&Undo"));
+    }
+}
+
+void LSEmbeddedShellHost::canRedoChanged()
+{
+    bool canredo = LSCommonFunctions::instance()->undoStack()->canRedo();
+    if(canredo)
+    {
+        shellAction(HWShell::ACT_EDIT_REDO)->setEnabled(true);
+        shellAction(HWShell::ACT_EDIT_REDO)->setText(tr("&Redo %1")
+            .arg(LSCommonFunctions::instance()->undoStack()->redoText()));
+    }
+    else
+    {
+        shellAction(HWShell::ACT_EDIT_REDO)->setEnabled(false);
+        shellAction(HWShell::ACT_EDIT_REDO)->setText(tr("&Redo"));
+    }
+}
+
 void LSEmbeddedShellHost::adjustColumnHeaders()
 {
     if(p->m_currentModel == Filesystem)
@@ -1046,16 +1110,11 @@ QString LSEmbeddedShellHost::generateStatusBarMsg() const
 
 void LSEmbeddedShellHost::showFolderPermissionError(const QString &folder)
 {
-    auto *msg = new QMessageBox(this);
-    msg->setModal(true);
-    msg->setIcon(QMessageBox::Information);
-    msg->setWindowTitle(" ");
-    msg->setText(tr("The folder \"%1\" can not be opened because you do not have permissions to see its contents.").arg(folder));
-    msg->setInformativeText(tr("A system administrator can set the relevant execute flag to allow this."));
-    msg->setStandardButtons(QMessageBox::Ok);
-    msg->exec();
-
-    delete msg;
+    LSCommonFunctions::instance()->showErrorDialog(
+        tr("The folder \"%1\" can not be opened because you do not have permissions to see its contents.").arg(folder),
+        tr("A system administrator can set the relevant execute flag to allow this."),
+        this,
+        QMessageBox::Information);
 }
 
 void LSEmbeddedShellHost::disconnectViewSlots()

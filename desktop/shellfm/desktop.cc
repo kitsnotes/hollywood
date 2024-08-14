@@ -9,6 +9,7 @@
 #include <QMimeData>
 
 #include "desktopviewoptions.h"
+#include <hollywood/commonfunctions.h>
 
 DesktopWindow::DesktopWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -168,7 +169,8 @@ void DesktopWindow::paste()
 
 void DesktopWindow::newFolder()
 {
-
+    auto desktop = QUrl::fromLocalFile(QStandardPaths::standardLocations(QStandardPaths::DesktopLocation).first());
+    LSCommonFunctions::instance()->newFolder(desktop, this);
 }
 
 void DesktopWindow::rename()
@@ -359,6 +361,38 @@ void DesktopWindow::viewOptionsClosed()
 {
     shellAction(HWShell::ACT_VIEW_OPTIONS)->setChecked(false);
     saveViewOptions();
+}
+
+void DesktopWindow::canUndoChanged()
+{
+    bool canundo = LSCommonFunctions::instance()->undoStack()->canUndo();
+    if(canundo)
+    {
+        shellAction(HWShell::ACT_EDIT_UNDO)->setEnabled(true);
+        shellAction(HWShell::ACT_EDIT_UNDO)->setText(tr("&Undo %1")
+                    .arg(LSCommonFunctions::instance()->undoStack()->undoText()));
+    }
+    else
+    {
+        shellAction(HWShell::ACT_EDIT_UNDO)->setEnabled(false);
+        shellAction(HWShell::ACT_EDIT_UNDO)->setText(tr("&Undo"));
+    }
+}
+
+void DesktopWindow::canRedoChanged()
+{
+    bool canredo = LSCommonFunctions::instance()->undoStack()->canRedo();
+    if(canredo)
+    {
+        shellAction(HWShell::ACT_EDIT_REDO)->setEnabled(true);
+        shellAction(HWShell::ACT_EDIT_REDO)->setText(tr("&Redo %1")
+                  .arg(LSCommonFunctions::instance()->undoStack()->redoText()));
+    }
+    else
+    {
+        shellAction(HWShell::ACT_EDIT_REDO)->setEnabled(false);
+        shellAction(HWShell::ACT_EDIT_REDO)->setText(tr("&Redo"));
+    }
 }
 
 void DesktopWindow::loadViewOptions()
@@ -589,7 +623,11 @@ void DesktopWindow::setupMenuBar()
     connect(shellAction(HWShell::ACT_FILE_TRASH), &QAction::toggled, this, &DesktopWindow::trash);
     //menu_File->addAction(shellAction(HWShell::ACT_FILE_EJECT));
     menu_Edit->addAction(shellAction(HWShell::ACT_EDIT_UNDO));
+    connect(shellAction(HWShell::ACT_EDIT_UNDO), &QAction::toggled,
+            LSCommonFunctions::instance()->undoStack(), &QUndoStack::undo);
     menu_Edit->addAction(shellAction(HWShell::ACT_EDIT_REDO));
+    connect(shellAction(HWShell::ACT_EDIT_REDO), &QAction::toggled,
+            LSCommonFunctions::instance()->undoStack(), &QUndoStack::redo);
     shellAction(HWShell::ACT_EDIT_UNDO)->setEnabled(false);
     shellAction(HWShell::ACT_EDIT_REDO)->setEnabled(false);
     menu_Edit->addSeparator();
@@ -652,6 +690,9 @@ void DesktopWindow::setupMenuBar()
             act->deleteLater();
     });
 
+    m_rightclick->addAction(shellAction(HWShell::ACT_EDIT_UNDO));
+    m_rightclick->addAction(shellAction(HWShell::ACT_EDIT_REDO));
+    m_rightclick->addSeparator();
     m_rightclick->addAction(shellAction(HWShell::ACT_FILE_NEW_FOLDER));
     m_rightclick->addSeparator();
     m_rightclick->addAction(shellAction(HWShell::ACT_EDIT_PASTE));
@@ -660,7 +701,7 @@ void DesktopWindow::setupMenuBar()
     m_rightclick->addSeparator();
     auto wp = m_rightclick->addAction(tr("Change &Wallpaper..."));
     connect(wp, &QAction::triggered, FMApplication::instance(), &FMApplication::showWallpaperSettings);
-    m_rotate = m_rightclick->addAction(tr("&Rotate Wallpaper Now"));
+    m_rotate = m_rightclick->addAction(tr("Rotate Wallpaper &Now"));
     connect(m_rotate, &QAction::triggered, FMApplication::instance(), &FMApplication::rotateWallpaper);
     m_rightclick->addSeparator();
     m_rightclick->addAction(shellAction(HWShell::ACT_VIEW_OPTIONS));

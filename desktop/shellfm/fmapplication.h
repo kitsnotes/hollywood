@@ -47,7 +47,8 @@ public slots:
 private slots:
     void openFolderFromDesktop(const QUrl &path);
     void settingsChanged();
-    void clipboardDataChanged();
+    void canUndoChanged();
+    void canRedoChanged();
 private:
     void checkForSessionStartup();
 private:

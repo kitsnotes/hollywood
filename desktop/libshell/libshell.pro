@@ -31,6 +31,7 @@ SOURCES += \
     src/core/disks.cc \
     src/core/fileoperation.cc \
     src/core/opmanager.cc \
+    src/core/shellundo.cc \
     src/core/udisks2.cc \
     src/dialogs/getinfodialog.cc \
     src/dialogs/viewoptionsdialog.cc \
@@ -61,6 +62,7 @@ HEADERS += \
     include/commonfunctions.h \
     include/getinfodialog.h \
     include/opmanager.h \
+    include/private/commonfunctions_p.h \
     include/private/fileinfo.h \
     include/private/actionmanager_p.h \
     include/private/appmodel_p.h \
@@ -68,6 +70,7 @@ HEADERS += \
     include/private/desktopmodel_p.h \
     include/private/disks.h \
     include/private/opmanager_p.h \
+    include/private/shellundo_p.h \
     include/private/udisks2.h \
     include/private/fileinfogatherer_p.h \
     include/private/fileoperation.h \

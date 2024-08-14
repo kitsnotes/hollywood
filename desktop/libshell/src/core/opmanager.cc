@@ -6,8 +6,6 @@
 #include <QListView>
 #include <QListWidget>
 
-OperationManager *g_global_op = nullptr;
-
 OperationManagerDialog::OperationManagerDialog()
     : QDialog(nullptr)
     , m_list(new QListView(this))
@@ -102,12 +100,4 @@ bool OperationManager::dialogIsVisible() const
 uint OperationManager::activeOperations() const
 {
     return p->m_threads.count();
-}
-
-OperationManager *__hwshell_operationManager()
-{
-    if(g_global_op == nullptr)
-        g_global_op = new OperationManager();
-
-    return g_global_op;
 }
