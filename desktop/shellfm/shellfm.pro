@@ -7,15 +7,10 @@ INCLUDEPATH += ../libshell/include
 INCLUDEPATH += include/
 INCLUDEPATH += ../libcommdlg
 INCLUDEPATH += ../libcompositor/include/
-
+#QMAKE_LFLAGS += -Wl,--allow-shlib-undefined
 TARGET = shellfm
 DBUS_ADAPTORS += org.freedesktop.FileManager1.xml
-
-CONFIG(debug, debug|release) {
-    LIBS += -L../output -lshelld-$${HOLLYWOOD_APIVERSION}
-} else {
-    LIBS += -lshell-$${HOLLYWOOD_APIVERSION}
-}
+LIBS += -lshell-$${HOLLYWOOD_APIVERSION}
 
 LIBS += -L../output -lcompositor-$${HOLLYWOOD_APIVERSION} -lcommdlg-$${HOLLYWOOD_APIVERSION}
 WAYLANDCLIENTSOURCES += ../compositor/protocols/originull-privateapi.xml
@@ -23,6 +18,7 @@ WAYLANDCLIENTSOURCES += ../compositor/protocols/originull-privateapi.xml
 SOURCES += \
     clipboardwindow.cc \
     desktop.cc \
+    desktopviewoptions.cc \
     fmapplication.cc \
     filewindow.cc
 
@@ -30,6 +26,7 @@ SOURCES += \
 HEADERS += \
     clipboardwindow.h \
     desktop.h \
+    desktopviewoptions.h \
     fileshell.h \
     filewindow.h \
     fmapplication.h

@@ -35,44 +35,43 @@ private:
     void setupMenuBar();
     void setupMainView();
 private:
-    LSEmbeddedShellHost *m_shellHost;
+    LSEmbeddedShellHost *m_shellHost = nullptr;
     HWShell::WindowMode m_windowMode;
-    QFileSystemModel *m_desktopModel;
+    QFileSystemModel *m_desktopModel = nullptr;
 private:
-    QAction *a_NewWindow;
-    QAction *actionGet_System_Help;
-    QAction *a_About;
-    QAction *a_Add_Bookmark;
-    QAction *a_Toolbar;
-    QAction *a_StatusBar;
-    QAction *a_Close_Window;
+    QAction *a_NewWindow = nullptr;
+    QAction *actionGet_System_Help = nullptr;
+    QAction *a_Add_Bookmark = nullptr;
+    QAction *a_Toolbar = nullptr;
+    QAction *a_StatusBar = nullptr;
+    QAction *a_Close_Window = nullptr;
 
+    QAction *a_Home = nullptr;
+    QAction *a_Documents = nullptr;
+    QAction *a_Photos = nullptr;
+    QAction *a_Videos = nullptr;
+    QAction *a_Music = nullptr;
+    QAction *a_Desktop = nullptr;
+    QAction *a_Applications = nullptr;
+    QAction *a_Connect_to_Server = nullptr;
+    QAction *a_Network = nullptr;
 
-    QAction *a_Home;
-    QAction *a_Documents;
-    QAction *a_Photos;
-    QAction *a_Videos;
-    QAction *a_Music;
-    QAction *a_Desktop;
-    QAction *a_Applications;
-    QAction *a_Connect_to_Server;
-    QAction *a_Network;
-
-    QMenuBar *m_menuBar;
-    QMenu *menu_File;
-    QMenu *menu_Edit;
-    QMenu *menu_View;
-    QMenu *menu_Go;
-    QMenu *menu_Sort;
-    QMenu *menuRecent_Locations;
-    QMenu *menu_Bookmark;
-    QMenu *menu_Help;
-    QStatusBar *m_statusBar;
-    QLabel *m_statusLabel;
-    QToolBar *m_toolBar;
+    QMenuBar *m_menuBar = nullptr;
+    QMenu *menu_File = nullptr;
+    QMenu *menu_Edit = nullptr;
+    QMenu *menu_View = nullptr;
+    QMenu *menu_Go = nullptr;
+    QMenu *menu_Sort = nullptr;
+    QMenu *menuRecent_Locations = nullptr;
+    QMenu *menu_Bookmark = nullptr;
+    QMenu *menu_Window = nullptr;
+    QMenu *menu_Help = nullptr;
+    QStatusBar *m_statusBar = nullptr;
+    QLabel *m_statusLabel = nullptr;
+    QToolBar *m_toolBar = nullptr;
     QToolButton *m_sort = nullptr;
     QToolButton *m_view = nullptr;
-    QLineEdit *m_search;
+    QLineEdit *m_search = nullptr;
 };
 
 #endif // FILEWINDOW_H

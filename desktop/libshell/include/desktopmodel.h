@@ -25,6 +25,7 @@ public:
     QString name(const QModelIndex &index) const;
     QString description(const QModelIndex &index) const;
     QFileInfo fileInfo(const QModelIndex &index) const;
+    QUrl url(const QModelIndex &index) const;
     bool isTrash(const QModelIndex &index) const;
     bool isDesktop(const QModelIndex &index) const;
     bool isHidden(const QModelIndex &index) const;

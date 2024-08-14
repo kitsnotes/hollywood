@@ -46,6 +46,9 @@ public:
     QUuid symlinkFiles(const QList<QUrl> &sources, const QUrl &destinationPath);
     QUuid trashFiles(const QList<QUrl> &sources);
 
+    void showDialog();
+    bool dialogIsVisible() const;
+    uint activeOperations() const;
 signals:
     void operationFinished(const QUuid &token);
     void operationHasError(const Error error);
@@ -53,5 +56,7 @@ private:
     OperationManagerPrivate *p;
 };
 
-
+extern "C" {
+    OperationManager *__hwshell_operationManager();
+}
 #endif // OPMANAGER_H

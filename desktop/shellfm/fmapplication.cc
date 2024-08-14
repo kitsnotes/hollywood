@@ -22,6 +22,7 @@ FMApplication::FMApplication(int &argc, char **argv)
     setOrganizationDomain(HOLLYWOOD_OS_DOMAIN);
     setWindowIcon(QIcon::fromTheme("system-file-manager"));
     setOrganizationName(HOLLYWOOD_OS_ORGNAME);
+    connect(clipboard(), &QClipboard::dataChanged, this, &FMApplication::clipboardDataChanged);
 }
 
 void FMApplication::aboutApplication()
@@ -55,6 +56,7 @@ void FMApplication::newFileWindow()
 
 void FMApplication::newFileWindow(const QUrl &path)
 {
+    // TODO: check if path is valid
     FileWindow *w = new FileWindow(HWShell::WINDOW_BROWSER, 0);
     w->shellHost()->newTabWithPath(path);
     m_fileWindows.append(w);
@@ -88,13 +90,47 @@ void FMApplication::showWallpaperSettings()
 
 void FMApplication::showPermissionError(const QUrl &path)
 {
+    auto *msg = new QMessageBox();
+    msg->setModal(true);
+    msg->setIcon(QMessageBox::Information);
+    msg->setWindowTitle(" ");
+    msg->setText(tr("The item \"%1\" can not be opened because you do not have permissions.").arg(path.toString()));
+    msg->setStandardButtons(QMessageBox::Ok);
+    msg->exec();
 
+    delete msg;
 }
 
 void FMApplication::rotateWallpaper()
 {
     if(m_protocol)
         m_protocol->rotateWallpaper();
+}
+
+void FMApplication::setupWindowMenu(QMenu *window)
+{
+    for(auto wnd : m_fileWindows)
+    {
+        auto act = new QAction(wnd->windowTitle());
+        if(wnd->isActiveWindow())
+            act->setChecked(true);
+
+        connect(act, &QAction::triggered, [wnd](){
+            wnd->raise();
+        });
+        window->addAction(act);
+    }
+    if(m_fileWindows.count() > 0)
+        window->addSeparator();
+
+    auto opsdlg = new QAction(tr("&Operation Progress"));
+    connect(opsdlg, &QAction::triggered, operationManager(), &OperationManager::showDialog);
+    window->addAction(opsdlg);
+}
+
+void FMApplication::openHelp()
+{
+
 }
 
 void FMApplication::openFolderFromDesktop(const QUrl &path)
@@ -105,6 +141,31 @@ void FMApplication::openFolderFromDesktop(const QUrl &path)
 void FMApplication::settingsChanged()
 {
 
+}
+
+void FMApplication::clipboardDataChanged()
+{
+    bool enable = false;
+    uint count = 0;
+
+    auto data = clipboard()->mimeData();
+    // see if it's something we can handle
+    if(data->hasUrls())
+    {
+        for(auto u : data->urls())
+        {
+            if(u.scheme() == "file")
+            {
+                enable = true;
+                break;
+            }
+        }
+    }
+    if(enable)
+        count = data->urls().count();
+
+    if(m_desktop)
+        m_desktop->enablePaste(enable, count);
 }
 
 void FMApplication::createDBusInterfaces()
@@ -149,6 +210,17 @@ bool FMApplication::checkSocket()
     return true;
 }
 
+OperationManager *FMApplication::operationManager()
+{
+    return __hwshell_operationManager();
+}
+
+void FMApplication::removeWindow(FileWindow *wnd)
+{
+    m_fileWindows.removeOne(wnd);
+    wnd->deleteLater();
+}
+
 void FMApplication::ShowFolders(const QStringList &urlList, const QString &startupId)
 {
     Q_UNUSED(startupId)
@@ -169,7 +241,7 @@ void FMApplication::ShowFolders(const QStringList &urlList, const QString &start
 void FMApplication::ShowItems(const QStringList &urlList, const QString &startupId)
 {
     Q_UNUSED(startupId)
-
+    Q_UNUSED(urlList)
 }
 
 void FMApplication::ShowItemProperties(const QStringList &urlList, const QString &startupId)
@@ -220,15 +292,37 @@ bool FMApplication::executeDesktopOverDBus(const QString &desktop)
     return false;
 }
 
+bool FMApplication::openFileOverDBusWithDefault(const QString &file)
+{
+    QDBusInterface ldb(HOLLYWOOD_SESSION_DBUS, HOLLYWOOD_SESSION_DBUSOBJ, HOLLYWOOD_SESSION_DBUSPATH);
+    if(!ldb.isValid())
+    {
+        qDebug() << QString("Could not call session DBUS interface. Command: openFileWithDefault");
+        return false;
+    }
+
+    QDBusMessage msg = ldb.call("openFileWithDefault", file);
+
+    if(msg.arguments().isEmpty() || msg.arguments().constFirst().isNull())
+        return true;
+
+    auto response = msg.arguments().constFirst();
+
+    if(msg.arguments().isEmpty())
+        return true;
+
+    if(response.isNull())
+        return true;
+
+    if(response.toBool())
+        return true;
+
+    return false;
+}
+
 void FMApplication::checkForSessionStartup()
 {
 
-}
-
-void FMApplication::setupOperationManager()
-{
-    if(m_ops == nullptr)
-        m_ops = new OperationManager();
 }
 
 int main(int argc, char *argv[])
@@ -242,12 +336,13 @@ int main(int argc, char *argv[])
 #ifndef QT_DEBUG
     if(!a.checkSocket())
         return 0;
+    a.operationManager();
     a.createDBusInterfaces();
     QTimer::singleShot(1100, [&a]() {
         a.createDesktop();
     });
-#else    
-    a.setupOperationManager();
+#else
+    a.operationManager();
     a.newFileWindow();
 #endif
     // required so sub-processes do not get qt-shell

@@ -138,6 +138,14 @@ QFileInfo LSDesktopModel::fileInfo(const QModelIndex &index) const
     return p->m_files.at(index.row())->fileInfo();
 }
 
+QUrl LSDesktopModel::url(const QModelIndex &index) const
+{
+    if(isTrash(index))
+        return QUrl("trash://");
+
+    return QUrl::fromLocalFile(p->m_files.at(index.row())->fileName);
+}
+
 bool LSDesktopModel::isTrash(const QModelIndex &index) const
 {
     if(index.row() == p->m_files.count())

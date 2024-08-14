@@ -27,9 +27,11 @@ public:
     void createDBusInterfaces();
     bool checkSocket();
     HWPrivateWaylandProtocol *protocol() { return m_protocol; }
+    OperationManager* operationManager();
+    void removeWindow(FileWindow *wnd);
 public slots:
-    void setupOperationManager();
     bool executeDesktopOverDBus(const QString &desktop);
+    bool openFileOverDBusWithDefault(const QString &file);
     void ShowFolders(const QStringList& urlList, const QString& startupId);
     void ShowItems(const QStringList& urlList, const QString& startupId);
     void ShowItemProperties(const QStringList& urlList, const QString& startupId);
@@ -40,9 +42,12 @@ public slots:
     void showWallpaperSettings();
     void showPermissionError(const QUrl &path);
     void rotateWallpaper();
+    void setupWindowMenu(QMenu *window);
+    void openHelp();
 private slots:
     void openFolderFromDesktop(const QUrl &path);
     void settingsChanged();
+    void clipboardDataChanged();
 private:
     void checkForSessionStartup();
 private:
@@ -53,8 +58,6 @@ private:
     bool m_sessionStarted = false;
     QLocalServer* m_socket = nullptr;
     bool m_dbusStarted = false;
-
-    OperationManager* m_ops = nullptr;
 };
 
 #endif // FMAPPLICATION_H

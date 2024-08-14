@@ -2,14 +2,25 @@
 #define OPERATIONMANAGER_H
 
 #include <QObject>
-#include "operationthread.h"
+#include <QUuid>
+#include <QDialog>
+
+#include "fileoperation.h"
 #include "progresswidget.h"
 
+class QListView;
+class QStatusBar;
 class OperationManagerDialog : public QDialog
 {
     Q_OBJECT
 public:
     explicit OperationManagerDialog();
+    void addWidget(LSOpProgressWidget *widget);
+    void removeWidget(LSOpProgressWidget *widget);
+private:
+    QList<LSOpProgressWidget*> m_widgets;
+    QListView *m_list = nullptr;
+    QStatusBar *m_status = nullptr;
 };
 
 class OperationManager;
@@ -21,13 +32,12 @@ private:
     ~OperationManagerPrivate();
     struct operation_t
     {
-        OperationWorker *worker = nullptr;
+        FileOperation *worker = nullptr;
         LSOpProgressWidget *widget = nullptr;
-        QThread *thread = nullptr;
         QUuid uuid;
     };
 
-    QUuid operation(const QList<QUrl> &sources, const OperationManager::OperationType type, const QUrl &destinationPath);
+    //QUuid operation(const QList<QUrl> &sources, const OperationManager::OperationType type, const QUrl &destinationPath);
 private slots:
 
 private:

@@ -75,8 +75,6 @@ private:
 
     QItemSelectionModel *m_curSelModel = nullptr;
     LSMimeApplications *m_mimeapps = nullptr;
-
-    OperationManager *m_opmgr = nullptr;
 };
 
 #endif // SHELLHOST_P_H

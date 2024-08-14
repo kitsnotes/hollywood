@@ -27,8 +27,8 @@ void FileWindow::closeEvent(QCloseEvent *event)
     // preserve our view states
     settings.beginGroup("ShellFM");
     settings.setValue("Cache/LastWindowPos", saveGeometry());
-
     event->accept();
+    FMApplication::instance()->removeWindow(this);
 }
 
 void FileWindow::shWindowTitleChanged(const QString &title)
@@ -48,6 +48,7 @@ void FileWindow::setupMenuBar()
     menu_View = new QMenu(m_menuBar);
     menu_Go = new QMenu(m_menuBar);
     menu_Bookmark = new QMenu(m_menuBar);
+    menu_Window = new QMenu(m_menuBar);
     menu_Help = new QMenu(m_menuBar);
     menuRecent_Locations = new QMenu(menu_Go);
     menu_Sort = new QMenu(menu_View);
@@ -59,6 +60,7 @@ void FileWindow::setupMenuBar()
     menu_Go->setObjectName(QString::fromUtf8("GoMenu"));
     menuRecent_Locations->setObjectName(QString::fromUtf8("RecentLocationsMenu"));
     menu_Bookmark->setObjectName(QString::fromUtf8("BookmarskMeu"));
+    menu_Window->setObjectName(QString::fromUtf8("WindowMenu"));
     menu_Help->setObjectName(QString::fromUtf8("HelpMenu"));
 
     menu_File->setTitle(tr("&File"));
@@ -67,6 +69,7 @@ void FileWindow::setupMenuBar()
     menu_Go->setTitle(tr("&Go"));
     menuRecent_Locations->setTitle(tr("Recent &Locations"));
     menu_Bookmark->setTitle(tr("&Bookmarks"));
+    menu_Window->setTitle(tr("&Window"));
     menu_Help->setTitle(tr("&Help"));
     menu_Sort->setTitle(tr("&Organize By"));
 
@@ -75,6 +78,7 @@ void FileWindow::setupMenuBar()
     m_menuBar->addAction(menu_View->menuAction());
     m_menuBar->addAction(menu_Go->menuAction());
     m_menuBar->addAction(menu_Bookmark->menuAction());
+    m_menuBar->addAction(menu_Window->menuAction());
     m_menuBar->addAction(menu_Help->menuAction());
     menu_File->addAction(a_NewWindow);
     menu_File->addAction(m_shellHost->shellAction(HWShell::ACT_FILE_NEW_TAB));
@@ -92,7 +96,7 @@ void FileWindow::setupMenuBar()
     menu_File->addAction(m_shellHost->shellAction(HWShell::ACT_FILE_ARCHIVE));
     menu_File->addSeparator();
     menu_File->addAction(m_shellHost->shellAction(HWShell::ACT_FILE_TRASH));
-    //menu_File->addAction(m_shellHost->shellAction(ArionShell::ACT_FILE_EJECT));
+    //menu_File->addAction(m_shellHost->shellAction(HWShell::ACT_FILE_EJECT));
     menu_File->addSeparator();
     menu_File->addAction(a_Close_Window);
     menu_Edit->addAction(m_shellHost->shellAction(HWShell::ACT_EDIT_UNDO));
@@ -146,7 +150,16 @@ void FileWindow::setupMenuBar()
     //menuRecent_Locations->addAction(a_Clear_List);
     menu_Bookmark->addAction(a_Add_Bookmark);
     menu_Help->addAction(actionGet_System_Help);
-    menu_Help->addAction(a_About);
+
+    // handle the global window list
+    connect(menu_Window, &QMenu::aboutToShow, [this]() {
+        FMApplication *myApp = FMApplication::instance();
+        myApp->setupWindowMenu(menu_Window);
+    });
+    connect(menu_Window, &QMenu::aboutToHide, [this]() {
+        for(auto act : menu_Window->actions())
+            act->deleteLater();
+    });
 }
 
 void FileWindow::setupActions()
@@ -227,11 +240,6 @@ void FileWindow::setupActions()
     actionGet_System_Help = new QAction(this);
     actionGet_System_Help->setObjectName(QString::fromUtf8("HelpSystem"));
 
-    a_About = new QAction(this);
-    a_About->setObjectName("ActionAboutShell");
-    a_About->setText(tr("About &Shell"));
-    connect(a_About, SIGNAL(triggered()), myApp, SLOT(aboutApplication()));
-
     // Bookmark Menu
     a_Add_Bookmark = new QAction(this);
     a_Add_Bookmark->setObjectName(QString::fromUtf8("BookmarkAdd"));
@@ -253,6 +261,7 @@ void FileWindow::setupActions()
     a_Applications->setText(tr("&Applications"));
     a_Network->setText(tr("&Network"));
     a_Connect_to_Server->setText(tr("&Connect to Server..."));
+    a_Connect_to_Server->setEnabled(false);
 
     a_Home->setIconVisibleInMenu(true);
     a_Documents->setIconVisibleInMenu(true);
@@ -418,7 +427,7 @@ void FileWindow::goQuickAction()
     }
     if(!path.isEmpty())
     {
-    //    if(m_windowMode == ArionShell::WINDOW_BROWSER)
+    //    if(m_windowMode == HWShell::WINDOW_BROWSER)
      //       m_shellHost->navigateToPath(path);
 
         // TODO: desktop mode

@@ -32,7 +32,7 @@ LSEmbeddedShellHostPrivate::LSEmbeddedShellHostPrivate(LSEmbeddedShellHost *pare
     , m_viewOptions(new LSViewOptionsDialog(parent))
     , m_delegate(new LSFSItemDelegate(parent))
     , m_mimeapps(new LSMimeApplications(parent))
-    , m_opmgr(ops) {}
+{}
 
 LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
     : QWidget(parent)
@@ -62,6 +62,8 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
     p->m_treeFavorites->setObjectName(QString::fromUtf8("PlacesTree"));
     p->m_treeFavorites->setModel(p->m_placeModel);
     p->m_treeFavorites->expandAll();
+    p->m_treeFavorites->setDropIndicatorShown(true);
+    p->m_treeFavorites->setDragDropMode(QAbstractItemView::DropOnly);
     connect(p->m_treeFavorites, &QTreeView::clicked, this, &LSEmbeddedShellHost::placeClicked);
 
     //p->m_treeFavorites->setFirstColumnSpanned()
@@ -115,7 +117,7 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
     p->m_filesList->setWordWrap(true);
     p->m_filesList->setUniformItemSizes(false);
     p->m_filesList->setItemDelegate(p->m_delegate);
-    p->m_filesList->setSelectionMode(QAbstractItemView::ContiguousSelection);
+    p->m_filesList->setSelectionMode(QAbstractItemView::ExtendedSelection);
     p->m_filesList->setContextMenuPolicy(Qt::CustomContextMenu);
 
     /* Setup List View */
@@ -125,7 +127,7 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
     p->m_filesTable->setAnimated(true);
     p->m_filesTable->setExpandsOnDoubleClick(false);
     p->m_filesTable->setContextMenuPolicy(Qt::CustomContextMenu);
-    p->m_filesTable->setSelectionMode(QAbstractItemView::ContiguousSelection);
+    p->m_filesTable->setSelectionMode(QAbstractItemView::ExtendedSelection);
     p->m_filesTable->setSortingEnabled(true);
     p->m_filesTable->header()->setFirstSectionMovable(false);
     p->m_filesTable->header()->resizeSection(0,290);
@@ -142,6 +144,10 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
     p->m_filesColumn->setDragEnabled(true);
     p->m_filesTable->setDragEnabled(true);
     p->m_filesList->setDragEnabled(true);
+
+    p->m_filesList->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    p->m_filesTable->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    p->m_filesColumn->setSelectionMode(QAbstractItemView::ExtendedSelection);
 
     swapToModel(Filesystem);
     connect(p->m_model, &LSFSModel::sortingChanged,
