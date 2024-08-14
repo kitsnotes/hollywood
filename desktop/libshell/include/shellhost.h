@@ -76,13 +76,11 @@ private slots:
     void viewContextMenuRequested(const QPoint &pos);
     void filesystemSortingChanged();
 private:
+    // internal functions
     void adjustColumnHeaders();
     void enableNoSelectionWritableActions();
     void actionSortRequested();
     void actionSortOrderRequested();
-    void showGetInfoDialog(const QUrl &target);
-    bool executeDesktopOverDBus(const QString &desktop);
-    bool openFileOverDBusWithDefault(const QString &file);
     void disableActionsForNoSelection();
     void enableActionsForFileSelection(bool multiple);
     void updatePlaceModelSelection(const QUrl &place);

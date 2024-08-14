@@ -15,6 +15,7 @@
 #include "mimeapps.h"
 #include "fileinfo.h"
 #include "desktopentry.h"
+#include "commonfunctions.h"
 
 #include <QDBusInterface>
 #include <hollywood/hollywood.h>
@@ -242,7 +243,7 @@ void LSEmbeddedShellHost::getInformationRequested()
             {
                 // show a dialog for our one file
                 auto url = QUrl(p->m_model->filePath(model->selectedIndexes().first()));
-                showGetInfoDialog(url);
+                LSCommonFunctions::instance()->showGetInfoDialog(url, this);
             }
         }
     }
@@ -634,18 +635,18 @@ void LSEmbeddedShellHost::viewActivated(const QModelIndex &idx)
         // handle a .desktop file
         if(p->m_model->isDesktop(idx))
         {
-            executeDesktopOverDBus(p->m_model->desktopFileForIndex(idx));
+            LSCommonFunctions::instance()->executeDesktopOverDBus(p->m_model->desktopFileForIndex(idx));
             return;
         }
 
-        openFileOverDBusWithDefault(fileInfo.canonicalFilePath());
+        LSCommonFunctions::instance()->openFileOverDBusWithDefault(fileInfo.canonicalFilePath());
         // TODO: handle executing an executable file???
     }
 
     if(p->m_currentModel == Applications)
     {
         auto da = p->m_apps->data(idx, Qt::UserRole+1);
-        executeDesktopOverDBus(da.toString());
+        LSCommonFunctions::instance()->executeDesktopOverDBus(da.toString());
     }
 
     if(p->m_currentModel == Trash)
@@ -888,70 +889,6 @@ void LSEmbeddedShellHost::actionSortOrderRequested()
     if(p->m_currentModel == Filesystem)
         doSort(p->m_model->sortColumn(), order);
 
-}
-
-void LSEmbeddedShellHost::showGetInfoDialog(const QUrl &target)
-{
-    auto dlg = new LSGetInfoDialog(target, this);
-    connect(dlg, &QDialog::accepted, dlg, &QWidget::deleteLater);
-    connect(dlg, &QDialog::rejected, dlg, &QWidget::deleteLater);
-    dlg->open();
-}
-
-bool LSEmbeddedShellHost::executeDesktopOverDBus(const QString &desktop)
-{
-    QDBusInterface ldb(HOLLYWOOD_SESSION_DBUS, HOLLYWOOD_SESSION_DBUSOBJ, HOLLYWOOD_SESSION_DBUSPATH);
-    if(!ldb.isValid())
-    {
-        qDebug() << QString("Could not call session DBUS interface. Command: executeDesktop");
-        return false;
-    }
-
-    QDBusMessage msg = ldb.call("executeDesktop", desktop, QStringList(), QStringList());
-
-    if(msg.arguments().isEmpty() || msg.arguments().constFirst().isNull())
-        return true;
-
-    auto response = msg.arguments().constFirst();
-
-    if(msg.arguments().isEmpty())
-        return true;
-
-    if(response.isNull())
-        return true;
-
-    if(response.toBool())
-        return true;
-
-    return false;
-}
-
-bool LSEmbeddedShellHost::openFileOverDBusWithDefault(const QString &file)
-{
-    QDBusInterface ldb(HOLLYWOOD_SESSION_DBUS, HOLLYWOOD_SESSION_DBUSOBJ, HOLLYWOOD_SESSION_DBUSPATH);
-    if(!ldb.isValid())
-    {
-        qDebug() << QString("Could not call session DBUS interface. Command: executeDesktop");
-        return false;
-    }
-
-    QDBusMessage msg = ldb.call("openFileWithDefault", file);
-
-    if(msg.arguments().isEmpty() || msg.arguments().constFirst().isNull())
-        return true;
-
-    auto response = msg.arguments().constFirst();
-
-    if(msg.arguments().isEmpty())
-        return true;
-
-    if(response.isNull())
-        return true;
-
-    if(response.toBool())
-        return true;
-
-    return false;
 }
 
 void LSEmbeddedShellHost::disableActionsForNoSelection()

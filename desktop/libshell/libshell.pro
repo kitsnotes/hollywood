@@ -27,6 +27,7 @@ versionAtLeast(QT_VERSION, 6.0.0) {
 
 SOURCES += \
     src/core/actionmanager.cc \
+    src/core/commonfunctions.cc \
     src/core/disks.cc \
     src/core/fileoperation.cc \
     src/core/opmanager.cc \
@@ -57,6 +58,7 @@ SOURCES += \
     src/xdg/mimeapps.cc
 
 HEADERS += \
+    include/commonfunctions.h \
     include/getinfodialog.h \
     include/opmanager.h \
     include/private/fileinfo.h \
