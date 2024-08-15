@@ -11,6 +11,7 @@
 #include <QtWidgets/QToolButton>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
+#include <QtWidgets/QDialogButtonBox>
 
 #include "fileoperation.h"
 
@@ -40,6 +41,9 @@ private:
     QProgressBar *m_progress = nullptr;
     QToolButton *m_cancelbtn = nullptr;
     QLabel *m_details = nullptr;
+
+    QLabel *m_error = nullptr;
+    QDialogButtonBox *m_errorButtons = nullptr;
 };
 
 #endif // LSOPPROGRESSWIDGET_H

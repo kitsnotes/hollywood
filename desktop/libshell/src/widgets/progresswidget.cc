@@ -15,7 +15,11 @@ LSOpProgressWidget::LSOpProgressWidget(FileOperation *op, QWidget *parent)
     , m_progress(new QProgressBar(this))
     , m_cancelbtn(new QToolButton(this))
     , m_details(new QLabel(this))
+    , m_error(new QLabel(this))
+    , m_errorButtons(new QDialogButtonBox(this))
 {
+    setMinimumHeight(75);
+    setMaximumHeight(75);
     m_task->setObjectName(QString::fromUtf8("TaskLabel"));
     m_progress->setObjectName(QString::fromUtf8("ProgressBar"));
     m_cancelbtn->setObjectName(QString::fromUtf8("CancelButton"));
@@ -31,19 +35,38 @@ LSOpProgressWidget::LSOpProgressWidget(FileOperation *op, QWidget *parent)
 
     m_progress->setValue(0);
     m_progress->setTextVisible(false);
+    m_progress->setMaximumHeight(15);
+    m_cancelbtn->setMaximumHeight(32);
+    m_cancelbtn->setMaximumWidth(32);
     m_cancelbtn->setAutoRaise(true);
-
+    m_cancelbtn->setIcon(QIcon::fromTheme("process-stop"));
     m_cancelbtn->setToolTip(tr("Cancel this operation"));
-    auto progress_layout = new QHBoxLayout();
-    progress_layout->addWidget(m_progress);
-    progress_layout->addWidget(m_cancelbtn);
 
     vl_main->addWidget(m_task);
-    vl_main->addLayout(progress_layout);
+    vl_main->addWidget(m_progress);
     vl_main->addWidget(m_details);
+
+    auto font = m_details->font();
+    font.setPointSize(font.pointSize()-1);
+    m_details->setFont(font);
+
+    m_details->setText(tr("Starting..."));
 
     main_layout->addLayout(vl_icon);
     main_layout->addLayout(vl_main);
+    main_layout->addWidget(m_cancelbtn);
+
+    auto errorLayout = new QVBoxLayout;
+    errorLayout->addWidget(m_error, 1);
+    errorLayout->addWidget(m_errorButtons);
+
+    m_error->setText(tr("Could not copy file."));
+    m_errorButtons->setStandardButtons(QDialogButtonBox::Ok);
+    m_error->setVisible(false);
+    m_errorButtons->setVisible(false);
+    m_errorButtons->setEnabled(false);
+
+    main_layout->addLayout(errorLayout);
     connect(op, &FileOperation::dataTransferProgress,
         this, &LSOpProgressWidget::progressChanged);
     connect(op, &FileOperation::started,
@@ -61,7 +84,7 @@ void LSOpProgressWidget::setOperationTitle(const QString &title)
 
 void LSOpProgressWidget::setIcon(const QIcon &icon)
 {
-    m_icon->setPixmap(icon.pixmap(64,64));
+    m_icon->setPixmap(icon.pixmap(32,32));
 }
 
 void LSOpProgressWidget::error(int id, FileOperation::Error error, bool stopped)
