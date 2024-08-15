@@ -12,26 +12,34 @@
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
 
+#include "fileoperation.h"
+
+class FileOperation;
 class LSOpProgressWidget : public QWidget
 {
     Q_OBJECT
 public:
-    explicit LSOpProgressWidget(QWidget *parent = nullptr);
+    explicit LSOpProgressWidget(FileOperation *op, QWidget *parent = nullptr);
     void setOperationTitle(const QString &title);
     void setIcon(const QIcon &icon);
 public slots:
-    void progressChanged(const uint progress);
+    void error(int id, FileOperation::Error error, bool stopped);
+    void stateChanged(FileOperation::State state);
+    void started(int id);
+    void finished(int id, bool error);
+    void progressChanged(uint id, qint64 progress);
     void statusChanged(const QString &status);
 signals:
     void cancelRequested();
 private:
-    QSpacerItem *vs_icon_top;
-    QLabel *m_icon;
-    QSpacerItem *vs_icon_btm;
-    QLabel *m_task;
-    QProgressBar *m_progress;
-    QToolButton *m_cancelbtn;
-    QLabel *m_details;
+    FileOperation *m_op = nullptr;
+    QSpacerItem *vs_icon_top = nullptr;
+    QLabel *m_icon = nullptr;
+    QSpacerItem *vs_icon_btm = nullptr;
+    QLabel *m_task = nullptr;
+    QProgressBar *m_progress = nullptr;
+    QToolButton *m_cancelbtn = nullptr;
+    QLabel *m_details = nullptr;
 };
 
 #endif // LSOPPROGRESSWIDGET_H

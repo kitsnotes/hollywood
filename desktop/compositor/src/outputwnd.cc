@@ -631,6 +631,7 @@ void OutputWindow::startDrag(Surface *dragIcon)
         qDebug() << "OutputWindow::startMove: mouseSelectedSurfaceObject is null";
         return;
     }
+    qDebug() << "OutputWindow::startedDrag";
     m_grabState = DragGrab;
     m_dragIconSurfaceObject = dragIcon;
     hwComp->raise(dragIcon);

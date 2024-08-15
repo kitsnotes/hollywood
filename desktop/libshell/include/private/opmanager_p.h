@@ -19,7 +19,7 @@ public:
     void removeWidget(LSOpProgressWidget *widget);
 private:
     QList<LSOpProgressWidget*> m_widgets;
-    QListView *m_list = nullptr;
+    QVBoxLayout *m_layout = nullptr;
     QStatusBar *m_status = nullptr;
 };
 

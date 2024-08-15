@@ -10,6 +10,8 @@
 
 #include "desktopviewoptions.h"
 #include <hollywood/commonfunctions.h>
+#include "commonfunctions.h"
+#include "opmanager.h"
 
 DesktopWindow::DesktopWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -78,6 +80,8 @@ DesktopWindow::DesktopWindow(QWidget *parent)
     m_viewOptions->updateViewOptions(m_view);
     connect(m_viewOptions, &DesktopViewOptions::optionsChanged, this, &DesktopWindow::viewOptionsChanged);
     connect(m_viewOptions, &QDialog::rejected, this, &DesktopWindow::viewOptionsClosed);
+    connect(LSCommonFunctions::instance(), &LSCommonFunctions::pasteAvailable, this, &DesktopWindow::enablePaste);
+
 }
 
 void DesktopWindow::enablePaste(bool enable, uint count)
@@ -164,7 +168,8 @@ void DesktopWindow::copyItems()
 
 void DesktopWindow::paste()
 {
-
+    auto data = FMApplication::instance()->clipboard()->mimeData()->urls();
+    LSCommonFunctions::instance()->operationManager()->copyFiles(data, QStandardPaths::standardLocations(QStandardPaths::DesktopLocation).first());
 }
 
 void DesktopWindow::newFolder()

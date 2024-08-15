@@ -76,7 +76,6 @@ void FMApplication::createDesktop()
     w->show();
     m_protocol->registerDesktopSurface(w->windowHandle());
     m_desktop = w;
-    connect(LSCommonFunctions::instance(), &LSCommonFunctions::pasteAvailable, m_desktop, &DesktopWindow::enablePaste);
 }
 
 void FMApplication::showWallpaperSettings()

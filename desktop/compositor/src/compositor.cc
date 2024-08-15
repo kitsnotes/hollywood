@@ -68,6 +68,7 @@ Compositor::~Compositor() {}
 void Compositor::create()
 {
     QWaylandCompositor::create();
+
     connect(this, &QWaylandCompositor::surfaceCreated, this, &Compositor::onSurfaceCreated);
     connect(this, &QWaylandCompositor::subsurfaceChanged, this, &Compositor::onSubsurfaceChanged);
     // TODO: cursors are leaky & buggy
@@ -959,7 +960,6 @@ void Compositor::startDrag()
     QWaylandDrag *currentDrag = defaultSeat()->drag();
     Q_ASSERT(currentDrag);
     Surface *iconSurface = findSurfaceObject(currentDrag->icon());
-    //SurfaceView *view = findView(currentDrag->icon());
     iconSurface->setPosition(primaryOutput()->window()->mapFromGlobal(QCursor::pos()));
 
     emit dragStarted(iconSurface);
@@ -974,13 +974,18 @@ void Compositor::handleDrag(SurfaceView *target, QMouseEvent *me)
         pos -= findSurfaceObject(surface)->renderPosition();
     }
     QWaylandDrag *currentDrag = defaultSeat()->drag();
-    // TODO: properly handle drag/drop icon surface
+    qDebug() << "drag drop target surface: " << findSurfaceObject(surface)->uuid().toString();
     if(surface)
         currentDrag->dragMove(surface, pos);
     if (me->buttons() == Qt::NoButton) {
         // TODO: destroy surface??
-        m_surfaces.removeOne(findSurfaceObject(currentDrag->icon()));
+        qDebug() << "Compositor::handleDrag: drag drop";
+        defaultSeat()->setKeyboardFocus(surface);
+        // TODO: multiple monitors/views
+        defaultSeat()->setMouseFocus(surface->primaryView());
+        surface->updateSelection();
         currentDrag->drop();
+        m_surfaces.removeOne(findSurfaceObject(currentDrag->icon()));
     }
 }
 

@@ -75,6 +75,8 @@ private slots:
     void createNewTab();
     void viewContextMenuRequested(const QPoint &pos);
     void filesystemSortingChanged();
+    // edit functions
+    void copyItems();
     void enablePaste(bool enable, uint count = 0);
     void canUndoChanged();
     void canRedoChanged();

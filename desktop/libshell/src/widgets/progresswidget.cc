@@ -1,14 +1,20 @@
-#include "progresswidget.h"
+// Hollywood Shell Library
+// (C) 2024 Originull Software
+// SPDX-License-Identifier: LGPL-2.1
 
-LSOpProgressWidget::LSOpProgressWidget(QWidget *parent)
-    : QWidget(parent),
-      vs_icon_top(new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding)),
-      m_icon(new QLabel(this)),
-      vs_icon_btm(new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding)),
-      m_task(new QLabel(this)),
-      m_progress(new QProgressBar(this)),
-      m_cancelbtn(new QToolButton(this)),
-      m_details(new QLabel(this))
+#include "progresswidget.h"
+#include "fileoperation.h"
+
+LSOpProgressWidget::LSOpProgressWidget(FileOperation *op, QWidget *parent)
+    : QWidget(parent)
+    , m_op(op)
+    , vs_icon_top(new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding))
+    , m_icon(new QLabel(this))
+    , vs_icon_btm(new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding))
+    , m_task(new QLabel(this))
+    , m_progress(new QProgressBar(this))
+    , m_cancelbtn(new QToolButton(this))
+    , m_details(new QLabel(this))
 {
     m_task->setObjectName(QString::fromUtf8("TaskLabel"));
     m_progress->setObjectName(QString::fromUtf8("ProgressBar"));
@@ -38,6 +44,14 @@ LSOpProgressWidget::LSOpProgressWidget(QWidget *parent)
 
     main_layout->addLayout(vl_icon);
     main_layout->addLayout(vl_main);
+    connect(op, &FileOperation::dataTransferProgress,
+        this, &LSOpProgressWidget::progressChanged);
+    connect(op, &FileOperation::started,
+            this, &LSOpProgressWidget::started);
+    connect(op, &FileOperation::error,
+                this, &LSOpProgressWidget::error);
+    connect(op, &FileOperation::stateChanged,
+                this, &LSOpProgressWidget::stateChanged);
 }
 
 void LSOpProgressWidget::setOperationTitle(const QString &title)
@@ -50,8 +64,29 @@ void LSOpProgressWidget::setIcon(const QIcon &icon)
     m_icon->setPixmap(icon.pixmap(64,64));
 }
 
-void LSOpProgressWidget::progressChanged(const uint progress)
+void LSOpProgressWidget::error(int id, FileOperation::Error error, bool stopped)
 {
+
+}
+
+void LSOpProgressWidget::stateChanged(FileOperation::State state)
+{
+
+}
+
+void LSOpProgressWidget::started(int id)
+{
+
+}
+
+void LSOpProgressWidget::finished(int id, bool error)
+{
+
+}
+
+void LSOpProgressWidget::progressChanged(uint id, qint64 progress)
+{
+    Q_UNUSED(id)
     m_progress->setValue(progress);
 }
 

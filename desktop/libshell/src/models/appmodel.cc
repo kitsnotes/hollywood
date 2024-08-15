@@ -1,3 +1,7 @@
+// Hollywood Shell Library
+// (C) 2024 Originull Software
+// SPDX-License-Identifier: LGPL-2.1
+
 #include "appmodel.h"
 #include "mimeapps.h"
 #include "desktopentry.h"

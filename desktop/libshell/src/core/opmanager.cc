@@ -1,5 +1,10 @@
+// Hollywood Shell Library
+// (C) 2024 Originull Software
+// SPDX-License-Identifier: LGPL-2.1
+
 #include "opmanager_p.h"
 #include "opmanager.h"
+#include "fileoperation.h"
 
 #include "progresswidget.h"
 
@@ -8,16 +13,28 @@
 
 OperationManagerDialog::OperationManagerDialog()
     : QDialog(nullptr)
-    , m_list(new QListView(this))
+    , m_layout(new QVBoxLayout(this))
     , m_status(new QStatusBar(this))
 {
     setWindowTitle(tr("Operation Progress"));
     setMinimumSize(QSize(450,350));
-    auto layout = new QVBoxLayout(this);
-    layout->addWidget(m_list);
-    layout->addWidget(m_status);
-    layout->setContentsMargins(0,0,0,0);
-    this->setLayout(layout);
+    m_layout->addWidget(m_status);
+    m_layout->setContentsMargins(0,0,0,0);
+    setLayout(m_layout);
+}
+
+void OperationManagerDialog::addWidget(LSOpProgressWidget *widget)
+{
+    m_layout->insertWidget(m_layout->count()-1, widget);
+    m_widgets.append(widget);
+}
+
+void OperationManagerDialog::removeWidget(LSOpProgressWidget *widget)
+{
+    m_layout->removeWidget(widget);
+    m_widgets.removeOne(widget);
+    if(m_widgets.count() == 0)
+        hide();
 }
 
 OperationManagerPrivate::OperationManagerPrivate(OperationManager *parent)
@@ -33,47 +50,71 @@ OperationManagerPrivate::~OperationManagerPrivate()
     m_dialog->deleteLater();
 }
 
-/*QUuid OperationManagerPrivate::operation(const QList<QUrl> &sources, const OperationManager::OperationType type, const QUrl &destinationPath)
-{
-    operation_t newop;
-    QList<OperationWorker::OpItem> items;
-    for(auto u : sources)
-    {
-        OperationWorker::OpItem i;
-        i.u = u;
-        items.append(i);
-    }
-    newop.worker = new OperationWorker(items, type, destinationPath);
-    newop.widget = new LSOpProgressWidget(m_dialog);
-    newop.uuid = QUuid::createUuid();
-    newop.thread = new QThread();
-    newop.worker->moveToThread(newop.thread);
-
-    QObject::connect(newop.thread, &QThread::started,
-                     newop.worker, &OperationWorker::startWorker);
-
-    QObject::connect(newop.worker, &OperationWorker::progressChanged,
-            newop.widget, &LSOpProgressWidget::progressChanged);
-    QObject::connect(newop.worker, &OperationWorker::progressChanged,
-            newop.widget, &LSOpProgressWidget::progressChanged);
-
-    m_threads.insert(newop.uuid, newop);
-
-    m_dialog->addWidget(newop.widget);
-    newop.worker->startWorker();
-    return newop.uuid;
-}*/
-
 OperationManager::OperationManager()
     : p(new OperationManagerPrivate(this)) {}
 
 QUuid OperationManager::moveFiles(const QList<QUrl> &sources, const QUrl &destinationPath)
 {
+    auto op = new FileOperation(this);
+    auto widget = new LSOpProgressWidget(op, p->m_dialog);
+
+    connect(op, &FileOperation::done, [this,op,widget](bool error){
+        if(error)
+        {
+            //widget->setError(op->error(op->););
+            op->deleteLater();
+        }
+        else
+        {
+            // operation success - lets clean up
+            p->m_dialog->removeWidget(widget);
+            widget->deleteLater();
+            op->deleteLater();
+        }
+    });
+    p->m_dialog->addWidget(widget);
+    p->m_dialog->show();
+    if(sources.count() == 1)
+    {
+        op->move(sources.first(), destinationPath);
+    }
+    else
+    {
+        op->moveFiles(sources, destinationPath);
+    }
     return QUuid(); //p->operation(sources, OperationType::Move, destinationPath);
 }
 
 QUuid OperationManager::copyFiles(const QList<QUrl> &sources, const QUrl &destinationPath)
 {
+    auto op = new FileOperation(this);
+    auto widget = new LSOpProgressWidget(op, p->m_dialog);
+
+    connect(op, &FileOperation::done, [this,op,widget](bool error){
+        if(error)
+        {
+            //widget->setError(op->error(op->););
+            op->deleteLater();
+        }
+        else
+        {
+            // operation success - lets clean up
+            p->m_dialog->removeWidget(widget);
+            widget->deleteLater();
+            op->deleteLater();
+            // make an undo stack entry
+        }
+    });
+    p->m_dialog->addWidget(widget);
+    p->m_dialog->show();
+    if(sources.count() == 1)
+    {
+        op->copy(sources.first(), destinationPath);
+    }
+    else
+    {
+        op->copyFiles(sources, destinationPath);
+    }
     return QUuid(); //p->operation(sources, OperationType::Copy, destinationPath);
 }
 
@@ -99,5 +140,5 @@ bool OperationManager::dialogIsVisible() const
 
 uint OperationManager::activeOperations() const
 {
-    return p->m_threads.count();
+    return 0;
 }

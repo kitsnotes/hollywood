@@ -1,13 +1,6 @@
-/****************************************************************************
-** Copyright (C) 2022 The Cat and Arion OS team.
-** Portions Copyright (C) 2015 The Qt Company Ltd.
-**
-** This file is originated from the QtWidgets module
-** of the Qt Toolkit version 5.6 - the last version to be licensed
-** under LGPL 2.1.
-**
-** This file, like the rest of libshell is licensed under LGPL 2.1.
-****************************************************************************/
+// Hollywood Shell Library
+// (C) 2024 Originull Software
+// SPDX-License-Identifier: LGPL-2.1
 
 #ifndef FILESYSTEMMODEL_H
 #define FILESYSTEMMODEL_H

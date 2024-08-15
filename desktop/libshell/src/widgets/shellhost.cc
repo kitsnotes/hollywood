@@ -1,3 +1,7 @@
+// Hollywood Shell Library
+// (C) 2024 Originull Software
+// SPDX-License-Identifier: LGPL-2.1
+
 #include "shellhost.h"
 #include "shellhost_p.h"
 #include "viewoptionsdialog.h"
@@ -22,6 +26,9 @@
 #include <hollywood/hollywood.h>
 #include <QAbstractItemModel>
 #include <QMimeDatabase>
+#include <QClipboard>
+#include <QMimeData>
+#include <QGuiApplication>
 
 LSEmbeddedShellHostPrivate::LSEmbeddedShellHostPrivate(LSEmbeddedShellHost *parent, OperationManager *ops)
     : d(parent)
@@ -182,13 +189,13 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
 
     connect(p->m_actions->shellAction(HWShell::ACT_FILE_NEW_TAB), &QAction::triggered,
              this, &LSEmbeddedShellHost::createNewTab);
-    connect(p->m_actions->shellAction(HWShell::ACT_GO_BACK), SIGNAL(triggered()),
-            this, SLOT(goBack()));
-    connect(p->m_actions->shellAction(HWShell::ACT_GO_FORWARD), SIGNAL(triggered()),
-            this, SLOT(goForward()));
+    connect(p->m_actions->shellAction(HWShell::ACT_GO_BACK), &QAction::triggered,
+            this, &LSEmbeddedShellHost::goBack);
+    connect(p->m_actions->shellAction(HWShell::ACT_GO_FORWARD), &QAction::triggered,
+            this, &LSEmbeddedShellHost::goForward);
 
-    connect(p->m_actions->shellAction(HWShell::ACT_GO_ENCLOSING_FOLDER), SIGNAL(triggered()),
-            this, SLOT(goEnclosingFolder()));
+    connect(p->m_actions->shellAction(HWShell::ACT_GO_ENCLOSING_FOLDER), &QAction::triggered,
+            this, &LSEmbeddedShellHost::goEnclosingFolder);
 
     connect(p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_NONE),
             &QAction::triggered, this, &LSEmbeddedShellHost::actionSortRequested);
@@ -212,9 +219,12 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
     connect(p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_DESC),
             &QAction::triggered, this, &LSEmbeddedShellHost::actionSortOrderRequested);
 
-    connect(p->m_actions->shellAction(HWShell::ACT_EDIT_UNDO), &QAction::toggled,
+    connect(p->m_actions->shellAction(HWShell::ACT_EDIT_COPY), &QAction::triggered,
+            this, &LSEmbeddedShellHost::copyItems);
+
+    connect(p->m_actions->shellAction(HWShell::ACT_EDIT_UNDO), &QAction::triggered,
             LSCommonFunctions::instance()->undoStack(), &QUndoStack::undo);
-    connect(p->m_actions->shellAction(HWShell::ACT_EDIT_REDO), &QAction::toggled,
+    connect(p->m_actions->shellAction(HWShell::ACT_EDIT_REDO), &QAction::triggered,
             LSCommonFunctions::instance()->undoStack(), &QUndoStack::redo);
 
     connect(LSCommonFunctions::instance()->undoStack(), &QUndoStack::canUndoChanged,
@@ -225,6 +235,11 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
             this, &LSEmbeddedShellHost::canRedoChanged);
     connect(LSCommonFunctions::instance()->undoStack(), &QUndoStack::redoTextChanged,
             this, &LSEmbeddedShellHost::canRedoChanged);
+
+    connect(LSCommonFunctions::instance(), &LSCommonFunctions::pasteAvailable,
+            this, &LSEmbeddedShellHost::enablePaste);
+
+
 
     restoreViewModeFromSettings();
 }
@@ -822,6 +837,36 @@ void LSEmbeddedShellHost::filesystemSortingChanged()
 
 }
 
+void LSEmbeddedShellHost::copyItems()
+{
+    if(p->m_currentModel == Filesystem)
+    {
+        QItemSelectionModel *model = nullptr;
+        switch(p->m_viewMode)
+        {
+        case HWShell::VIEW_ICONS:
+            model = p->m_filesList->selectionModel();
+            break;
+        case HWShell::VIEW_LIST:
+            model = p->m_filesTable->selectionModel();
+            break;
+        case HWShell::VIEW_COLUMN:
+            model = p->m_filesColumn->selectionModel();
+        }
+
+        if(model)
+        {
+            QList<QUrl> urls;
+            for(auto idx : model->selectedIndexes())
+                urls.append(QUrl::fromLocalFile(p->m_model->fileName(idx)));
+
+            auto mimedata = new QMimeData;
+            mimedata->setUrls(urls);
+            QGuiApplication::clipboard()->setMimeData(mimedata);
+        }
+    }
+}
+
 void LSEmbeddedShellHost::enablePaste(bool enable, uint count)
 {
     if(!enable)
@@ -1038,11 +1083,11 @@ void LSEmbeddedShellHost::enableActionsForFileSelection(bool multiple)
 
     p->m_actions->shellAction(HWShell::ACT_FILE_GET_INFO)->setEnabled(true);
     p->m_actions->shellAction(HWShell::ACT_FILE_RENAME)->setEnabled(true);
-    //p->m_actions->shellAction(ArionShell::ACT_FILE_ARCHIVE)->setEnabled(true);
+    //p->m_actions->shellAction(HWShell::ACT_FILE_ARCHIVE)->setEnabled(true);
     p->m_actions->shellAction(HWShell::ACT_FILE_TRASH)->setEnabled(true);
     p->m_actions->shellAction(HWShell::ACT_EDIT_COPY)->setEnabled(true);
 
-    //p->m_actions->shellAction(ArionShell::ACT_EDIT_CUT)->setDisabled(true);
+    //p->m_actions->shellAction(HWShell::ACT_EDIT_CUT)->setDisabled(true);
     p->m_actions->shellAction(HWShell::ACT_EDIT_INV_SEL)->setDisabled(true);
 
 }
