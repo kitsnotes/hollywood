@@ -78,6 +78,7 @@ private slots:
     // edit functions
     void copyItems();
     void enablePaste(bool enable, uint count = 0);
+    void paste();
     void canUndoChanged();
     void canRedoChanged();
 private:

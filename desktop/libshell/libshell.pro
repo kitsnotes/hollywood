@@ -40,6 +40,8 @@ SOURCES += \
     src/filesystem/fsitemdelegate.cc \
     src/filesystem/fsnode.cc \
     src/filesystem/hwfileiconprovider.cc \
+    src/filesystem/trashinfogatherer.cc \
+    src/filesystem/trashnode.cc \
     src/mdns/mdnsbrowser.cc \
     src/mdns/mdnsresolver.cc \
     src/models/appmodel.cc \
@@ -89,6 +91,8 @@ HEADERS += \
     include/private/placeview.h \
     include/private/executor_p.h \
     include/private/progresswidget.h \
+    include/private/trashinfogatherer_p.h \
+    include/private/trashnode.h \
     include/private/trashmodel_p.h \
     include/appmodel.h \
     include/actionmanager.h \

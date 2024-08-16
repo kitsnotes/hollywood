@@ -20,8 +20,10 @@
 #include "fileinfo.h"
 #include "desktopentry.h"
 #include "commonfunctions.h"
-#include <QUndoStack>
+#include "opmanager.h"
+#include "trashmodel.h"
 
+#include <QUndoStack>
 #include <QDBusInterface>
 #include <hollywood/hollywood.h>
 #include <QAbstractItemModel>
@@ -41,12 +43,15 @@ LSEmbeddedShellHostPrivate::LSEmbeddedShellHostPrivate(LSEmbeddedShellHost *pare
     , m_viewOptions(new LSViewOptionsDialog(parent))
     , m_delegate(new LSFSItemDelegate(parent))
     , m_mimeapps(new LSMimeApplications(parent))
-{}
+{
+
+}
 
 LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
     : QWidget(parent)
     , p(new LSEmbeddedShellHostPrivate(this))
 {
+
     p->m_mimeapps->processGlobalMimeCache();
     p->m_mimeapps->cacheAllDesktops();
     setContentsMargins(0,0,0,0);
@@ -221,6 +226,8 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
 
     connect(p->m_actions->shellAction(HWShell::ACT_EDIT_COPY), &QAction::triggered,
             this, &LSEmbeddedShellHost::copyItems);
+    connect(p->m_actions->shellAction(HWShell::ACT_EDIT_PASTE), &QAction::triggered,
+            this, &LSEmbeddedShellHost::paste);
 
     connect(p->m_actions->shellAction(HWShell::ACT_EDIT_UNDO), &QAction::triggered,
             LSCommonFunctions::instance()->undoStack(), &QUndoStack::undo);
@@ -858,10 +865,11 @@ void LSEmbeddedShellHost::copyItems()
         {
             QList<QUrl> urls;
             for(auto idx : model->selectedIndexes())
-                urls.append(QUrl::fromLocalFile(p->m_model->fileName(idx)));
+                urls.append(QUrl::fromLocalFile(p->m_model->fileInfo(idx).absoluteFilePath()));
 
             auto mimedata = new QMimeData;
             mimedata->setUrls(urls);
+            qDebug() << urls;
             QGuiApplication::clipboard()->setMimeData(mimedata);
         }
     }
@@ -881,6 +889,31 @@ void LSEmbeddedShellHost::enablePaste(bool enable, uint count)
         else
             shellAction(HWShell::ACT_EDIT_PASTE)->setText(tr("&Paste %1 Items").arg(QString::number(count)));
         shellAction(HWShell::ACT_EDIT_PASTE)->setEnabled(enable);
+    }
+}
+
+void LSEmbeddedShellHost::paste()
+{
+    if(p->m_currentModel == Filesystem)
+    {
+        auto curdir = QString();
+        switch(p->m_viewMode)
+        {
+        case HWShell::VIEW_ICONS:
+            curdir = p->m_model->absolutePath(p->m_filesList->rootIndex());
+            break;
+        case HWShell::VIEW_LIST:
+            curdir = p->m_model->absolutePath(p->m_filesTable->rootIndex());
+            break;
+        case HWShell::VIEW_COLUMN:
+            curdir = p->m_model->absolutePath(p->m_filesColumn->rootIndex());
+            break;
+        default:
+            break;
+        }
+        qDebug() << curdir;
+        auto data = QGuiApplication::clipboard()->mimeData()->urls();
+        LSCommonFunctions::instance()->operationManager()->copyFiles(data, QUrl::fromLocalFile(curdir));
     }
 }
 
@@ -1014,6 +1047,7 @@ void LSEmbeddedShellHost::disableActionsForNoSelection()
     p->m_actions->shellAction(HWShell::ACT_FILE_TRASH)->setDisabled(true);
 
     p->m_actions->shellAction(HWShell::ACT_EDIT_COPY)->setDisabled(true);
+    p->m_actions->shellAction(HWShell::ACT_EDIT_COPY)->setText(tr("C&opy"));
     p->m_actions->shellAction(HWShell::ACT_EDIT_CUT)->setDisabled(true);
     p->m_actions->shellAction(HWShell::ACT_EDIT_INV_SEL)->setDisabled(true);
 
@@ -1086,6 +1120,8 @@ void LSEmbeddedShellHost::enableActionsForFileSelection(bool multiple)
     //p->m_actions->shellAction(HWShell::ACT_FILE_ARCHIVE)->setEnabled(true);
     p->m_actions->shellAction(HWShell::ACT_FILE_TRASH)->setEnabled(true);
     p->m_actions->shellAction(HWShell::ACT_EDIT_COPY)->setEnabled(true);
+    p->m_actions->shellAction(HWShell::ACT_EDIT_COPY)->setText(tr("C&opy %1 Items")
+                    .arg(QString::number(p->m_curSelModel->selectedIndexes().count())));
 
     //p->m_actions->shellAction(HWShell::ACT_EDIT_CUT)->setDisabled(true);
     p->m_actions->shellAction(HWShell::ACT_EDIT_INV_SEL)->setDisabled(true);

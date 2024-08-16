@@ -61,12 +61,14 @@ void OperationThread::copierDestroyed()
 
 void OperationThread::restart()
 {
+    qDebug() << "OperationThread::restart";
     start();
     newCopyCondition.wakeOne();
 }
 
 void OperationThread::copy(int id, const CopyRequest &request)
 {
+    qDebug() << "OperationThread::copy";
     Request r(request);
     QMutexLocker l(&mutex);
     requestQueue[id] = r;
@@ -75,6 +77,7 @@ void OperationThread::copy(int id, const CopyRequest &request)
 
 void OperationThread::copy(const QMap<int, CopyRequest> &requests)
 {
+    qDebug() << "OperationThread::copy";
     QMap<int, CopyRequest>::ConstIterator it = requests.constBegin();
     QMutexLocker l(&mutex);
     while (it != requests.constEnd()) {
@@ -465,7 +468,9 @@ struct CopyFileNode : public ChainNode {
                 OperationThread *thread)
         : ChainNode(nextInChain) {
         id = currentId;
+        qDebug() << "CopyFileNode create" << id << request.source.toDisplayString();
         r = request;
+        qDebug() << "CopyFileNode create" << id << r.source.toDisplayString();
         t = thread;
     }
     CopyRequest &request() {
@@ -478,13 +483,15 @@ struct CopyFileNode : public ChainNode {
         return id;
     }
     bool handle() {
-        CopyRequest &r = request();
+        qDebug() << "CopyFileNode::handle" << r.source.toString();
+        //CopyRequest &r = request();
         if (r.dir) {
             setError(FileOperation::SourceDirectoryOmitted);
             return false;
         }
         QFile sourceFile(r.source.toLocalFile());
         QFile destFile(r.dest.toLocalFile());
+        qDebug() << r.source.toLocalFile() << r.dest.toLocalFile();
         if (!sourceFile.open(QIODevice::ReadOnly)) {
             setError(FileOperation::CannotOpenSourceFile); // cannot open source file
             return false;
@@ -614,6 +621,7 @@ void OperationThread::cancelChildren(int id)
 
 void OperationThread::handle(int id)
 {
+    qDebug() << "OperationThread::handle" << id;
     if (cancelRequest)
         return;
     mutex.lock();
@@ -625,7 +633,7 @@ void OperationThread::handle(int id)
 
     emit started(id);
     bool done = false;
-    FileOperation::Error err = FileOperation::NoError;;
+    FileOperation::Error err = FileOperation::NoError;
     while (!done) {
         mutex.lock();
         QMap<int, Request>::ConstIterator it = requestQueue.find(id);
@@ -635,15 +643,20 @@ void OperationThread::handle(int id)
         CopyRequest copyRequest = r.request;
 
         ChainNode *n = 0;
-        n = new CopyFileNode(n, id, copyRequest, this);
-        n = new CopyDirNode(n);
-        n = new MoveNode(n);
-        n = new RenameNode(n);
+        if(r.canceled)
+            n = new CanceledNode(n, r.canceled);
+        else if(r.overwrite == true || overwriteAll)
+            n = new OverwriteNode(n, r.overwrite || overwriteAll);
+        else if(copyRequest.dir == false && copyRequest.move == false && r.overwrite == false)
+            n = new CopyFileNode(n, id, copyRequest, this);
+        else if(copyRequest.dir == true && copyRequest.move == false)
+            n = new CopyDirNode(n);
+        else if(copyRequest.dir == false && copyRequest.move == true)
+            n = new MoveNode(n);
+        /*n = new RenameNode(n);
         n = new FollowLinksNode(n);
         n = new MakeLinksNode(n);
-        n = new OverwriteNode(n, r.overwrite || overwriteAll);
-        n = new SourceExistsNode(n);
-        n = new CanceledNode(n, r.canceled);
+        n = new SourceExistsNode(n);*/
 
         done = n->handle();
         err = n->error();
@@ -682,6 +695,7 @@ void OperationThread::handle(int id)
 
 void OperationThread::run()
 {
+    qDebug() << "OperationThread::run";
     bool stop = false;
 
     while (!stop) {
@@ -708,6 +722,7 @@ void OperationThread::run()
                 mutex.unlock();
             } else {
                 mutex.unlock();
+                qDebug() << "OperationThread doing handle";
                 handle(requestQueue.constBegin().key());
             }
         }
@@ -792,6 +807,7 @@ void FileOperationPrivate::copyError(int id, FileOperation::Error error, bool st
 void FileOperationPrivate::copyStarted(int id)
 {
     Q_Q(FileOperation);
+    qDebug() << "copyStarted (private)";
     setState(FileOperation::Busy);
     currentStack.push(id);
     emit q->started(id);
@@ -849,8 +865,8 @@ CopyRequest FileOperationPrivate::prepareRequest(bool checkPath, const QUrl &sou
         fid.setFile(destDir, fis.fileName());
     }
     CopyRequest r;
-    r.source = fis.filePath();
-    r.dest = fid.filePath();
+    r.source = QUrl::fromLocalFile(fis.filePath());
+    r.dest = QUrl::fromLocalFile(fid.filePath());
     r.copyFlags = flags;
     r.move = move;
     r.dir = dir;
@@ -876,6 +892,7 @@ int FileOperationPrivate::copy(const QUrl &sourceFile, const QUrl &destinationPa
     requests[idCounter] = r;
     copyThread->copy(idCounter, r);
     startThread();
+    qDebug() << "copy (private)" << sourceFile.toString();
     return idCounter++;
 }
 
@@ -1034,11 +1051,14 @@ FileOperation::~FileOperation()
 int FileOperation::copy(const QUrl &sourceFile, const QUrl &destinationPath,
                 CopyFlags flags)
 {
+    qDebug() << "copy" << sourceFile << destinationPath;
     if (state() != FileOperation::Idle)
         return -1;
+    qDebug() << "copy (passed idle)" << sourceFile << destinationPath;
     QFileInfo fis(sourceFile.toLocalFile());
     if (fis.isDir())
         return -1; // Omitting Dir
+    qDebug() << "copy (passed dircheck)" << sourceFile << destinationPath;
     return d_ptr->copy(sourceFile, destinationPath, flags, false);
 }
 

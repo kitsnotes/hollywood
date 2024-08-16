@@ -147,7 +147,8 @@ QUrl LSDesktopModel::url(const QModelIndex &index) const
     if(isTrash(index))
         return QUrl("trash://");
 
-    return QUrl::fromLocalFile(p->m_files.at(index.row())->fileName);
+    qDebug() << QUrl::fromLocalFile(p->m_files.at(index.row())->fileInfo().absoluteFilePath());
+    return QUrl::fromLocalFile(p->m_files.at(index.row())->fileInfo().absoluteFilePath());
 }
 
 bool LSDesktopModel::isTrash(const QModelIndex &index) const

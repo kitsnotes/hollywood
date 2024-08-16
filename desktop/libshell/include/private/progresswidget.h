@@ -33,6 +33,9 @@ public slots:
 signals:
     void cancelRequested();
 private:
+    void presentError();
+    void presentProgress();
+private:
     FileOperation *m_op = nullptr;
     QSpacerItem *vs_icon_top = nullptr;
     QLabel *m_icon = nullptr;
