@@ -22,4 +22,5 @@ LSPlaceView::LSPlaceView(QWidget *parent)
     p.setColor(QPalette::Text, p.color(QPalette::WindowText));
     setPalette(p);
     viewport()->setAutoFillBackground(false);
+    setMinimumHeight(100);
 }

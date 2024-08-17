@@ -42,9 +42,9 @@ private:
     LSActionManager *m_actions;
     LSLocationBar *m_location = nullptr;
     QSplitter *m_mainSplitter;
-    QTabWidget *m_treeToolbox;
+
     LSPlaceView *m_treeFavorites;
-    QTreeView *m_treeDirs;
+    LSPlaceView *m_treeDirs;
 
     QColumnView *m_filesColumn;
     LSColumnPreview *m_columnPreview = nullptr;
@@ -59,6 +59,7 @@ private:
     LSTrashModel *m_trash;
 
     LSPlaceModel *m_placeModel;
+    LSFSModel *m_sidebarModel;
     QMap<QUuid, QUrl> m_tabLocations;
     QMap<QUuid, HWShell::ViewMode> m_tabViewMode;
     QMap<QUuid, Qt::SortOrder> m_tabSortOrder;
