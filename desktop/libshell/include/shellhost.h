@@ -100,6 +100,7 @@ private:
     void updateNavigationButtonStatus();
     void swapToModel(ShellModel model);
     void swapModelForUrl(const QUrl &url);
+    void resetSelectionModel();
 private:
     LSEmbeddedShellHostPrivate *p;
 };

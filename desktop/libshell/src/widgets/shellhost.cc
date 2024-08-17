@@ -694,15 +694,19 @@ void LSEmbeddedShellHost::viewActivated(const QModelIndex &idx)
 
 void LSEmbeddedShellHost::viewSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected)
 {
-    if(selected.count() > 2)
+    qDebug() << "viewSelectionChanged";
+    Q_UNUSED(selected)
+    Q_UNUSED(deselected)
+
+    auto idxes = p->m_curSelModel->selectedIndexes();
+    if(idxes.count() > 2)
         enableActionsForFileSelection(true);
-    else if(selected.count() == 1)
+    else if(idxes.count() == 1)
         enableActionsForFileSelection(false);
     else
         disableActionsForNoSelection();
 
     emit updateStatusBar(generateStatusBarMsg());
-    Q_UNUSED(deselected);
 }
 
 void LSEmbeddedShellHost::placeClicked(const QModelIndex &idx)
@@ -877,6 +881,7 @@ void LSEmbeddedShellHost::copyItems()
 
 void LSEmbeddedShellHost::enablePaste(bool enable, uint count)
 {
+    p->m_clipboardHasPaste = enable;
     if(!enable)
     {
         shellAction(HWShell::ACT_EDIT_PASTE)->setText(tr("&Paste"));
@@ -890,6 +895,9 @@ void LSEmbeddedShellHost::enablePaste(bool enable, uint count)
             shellAction(HWShell::ACT_EDIT_PASTE)->setText(tr("&Paste %1 Items").arg(QString::number(count)));
         shellAction(HWShell::ACT_EDIT_PASTE)->setEnabled(enable);
     }
+    if(p->m_currentModel == Trash ||
+        p->m_currentModel == Applications)
+        shellAction(HWShell::ACT_EDIT_PASTE)->setEnabled(false);
 }
 
 void LSEmbeddedShellHost::paste()
@@ -911,7 +919,6 @@ void LSEmbeddedShellHost::paste()
         default:
             break;
         }
-        qDebug() << curdir;
         auto data = QGuiApplication::clipboard()->mimeData()->urls();
         LSCommonFunctions::instance()->operationManager()->copyFiles(data, QUrl::fromLocalFile(curdir));
     }
@@ -1064,6 +1071,7 @@ void LSEmbeddedShellHost::disableActionsForNoSelection()
 
 void LSEmbeddedShellHost::enableActionsForFileSelection(bool multiple)
 {
+    qDebug() << "enableActionsForFileSelection" << multiple;
     if(!multiple)
     {
         if(p->m_currentModel == Filesystem)
@@ -1098,34 +1106,54 @@ void LSEmbeddedShellHost::enableActionsForFileSelection(bool multiple)
                 p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setEnabled(true);
                 p->m_actions->openWithMenu()->setEnabled(false);
             }
+            p->m_actions->shellAction(HWShell::ACT_EDIT_COPY)->setEnabled(true);
+            p->m_actions->shellAction(HWShell::ACT_EDIT_PASTE)->setEnabled(p->m_clipboardHasPaste);
+            p->m_actions->shellAction(HWShell::ACT_FILE_RENAME)->setEnabled(true);
         }
         else
         {
+            // not filesystem - ie: trash/applications/etc
             p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setText(tr("&Open"));
             p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setIcon(QIcon());
             p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setEnabled(true);
-        }
+            p->m_actions->shellAction(HWShell::ACT_EDIT_COPY)->setEnabled(false);
+            p->m_actions->shellAction(HWShell::ACT_EDIT_PASTE)->setEnabled(false);
+            p->m_actions->shellAction(HWShell::ACT_FILE_RENAME)->setEnabled(false);
 
+        }
         p->m_actions->shellAction(HWShell::ACT_FILE_RENAME)->setText(tr("&Rename"));
     }
     else
     {
+        // multiple options
         p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setText(tr("&Open..."));
         p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setIcon(QIcon());
         p->m_actions->shellAction(HWShell::ACT_FILE_RENAME)->setText(tr("&Rename..."));
+
+        if(p->m_currentModel == Filesystem)
+        {
+            p->m_actions->shellAction(HWShell::ACT_EDIT_COPY)->setEnabled(true);
+            p->m_actions->shellAction(HWShell::ACT_FILE_RENAME)->setEnabled(true);
+            p->m_actions->shellAction(HWShell::ACT_EDIT_PASTE)->setEnabled(p->m_clipboardHasPaste);
+        }
+        else
+        {
+            // trash/applications/etc
+            p->m_actions->shellAction(HWShell::ACT_FILE_RENAME)->setEnabled(false);
+            p->m_actions->shellAction(HWShell::ACT_EDIT_COPY)->setEnabled(false);
+            p->m_actions->shellAction(HWShell::ACT_EDIT_PASTE)->setEnabled(p->m_clipboardHasPaste);
+        }
     }
 
-    p->m_actions->shellAction(HWShell::ACT_FILE_GET_INFO)->setEnabled(true);
-    p->m_actions->shellAction(HWShell::ACT_FILE_RENAME)->setEnabled(true);
-    //p->m_actions->shellAction(HWShell::ACT_FILE_ARCHIVE)->setEnabled(true);
     p->m_actions->shellAction(HWShell::ACT_FILE_TRASH)->setEnabled(true);
-    p->m_actions->shellAction(HWShell::ACT_EDIT_COPY)->setEnabled(true);
+
+    p->m_actions->shellAction(HWShell::ACT_FILE_GET_INFO)->setEnabled(true);
+    //p->m_actions->shellAction(HWShell::ACT_FILE_ARCHIVE)->setEnabled(true);
     p->m_actions->shellAction(HWShell::ACT_EDIT_COPY)->setText(tr("C&opy %1 Items")
                     .arg(QString::number(p->m_curSelModel->selectedIndexes().count())));
 
-    //p->m_actions->shellAction(HWShell::ACT_EDIT_CUT)->setDisabled(true);
+    p->m_actions->shellAction(HWShell::ACT_EDIT_CUT)->setDisabled(true);
     p->m_actions->shellAction(HWShell::ACT_EDIT_INV_SEL)->setDisabled(true);
-
 }
 
 void LSEmbeddedShellHost::updatePlaceModelSelection(const QUrl &place)
@@ -1249,6 +1277,14 @@ void LSEmbeddedShellHost::updateNavigationButtonStatus()
 
 void LSEmbeddedShellHost::swapToModel(ShellModel model)
 {
+    qDebug() << "viewSelectionChanged";
+
+    if(p->m_curSelModel)
+    {
+        qDebug() << "disconnecting viewSelection";
+        disconnect(p->m_curSelModel, &QItemSelectionModel::selectionChanged,
+               this, &LSEmbeddedShellHost::viewSelectionChanged);
+    }
     switch(model)
     {
     case Applications:
@@ -1279,6 +1315,9 @@ void LSEmbeddedShellHost::swapToModel(ShellModel model)
         adjustColumnHeaders();
         break;
     }
+    resetSelectionModel();
+    connect(p->m_curSelModel, &QItemSelectionModel::selectionChanged,
+        this, &LSEmbeddedShellHost::viewSelectionChanged);
 }
 
 void LSEmbeddedShellHost::swapModelForUrl(const QUrl &url)
@@ -1306,6 +1345,18 @@ void LSEmbeddedShellHost::swapModelForUrl(const QUrl &url)
 
         return;
     }
+}
+
+void LSEmbeddedShellHost::resetSelectionModel()
+{
+    if(p->m_viewMode == HWShell::VIEW_ICONS)
+        p->m_curSelModel = p->m_filesList->selectionModel();
+
+    if(p->m_viewMode == HWShell::VIEW_LIST)
+        p->m_curSelModel = p->m_filesTable->selectionModel();
+
+    if(p->m_viewMode == HWShell::VIEW_COLUMN)
+        p->m_curSelModel = p->m_filesColumn->selectionModel();
 }
 
 void LSEmbeddedShellHost::updateRootIndex(const QModelIndex &idx, bool internal)

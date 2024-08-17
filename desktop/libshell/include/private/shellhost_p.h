@@ -75,6 +75,8 @@ private:
 
     QItemSelectionModel *m_curSelModel = nullptr;
     LSMimeApplications *m_mimeapps = nullptr;
+
+    bool m_clipboardHasPaste = false;
 };
 
 #endif // SHELLHOST_P_H
