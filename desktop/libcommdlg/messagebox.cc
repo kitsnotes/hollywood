@@ -8,16 +8,12 @@
 #include <QSettings>
 #include <QPainter>
 #include <QParallelAnimationGroup>
-#if QT_VERSION > 0x060000
 #include <QSoundEffect>
-#endif
 MessageBoxPrivate::MessageBoxPrivate(HWMessageBox *parent)
     : d(parent)
 {
-#if QT_VERSION > 0x060000
     m_bell = new QSoundEffect(parent);
     m_bell->setSource(QUrl::fromLocalFile("/usr/share/sounds/Hollywood/Bell.wav"));
-#endif
     verticalLayout = new QVBoxLayout(parent);
     m_icon = new QLabel(parent);
     m_text = new QLabel(parent);

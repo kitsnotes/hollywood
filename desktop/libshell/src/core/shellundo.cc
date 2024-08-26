@@ -8,6 +8,7 @@
 #include <QUrl>
 #include <QFileSystemWatcher>
 #include <QApplication>
+#include <QDebug>
 
 UndoNewFolder::UndoNewFolder(const QUrl &target, const QString &newFolderName)
     : QObject()

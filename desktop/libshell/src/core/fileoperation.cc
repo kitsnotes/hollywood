@@ -17,6 +17,7 @@
 #include <QtCore/QDir>
 #include <QtCore/QTimer>
 #include <QtCore/QMetaType>
+#include <QDebug>
 
 OperationThread::OperationThread(FileOperation *fileCopier)
     : QThread(QCoreApplication::instance()),
@@ -61,14 +62,12 @@ void OperationThread::copierDestroyed()
 
 void OperationThread::restart()
 {
-    qDebug() << "OperationThread::restart";
     start();
     newCopyCondition.wakeOne();
 }
 
 void OperationThread::copy(int id, const CopyRequest &request)
 {
-    qDebug() << "OperationThread::copy";
     Request r(request);
     QMutexLocker l(&mutex);
     requestQueue[id] = r;
@@ -77,7 +76,6 @@ void OperationThread::copy(int id, const CopyRequest &request)
 
 void OperationThread::copy(const QMap<int, CopyRequest> &requests)
 {
-    qDebug() << "OperationThread::copy";
     QMap<int, CopyRequest>::ConstIterator it = requests.constBegin();
     QMutexLocker l(&mutex);
     while (it != requests.constEnd()) {
@@ -353,25 +351,23 @@ struct MakeLinksNode : public ChainNode {
 struct FollowLinksNode : public ChainNode {
     FollowLinksNode(ChainNode *nextInChain) : ChainNode(nextInChain) { }
     bool handle() {
+#if QT_VERSION >= 0x060000
         CopyRequest &r = request();
         QFileInfo fis(r.source.toLocalFile());
         if (fis.isSymLink() && !(r.copyFlags & FileOperation::FollowLinks)) {
             QFileInfo fil(fis.readSymLink());
             QString linkName = fil.filePath();
-#if defined(Q_OS_WIN32)
-	    linkName = fil.absoluteFilePath();
-#else
             if (fil.isAbsolute()) {
                 QDir dir = fis.dir();
                 linkName = dir.relativeFilePath(linkName);
             }
-#endif
             QFile linkTarget(linkName);
             if (linkTarget.link(r.dest.toLocalFile()))
                 return true;
             setError(FileOperation::CannotCreateSymLink);
             return false;
         }
+#endif
         return ChainNode::handle();
     }
 };
@@ -468,9 +464,7 @@ struct CopyFileNode : public ChainNode {
                 OperationThread *thread)
         : ChainNode(nextInChain) {
         id = currentId;
-        qDebug() << "CopyFileNode create" << id << request.source.toDisplayString();
         r = request;
-        qDebug() << "CopyFileNode create" << id << r.source.toDisplayString();
         t = thread;
     }
     CopyRequest &request() {
@@ -483,7 +477,6 @@ struct CopyFileNode : public ChainNode {
         return id;
     }
     bool handle() {
-        qDebug() << "CopyFileNode::handle" << r.source.toString();
         //CopyRequest &r = request();
         if (r.dir) {
             setError(FileOperation::SourceDirectoryOmitted);
@@ -491,7 +484,6 @@ struct CopyFileNode : public ChainNode {
         }
         QFile sourceFile(r.source.toLocalFile());
         QFile destFile(r.dest.toLocalFile());
-        qDebug() << r.source.toLocalFile() << r.dest.toLocalFile();
         if (!sourceFile.open(QIODevice::ReadOnly)) {
             setError(FileOperation::CannotOpenSourceFile); // cannot open source file
             return false;
@@ -621,7 +613,6 @@ void OperationThread::cancelChildren(int id)
 
 void OperationThread::handle(int id)
 {
-    qDebug() << "OperationThread::handle" << id;
     if (cancelRequest)
         return;
     mutex.lock();
@@ -695,7 +686,6 @@ void OperationThread::handle(int id)
 
 void OperationThread::run()
 {
-    qDebug() << "OperationThread::run";
     bool stop = false;
 
     while (!stop) {
@@ -722,7 +712,6 @@ void OperationThread::run()
                 mutex.unlock();
             } else {
                 mutex.unlock();
-                qDebug() << "OperationThread doing handle";
                 handle(requestQueue.constBegin().key());
             }
         }
@@ -807,7 +796,6 @@ void FileOperationPrivate::copyError(int id, FileOperation::Error error, bool st
 void FileOperationPrivate::copyStarted(int id)
 {
     Q_Q(FileOperation);
-    qDebug() << "copyStarted (private)";
     setState(FileOperation::Busy);
     currentStack.push(id);
     emit q->started(id);
@@ -892,7 +880,6 @@ int FileOperationPrivate::copy(const QUrl &sourceFile, const QUrl &destinationPa
     requests[idCounter] = r;
     copyThread->copy(idCounter, r);
     startThread();
-    qDebug() << "copy (private)" << sourceFile.toString();
     return idCounter++;
 }
 
@@ -982,6 +969,7 @@ QMap<int, CopyRequest> FileOperationPrivate::copyDirectoryContents(const QUrl &s
     QDir destDir(fid.filePath());
     QFileInfoList dirList = sDir.entryInfoList(QDir::Dirs);
     QListIterator<QFileInfo> itDir(dirList);
+#if QT_VERSION > 0x060000
     while (itDir.hasNext()) {
         QFileInfo newfis = itDir.next();
         newfis.makeAbsolute();
@@ -995,6 +983,7 @@ QMap<int, CopyRequest> FileOperationPrivate::copyDirectoryContents(const QUrl &s
             resultList[curId].childrenQueue.enqueue(childDir.constBegin().key());
         }
     }
+#endif
     QFileInfoList fileList = sDir.entryInfoList(QDir::Files |
                     QDir::Hidden | QDir::System);
     QListIterator<QFileInfo> itLink(fileList);
@@ -1051,14 +1040,11 @@ FileOperation::~FileOperation()
 int FileOperation::copy(const QUrl &sourceFile, const QUrl &destinationPath,
                 CopyFlags flags)
 {
-    qDebug() << "copy" << sourceFile << destinationPath;
     if (state() != FileOperation::Idle)
         return -1;
-    qDebug() << "copy (passed idle)" << sourceFile << destinationPath;
     QFileInfo fis(sourceFile.toLocalFile());
     if (fis.isDir())
         return -1; // Omitting Dir
-    qDebug() << "copy (passed dircheck)" << sourceFile << destinationPath;
     return d_ptr->copy(sourceFile, destinationPath, flags, false);
 }
 

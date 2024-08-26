@@ -93,7 +93,6 @@ void LSOpProgressWidget::setIcon(const QIcon &icon)
 
 void LSOpProgressWidget::error(int id, FileOperation::Error error, bool stopped)
 {
-    qDebug() << "error" << id << error << stopped;
     if(stopped)
     {
         auto action = QString("copy");
@@ -144,17 +143,14 @@ void LSOpProgressWidget::error(int id, FileOperation::Error error, bool stopped)
 
 void LSOpProgressWidget::stateChanged(FileOperation::State state)
 {
-    qDebug() << "state changed" << state;
 }
 
 void LSOpProgressWidget::started(int id)
 {
-    qDebug() << "started" << id;
 }
 
 void LSOpProgressWidget::finished(int id, bool error)
 {
-    qDebug() << "finished" << id;
 
 }
 

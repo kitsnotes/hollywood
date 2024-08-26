@@ -11,6 +11,8 @@
 #include <QSharedPointer>
 #include <QFile>
 #include <QFileIconProvider>
+#include <QDateTime>
+#include <QHash>
 
 class LSTrashNode
 {

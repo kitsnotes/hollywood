@@ -6,7 +6,7 @@ CONFIG += compile_libtool create_libtool create_pc create_prl no_install_prl
 DEFINES += LIBCOMMDLG_LIBRARY
 VERSION = $${HOLLYWOOD_APIVERSION}
 SEMVER_VERSION = $${HOLLYWOOD_MAJOR_VERSION}.$${HOLLYWOOD_MINOR_VERSION}.$${HOLLYWOOD_PATCH_VERSION}
-greaterThan(QT_MAJOR_VERSION, 5): QT += multimedia
+QT += multimedia
 INCLUDEPATH += private/
 INCLUDEPATH += $$PWD $$PWD/hollywood/ $$PWD/hollywood/private
 
