@@ -5,9 +5,8 @@
 #include "stageclock.h"
 
 #include "menuserver.h"
-#include <dbusmenuimporter.h>
-
-#include "dbusmenu/menuimporter.h"
+#include "dbusmenu/dbusmenuimporter.h"
+#include "dbusmenu/menuregistrarimporter.h"
 #include "notifierhost.h"
 #include "battery.h"
 
@@ -417,8 +416,7 @@ void StageApplication::setupMenuServer()
                                           this,
                                           SLOT(itemActivationRequested(int, uint)));*/
 
-        m_menuImporter = new MenuImporter(this);
-        //connect(m_menuImporter, &MenuImporter::WindowRegistered, this, &StageApplication::slotWindowRegistered);
+        m_menuImporter = new MenuRegistrarImporter(this);
         m_menuImporter->connectToBus();
     }
     if(!m_menu)
@@ -519,6 +517,7 @@ void StageApplication::statusButtonRemoved(StatusNotifierButton *btn)
 
 int main(int argc, char *argv[])
 {
+    QCoreApplication::setAttribute(Qt::AA_DontShowShortcutsInContextMenus, false);
     QCoreApplication::setAttribute(Qt::AA_DontUseNativeMenuBar, true);
     StageApplication a(argc, argv);
     return a.exec();

@@ -5,7 +5,7 @@
 #include "battery.h"
 #include "client/privateprotocol.h"
 
-#include <dbusmenuimporter.h>
+#include "dbusmenu/dbusmenuimporter.h"
 
 using namespace LayerShellQt;
 
@@ -44,7 +44,6 @@ MenuServer::MenuServer(StageClock *clock, BatteryMonitor *battery, QScreen *scre
     //m_opposite->setMaximumHeight(25);
     
     m_menuBar->addMenu(StageApplication::instance()->systemMenu());
-    
     m_menuBar->setStyleSheet(QString("QMenuBar { height: %1px; }  ").arg(QString::number(minheight-7)));
     m_menuBar->setFixedHeight(this->size().height());
     m_menuBar->setFont(font);
@@ -75,18 +74,17 @@ void MenuServer::installMenu(QMenu *menu)
         if(m != nullptr)
         {
             m_menuBar->addMenu(m);
-            connect(m, &QMenu::aboutToShow, [this](){
+            /*connect(m, &QMenu::aboutToShow, [this](){
                 activateWindow();
                 setFocus();
-            });
-            /* auto c = connect(m, &QMenu::triggered, [](QAction *act){
-                qDebug() << act->text();
+            });*/
+            /*auto c = connect(m, &QMenu::triggered, [](QAction *act){
                 auto id = act->property("_dbusmenu_id").toInt();
-                auto impoter = StageApplication::instance()->importer();
+                qDebug() << act->text() << id;
+                auto importer = StageApplication::instance()->importer();
                 if(importer)
-                    importer->
-            }); */
-            //m_connections.insert(m, c);
+                    importer->triggerAction(id);
+            });*/
         }
         else
             m_menuBar->addAction(a);
@@ -115,7 +113,6 @@ void MenuServer::show()
 
     m_lswnd = Window::get(windowHandle());
     m_lswnd->setAnchors((Window::Anchors)Window::AnchorTop);
-//    m_lswnd->setAnchors((Window::Anchors)Window::AnchorTop|LayerShellQt::Window::AnchorLeft|Window::AnchorRight);
     m_lswnd->setExclusiveZone(size().height());
     m_lswnd->setSize(QSize(size().width(), size().height()));
     m_ready = true;

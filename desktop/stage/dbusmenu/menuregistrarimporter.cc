@@ -22,8 +22,8 @@
   DEALINGS IN THE SOFTWARE.
 */
 
-#include "menuimporter.h"
-#include <dbusmenuimporter.h>
+#include "menuregistrarimporter.h"
+#include "dbusmenu/dbusmenuimporter.h"
 
 #include <QDBusMessage>
 #include <QDBusServiceWatcher>
@@ -62,22 +62,22 @@ void RegistrarAdaptor::UnregisterWindow(uint windowId)
     QMetaObject::invokeMethod(parent(), "UnregisterWindow", Q_ARG(WId, windowId));
 }
 
-MenuImporter::MenuImporter(QObject *parent)
+MenuRegistrarImporter::MenuRegistrarImporter(QObject *parent)
     : QObject(parent)
     , m_serviceWatcher(new QDBusServiceWatcher(this))
 {
     //qDBusRegisterMetaType<DBusMenuLayoutItem>();
     m_serviceWatcher->setConnection(QDBusConnection::sessionBus());
     m_serviceWatcher->setWatchMode(QDBusServiceWatcher::WatchForUnregistration);
-    connect(m_serviceWatcher, &QDBusServiceWatcher::serviceUnregistered, this, &MenuImporter::slotServiceUnregistered);
+    connect(m_serviceWatcher, &QDBusServiceWatcher::serviceUnregistered, this, &MenuRegistrarImporter::slotServiceUnregistered);
 }
 
-MenuImporter::~MenuImporter()
+MenuRegistrarImporter::~MenuRegistrarImporter()
 {
     QDBusConnection::sessionBus().unregisterService(DBUS_SERVICE);
 }
 
-bool MenuImporter::connectToBus()
+bool MenuRegistrarImporter::connectToBus()
 {
     if (!QDBusConnection::sessionBus().registerService(DBUS_SERVICE)) {
         return false;
@@ -89,7 +89,7 @@ bool MenuImporter::connectToBus()
     return true;
 }
 
-void MenuImporter::RegisterWindow(WId id, const QDBusObjectPath &path)
+void MenuRegistrarImporter::RegisterWindow(WId id, const QDBusObjectPath &path)
 {
     if (path.path().isEmpty()) // prevent bad dbusmenu usage
         return;
@@ -109,7 +109,7 @@ void MenuImporter::RegisterWindow(WId id, const QDBusObjectPath &path)
     emit WindowRegistered(id, service, path);
 }
 
-void MenuImporter::UnregisterWindow(WId id)
+void MenuRegistrarImporter::UnregisterWindow(WId id)
 {
     m_menuServices.remove(id);
     m_menuPaths.remove(id);
@@ -118,13 +118,13 @@ void MenuImporter::UnregisterWindow(WId id)
     emit WindowUnregistered(id);
 }
 
-QString MenuImporter::GetMenuForWindow(WId id, QDBusObjectPath &path)
+QString MenuRegistrarImporter::GetMenuForWindow(WId id, QDBusObjectPath &path)
 {
     path = m_menuPaths.value(id);
     return m_menuServices.value(id);
 }
 
-void MenuImporter::slotServiceUnregistered(const QString &service)
+void MenuRegistrarImporter::slotServiceUnregistered(const QString &service)
 {
     WId id = m_menuServices.key(service);
     m_menuServices.remove(id);

@@ -30,7 +30,7 @@
 
 #include <QDir>
 #include <QFile>
-#include <dbusmenuimporter.h>
+#include "dbusmenu/dbusmenuimporter.h"
 #include "sniasync.h"
 #include "../stagehost.h"
 
@@ -39,7 +39,7 @@ namespace
     /*! \brief specialized DBusMenuImporter to correctly create actions' icons based
      * on name
      */
-    class MenuImporter : public DBusMenuImporter
+    class MenuRegistrarImporter : public DBusMenuImporter
     {
     public:
         using DBusMenuImporter::DBusMenuImporter;
@@ -70,6 +70,11 @@ StatusNotifierButton::StatusNotifierButton(QString service, QString objectPath, 
     connect(interface, &SniAsync::NewToolTip, this, &StatusNotifierButton::newToolTip);
     connect(interface, &SniAsync::NewStatus, this, &StatusNotifierButton::newStatus);
 
+    setStyleSheet("QToolButton {border: 0px; }"
+                  "QToolButton:pressed { background-color: palette(highlight);"
+                  " border: none; color: palette(highlighted-text); }"
+                  " QToolButton::menu-indicator { image: none; }");
+
     // get the title only at the start because that title is used
     // for deciding about (auto-)hiding
     interface->propertyGetAsync(QLatin1String("Title"), [this] (QString value) {
@@ -82,7 +87,7 @@ StatusNotifierButton::StatusNotifierButton(QString service, QString objectPath, 
     interface->propertyGetAsync(QLatin1String("Menu"), [this] (QDBusObjectPath path) {
         if (!path.path().isEmpty())
         {
-            mMenu = (new MenuImporter{interface->service(), path.path(), this})->menu();
+            mMenu = (new MenuRegistrarImporter{interface->service(), path.path(), this})->menu();
             mMenu->setObjectName(QLatin1String("StatusNotifierMenu"));
         }
     });
@@ -325,7 +330,7 @@ void StatusNotifierButton::mouseReleaseEvent(QMouseEvent *event)
     {
         if (mMenu)
         {
-            mMenu->popup(event->position().toPoint());
+            mMenu->popup(mapToGlobal(event->position().toPoint()));
             //mPlugin->willShowWindow(mMenu);
             //mMenu->popup(mPlugin->panel()->calculatePopupWindowPos(QCursor::pos(), mMenu->sizeHint()).topLeft());
         } else

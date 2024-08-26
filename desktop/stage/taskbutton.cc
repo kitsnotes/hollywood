@@ -63,7 +63,7 @@ void TaskButton::themeIconChanged(const QString &icon)
 
 void TaskButton::displayContextMenu(const QPoint &pos)
 {
-    m_context->popup(pos);
+    m_context->popup(mapToGlobal(pos));
 }
 
 void TaskButton::titleChanged(const QString &title)

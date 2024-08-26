@@ -31,7 +31,10 @@ StageClock::StageClock(QWidget *parent)
         m_cal->setSelectedDate(QDate::currentDate());
     });
 
-    setStyleSheet("QToolButton::menu-indicator { image: none; }");
+    setStyleSheet("QToolButton {border: 0px; }"
+                  "QToolButton:pressed { background-color: palette(highlight);"
+                  " border: none; color: palette(highlighted-text); }"
+                  " QToolButton::menu-indicator { image: none; }");
     setAutoRaise(true);
 
     setPopupMode(QToolButton::InstantPopup);

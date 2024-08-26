@@ -17,7 +17,8 @@
 
 #include <hollywood/layershellinterface.h>
 
-#include <dbusmenuimporter.h>
+#include "dbusmenu/dbusmenuimporter.h"
+
 class HWPrivateWaylandProtocol;
 class PlasmaWindowManagement;
 class PlasmaWindow;
@@ -26,7 +27,7 @@ class MenuServer;
 class LSDesktopEntry;
 class QDBusServiceWatcher;
 class DBusMenuImporter;
-class MenuImporter;
+class MenuRegistrarImporter;
 class OriginullMenuServerClient;
 class NotifierHost;
 class StageClock;
@@ -77,6 +78,7 @@ private:
     void moveToStage();
     void moveToMenubar();
 private:
+    friend class DBusMenuImporter;
     QList<StatusNotifierButton*> m_traybtns;
     QFileSystemWatcher *m_cfgwatch = nullptr;
     StageHost *m_host = nullptr;
@@ -93,7 +95,7 @@ private:
     NotifierHost *m_notifier = nullptr;
     QDBusServiceWatcher *m_menuViewWatcher;
     HWPrivateWaylandProtocol *m_protocol = nullptr;
-    MenuImporter* m_menuImporter = nullptr;
+    MenuRegistrarImporter* m_menuImporter = nullptr;
     QPointer<DBusMenuImporter> m_importer;
     QString m_serviceName;
     QString m_menuObjectPath;

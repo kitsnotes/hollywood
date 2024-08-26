@@ -22,8 +22,8 @@
   DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef MENUIMPORTER_H
-#define MENUIMPORTER_H
+#ifndef MENUREGISTRARIMPORTER_H
+#define MENUREGISTRARIMPORTER_H
 
 // Qt
 #include <QDBusArgument>
@@ -35,18 +35,16 @@
 #include <QMenu>
 #include <QtDBus/QtDBus>
 
-#include "dbusmenuimporter.h"
-
 class QDBusObjectPath;
 class QDBusServiceWatcher;
 
-class MenuImporter : public QObject, protected QDBusContext
+class MenuRegistrarImporter : public QObject, protected QDBusContext
 {
     Q_OBJECT
 
 public:
-    explicit MenuImporter(QObject *);
-    ~MenuImporter() override;
+    explicit MenuRegistrarImporter(QObject *);
+    ~MenuRegistrarImporter() override;
 
     bool connectToBus();
 
@@ -129,4 +127,4 @@ Q_SIGNALS: // SIGNALS
 };
 
 
-#endif /* MENUIMPORTER_H */
+#endif /* MENUREGISTRARIMPORTER_H */
