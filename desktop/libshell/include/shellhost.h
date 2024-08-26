@@ -81,6 +81,14 @@ private slots:
     void paste();
     void canUndoChanged();
     void canRedoChanged();
+    void selectAll();
+    void invertSelection();
+    // file functions
+    void newFolder();
+    void openSelection();
+    void rename();
+    void trash();
+    void archiveSelection();
 private:
     // internal functions
     void adjustColumnHeaders();
@@ -101,6 +109,7 @@ private:
     void swapToModel(ShellModel model);
     void swapModelForUrl(const QUrl &url);
     void resetSelectionModel();
+    void openItem(const QModelIndex &idx);
 private:
     LSEmbeddedShellHostPrivate *p;
 };

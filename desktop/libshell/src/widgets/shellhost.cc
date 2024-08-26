@@ -45,7 +45,7 @@ LSEmbeddedShellHostPrivate::LSEmbeddedShellHostPrivate(LSEmbeddedShellHost *pare
     , m_delegate(new LSFSItemDelegate(parent))
     , m_mimeapps(new LSMimeApplications(parent))
 {
-
+    m_model->setReadOnly(false);
 }
 
 LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
@@ -94,10 +94,6 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
     treewidget->setMaximumWidth(155);
     treewidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     treelayout->setSpacing(3);
-    /*p->m_treeToolbox->resize(p->m_treeToolbox->height(), 125);
-    p->m_treeToolbox->addTab(p->m_treeFavorites, tr("Places"));
-    p->m_treeToolbox->addTab(p->m_treeDirs, tr("Directories"));
-     */
 
     /* setup tab bar host (right side of p->m_mainSplitter) */
     p->m_tabWndHost = new QWidget(p->m_mainSplitter);
@@ -196,6 +192,16 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
 
     connect(p->m_actions->shellAction(HWShell::ACT_FILE_GET_INFO),
             &QAction::triggered, this, &LSEmbeddedShellHost::getInformationRequested);
+    connect(p->m_actions->shellAction(HWShell::ACT_FILE_NEW_FOLDER), &QAction::triggered,
+            this, &LSEmbeddedShellHost::newFolder);
+    connect(p->m_actions->shellAction(HWShell::ACT_FILE_OPEN), &QAction::triggered,
+            this, &LSEmbeddedShellHost::openSelection);
+    connect(p->m_actions->shellAction(HWShell::ACT_FILE_ARCHIVE), &QAction::triggered,
+            this, &LSEmbeddedShellHost::archiveSelection);
+    connect(p->m_actions->shellAction(HWShell::ACT_FILE_TRASH), &QAction::triggered,
+            this, &LSEmbeddedShellHost::trash);
+    connect(p->m_actions->shellAction(HWShell::ACT_FILE_RENAME), &QAction::triggered,
+            this, &LSEmbeddedShellHost::rename);
 
     connect(p->m_actions->shellAction(HWShell::ACT_FILE_NEW_TAB), &QAction::triggered,
              this, &LSEmbeddedShellHost::createNewTab);
@@ -229,15 +235,20 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
     connect(p->m_actions->shellAction(HWShell::ACT_VIEW_SORT_DESC),
             &QAction::triggered, this, &LSEmbeddedShellHost::actionSortOrderRequested);
 
+    connect(p->m_actions->shellAction(HWShell::ACT_EDIT_UNDO), &QAction::triggered,
+            LSCommonFunctions::instance()->undoStack(), &QUndoStack::undo);
+    connect(p->m_actions->shellAction(HWShell::ACT_EDIT_REDO), &QAction::triggered,
+            LSCommonFunctions::instance()->undoStack(), &QUndoStack::redo);
+
     connect(p->m_actions->shellAction(HWShell::ACT_EDIT_COPY), &QAction::triggered,
             this, &LSEmbeddedShellHost::copyItems);
     connect(p->m_actions->shellAction(HWShell::ACT_EDIT_PASTE), &QAction::triggered,
             this, &LSEmbeddedShellHost::paste);
 
-    connect(p->m_actions->shellAction(HWShell::ACT_EDIT_UNDO), &QAction::triggered,
-            LSCommonFunctions::instance()->undoStack(), &QUndoStack::undo);
-    connect(p->m_actions->shellAction(HWShell::ACT_EDIT_REDO), &QAction::triggered,
-            LSCommonFunctions::instance()->undoStack(), &QUndoStack::redo);
+    connect(p->m_actions->shellAction(HWShell::ACT_EDIT_SEL_ALL), &QAction::triggered,
+            this, &LSEmbeddedShellHost::selectAll);
+    connect(p->m_actions->shellAction(HWShell::ACT_EDIT_INV_SEL), &QAction::triggered,
+            this, &LSEmbeddedShellHost::invertSelection);
 
     connect(LSCommonFunctions::instance()->undoStack(), &QUndoStack::canUndoChanged,
             this, &LSEmbeddedShellHost::canUndoChanged);
@@ -369,7 +380,8 @@ void LSEmbeddedShellHost::doSort(int column, Qt::SortOrder order)
     }
 }
 
-void LSEmbeddedShellHost::viewOptionsFinished(int result)
+void LSEmbeddedShellHost::
+    viewOptionsFinished(int result)
 {
     Q_UNUSED(result);
     if(!p->m_viewOptions->isVisible())
@@ -659,47 +671,11 @@ void LSEmbeddedShellHost::viewClicked(const QModelIndex &idx)
 
 void LSEmbeddedShellHost::viewActivated(const QModelIndex &idx)
 {
-    if(p->m_currentModel == Filesystem)
-    {
-        QFileInfo fileInfo(p->m_model->fileInfo(idx));
-        if(fileInfo.isDir())
-        {
-            // TODO: Handle a spacitial mode
-            if(fileInfo.isReadable() && fileInfo.isExecutable())
-            {
-                updateBackForwardList(QUrl::fromLocalFile(fileInfo.canonicalFilePath()));
-                updateRootIndex(idx);
-            }
-            else
-                showFolderPermissionError(fileInfo.fileName());
-        }
-
-        // handle a .desktop file
-        if(p->m_model->isDesktop(idx))
-        {
-            LSCommonFunctions::instance()->executeDesktopOverDBus(p->m_model->desktopFileForIndex(idx));
-            return;
-        }
-
-        LSCommonFunctions::instance()->openFileOverDBusWithDefault(fileInfo.canonicalFilePath());
-        // TODO: handle executing an executable file???
-    }
-
-    if(p->m_currentModel == Applications)
-    {
-        auto da = p->m_apps->data(idx, Qt::UserRole+1);
-        LSCommonFunctions::instance()->executeDesktopOverDBus(da.toString());
-    }
-
-    if(p->m_currentModel == Trash)
-    {
-        // just show properties for a trashed item
-    }
+    openItem(idx);
 }
 
 void LSEmbeddedShellHost::viewSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected)
 {
-    qDebug() << "viewSelectionChanged";
     Q_UNUSED(selected)
     Q_UNUSED(deselected)
 
@@ -741,6 +717,7 @@ void LSEmbeddedShellHost::createNewTab()
 
 void LSEmbeddedShellHost::viewContextMenuRequested(const QPoint &pos)
 {
+    qDebug() << "viewContextMenuRequested" << pos;
     auto menu = new QMenu(this);
     connect(menu, &QMenu::aboutToHide, menu, &QMenu::deleteLater);
 
@@ -801,7 +778,8 @@ void LSEmbeddedShellHost::viewContextMenuRequested(const QPoint &pos)
         menu->addAction(p->m_actions->shellAction(HWShell::ACT_FILE_GET_INFO));
     }
 
-    menu->popup(mapToGlobal(pos));
+    qDebug() << pos << "mapToParent" << mapToParent(pos);
+    menu->popup(mapToParent(pos));
 }
 
 void LSEmbeddedShellHost::filesystemSortingChanged()
@@ -879,7 +857,6 @@ void LSEmbeddedShellHost::copyItems()
 
             auto mimedata = new QMimeData;
             mimedata->setUrls(urls);
-            qDebug() << urls;
             QGuiApplication::clipboard()->setMimeData(mimedata);
         }
     }
@@ -960,6 +937,83 @@ void LSEmbeddedShellHost::canRedoChanged()
         shellAction(HWShell::ACT_EDIT_REDO)->setEnabled(false);
         shellAction(HWShell::ACT_EDIT_REDO)->setText(tr("&Redo"));
     }
+}
+
+void LSEmbeddedShellHost::selectAll()
+{
+    switch(p->m_viewMode)
+    {
+    case HWShell::VIEW_ICONS:
+        p->m_filesList->selectAll();
+        break;
+    case HWShell::VIEW_LIST:
+        p->m_filesTable->selectAll();
+        break;
+    case HWShell::VIEW_COLUMN:
+        p->m_filesColumn->selectAll();
+        break;
+    default:
+        break;
+    }
+}
+
+void LSEmbeddedShellHost::invertSelection()
+{
+
+}
+
+void LSEmbeddedShellHost::newFolder()
+{
+    if(p->m_currentModel == Filesystem)
+    {
+        auto folder = p->m_model->absolutePath(p->m_currentFsRoot);
+        auto newpath = LSCommonFunctions::instance()->newFolder(QUrl::fromLocalFile(folder), this);
+    }
+}
+
+void LSEmbeddedShellHost::openSelection()
+{
+    if(p->m_curSelModel->selectedIndexes().count() == 1)
+        openItem(p->m_curSelModel->selectedIndexes().first());
+    else
+    {
+        // TODO: multiple open
+    }
+}
+
+void LSEmbeddedShellHost::rename()
+{
+    if(p->m_curSelModel->selectedIndexes().count() == 1)
+    {
+        switch(p->m_viewMode)
+        {
+        case HWShell::VIEW_ICONS:
+            p->m_filesList->edit(p->m_curSelModel->selectedIndexes().first());
+            break;
+        case HWShell::VIEW_LIST:
+            p->m_filesTable->edit(p->m_curSelModel->selectedIndexes().first());
+            break;
+        case HWShell::VIEW_COLUMN:
+            p->m_filesColumn->edit(p->m_curSelModel->selectedIndexes().first());
+            break;
+        default:
+            break;
+        }
+    }
+    else
+    {
+        qDebug() << "multi-rename coming soon";
+    }
+}
+
+void LSEmbeddedShellHost::trash()
+{
+
+}
+
+void LSEmbeddedShellHost::archiveSelection()
+{
+
 }
 
 void LSEmbeddedShellHost::adjustColumnHeaders()
@@ -1077,36 +1131,58 @@ void LSEmbeddedShellHost::disableActionsForNoSelection()
 
 void LSEmbeddedShellHost::enableActionsForFileSelection(bool multiple)
 {
-    qDebug() << "enableActionsForFileSelection" << multiple;
     if(!multiple)
     {
         if(p->m_currentModel == Filesystem)
         {
             auto idx = p->m_curSelModel->selectedIndexes().first();
-            auto path = p->m_model->data(idx, LSFSModel::FileAbsolutePath).toString();
+            p->m_model->fileInfo(idx);
+
+            auto path = p->m_model->fileInfo(idx).absoluteFilePath();
             QMimeDatabase db;
             auto mime = db.mimeTypeForFile(path);
             if(mime.name() != "inode/directory")
             {
-                p->m_actions->openWithMenu()->setEnabled(true);
-                p->m_actions->shellAction(HWShell::ACT_FILE_OPEN_WITH)->setEnabled(true);
-                auto app = p->m_mimeapps->defaultApp(mime.name());
-                if(app)
+                if(p->m_model->isDesktop(idx))
                 {
-                    p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setText(tr("&Open with %1").arg(app->value("Name").toString()));
-                    p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setIcon(app->icon());
+                    auto *desktop = new LSDesktopEntry();
+                    QString di;
+                    if(desktop->load(p->m_model->desktopFileForIndex(idx)))
+                        di = QString(desktop->value("Icon").toString());
+
+                    if(!di.isEmpty())
+                    {
+                        QIcon dico = QIcon::fromTheme(di);
+                        if(!dico.isNull())
+                            p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setIcon(dico);
+                    }
+                    p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setText(QString("%1 %2")
+                                                                     .arg(tr("&Open")).arg(desktop->value("Name").toString()));
                     p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setEnabled(true);
                 }
                 else
                 {
-                    p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setText(tr("&Open"));
-                    p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setIcon(QIcon());
-                    p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setEnabled(true);
                     p->m_actions->openWithMenu()->setEnabled(true);
+                    p->m_actions->shellAction(HWShell::ACT_FILE_OPEN_WITH)->setEnabled(true);
+                    auto app = p->m_mimeapps->defaultApp(mime.name());
+                    if(app)
+                    {
+                        p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setText(tr("&Open with %1").arg(app->value("Name").toString()));
+                        p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setIcon(app->icon());
+                        p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setEnabled(true);
+                    }
+                    else
+                    {
+                        p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setText(tr("&Open"));
+                        p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setIcon(QIcon());
+                        p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setEnabled(true);
+                        p->m_actions->openWithMenu()->setEnabled(true);
+                    }
                 }
             }
             else
             {
+                // single option - directory
                 p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setText(tr("&Open"));
                 p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setIcon(QIcon());
                 p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setEnabled(true);
@@ -1118,6 +1194,7 @@ void LSEmbeddedShellHost::enableActionsForFileSelection(bool multiple)
         }
         else
         {
+            // single selection
             // not filesystem - ie: trash/applications/etc
             p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setText(tr("&Open"));
             p->m_actions->shellAction(HWShell::ACT_FILE_OPEN)->setIcon(QIcon());
@@ -1155,7 +1232,10 @@ void LSEmbeddedShellHost::enableActionsForFileSelection(bool multiple)
 
     p->m_actions->shellAction(HWShell::ACT_FILE_GET_INFO)->setEnabled(true);
     //p->m_actions->shellAction(HWShell::ACT_FILE_ARCHIVE)->setEnabled(true);
-    p->m_actions->shellAction(HWShell::ACT_EDIT_COPY)->setText(tr("C&opy %1 Items")
+    if(p->m_curSelModel->selectedIndexes().count() == 1)
+        p->m_actions->shellAction(HWShell::ACT_EDIT_COPY)->setText(tr("C&opy 1 Item"));
+    else
+        p->m_actions->shellAction(HWShell::ACT_EDIT_COPY)->setText(tr("C&opy %1 Items")
                     .arg(QString::number(p->m_curSelModel->selectedIndexes().count())));
 
     p->m_actions->shellAction(HWShell::ACT_EDIT_CUT)->setDisabled(true);
@@ -1283,14 +1363,10 @@ void LSEmbeddedShellHost::updateNavigationButtonStatus()
 
 void LSEmbeddedShellHost::swapToModel(ShellModel model)
 {
-    qDebug() << "viewSelectionChanged";
-
     if(p->m_curSelModel)
-    {
-        qDebug() << "disconnecting viewSelection";
         disconnect(p->m_curSelModel, &QItemSelectionModel::selectionChanged,
                this, &LSEmbeddedShellHost::viewSelectionChanged);
-    }
+
     switch(model)
     {
     case Applications:
@@ -1298,6 +1374,9 @@ void LSEmbeddedShellHost::swapToModel(ShellModel model)
         p->m_filesList->setModel(p->m_apps);
         p->m_filesTable->setModel(p->m_apps);
         p->m_currentModel = Applications;
+        p->m_filesColumn->setEditTriggers(QColumnView::NoEditTriggers);
+        p->m_filesList->setEditTriggers(QListView::NoEditTriggers);
+        p->m_filesTable->setEditTriggers(QTableView::NoEditTriggers);
         disableActionsForNoSelection();
         adjustColumnHeaders();
         break;
@@ -1306,6 +1385,9 @@ void LSEmbeddedShellHost::swapToModel(ShellModel model)
         p->m_filesList->setModel(p->m_trash);
         p->m_filesTable->setModel(p->m_trash);
         p->m_currentModel = Trash;
+        p->m_filesColumn->setEditTriggers(QColumnView::NoEditTriggers);
+        p->m_filesList->setEditTriggers(QListView::NoEditTriggers);
+        p->m_filesTable->setEditTriggers(QTableView::NoEditTriggers);
         disableActionsForNoSelection();
         adjustColumnHeaders();
         break;
@@ -1315,6 +1397,9 @@ void LSEmbeddedShellHost::swapToModel(ShellModel model)
         p->m_filesList->setModel(p->m_model);
         p->m_filesTable->setModel(p->m_model);
         p->m_currentModel = Filesystem;
+        p->m_filesColumn->setEditTriggers(QColumnView::EditKeyPressed);
+        p->m_filesList->setEditTriggers(QListView::EditKeyPressed);
+        p->m_filesTable->setEditTriggers(QTableView::EditKeyPressed);
         doSort(p->m_sortColumn, p->m_sortOrder);
         disableActionsForNoSelection();
         filesystemSortingChanged();
@@ -1365,6 +1450,46 @@ void LSEmbeddedShellHost::resetSelectionModel()
         p->m_curSelModel = p->m_filesColumn->selectionModel();
 }
 
+void LSEmbeddedShellHost::openItem(const QModelIndex &idx)
+{
+    if(p->m_currentModel == Filesystem)
+    {
+        QFileInfo fileInfo(p->m_model->fileInfo(idx));
+        if(fileInfo.isDir())
+        {
+            // TODO: Handle a spacitial mode
+            if(fileInfo.isReadable() && fileInfo.isExecutable())
+            {
+                updateBackForwardList(QUrl::fromLocalFile(fileInfo.canonicalFilePath()));
+                updateRootIndex(idx);
+            }
+            else
+                showFolderPermissionError(fileInfo.fileName());
+        }
+
+        // handle a .desktop file
+        if(p->m_model->isDesktop(idx))
+        {
+            LSCommonFunctions::instance()->executeDesktopOverDBus(p->m_model->desktopFileForIndex(idx));
+            return;
+        }
+
+        LSCommonFunctions::instance()->openFileOverDBusWithDefault(fileInfo.canonicalFilePath());
+        // TODO: handle executing an executable file???
+    }
+
+    if(p->m_currentModel == Applications)
+    {
+        auto da = p->m_apps->data(idx, Qt::UserRole+1);
+        LSCommonFunctions::instance()->executeDesktopOverDBus(da.toString());
+    }
+
+    if(p->m_currentModel == Trash)
+    {
+        // just show properties for a trashed item
+    }
+}
+
 void LSEmbeddedShellHost::updateRootIndex(const QModelIndex &idx, bool internal)
 {
     Q_UNUSED(internal)
@@ -1377,6 +1502,8 @@ void LSEmbeddedShellHost::updateRootIndex(const QModelIndex &idx, bool internal)
     // we shouldn't do the following two in desktop mode
     p->m_filesColumn->setRootIndex(idx);
     p->m_filesTable->setRootIndex(idx);
+
+    p->m_currentFsRoot = idx;
 
     // update our tab and window title
     QString directory = info.canonicalFilePath();
@@ -1411,6 +1538,7 @@ void LSEmbeddedShellHost::updateRootIndex(const QModelIndex &idx, bool internal)
         p->m_actions->shellAction(HWShell::ACT_GO_ENCLOSING_FOLDER)->setEnabled(false);
 
     emit updateStatusBar(generateStatusBarMsg());
+
 }
 
 QAction* LSEmbeddedShellHost::shellAction(HWShell::ShellActions shellAction)

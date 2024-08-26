@@ -24,6 +24,7 @@ LSGetInfoDialogPrivate::LSGetInfoDialogPrivate(LSGetInfoDialog *parent)
     , m_filesize(new QLabel(m_info))
     , m_mimetype(new QLabel(m_info))
     , m_labels(new QFormLayout)
+    , m_openwithlabel(new QLabel(m_info))
     , m_openwith(new QComboBox(m_info))
     , m_location(new QLabel(m_info))
     , m_disksize(new QLabel(m_info))
@@ -67,7 +68,7 @@ LSGetInfoDialogPrivate::LSGetInfoDialogPrivate(LSGetInfoDialog *parent)
     auto l_ct = new QLabel(QApplication::tr("Created:"), m_info);
     auto l_mod = new QLabel(QApplication::tr("Modified:"), m_info);
     auto l_at = new QLabel(QApplication::tr("Accessed:"), m_info);
-    auto l_ow = new QLabel(QApplication::tr("Open with:"), m_info);
+    m_openwithlabel->setText(QApplication::tr("Open with:"));
 
     m_labels->setLabelAlignment(Qt::AlignRight);
     m_labels->addRow(l_loc, m_location);
@@ -76,8 +77,9 @@ LSGetInfoDialogPrivate::LSGetInfoDialogPrivate(LSGetInfoDialog *parent)
     m_labels->addRow(l_ct, m_ctime);
     m_labels->addRow(l_mod, m_mtime);
     m_labels->addRow(l_at, m_atime);
-    m_labels->setWidget(m_labels->rowCount(), QFormLayout::SpanningRole, makeLine());
-    m_labels->addRow(l_ow, m_openwith);
+    m_beforeOpenWithLine = makeLine();
+    m_labels->setWidget(m_labels->rowCount(), QFormLayout::SpanningRole, m_beforeOpenWithLine);
+    m_labels->addRow(m_openwithlabel, m_openwith);
 
     vb_main->addLayout(hl_files);
     vb_main->addWidget(makeLine());
@@ -210,6 +212,12 @@ void LSGetInfoDialog::reloadInfo()
     p->m_mimetype->setText(mime.name());
     p->m_location->setText(f.canonicalPath());
 
+    if(mime.name() == "inode/directory")
+    {
+        p->m_beforeOpenWithLine->setVisible(false);
+        p->m_openwithlabel->setVisible(false);
+        p->m_openwith->setVisible(false);
+    }
     QDateTime ctime = QDateTime::fromSecsSinceEpoch(sb.st_ctim.tv_sec);
     QDateTime mtime = QDateTime::fromSecsSinceEpoch(sb.st_mtim.tv_sec);
     QDateTime atime = QDateTime::fromSecsSinceEpoch(sb.st_atim.tv_sec);

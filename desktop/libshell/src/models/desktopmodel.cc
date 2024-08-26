@@ -184,7 +184,7 @@ void LSDesktopModel::refreshDesktopFolder()
     for (const auto &i : items)
     {
         QString fileName = i.fileName();
-        qDebug() << fileName;
+        //qDebug() << fileName;
         Q_ASSERT(!fileName.isEmpty());
         int row = p->rowForFile(fileName);
         if(!p->hasFile(fileName))

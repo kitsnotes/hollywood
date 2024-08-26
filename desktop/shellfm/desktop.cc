@@ -168,8 +168,9 @@ void DesktopWindow::copyItems()
 
 void DesktopWindow::paste()
 {
+    auto desktop = QStandardPaths::standardLocations(QStandardPaths::DesktopLocation).first();
     auto data = FMApplication::instance()->clipboard()->mimeData()->urls();
-    LSCommonFunctions::instance()->operationManager()->copyFiles(data, QStandardPaths::standardLocations(QStandardPaths::DesktopLocation).first());
+    LSCommonFunctions::instance()->operationManager()->copyFiles(data, QUrl::fromLocalFile(desktop));
 }
 
 void DesktopWindow::newFolder()

@@ -77,6 +77,7 @@ private:
     QItemSelectionModel *m_curSelModel = nullptr;
     LSMimeApplications *m_mimeapps = nullptr;
 
+    QModelIndex m_currentFsRoot;
     bool m_clipboardHasPaste = false;
 };
 

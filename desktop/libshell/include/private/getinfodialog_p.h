@@ -39,6 +39,8 @@ class LSGetInfoDialogPrivate
     QLabel *m_mimetype;
 
     QFormLayout *m_labels;
+    QFrame *m_beforeOpenWithLine;
+    QLabel *m_openwithlabel;
     QComboBox *m_openwith;
 
     QLabel *m_location;
