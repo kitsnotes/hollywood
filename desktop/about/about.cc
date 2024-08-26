@@ -214,7 +214,7 @@ void AboutWindow::setupUi()
     l_mem->setText(QCoreApplication::translate("AboutWindow", "Memory:", nullptr));
     l_gpu->setText(QCoreApplication::translate("AboutWindow", "Graphics:", nullptr));
     l_sysdisk->setText(QCoreApplication::translate("AboutWindow", "System Disk:", nullptr));
-    lbl_copyright->setText(QCoreApplication::translate("AboutWindow", "&copy; 2023 Originull Software and Contributors to the Hollywood Operating System.<br>Hollywood is free software; you have rights available to you under license. ", nullptr));
+    lbl_copyright->setText(QCoreApplication::translate("AboutWindow", "&copy; 2024 Originull Software and Contributors to the Hollywood Operating System.<br>Hollywood is free software; you have rights available to you under license. ", nullptr));
     m_sysreport->setText(QCoreApplication::translate("AboutWindow", "Full System Report...", nullptr));
     m_update->setText(QCoreApplication::translate("AboutWindow", "Software Update...", nullptr));
     m_rights->setText(QCoreApplication::translate("AboutWindow", "About My Rights...", nullptr));
