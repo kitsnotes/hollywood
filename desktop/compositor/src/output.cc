@@ -46,8 +46,8 @@ Output::Output(QScreen *s, bool defaultScreen)
     // set our preferred mode
     QWaylandOutputMode mode(s->size(), s->refreshRate());
     m_wlOutput->addMode(mode, true);
-    m_wlOutput->addMode(QWaylandOutputMode(QSize(1920,1080), 75), true);
-    m_wlOutput->addMode(QWaylandOutputMode(QSize(1920,1080), 60));
+    /*m_wlOutput->addMode(QWaylandOutputMode(QSize(1920,1080), 75), true);
+    m_wlOutput->addMode(QWaylandOutputMode(QSize(1920,1080), 60));*/
 
     m_wlOutput->setCurrentMode(mode);
 
@@ -183,8 +183,8 @@ void Output::modesetFromConfig()
     chg.enabled = true;
     chg.refreshRate = settings.value("Refresh", 60000).toInt();
     chg.scale = 1.0;
-    chg.resolution = QSize(settings.value("Width", 1024).toInt()
-                           ,settings.value("Height",768).toInt());
+    chg.resolution = QSize(settings.value("Width", m_screen->geometry().width()).toInt()
+                           ,settings.value("Height",m_screen->geometry().height()).toInt());
 
     qDebug() << "Changing Mode:" << chg.resolution << chg.refreshRate;
     // TODO: test, check if valid mode
