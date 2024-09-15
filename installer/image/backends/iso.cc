@@ -277,7 +277,7 @@ public:
 
         /* REQ: ISO.13 */
         output_info("CD backend", "setting root shell");
-        run_command("sed", {"-i", "s#/root:/bin/sh$#/root:/bin/zsh#",
+        run_command("sed", {"-i", "s#/root:/bin/sh$#/root:/bin/bash#",
                             target + "/etc/passwd"});
 
         /* REQ: ISO.15 */

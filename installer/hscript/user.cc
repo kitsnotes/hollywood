@@ -214,7 +214,7 @@ bool Username::execute() const {
     output_info(pos, "username: creating account " + _value);
 
     if(script->options().test(Simulate)) {
-        std::cout << "useradd -s /bin/zsh -c \"Hollywood User\" -m -R "
+        std::cout << "useradd -s /bin/bash -c \"Hollywood User\" -m -R "
                   << script->targetDirectory() << " -U " << _value
                   << std::endl;
         return true;
@@ -222,7 +222,7 @@ bool Username::execute() const {
 
 #ifdef HAS_INSTALL_ENV
     if(run_command("chroot", {script->targetDirectory(), "useradd",
-                              "-s" "/bin/zsh", "-c", "Hollywood User", "-m",
+                              "-s" "/bin/bash", "-c", "Hollywood User", "-m",
                               "-U", _value}) != 0)
     {
         output_error(pos, "username: failed to create user account", _value);
