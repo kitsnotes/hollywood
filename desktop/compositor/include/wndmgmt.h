@@ -27,6 +27,9 @@ public:
     PlasmaWindowControl* createWindowControl(Surface *parent);
     void updateZOrder(const QString &uuids);
 protected:
+    friend class PlasmaWindowControl;
+    void removeWindow(PlasmaWindowControl *wnd);
+protected:
     void org_kde_plasma_window_management_bind_resource(Resource *resource) override;
     void org_kde_plasma_window_management_destroy_resource(Resource *resource) override;
     void org_kde_plasma_window_management_get_window(Resource *resource, uint32_t id, uint32_t internal_window_id) override;

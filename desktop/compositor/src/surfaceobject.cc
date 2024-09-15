@@ -224,6 +224,9 @@ bool Surface::hasWlShell() const { return m_wlShellSurface; }
 
 bool Surface::hasPlasmaControl() const
 {
+    if(isSpecialShellObject())
+        return false;
+
     return m_wndctl == nullptr ? false : true;
 }
 
@@ -486,9 +489,10 @@ SurfaceView* Surface::createViewForOutput(Output *o)
 
 void Surface::setAppMenu(AppMenu *m)
 {
+    qDebug() << "setAppMenu";
     m_appMenu = m;
     if(hwComp->raisedSurface() == this)
-        QTimer::singleShot(2, [this](){hwComp->raise(this);});
+        QTimer::singleShot(2, [this](){hwComp->activate(this);});
 
     if(isShellDesktop())
         QTimer::singleShot(2, [this](){hwComp->activate(this);});
@@ -868,6 +872,7 @@ void Surface::onSurfaceSourceGeometryChanged()
 
 void Surface::onDestinationSizeChanged()
 {
+    qDebug() << "onDestinationSizeChanged" << surface()->destinationSize();
     // if we are initializing an xdg toplevel we should set a
     // better initial position
     if(!m_surfaceInit)
@@ -891,6 +896,14 @@ void Surface::onDestinationSizeChanged()
                     y = (outputRect.height() - rect.height())/2;
 
                  setPosition(QPointF(x,y));
+        }
+
+        if(m_xdgTopLevel)
+        {
+            QTimer::singleShot(250, [this]() {
+                qDebug() << "fixing toplevel 2";
+                hwComp->raise(this);
+            });
         }
         m_surfaceInit = true;
     }
@@ -1071,6 +1084,9 @@ void Surface::activate()
         QList<HWWaylandXdgToplevel::State> states = m_xdgTopLevel->states();
         states.append(HWWaylandXdgToplevel::ActivatedState);
         m_xdgTopLevel->sendConfigure(surfaceSize(), states);
+        if(m_wndctl)
+            m_wndctl->setActive(true);
+
     }
     renderDecoration();
 }
@@ -1085,6 +1101,8 @@ void Surface::deactivate()
         m_xdgTopLevel->sendConfigure(surfaceSize(), states);
     }
 
+    if(m_wndctl)
+        m_wndctl->setActive(false);
     renderDecoration();
 }
 
@@ -1162,9 +1180,9 @@ void Surface::createXdgTopLevelSurface(HWWaylandXdgToplevel *topLevel)
                 m_wndctl->setTitle(topLevel->title());
                 if(m_menuServer)
                     m_menuServer->setTopWindowForMenuServer(this);
+
             }
         }
-        hwComp->raise(this);
     });
     m_loadTimer->start();
 }

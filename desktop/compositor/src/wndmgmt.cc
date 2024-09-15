@@ -5,6 +5,7 @@
 #include "wndmgmt.h"
 #include "surfaceobject.h"
 #include "compositor.h"
+#include "application.h"
 
 #include <QWaylandSurface>
 #include <QFile>
@@ -34,6 +35,7 @@ PlasmaWindowControl* PlasmaWindowManagement::createWindowControl(Surface *parent
     for(auto res : resourceMap())
         send_window_with_uuid(res->handle, parent->id(), parent->uuid().toString(QUuid::WithoutBraces));
 
+    qDebug() << "plasma adding window uuid" << pm->uuid();
     m_windows.append(pm);
     return pm;
 }
@@ -42,6 +44,12 @@ void PlasmaWindowManagement::updateZOrder(const QString &uuids)
 {
     for(auto res : resourceMap())
         send_stacking_order_uuid_changed(res->handle, uuids);
+}
+
+void PlasmaWindowManagement::removeWindow(PlasmaWindowControl *wnd)
+{
+    qDebug() << "plasma removing window uuid" << wnd->uuid();
+    m_windows.removeOne(wnd);
 }
 
 void PlasmaWindowManagement::org_kde_plasma_window_management_bind_resource(Resource *resource)
@@ -99,6 +107,8 @@ PlasmaWindowControl::PlasmaWindowControl(Surface *obj, const QUuid &uuid)
 
 PlasmaWindowControl::~PlasmaWindowControl()
 {
+    CompositorApp::instance()->compositor()->windowManager()->removeWindow(this);
+    qDebug() << "deallocating PMWND" << m_uuid;
     unmap();
 }
 
@@ -129,7 +139,8 @@ void PlasmaWindowControl::destroy()
 
 void PlasmaWindowControl::setActive(bool set)
 {
-    setState(ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_ACTIVE, set);
+    if(m_mapped)
+        setState(ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_ACTIVE, set);
 }
 
 void PlasmaWindowControl::setMinimized(bool set)
@@ -161,7 +172,13 @@ void PlasmaWindowControl::setTitle(const QString &title)
 {
     m_title = title;
     for (auto r : resourceMap())
-        send_title_changed(r->handle, title);
+    {
+        if(r)
+        {
+            qDebug() << "titleChanged" << title;
+            send_title_changed(r->handle, title);
+        }
+    }
     Q_EMIT titleChanged(title);
 }
 
@@ -272,6 +289,9 @@ void PlasmaWindowControl::setState(org_kde_plasma_window_management_state flag, 
 
     m_state = ns;
     for (auto r : resourceMap())
-        send_state_changed(r->handle, ns);
+    {
+        if(r)
+            send_state_changed(r->handle, ns);
+    }
 }
 

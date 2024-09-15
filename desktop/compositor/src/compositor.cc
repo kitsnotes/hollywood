@@ -170,8 +170,11 @@ void Compositor::resetLayerShellLayer(Surface *s)
 QString Compositor::surfaceZOrderByUUID() const
 {
     QStringList uuids;
-    for(auto *obj : m_zorder)
+    QListIterator i(m_zorder);
+    i.toBack();
+    while(i.hasPrevious())
     {
+        auto obj = i.previous();
         if(obj->isSpecialShellObject())
             continue;
         if(obj->plasmaControl())
@@ -395,7 +398,11 @@ void Compositor::onDesktopRequest(QWaylandSurface *surface)
     if(m_zorder.contains(sf))
         m_zorder.removeOne(sf);
 
-    delete sf->m_wndctl;
+    if(sf->m_wndctl)
+    {
+        sf->m_wndctl->deleteLater();
+        sf->m_wndctl = nullptr;
+    }
     m_desktops.append(sf);
     sf->m_surfaceType = Surface::Desktop;
     sf->m_isShellDesktop = true;
@@ -783,6 +790,7 @@ void Compositor::onRotateWallpaper()
 
 void Compositor::appMenuCreated(AppMenu *m)
 {
+    qDebug() << "appMenuCreated";
     m->surface()->setAppMenu(m);
 }
 

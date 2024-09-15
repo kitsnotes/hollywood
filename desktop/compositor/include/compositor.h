@@ -185,7 +185,7 @@ private:
     QList<Surface*> m_surfaces;
 
     // Top level surfaces to worry about z-order
-    QVector<Surface*> m_zorder;
+    QList<Surface*> m_zorder;
 
     // Our wl_shell protocol support
     QWaylandWlShell *m_wlShell = nullptr;
