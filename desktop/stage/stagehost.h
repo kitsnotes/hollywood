@@ -1,5 +1,8 @@
-#ifndef STAGEHOST_H
-#define STAGEHOST_H
+// Hollywood Stage
+// (C) 2022-2024 Originull Software
+// SPDX-License-Identifier: LGPL-2.1-or-later
+
+#pragma once
 
 #include <QWidget>
 #include <QVBoxLayout>
@@ -12,26 +15,23 @@
 class NotifierHost;
 class StatusNotifierButton;
 class StageClock;
-class TaskButton;
-class SurfaceManager;
+class WindowTaskList;
 class BatteryMonitor;
+class AbstractTaskViewItem;
 class StageHost : public QWidget
 {
     Q_OBJECT
 public:
-    enum Alignment
-    {
-        Vertical,
-        Horizontal
-    };
     explicit StageHost(QScreen *screen, QWidget *parent = nullptr);
 
-    void setAlignment(Alignment align);
+    void setAlignment(Qt::Orientation align);
     void setClock(StageClock *clock);
     void takeClock();
     void setBattery(BatteryMonitor *clock);
     void takeBattery();
     void setMainEnabled(bool enabled);
+    void switchToWindowList();
+    void switchToAppList();
 public slots:
     void show();
     void createStatusButton(StatusNotifierButton *btn);
@@ -39,23 +39,20 @@ public slots:
 protected:
     void resizeEvent(QResizeEvent *event) override;
 protected slots:
-    void createWindowButton(TaskButton *btn);
-    void windowClosed(TaskButton *btn);
 private:
     bool m_ready = false;
     LayerShellQt::Window *m_lswnd;
     QScreen *m_screen = nullptr;
-    Alignment m_align = Vertical;
+    Qt::Orientation m_align = Qt::Horizontal;
     QVBoxLayout *m_vbox = nullptr;
     QHBoxLayout *m_hbox = nullptr;
-    QSpacerItem *m_spacer = nullptr;
+    QSpacerItem *m_hspacer = nullptr;
+    QSpacerItem *m_vspacer = nullptr;
     QToolButton *m_menu = nullptr;
     QToolButton *m_showdesktop = nullptr;
 
-    SurfaceManager *m_sm = nullptr;
+    WindowTaskList *m_windowList = nullptr;
     QSpacerItem *m_trayspacer = nullptr;
     StageClock *m_clock = nullptr;
     BatteryMonitor *m_battery = nullptr;
 };
-
-#endif // STAGEHOST_H

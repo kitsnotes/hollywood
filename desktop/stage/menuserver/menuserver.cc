@@ -1,11 +1,15 @@
+// Hollywood Stage
+// (C) 2022-2024 Originull Software
+// SPDX-License-Identifier: LGPL-2.1-or-later
+
 #include "menuserver.h"
-#include "app.h"
+#include "stage.h"
 #include "stageclock.h"
-#include "notifierhost.h"
+#include "statusnotifier/notifierhost.h"
 #include "battery.h"
 #include "client/privateprotocol.h"
 
-#include "dbusmenu/dbusmenuimporter.h"
+#include <dbusmenuimporter.h>
 
 using namespace LayerShellQt;
 
@@ -20,9 +24,12 @@ MenuServer::MenuServer(StageClock *clock, BatteryMonitor *battery, QScreen *scre
     , m_battery(battery)
     , vl_opposite(new QHBoxLayout)
 {
-    m_clock->setParent(this);
+    if(m_clock)
+    {
+        m_clock->setParent(this);
+        m_clock->updateDpiAwareSettings();
+    }
     m_battery->setParent(this);
-    m_clock->updateDpiAwareSettings();
     m_battery->updateDpiAwareSettings();
 
     setWindowFlag(Qt::FramelessWindowHint, true);
@@ -39,8 +46,6 @@ MenuServer::MenuServer(StageClock *clock, BatteryMonitor *battery, QScreen *scre
     auto minheight = m.height()+8;
     setMinimumHeight(minheight);
     setMaximumHeight(minheight);
-
-    qDebug() << "minimumheight" << minheight;
     //m_opposite->setMaximumHeight(25);
     
     m_menuBar->addMenu(StageApplication::instance()->systemMenu());
@@ -56,10 +61,10 @@ MenuServer::MenuServer(StageClock *clock, BatteryMonitor *battery, QScreen *scre
     m_layout->setContentsMargins(0,0,0,0);
     vl_opposite->setSpacing(0);
     vl_opposite->setContentsMargins(0,0,0,0);
-    clock->setParent(this);
     vl_opposite->addSpacerItem(m_trayspacer);
     vl_opposite->addWidget(battery);
-    vl_opposite->addWidget(clock);
+    if(m_clock)
+        vl_opposite->addWidget(clock);
 }
 
 void MenuServer::installMenu(QMenu *menu)

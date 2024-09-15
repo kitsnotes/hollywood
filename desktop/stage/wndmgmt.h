@@ -1,5 +1,8 @@
-#ifndef WNDMGMT_H
-#define WNDMGMT_H
+// Hollywood Stage
+// (C) 2022-2024 Originull Software
+// SPDX-License-Identifier: LGPL-2.1-or-later
+
+#pragma once
 
 #include <QUuid>
 #include <QIcon>
@@ -50,6 +53,8 @@ Q_SIGNALS:
     void minimizedChanged();
     void windowClosed();
     void themeIconChanged(const QString &icon);
+    void activated();
+    void deactivated();
 protected:
     friend class PlasmaWindowManagement;
     PlasmaWindow(struct ::org_kde_plasma_window *window, PlasmaWindowManagement *p);
@@ -74,5 +79,3 @@ protected:
 
     PlasmaWindowManagement *m_parent = nullptr;
 };
-
-#endif // WNDMGMT_H

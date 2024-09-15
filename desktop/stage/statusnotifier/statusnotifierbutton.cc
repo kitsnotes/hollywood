@@ -30,9 +30,9 @@
 
 #include <QDir>
 #include <QFile>
-#include "dbusmenu/dbusmenuimporter.h"
+#include <dbusmenuimporter.h>
 #include "sniasync.h"
-#include "../stagehost.h"
+#include "stagehost.h"
 
 namespace
 {

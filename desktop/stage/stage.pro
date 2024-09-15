@@ -9,10 +9,11 @@ INCLUDEPATH += ../libshell/include
 INCLUDEPATH += ../libcommdlg/
 INCLUDEPATH += ../libcompositor/include/
 INCLUDEPATH += ../shellintegration/
+INCLUDEPATH += /usr/include/dbusmenu-qt6/
 
 # TODO: prefix with -APIVERSION
-CONFIG(debug): LIBS += -L../output -lshell-$${HOLLYWOOD_APIVERSION} -lcompositor-$${HOLLYWOOD_APIVERSION} -lcommdlg-$${HOLLYWOOD_APIVERSION} -lhw-layer-shell
-CONFIG(release): LIBS += -L/usr/lib/qt6/plugins/wayland-shell-integration -lshell-$${HOLLYWOOD_APIVERSION} -lcompositor-$${HOLLYWOOD_APIVERSION} -lcommdlg-$${HOLLYWOOD_APIVERSION} -lhw-layer-shell
+CONFIG(debug): LIBS += -ldbusmenu-qt6 -L../output -lshell-$${HOLLYWOOD_APIVERSION} -lcompositor-$${HOLLYWOOD_APIVERSION} -lcommdlg-$${HOLLYWOOD_APIVERSION} -lhw-layer-shell
+CONFIG(release): LIBS += -ldbusmenu-qt6 -L/usr/lib/qt6/plugins/wayland-shell-integration -lshell-$${HOLLYWOOD_APIVERSION} -lcompositor-$${HOLLYWOOD_APIVERSION} -lcommdlg-$${HOLLYWOOD_APIVERSION} -lhw-layer-shell
 
 WAYLANDCLIENTSOURCES += ../compositor/protocols/originull-privateapi.xml
 WAYLANDCLIENTSOURCES += ../compositor/protocols/plasma-window-management.xml
@@ -22,38 +23,34 @@ CONFIG += c++11
 DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000
 
 SOURCES += \
-    app.cc \
+    stage.cc \
+    taskview/appbutton.cc \
     battery.cc \
-    dbusmenu/dbusmenuimporter.cc \
-    dbusmenu/dbusmenushortcut_p.cc \
-    dbusmenu/dbusmenutypes_p.cc \
-    dbusmenu/menuregistrarimporter.cc \
-    dbusmenu/utils.cc \
-    menuserver.cc \
-    notifierhost.cc \
+    menuserver/menuregistrarimporter.cc \
+    menuserver/utils.cc \
+    menuserver/menuserver.cc \
     stageclock.cc \
     stagehost.cc \
-    statusnotifier/dbustypes.cpp \
-    statusnotifier/sniasync.cpp \
-    statusnotifier/statusnotifierbutton.cpp \
-    statusnotifier/statusnotifieriteminterface.cpp \
-    statusnotifier/statusnotifierproxy.cpp \
-    statusnotifier/statusnotifierwatcher.cpp \
+    statusnotifier/dbustypes.cc \
+    statusnotifier/sniasync.cc \
+    statusnotifier/statusnotifierbutton.cc \
+    statusnotifier/statusnotifieriteminterface.cc \
+    statusnotifier/statusnotifierproxy.cc \
+    statusnotifier/notifierhost.cc \
+    statusnotifier/statusnotifierwatcher.cc \
     surfacemanager.cc \
-    taskbutton.cc \
+    taskview/stagetasklist.cc \
     ../shared/upower.cc \
+    taskview/windowlist.cc \
     wndmgmt.cc
 
 HEADERS += \
-    app.h \
+    stage.h \
+    taskview/appbutton.h \
     battery.h \
-    dbusmenu/dbusmenuimporter.h \
-    dbusmenu/dbusmenushortcut_p.h \
-    dbusmenu/dbusmenutypes_p.h \
-    dbusmenu/menuregistrarimporter.h \
-    dbusmenu/utils.h \
-    menuserver.h \
-    notifierhost.h \
+    menuserver/menuregistrarimporter.h \
+    menuserver/utils.h \
+    menuserver/menuserver.h \
     stageclock.h \
     stagehost.h \
     statusnotifier/dbustypes.h \
@@ -62,9 +59,12 @@ HEADERS += \
     statusnotifier/statusnotifieriteminterface.h \
     statusnotifier/statusnotifierproxy.h \
     statusnotifier/statusnotifierwatcher.h \
+    statusnotifier/notifierhost.h \
     surfacemanager.h \
-    taskbutton.h \
+    taskview/stagetasklist.h \
     ../shared/upower.h \
+    taskview/taskview.h \
+    taskview/windowlist.h \
     wndmgmt.h
 
 # Default rules for deployment.

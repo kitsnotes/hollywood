@@ -1,6 +1,11 @@
+// Hollywood Stage
+// (C) 2022-2024 Originull Software
+// SPDX-License-Identifier: LGPL-2.1-or-later
+
 #include "battery.h"
 #include "upower.h"
-#include "app.h"
+#include "stage.h"
+
 #include <QMenu>
 #include <QAction>
 #include <hollywood/hollywood.h>

@@ -1,3 +1,7 @@
+// Hollywood Stage
+// (C) 2022-2024 Originull Software
+// SPDX-License-Identifier: LGPL-2.1-or-later
+
 #ifndef MENUSERVER_H
 #define MENUSERVER_H
 
@@ -10,7 +14,7 @@ class BatteryMonitor;
 class NotifierHost;
 class StatusNotifierButton;
 class StageClock;
-class TaskButton;
+class WindowButton;
 class MenuServer : public QWidget
 {
     Q_OBJECT

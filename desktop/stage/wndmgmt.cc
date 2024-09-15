@@ -1,3 +1,7 @@
+// Hollywood Stage
+// (C) 2022-2024 Originull Software
+// SPDX-License-Identifier: LGPL-2.1-or-later
+
 #include "wndmgmt.h"
 
 #include <QFutureWatcher>
@@ -113,7 +117,20 @@ void PlasmaWindow::org_kde_plasma_window_title_changed(const QString &title)
 
 void PlasmaWindow::org_kde_plasma_window_state_changed(uint32_t flags)
 {
+    qDebug() << "statechanged" << flags;
     m_state = flags;
+    bool oldactive = m_active;
+    if(flags & ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_ACTIVE)
+    {
+        m_active = true;
+        emit activated();
+    }
+    else
+    {
+        m_active = false;
+        emit deactivated();
+    }
+
     if(flags & ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_MINIMIZED)
     {
         if(!m_minimized)

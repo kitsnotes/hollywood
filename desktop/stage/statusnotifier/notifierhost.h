@@ -1,3 +1,7 @@
+// Hollywood Stage
+// (C) 2022-2024 Originull Software
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #ifndef NOTIFIERHOST_H
 #define NOTIFIERHOST_H
 

@@ -23,7 +23,7 @@
 */
 
 #include "menuregistrarimporter.h"
-#include "dbusmenu/dbusmenuimporter.h"
+#include <dbusmenuimporter.h>
 
 #include <QDBusMessage>
 #include <QDBusServiceWatcher>
