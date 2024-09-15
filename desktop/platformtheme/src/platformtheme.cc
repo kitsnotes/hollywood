@@ -24,7 +24,6 @@ static bool isDbusMenuAvailable()
     QDBusConnection connection = QDBusConnection::sessionBus();
     QString registrarService = QStringLiteral("com.canonical.AppMenu.Registrar");
     bool available = connection.interface()->isServiceRegistered(registrarService);
-    //qDebug() << "testing if dbusmenu available: " << available;
     return available;
 }
 
@@ -173,8 +172,6 @@ const QFont *HollywoodPlatformTheme::font(Font type) const
        type == ToolButtonFont)
         ps = ps-2;
 
-
-    //qDebug() << family << ps;
     auto font = new QFont(family,ps);
     return font;
 }
@@ -507,7 +504,6 @@ QPlatformMenuBar *HollywoodPlatformTheme::createPlatformMenuBar() const
 {
     if (isDBusGlobalMenuAvailable())
     {
-        qDebug() << "creating new DBus Menubar";
         auto *menu = new DBusMenuBar(const_cast<HollywoodPlatformTheme *>(this));
 
         QObject::connect(menu, &DBusMenuBar::windowChanged, menu, [this, menu](QWindow *newWindow, QWindow *oldWindow) {
