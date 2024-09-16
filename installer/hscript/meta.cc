@@ -796,7 +796,6 @@ bool Bootloader::validate() const {
 }
 
 bool Bootloader::execute() const {
-    const std::string arch = my_arch(script);
     std::string method = _bootloader;
 
     if(method == "none")
@@ -808,16 +807,9 @@ bool Bootloader::execute() const {
                       << " --keys-dir etc/apk/keys add refind"
                       << std::endl
                       << " install refind " << _device << std::endl;
-            goto updateboot;
+            return true;
         }
 #ifdef HAS_INSTALL_ENV
-        if(run_command("/sbin/apk",
-                       {"--root", script->targetDirectory(), "--keys-dir",
-                        "etc/apk/keys", "add", "refind"}) != 0) {
-            output_error(pos, "bootloader: couldn't add package refind");
-            return false;
-        }
-
         /* remount EFI vars r/w */
         /*const auto efipath{script->targetDirectory() +
                            "/sys/firmware/efi/efivars"};
@@ -828,259 +820,46 @@ bool Bootloader::execute() const {
             // we do not return here, we treat as warning
         } */
 
-        /* create our /boot/efi/EFI/hollywood folder */
-        std::string refind_src = script->targetDirectory() + "/usr/share/refind";
-        std::string refind_efi = script->targetDirectory() + "/boot/efi/EFI/hollywood";
-        error_code ec;
-        if(!fs::exists(refind_efi, ec)) fs::create_directories(refind_efi, ec);
-
-        std::set<std::string> refind_files;
-        if(arch == "x86_64")
-        {
-            fs::create_directory(refind_efi+"/drivers_x64");
-            fs::create_directory(refind_efi+"/tools_x64");
-            fs::create_directory(refind_efi+"/icons");
-
-            /* copy over our refind files */
-            refind_files = {
-                "/refind_x64.efi",
-                "/drivers_x64/ext4_x64.efi",
-                "/drivers_x64/btrfs_x64.efi",
-                "/icons/arrow_left.png",
-                "/icons/arrow_right.png",
-                "/icons/func_about.png",
-                "/icons/func_bootorder.png",
-                "/icons/func_csr_rotate.png",
-                "/icons/func_exit.png",
-                "/icons/func_firmware.png",
-                "/icons/func_hidden.png",
-                "/icons/func_install.png",
-                "/icons/func_reset.png",
-                "/icons/func_shutdown.png",
-                "/icons/mouse.png",
-                "/icons/os_linux.png",
-                "/icons/os_unknown.png",
-                "/icons/os_mac.png",
-                "/icons/os_win.png",
-                "/icons/os_hollywood.png",
-                "/icons/transparent.png"
-            };
-        }
-        else
-        {
-            fs::create_directory(refind_efi+"/drivers_aa64");
-            fs::create_directory(refind_efi+"/tools_aa64");
-            fs::create_directory(refind_efi+"/icons");
-
-            /* copy over our refind files */
-            refind_files = {
-                "/refind_aa64.efi",
-                "/drivers_aa64/ext4_aa64.efi",
-                "/drivers_aa64/btrfs_aa64.efi",
-                "/icons/arrow_left.png",
-                "/icons/arrow_right.png",
-                "/icons/func_about.png",
-                "/icons/func_bootorder.png",
-                "/icons/func_csr_rotate.png",
-                "/icons/func_exit.png",
-                "/icons/func_firmware.png",
-                "/icons/func_hidden.png",
-                "/icons/func_install.png",
-                "/icons/func_reset.png",
-                "/icons/func_shutdown.png",
-                "/icons/mouse.png",
-                "/icons/os_linux.png",
-                "/icons/os_mac.png",
-                "/icons/os_win.png",
-                "/icons/os_hollywood.png",
-                "/icons/os_unknown.png",
-                "/icons/transparent.png"
-            };
-        }
-
-        for(const std::string &file : refind_files)
-        {
-            fs::copy_file(refind_src+file, refind_efi+file, ec);
-            if(ec) {
-                output_error(pos, "bootloader: failed to copy file " + file,
-                             ec.message());
-                return false;
-            }
-        }
-
-        if(arch == "x86_64")
-        {
-            fs::rename(refind_efi+"/drivers_x64", refind_efi+"/drivers", ec);
-            if(ec) {
-                output_error(pos, "bootloader: failed to rename drivers_x86_64 to drivers",
-                             ec.message());
-                return false;
-            }
-
-            fs::rename(refind_efi+"/tools_x64", refind_efi+"/tools", ec);
-            if(ec) {
-                output_error(pos, "bootloader: failed to rename tools_x86_64 to drivers",
-                             ec.message());
-                return false;
-            }
-
-            fs::rename(refind_efi+"/refind_x64.efi", refind_efi+"/bootx64.efi", ec);
-            if(ec) {
-                output_error(pos, "bootloader: failed to rename refind_x64.efi to bootx64.efi",
-                             ec.message());
-                return false;
-            }
-        }
-        else
-        {
-            fs::rename(refind_efi+"/drivers_aa64", refind_efi+"/drivers", ec);
-            if(ec) {
-                output_error(pos, "bootloader: failed to rename drivers_x86_64 to drivers",
-                             ec.message());
-                return false;
-            }
-
-            fs::rename(refind_efi+"/tools_aa64", refind_efi+"/tools", ec);
-            if(ec) {
-                output_error(pos, "bootloader: failed to rename tools_x86_64 to drivers",
-                             ec.message());
-                return false;
-            }
-
-            fs::rename(refind_efi+"/refind_aa64.efi", refind_efi+"/bootaa64.efi", ec);
-            if(ec) {
-                output_error(pos, "bootloader: failed to rename refind_aa64.efi to bootaa64.efi",
-                             ec.message());
-                return false;
-            }
-        }
-
-        /* generate our refind.conf */
-        if(fs::exists(refind_efi+"/refind.conf", ec))
-        {
-            fs::remove(refind_efi+"/refind.conf", ec);
-            if(ec) {
-                output_error(pos, "bootloader: failed to remove existing refind.conf",
-                             ec.message());
-                return false;
-            }
-        }
-
-        std::ofstream refind_conf(refind_efi + "/refind.conf",
+        /* create our /etc/bootloader.conf */
+        std::string bootloader_conf = script->targetDirectory() + "/etc/bootloader.conf";
+        std::ofstream bl_conf_handle(bootloader_conf,
                                   std::ios::app);
-        if(!refind_conf) {
+        if(!bl_conf_handle) {
             output_error(pos, "bootloader: failure opening /boot/efi/EFI/hollywood/refind.conf for writing");
             return false;
         }
 
         // start building our refind.conf
-        bool separate_boot = false;
-        std::string root_uuid, boot_uuid, root_fs, root_fstype, gpt_guid;
+        std::string root_uuid, gpt_guid;
         for(const Key *s : script->getValues("mount"))
         {
             auto ks = dynamic_cast<const Mount*>(s);
             if(ks->mountpoint() == "/boot")
-            {
-                separate_boot = true;
-                boot_uuid = ks->blkid();
                 gpt_guid = ks->gptguid();
-            }
             if(ks->mountpoint() == "/")
             {
-                root_fs = ks->device();
                 gpt_guid = ks->gptguid();
-                for(const Key *fs : script->getValues("fs"))
-                {
-                    auto fso = dynamic_cast<const Filesystem*>(fs);
-                    if(fso->device() == root_fs)
-                    {
-                        switch(fso->fstype())
-                        {
-                        case Filesystem::BtrFS:
-                            root_fstype = "btrfs";
-                            break;
-                        case Filesystem::Ext4:
-                        default:
-                            root_fstype = "ext4";
-                            break;
-                        }
-                    }
-                }
                 root_uuid = ks->blkid();
             }
         }
 
-        auto kernel = script->getOneValue("kernel");
-        auto ko = dynamic_cast<const Kernel*>(kernel);
-        refind_conf << "timeout -1" << std::endl;
-        refind_conf << "hideui banner" << std::endl;
-        refind_conf << "use_graphics_for linux, windows, osx" << std::endl;
-        refind_conf << "scanfor manual" << std::endl;
-        refind_conf << "showtools shell, memtest, firmware" << std::endl;
-        refind_conf << "fold_linux_kernels true" << std::endl;
-        refind_conf << "hideui editor badges hints" << std::endl;
-        
-        refind_conf << "menuentry Hollywood {" << std::endl;
-        refind_conf << "\ticon EFI/hollywood/icons/os_hollywood.png" << std::endl;
-        refind_conf << "\tvolume " << gpt_guid << std::endl;
-        if(separate_boot)
-        {
-            refind_conf << "\tloader /vmlinuz-" << ko->value() << std::endl;
-            refind_conf << "\tinitrd /initramfs-" << ko->value() << std::endl;
-        }
-        else
-        {
-            refind_conf << "\tloader /boot/vmlinuz-" << ko->value() << std::endl;
-            refind_conf << "\tinitrd /boot/initramfs-" << ko->value() << std::endl;
+        bl_conf_handle << "GPT_BOOT_VOL_GUID=\"" << gpt_guid << "\"" <<std::endl;
+        bl_conf_handle << "ROOT_FS_BLKID=\"" << root_uuid << "\"" <<std::endl;
+        bl_conf_handle.close();
 
-        }
-        refind_conf << "\toptions \"root=UUID=" << root_uuid
-                    << " ro quiet splash loglevel=1 vt.global_cursor_default=0 rootfstype=" << root_fstype
-                    << "\"" << std::endl;
-
-        refind_conf << "}";
-        refind_conf.close();
-
-        // lets set a efi variable
-
-        std::string dev, devid;
-        for(const Key *s : script->getValues("mount"))
-        {
-            auto fs = dynamic_cast<const Mount*>(s);
-            if(fs->mountpoint() == "/boot/efi")
-            {
-                auto str = fs->device();
-                dev = str.substr(0, str.length()-1);
-                devid = str.substr(str.length()-1, 1);
-            }
-        }
-
-        if(run_command("/usr/sbin/efibootmgr",
-                       {"-c", "-d", dev, "-p", devid, "-L", "Hollywood", "-l", "\\EFI\\hollywood\\bootx64.efi" }) != 0) {
-            output_warning(pos, "bootloader: couldn't set refind as bootloader in EFI variables");
-            // do NOT error out here.
+        if(run_command("/sbin/apk",
+                        {"--root", script->targetDirectory(), "--keys-dir",
+                         "etc/apk/keys", "add", "refind"}) != 0) {
+            output_error(pos, "bootloader: couldn't add package refind");
+            return false;
         }
 
         /* done, back to r/o */
         //umount(efipath.c_str());
-        goto updateboot;
+        return true;
 #endif  /* HAS_INSTALL_ENV */
     }
     return false;  /* LCOV_EXCL_LINE */
-
-updateboot:
-    /* We ignore if update-boot fails, in case the user has chosen no-boot. */
-    /* if(script->options().test(Simulate)) {
-        std::cout << "chroot " << script->targetDirectory()
-                  << " /usr/sbin/update-boot || true" << std::endl;
-    } */
-#ifdef HAS_INSTALL_ENV
-   /* else {
-        run_command("chroot",
-                    {script->targetDirectory(), "/usr/sbin/update-boot"});
-    } */
-#endif  /* HAS_INSTALL_ENV */
-    return true;
 }
 
 static std::set<std::string> valid_kernels = {
