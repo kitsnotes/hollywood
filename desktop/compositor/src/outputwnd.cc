@@ -119,7 +119,7 @@ void OutputWindow::paintGL()
     // render our background & wallpaper
     m_wpm->clearBackgroundColor();
 
-    if(!hwComp->isRunningLoginManager())
+    if(!hwComp->isRunningLoginManager() && !hwComp->miniMode())
         m_wpm->renderWallpaper();
 
     // draw our desktops (bottom most) - we can't do this recursively
@@ -133,7 +133,7 @@ void OutputWindow::paintGL()
     for(Surface *obj : hwComp->bottomLayerSurfaces())
         drawTextureForObject(obj);
 
-    if(!hwComp->isRunningLoginManager())
+    if(!hwComp->isRunningLoginManager() && !hwComp->miniMode())
         drawDesktopInfoString();
 
     // draw standard surfaces

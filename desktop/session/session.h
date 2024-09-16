@@ -70,6 +70,7 @@ private:
     void restartCompositorReliantProcesses();
     void verifyTrashFolder();
 private slots:
+    void startMiniUtils();
     void compositorDied();
     void userProcessTerminated(int result);
     bool terminateUserProcesses();
@@ -111,6 +112,9 @@ private:
     QString m_currency = "";
     QString m_measurement = "";
     QString m_collation = "";
+
+    bool m_mini = false;
+    QProcess* m_mini_utils = nullptr;
 };
 
 #endif // SMAPPLICATION_H

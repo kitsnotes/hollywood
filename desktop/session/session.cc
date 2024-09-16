@@ -77,6 +77,13 @@ SMApplication::SMApplication(int &argc, char **argv)
     qputenv("XDG_SESSION_TYPE", "wayland");
     qputenv("XDG_MENU_PREFIX", "hollywood-");
 
+    auto envvar = qgetenv("HOLLYWOOD_RECOVERY_ENV");
+    if(!envvar.isEmpty())
+    {
+        if(envvar == "1")
+            m_mini = true;
+    }
+
     // see if we are started by a display manager
     auto ppid = getppid();
     QFile f(QLatin1String("/proc/%1/cmdline").arg(QString::number(ppid)));
@@ -347,6 +354,9 @@ void SMApplication::startDBusReliantServices()
     m_dbus = new SessionDBus(this);
     QDBusConnection::sessionBus().registerService(QLatin1String(HOLLYWOOD_SESSION_DBUS));
     QDBusConnection::sessionBus().registerObject(QLatin1String(HOLLYWOOD_SESSION_DBUSOBJ), this);
+
+    if(m_mini)
+        QTimer::singleShot(2500, Qt::CoarseTimer, this, &SMApplication::startMiniUtils);
 }
 
 bool SMApplication::verifyXdgRuntime()
@@ -457,6 +467,26 @@ void SMApplication::verifyTrashFolder()
 
     dir.mkpath(xdg_data+"Trash"+"/files");
     dir.mkpath(xdg_data+"Trash"+"/info");
+}
+
+void SMApplication::startMiniUtils()
+{
+    auto utils = QString("/usr/libexec/hollywood/utilities");
+    QFile file(utils);
+    if(!file.exists())
+    {
+        QMessageBox::critical(nullptr, tr("Unable to launch utilities"),
+                              tr("The utilites binary %1 does not exist. This image is corrupt, so we will now reboot."),
+                              QMessageBox::Ok);
+
+        reboot();
+    }
+    m_mini_utils = new QProcess(this);
+    m_mini_utils->setProgram(utils);
+    connect(m_mini_utils, &QProcess::finished, [this](/* int exitCode, QProcess::ExitStatus exitStatus */) {
+        reboot();
+    });
+    m_mini_utils->start();
 }
 
 void SMApplication::compositorDied()

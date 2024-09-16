@@ -52,6 +52,12 @@ Compositor::Compositor(bool sddm)
     , m_shortcuts(new ShortcutManager(this))
     , m_timeout(new QTimer(this))
 {
+    auto envvar = qgetenv("HOLLYWOOD_RECOVERY_ENV");
+    if(!envvar.isEmpty())
+    {
+        if(envvar == "1")
+            m_mini = true;
+    }
     m_timeout->setTimerType(Qt::VeryCoarseTimer);
     loadSettings();
     m_cfgwatch = new QFileSystemWatcher();
@@ -440,6 +446,10 @@ void Compositor::loadSettings()
     if(!bg.isValid())
         bg = QColor(QLatin1String(HOLLYWOOD_DEF_DESKTOP_BG));
     m_desktop_bg = bg;
+
+    if(miniMode())
+        m_desktop_bg = QColor(Qt::black);
+
     settings.endGroup();
 
     settings.beginGroup(QLatin1String("Metrics"));
@@ -465,6 +475,9 @@ void Compositor::loadSettings()
     settings.beginGroup(QLatin1String("Compositor"));
 
     m_legacyExperience = settings.value("LegacyExperience", false).toBool();
+
+    if(miniMode())
+        m_legacyExperience = true;
 
     settings.endGroup();
     settings.beginGroup(QLatin1String("Energy"));

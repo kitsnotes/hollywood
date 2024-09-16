@@ -327,9 +327,20 @@ int main(int argc, char *argv[])
     if(!a.checkSocket())
         return 0;
     a.createDBusInterfaces();
-    QTimer::singleShot(1100, [&a]() {
-        a.createDesktop();
-    });
+    bool mini = false;
+    auto envvar = qgetenv("HOLLYWOOD_RECOVERY_ENV");
+    if(!envvar.isEmpty())
+    {
+        if(envvar == "1")
+            mini = true;
+    }
+    if(!mini)
+    {
+        // we don't make a desktop for minishell
+        QTimer::singleShot(1100, [&a]() {
+            a.createDesktop();
+        });
+    }
 #else
     a.newFileWindow();
 #endif

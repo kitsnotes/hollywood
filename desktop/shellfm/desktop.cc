@@ -9,7 +9,6 @@
 #include <QMimeData>
 
 #include "desktopviewoptions.h"
-#include <hollywood/commonfunctions.h>
 #include "commonfunctions.h"
 #include "opmanager.h"
 

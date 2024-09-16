@@ -112,6 +112,7 @@ public:
     QPointF correctedPosition(const QPointF &point);
     ShortcutManager* shortcuts();
     QWaylandXdgOutputManagerV1 *xdgOutputManager() { return m_outputmgr; }
+    bool miniMode() { return m_mini; }
 protected:
     void adjustCursorSurface(QWaylandSurface *surface, int hotspotX, int hotspotY);
     void recycleSurfaceObject(Surface *obj);
@@ -256,6 +257,8 @@ private:
     QTimer *m_timeout = nullptr;
     bool m_display_sleeping = false;
     bool m_idle_inhibit = false;
+
+    bool m_mini = false;
 };
 
 #endif // WINDOWCOMPOSITOR_H
