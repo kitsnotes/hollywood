@@ -355,7 +355,13 @@ QStringList bootForArch(const std::string &raw_disk, HorizonWizard::Arch arch,
         return {
             QString{"partition %1 %2 512M esp"}.arg(disk).arg(*start),
             QString{"fs %1 vfat"}.arg(nameForPartitionOnDisk(raw_disk, *start)),
-            QString{"mount %1 /boot/efi"}.arg(nameForPartitionOnDisk(raw_disk, (*start)++))
+            QString{"mount %1 /boot/efi"}.arg(nameForPartitionOnDisk(raw_disk, (*start)++)),
+            QString{"partition %1 %2 512M"}.arg(disk).arg(*start),
+            QString{"fs %1 ext4"}.arg(nameForPartitionOnDisk(raw_disk, *start)),
+            QString{"mount %1 /boot"}.arg(nameForPartitionOnDisk(raw_disk, (*start)++)),
+            QString{"partition %1 %2 2048M"}.arg(disk).arg(*start),
+            QString{"fs %1 ext4"}.arg(nameForPartitionOnDisk(raw_disk, *start)),
+            QString{"mount %1 /boot/recovery"}.arg(nameForPartitionOnDisk(raw_disk, (*start)++))
         };
     }
 }
