@@ -20,12 +20,15 @@
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QApplication>
+#include <QLabel>
 
 ExecutePage::ExecutePage(QWidget *parent) : HorizonWizardPage(parent) {
     setTitle(tr("Installing Hollywood..."));
     loadWatermark("commit");
     failed = false;
 
+    m_currentLog = new QLabel(this);
+    m_currentLog->setVisible(false);
     progress = new StepProgressWidget;
     progress->addStep(tr("Prepare installation"));
     progress->addStep(tr("Validate installation"));
@@ -38,7 +41,6 @@ ExecutePage::ExecutePage(QWidget *parent) : HorizonWizardPage(parent) {
     QVBoxLayout *mainLayout = new QVBoxLayout;
     mainLayout->addWidget(progress);
     mainLayout->addStretch();
-
     setLayout(mainLayout);
 
     finishTimer = new QTimer(this);
@@ -124,6 +126,7 @@ void ExecutePage::processMessages() {
             Q_ASSERT(stepToPhase(msg.section('\t', 2)) == this->current);
             markFinished(this->current);
         } else if(msgType == "log") {
+            m_currentLog->setText(msg);
             QString severity = msg.section(": ", 1, 1);
             if(severity == "error") {
                 /* Workaround for:
@@ -145,12 +148,14 @@ void ExecutePage::processMessages() {
             }
         } else {
             /* !? */
+
         }
     }
 }
 
 void ExecutePage::executorOutReady() {
-    log.write(executor->readAllStandardOutput());
+    auto data = executor->readAllStandardOutput();
+    log.write(data);
 }
 
 void ExecutePage::executorFinished(int code, QProcess::ExitStatus status) {

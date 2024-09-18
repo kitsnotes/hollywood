@@ -43,6 +43,7 @@ private:
     QTimer *finishTimer;
     QFile log;
     QByteArray msgBuffer;
+    QLabel *m_currentLog = nullptr;
 
     Phase current;
     bool failed;

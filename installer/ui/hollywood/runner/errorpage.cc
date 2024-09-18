@@ -57,17 +57,17 @@ ErrorPage::ErrorPage(QWidget *parent) : HorizonWizardPage(parent) {
             QMessageBox::critical(this, tr("Could Not Save Installation Data"), tr("Unable to save installation data to %1.").arg(dir));
         }
     });
-    QPushButton *popAnXterm = new QPushButton(tr("Open &Terminal"));
+    /*QPushButton *popAnXterm = new QPushButton(tr("Open &Terminal"));
     popAnXterm->setWhatsThis(tr("Opens a terminal, to allow you to run commands from the installation environment."));
     connect(popAnXterm, &QPushButton::clicked, [=]{
         QProcess p;
         p.execute("xterm", {"-fa", "Liberation Mono", "-fs", "12"});
-    });
+    });*/
 
     QHBoxLayout *buttonLayout = new QHBoxLayout;
     buttonLayout->addWidget(viewLog);
     buttonLayout->addWidget(saveData);
-    buttonLayout->addWidget(popAnXterm);
+    //buttonLayout->addWidget(popAnXterm);
 
     QVBoxLayout *layout = new QVBoxLayout;
     layout->addWidget(descLabel);

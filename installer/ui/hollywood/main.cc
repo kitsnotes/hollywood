@@ -53,7 +53,7 @@ HorizonSetupApplication::HorizonSetupApplication(int &argc, char **argv)
     , m_wizard(new HorizonWizard(nullptr))
 {
     setOrganizationName("Originull Software");
-    setApplicationName("Hollywood Installer");
+    setApplicationName("Setup Assistant");
     setApplicationVersion(VERSTR);
 
     setWindowIcon(QIcon::fromTheme("system-software-install"));
