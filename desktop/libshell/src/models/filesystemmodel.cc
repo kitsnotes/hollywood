@@ -630,7 +630,6 @@ Qt::ItemFlags LSFSModel::flags(const QModelIndex &index) const
         return flags;
 
     if ((index.column() == 0) && indexNode->permissions() & QFile::WriteUser) {
-        qDebug() << "editable item" << indexNode->permissions();
         flags |= Qt::ItemIsEditable;
         if (indexNode->isDir())
             flags |= Qt::ItemIsDropEnabled;

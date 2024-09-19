@@ -58,6 +58,9 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
     setContentsMargins(0,0,0,0);
     QSettings settings("originull", "hollywood");
     p->m_model->setRootPath("/");
+    QModelIndex idx = p->m_model->index("/");
+    if(idx.isValid())
+        p->m_model->fetchMore(idx);
 
     setupLocationBar();
 
@@ -82,6 +85,7 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
     treelayout->addWidget(p->m_treeFavorites);
 
     p->m_treeDirs = new LSPlaceView(this);
+    p->m_treeDirs->setVisible(false);
     p->m_treeDirs->setObjectName(QString::fromUtf8("DirectoryTree"));
     p->m_sidebarModel->setFilter(QDir::Dirs);
     p->m_treeDirs->setModel(p->m_sidebarModel);
@@ -261,8 +265,6 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
 
     connect(LSCommonFunctions::instance(), &LSCommonFunctions::pasteAvailable,
             this, &LSEmbeddedShellHost::enablePaste);
-
-
 
     restoreViewModeFromSettings();
 }
@@ -1343,7 +1345,8 @@ void LSEmbeddedShellHost::updateBackForwardList(const QUrl &url, bool goback)
     updateNavigationButtonStatus();
 }
 
-void LSEmbeddedShellHost::updateNavigationButtonStatus()
+void LSEmbeddedShellHost::
+    updateNavigationButtonStatus()
 {
     QUuid uuid = p->m_tabs->tabData(p->m_tabs->currentIndex()).toUuid();
     auto bc = p->m_backLists[uuid].count();
@@ -1502,6 +1505,8 @@ void LSEmbeddedShellHost::updateRootIndex(const QModelIndex &idx, bool internal)
     // we shouldn't do the following two in desktop mode
     p->m_filesColumn->setRootIndex(idx);
     p->m_filesTable->setRootIndex(idx);
+    while(p->m_model->canFetchMore(idx.parent()))
+        p->m_model->fetchMore(idx.parent());
 
     p->m_currentFsRoot = idx;
 
