@@ -78,7 +78,7 @@ public slots:
 signals:
     void buttonClicked(QAbstractButton *button);
 protected:
-    void showEvent(QShowEvent *event);
+    void showEvent(QShowEvent *event) override;
 private slots:
     friend class MessageBoxPrivate;
     void boxButtonClicked(QAbstractButton *button);
