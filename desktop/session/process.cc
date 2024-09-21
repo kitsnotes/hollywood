@@ -258,6 +258,10 @@ void ManagedProcess::setEnvironmentForProcess()
                 env.insert("QT_QPA_PLATFORM", "eglfs");
             else
                 env.insert("QT_QPA_PLATFORM", "hollywood-eglfs");
+
+            // Apple GPU doesn't support hardware cursors
+            if(smApp->isAsahiKernel())
+                env.insert("QT_QPA_EGLFS_SWCURSOR", "1");
         }
         env.insert("QT_QPA_NO_SIGNAL_HANDLER", "1");
     }

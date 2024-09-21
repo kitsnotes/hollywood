@@ -342,6 +342,19 @@ bool SMApplication::isBatteryPowered() const
     return false;
 }
 
+bool SMApplication::isAsahiKernel() const
+{
+    QProcess process;
+    process.start("uname", QStringList() << "-r");
+    process.waitForFinished();
+    QString kernelVersion = process.readAllStandardOutput().trimmed();
+    QStringList versionParts = kernelVersion.split('-');
+    if (!versionParts.isEmpty() && versionParts.last() == "asahi")
+        return true;
+
+    return false;
+}
+
 void SMApplication::startDBusReliantServices()
 {
     m_elevatorProcess->initialize();

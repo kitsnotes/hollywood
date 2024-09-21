@@ -62,6 +62,7 @@ public:
     bool detailedLocaleSettings() const { return m_detailedregion; }
     bool isBatteryPowered() const;
     bool useQtBuiltinEglfs() const { return m_qt_builtin_eglfs; }
+    bool isAsahiKernel() const;
 private:
     void startDBusReliantServices();
     bool verifyXdgRuntime();
