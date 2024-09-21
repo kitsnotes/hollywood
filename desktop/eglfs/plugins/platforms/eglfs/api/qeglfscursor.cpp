@@ -76,7 +76,7 @@ QEglFSCursor::QEglFSCursor(QPlatformScreen *screen)
         m_rotationMatrix.rotate(rotation, 0, 0, 1);
 
     // Load the default cursor
-    m_cursorTheme.loadTheme(QString(), 32);
+    //m_cursorTheme.loadTheme(QString(), 32);
 
     // Try to load the cursor atlas. If this fails, m_visible is set to false and
     // paintOnScreen() and setCurrentCursor() become no-ops.
@@ -107,7 +107,6 @@ void QEglFSCursor::updateMouseStatus()
 
 void QEglFSCursor::setCursorTheme(const QString &name, int size)
 {
-    qDebug() << "loading cursor theme" << name << size;
     m_cursorTheme.loadTheme(name, size);
 }
 
@@ -392,9 +391,10 @@ void QEglFSCursor::paintOnScreen()
 // to deal with the changes we make.
 struct StateSaver
 {
-    StateSaver() {
-        f = QOpenGLContext::currentContext()->functions();
+    StateSaver(QOpenGLFunctions* func) {
+        f = func;
         vaoHelper = QOpenGLVertexArrayObjectHelper::vertexArrayObjectHelperForContext(QOpenGLContext::currentContext());
+
         static bool windowsChecked = false;
         static bool shouldSave = true;
         if (!windowsChecked) {
@@ -418,6 +418,8 @@ struct StateSaver
         f->glGetIntegerv(GL_BLEND_SRC_ALPHA, blendFunc + 1);
         f->glGetIntegerv(GL_BLEND_DST_RGB, blendFunc + 2);
         f->glGetIntegerv(GL_BLEND_DST_ALPHA, blendFunc + 3);
+        scissor = f->glIsEnabled(GL_SCISSOR_TEST);
+        stencil = f->glIsEnabled(GL_STENCIL_TEST);
         f->glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &arrayBuf);
         if (vaoHelper->isValid())
             f->glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &vao);
@@ -441,17 +443,15 @@ struct StateSaver
             f->glFrontFace(frontFace);
             if (cull)
                 f->glEnable(GL_CULL_FACE);
-            else
-                f->glDisable(GL_CULL_FACE);
             if (depthTest)
                 f->glEnable(GL_DEPTH_TEST);
-            else
-                f->glDisable(GL_DEPTH_TEST);
-            if (blend)
-                f->glEnable(GL_BLEND);
-            else
+            if (!blend)
                 f->glDisable(GL_BLEND);
             f->glBlendFuncSeparate(blendFunc[0], blendFunc[1], blendFunc[2], blendFunc[3]);
+            if (scissor)
+                f->glEnable(GL_SCISSOR_TEST);
+            if (stencil)
+                f->glEnable(GL_STENCIL_TEST);
             f->glBindBuffer(GL_ARRAY_BUFFER, arrayBuf);
             if (vaoHelper->isValid())
                 vaoHelper->glBindVertexArray(vao);
@@ -464,7 +464,6 @@ struct StateSaver
                 f->glVertexAttribPointer(i, va[i].size, va[i].type, va[i].normalized, va[i].stride, va[i].pointer);
             }
         }
-        delete vaoHelper;
     }
     QOpenGLFunctions *f;
     QOpenGLVertexArrayObjectHelper *vaoHelper;
@@ -477,6 +476,8 @@ struct StateSaver
     bool depthTest;
     bool blend;
     GLint blendFunc[4];
+    bool scissor;
+    bool stencil;
     GLint vao;
     GLint arrayBuf;
     struct { GLint enabled, type, size, normalized, stride, buffer; GLvoid *pointer; } va[2];
@@ -484,7 +485,9 @@ struct StateSaver
 
 void QEglFSCursor::draw(const QRectF &r)
 {
-    StateSaver stateSaver;
+    Q_ASSERT(QOpenGLContext::currentContext());
+    QOpenGLFunctions *f = QOpenGLContext::currentContext()->functions();
+    StateSaver stateSaver(f);
 
     QEglFSCursorData &gfx = static_cast<QEglFSContext*>(QOpenGLContext::currentContext()->handle())->cursorData;
     if (!gfx.program) {

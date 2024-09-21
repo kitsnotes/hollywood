@@ -78,6 +78,11 @@ HWEglFSKmsGbmCursor::HWEglFSKmsGbmCursor(HWEglFSKmsGbmScreen *screen)
         return;
     }
 
+    bool swcursor = false;
+    QByteArray swCursorVal = qgetenv("QT_QPA_EGLFS_SWCURSOR");
+    if (!swCursorVal.isEmpty() && swCursorVal.toInt())
+        swcursor = true;
+
     uint64_t width, height;
     if ((drmGetCap(m_screen->device()->fd(), DRM_CAP_CURSOR_WIDTH, &width) == 0)
         && (drmGetCap(m_screen->device()->fd(), DRM_CAP_CURSOR_HEIGHT, &height) == 0)) {
@@ -91,7 +96,8 @@ HWEglFSKmsGbmCursor::HWEglFSKmsGbmCursor(HWEglFSKmsGbmScreen *screen)
         qWarning("Could not create buffer for cursor!");
     } else {
         // TODO: define in hollywood.h ?
-        m_cursorTheme.loadTheme(QLatin1String("neutral"), 32);
+        if(!swcursor)
+            m_cursorTheme.loadTheme(QLatin1String("neutral"), 32);
         initCursorAtlas();
     }
 
@@ -140,7 +146,13 @@ void HWEglFSKmsGbmCursor::updateMouseStatus()
 
 void HWEglFSKmsGbmCursor::setCursorTheme(const QString &name, int size)
 {
-    m_cursorTheme.loadTheme(name, size);
+    bool swcursor = false;
+    QByteArray swCursorVal = qgetenv("QT_QPA_EGLFS_SWCURSOR");
+    if (!swCursorVal.isEmpty() && swCursorVal.toInt())
+        swcursor = true;
+
+    if(!swcursor)
+        m_cursorTheme.loadTheme(name, size);
 }
 
 bool QEglFSKmsGbmCursorDeviceListener::hasMouse() const

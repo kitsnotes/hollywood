@@ -94,8 +94,6 @@ HWEglFSIntegration::HWEglFSIntegration()
       m_logindHandler(nullptr),
       m_disableInputHandlers(false)
 {
-    qDebug() << "HWEglFSIntegration::HWEglFSIntegration";
-
     m_disableInputHandlers = qEnvironmentVariableIntValue("QT_QPA_EGLFS_DISABLE_INPUT");
     initResources();
 }
@@ -337,8 +335,6 @@ void *HWEglFSIntegration::nativeResourceForScreen(const QByteArray &resource, QS
 
 void *HWEglFSIntegration::nativeResourceForWindow(const QByteArray &resource, QWindow *window)
 {
-    qDebug() << "HWEglFSIntegration::nativeResourceForWindow";
-
     void *result = 0;
 
     switch (resourceType(resource)) {
@@ -481,6 +477,7 @@ void HWEglFSIntegration::setPowerStateStatic(QScreen *screen, Originull::Platfor
 
 bool HWEglFSIntegration::testScreenChangesStatic(const QVector<Originull::Platform::ScreenChange> &changes)
 {
+    Q_UNUSED(changes)
     return false;
 }
 

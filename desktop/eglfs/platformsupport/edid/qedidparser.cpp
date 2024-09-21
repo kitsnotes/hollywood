@@ -165,7 +165,7 @@ QString QEdidParser::parseEdidString(const quint8 *data)
     buffer = buffer.replace('\r', '\0').replace('\n', '\0');
 
     // Replace non-printable characters with dash
-    for (int i = 0; i < buffer.count(); ++i) {
+    for (int i = 0; i < buffer.length(); ++i) {
         if (buffer[i] < '\040' || buffer[i] > '\176')
             buffer[i] = '-';
     }

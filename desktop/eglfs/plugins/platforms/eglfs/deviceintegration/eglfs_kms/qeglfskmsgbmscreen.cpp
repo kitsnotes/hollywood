@@ -425,7 +425,6 @@ void HWEglFSKmsGbmScreen::flip()
 
 void HWEglFSKmsGbmScreen::setCursorTheme(const QString &name, int size)
 {
-    qDebug() << "HWEglFSKmsGbmScreen::setCursorTheme" << name;
     if(!m_cursor.isNull())
         m_cursor->setCursorTheme(name,size);
 }

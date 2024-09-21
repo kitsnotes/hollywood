@@ -1035,14 +1035,19 @@ HWKmsScreenConfig::HWKmsScreenConfig()
 
 void HWKmsScreenConfig::loadConfig()
 {
+    QByteArray swCursorVal = qgetenv("QT_QPA_EGLFS_SWCURSOR");
+    if (!swCursorVal.isEmpty() && swCursorVal.toInt())
+    {
+        qCWarning(qLcKmsDebug) << "Using software cursor";
+        m_hwCursor = false;
+    }
+
     QByteArray json = qgetenv("QT_QPA_EGLFS_KMS_CONFIG");
     if (json.isEmpty()) {
         json = qgetenv("QT_QPA_KMS_CONFIG");
         if (json.isEmpty())
             return;
     }
-
-    qCDebug(qLcKmsDebug) << "Loading KMS setup from" << json;
 
     QFile file(QString::fromUtf8(json));
     if (!file.open(QFile::ReadOnly)) {
@@ -1070,7 +1075,6 @@ void HWKmsScreenConfig::loadConfig()
         m_headless = false;
     }
 
-    m_hwCursor = object.value(QLatin1String("hwcursor")).toBool(m_hwCursor);
     m_pbuffers = object.value(QLatin1String("pbuffers")).toBool(m_pbuffers);
     m_devicePath = object.value(QLatin1String("device")).toString();
     m_separateScreens = object.value(QLatin1String("separateScreens")).toBool(m_separateScreens);
@@ -1169,7 +1173,7 @@ void HWKmsOutput::setPowerState(HWKmsDevice *device, QPlatformScreen::PowerState
 
 bool HWKmsOutput::setMode(HWKmsDevice *device, const QSize resolution, const uint32_t refreshRate)
 {
-    qDebug() << "22 HWKmsOutput::setMode" << resolution << refreshRate;
+    Q_UNUSED(device);
     bool has_mode = false;
     int wanted_mode = 0;
     for(int i = 0; i < modes.count(); i++)
@@ -1190,24 +1194,7 @@ bool HWKmsOutput::setMode(HWKmsDevice *device, const QSize resolution, const uin
         this->mode = wanted_mode;
         this->mode_set = false;
         return true;
-        /*drmModeRes *resources = drmModeGetResources(device->fd());
-
-        if(resources)
-        {
-
-            qDebug() << "hasMode" << has_mode << "wanted:" << wanted_mode << device->fd();
-            //auto crtc = drmModeGetCrtc(device->fd(), crtc_id);
-            int ret = drmModeSetCrtc(device->fd(),
-                           crtc_id,
-                           1,
-                           0, 0,
-                           &connector_id, 1,
-                           &modes[wanted_mode]);
-            qDebug() << ret;
-            return true;
-        }
     }
 
-    return false;*/
-    }
+    return false;
 }

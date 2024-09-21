@@ -63,6 +63,7 @@ HWEglFSKmsIntegration::~HWEglFSKmsIntegration()
 
 void HWEglFSKmsIntegration::platformInit()
 {
+    qDebug() << "HWEglFSKmsIntegration::platformInit";
     qCDebug(qLcEglfsKmsDebug, "platformInit: Load Screen Config");
     m_screenConfig = createScreenConfig();
 
@@ -171,7 +172,7 @@ HWKmsScreenConfig *HWEglFSKmsIntegration::screenConfig() const
 HWKmsScreenConfig *HWEglFSKmsIntegration::createScreenConfig()
 {
     HWKmsScreenConfig *screenConfig = new HWKmsScreenConfig;
-    //screenConfig->loadConfig();
+    screenConfig->loadConfig();
 
     return screenConfig;
 }

@@ -78,7 +78,7 @@ public:
     void presentBuffer(QPlatformSurface *surface) override;
     HWEglFSWindow *createWindow(QWindow *window) const override;
     static bool applyScreenChangesStatic(const QVector<Originull::Platform::ScreenChange> &changes);
-    QFunctionPointer platformFunction(const QByteArray &function) const;
+    QFunctionPointer platformFunction(const QByteArray &function) const override;
 
 protected:
     HWKmsDevice *createDevice() override;

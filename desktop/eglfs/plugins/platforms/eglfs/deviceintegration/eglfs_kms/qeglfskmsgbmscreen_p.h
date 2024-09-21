@@ -82,7 +82,7 @@ public:
 
     virtual void flip();
 
-    void setCursorTheme(const QString &name, int size);
+    void setCursorTheme(const QString &name, int size) override;
     virtual void updateFlipStatus();
 
     void setSurface(gbm_surface *surface);

@@ -69,21 +69,14 @@ Q_GLOBAL_STATIC(DeviceIntegration, deviceIntegration)
 DeviceIntegration::DeviceIntegration()
     : m_integration(nullptr)
 {
+    qDebug() << "finding EGL device integration";
     QStringList pluginKeys = HWEglFSDeviceIntegrationFactory::keys();
     if (!pluginKeys.isEmpty()) {
-        // Some built-in logic: Prioritize either X11 or KMS/DRM.
-        if (qEnvironmentVariableIsSet("DISPLAY")) {
-            const QString x11key = QStringLiteral("eglfs_x11");
-            if (pluginKeys.contains(x11key)) {
-                pluginKeys.removeOne(x11key);
-                pluginKeys.prepend(x11key);
-            }
-        } else {
-            const QString kmskey = QStringLiteral("eglfs_kms");
-            if (pluginKeys.contains(kmskey)) {
-                pluginKeys.removeOne(kmskey);
-                pluginKeys.prepend(kmskey);
-            }
+        // Some built-in logic: Prioritize KMS/DRM.
+        const QString kmskey = QStringLiteral("eglfs_kms");
+        if (pluginKeys.contains(kmskey)) {
+            pluginKeys.removeOne(kmskey);
+            pluginKeys.prepend(kmskey);
         }
 
         QByteArray requested;
@@ -91,16 +84,13 @@ DeviceIntegration::DeviceIntegration()
         // The environment variable can override everything.
         if (qEnvironmentVariableIsSet("QT_QPA_EGLFS_INTEGRATION")) {
             requested = qgetenv("QT_QPA_EGLFS_INTEGRATION");
+            qDebug() << requested;
         } else {
             // Device-specific makespecs may define a preferred plugin.
-#ifdef EGLFS_PREFERRED_PLUGIN
-#define DEFAULT_PLUGIN EGLFS_PREFERRED_PLUGIN
-#define STR(s) #s
-#define STRQ(s) STR(s)
-            requested = STRQ(DEFAULT_PLUGIN);
-#endif
+            requested = "eglfs_kms";
         }
 
+        qDebug() << "requested EGL:" << requested;
         // Treat "none" as special. There has to be a way to indicate
         // that plugins must be ignored when the device is known to be
         // functional with the default, non-specialized integration.
