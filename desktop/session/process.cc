@@ -141,7 +141,7 @@ void ManagedProcess::logStdOut()
                disconnect(this, &QProcess::readyReadStandardOutput, this, &ManagedProcess::logStdOut);
             }
         }
-        logInfo(QString("[OUT] %1").arg(line));
+        logInfo(QString("%1").arg(line));
     }
 }
 
@@ -153,7 +153,7 @@ void ManagedProcess::logStdErr()
         if(line.isEmpty())
             continue;
 
-        logInfo(QString("[ERR] %1").arg(line));
+        logInfo(QString("%1").arg(line));
     }
 }
 
@@ -254,7 +254,10 @@ void ManagedProcess::setEnvironmentForProcess()
         if(!env.contains("DISPLAY"))
         {
             env.remove("QT_QPA_PLATFORM");
-            env.insert("QT_QPA_PLATFORM", "hollywood-eglfs");
+            if(smApp->useQtBuiltinEglfs())
+                env.insert("QT_QPA_PLATFORM", "eglfs");
+            else
+                env.insert("QT_QPA_PLATFORM", "hollywood-eglfs");
         }
         env.insert("QT_QPA_NO_SIGNAL_HANDLER", "1");
     }

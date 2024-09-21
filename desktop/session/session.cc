@@ -77,6 +77,8 @@ SMApplication::SMApplication(int &argc, char **argv)
     qputenv("XDG_SESSION_TYPE", "wayland");
     qputenv("XDG_MENU_PREFIX", "hollywood-");
 
+    loadSettings();
+
     auto envvar = qgetenv("HOLLYWOOD_RECOVERY_ENV");
     if(!envvar.isEmpty())
     {
@@ -467,6 +469,13 @@ void SMApplication::verifyTrashFolder()
 
     dir.mkpath(xdg_data+"Trash"+"/files");
     dir.mkpath(xdg_data+"Trash"+"/info");
+}
+
+void SMApplication::loadSettings()
+{
+    QSettings settings("originull", "hollywood");
+    settings.beginGroup("Compositor");
+    m_qt_builtin_eglfs = settings.value("EglfsUseQtBuiltin", false).toBool();
 }
 
 void SMApplication::startMiniUtils()

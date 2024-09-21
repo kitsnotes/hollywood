@@ -61,6 +61,7 @@ public:
     QString localeVariable(LocaleVariable v);
     bool detailedLocaleSettings() const { return m_detailedregion; }
     bool isBatteryPowered() const;
+    bool useQtBuiltinEglfs() const { return m_qt_builtin_eglfs; }
 private:
     void startDBusReliantServices();
     bool verifyXdgRuntime();
@@ -69,6 +70,7 @@ private:
     void disconnectProcessWatchers();
     void restartCompositorReliantProcesses();
     void verifyTrashFolder();
+    void loadSettings();
 private slots:
     void startMiniUtils();
     void compositorDied();
@@ -115,6 +117,7 @@ private:
 
     bool m_mini = false;
     QProcess* m_mini_utils = nullptr;
+    bool m_qt_builtin_eglfs = false;
 };
 
 #endif // SMAPPLICATION_H
