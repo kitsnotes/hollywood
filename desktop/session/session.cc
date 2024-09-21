@@ -489,6 +489,10 @@ void SMApplication::loadSettings()
     QSettings settings("originull", "hollywood");
     settings.beginGroup("Compositor");
     m_qt_builtin_eglfs = settings.value("EglfsUseQtBuiltin", false).toBool();
+    settings.endGroup();
+    settings.beginGroup("Session");
+    m_wayland_reconnect = settings.value("WaylandSurviveCrash", true).toBool();
+
 }
 
 void SMApplication::startMiniUtils()
@@ -514,6 +518,15 @@ void SMApplication::startMiniUtils()
 void SMApplication::compositorDied()
 {
     qCCritical(lcSession) << "compositor process died! restrting";
+    if(surviveWaylandCrash())
+    {
+        // if QT_WAYLAND_RECONNECT=1 is set, then we should be able to
+        // *very quickly* relaunch the compositor and pick up
+        // where we left off...
+
+        m_compositorProcess->start();
+        return;
+    }
     m_elevatorProcess->setAutoRestart(false);
     m_stageProcess->setAutoRestart(false);
     m_desktopProcess->setAutoRestart(false);
@@ -556,7 +569,7 @@ void SMApplication::reloadLocaleSettings()
 
     m_lang = settings.value("LANG", QString::fromLocal8Bit(qgetenv("LANG"))).toString();
     if(m_lang.isEmpty())
-        m_lang = "C.UTF8";
+        m_lang = "en_US.UTF-8";
     m_detailedregion = settings.value(QStringLiteral("UseDetailed"), false).toBool();
     m_numeric = settings.value("LC_NUMERIC", QString::fromLocal8Bit(qgetenv("LC_NUMERIC"))).toString();
     m_time = settings.value("LC_TIME", QString::fromLocal8Bit(qgetenv("LC_TIME"))).toString();

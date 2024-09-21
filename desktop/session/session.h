@@ -63,6 +63,7 @@ public:
     bool isBatteryPowered() const;
     bool useQtBuiltinEglfs() const { return m_qt_builtin_eglfs; }
     bool isAsahiKernel() const;
+    bool surviveWaylandCrash() const { return m_wayland_reconnect; }
 private:
     void startDBusReliantServices();
     bool verifyXdgRuntime();
@@ -119,6 +120,7 @@ private:
     bool m_mini = false;
     QProcess* m_mini_utils = nullptr;
     bool m_qt_builtin_eglfs = false;
+    bool m_wayland_reconnect = true;
 };
 
 #endif // SMAPPLICATION_H

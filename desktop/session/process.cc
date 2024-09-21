@@ -205,6 +205,8 @@ void ManagedProcess::setEnvironmentForProcess()
     env.insert("XDG_CURRENT_DESKTOP", "Hollywood");
     env.insert("XDG_SESSION_TYPE", "wayland");
     env.insert("XDG_MENU_PREFIX", "hollywood-");
+    if(smApp->surviveWaylandCrash())
+        env.insert("QT_WAYLAND_RECONNECT", "1");
 
     // handle our locale env
     if(env.contains("LANG"))
