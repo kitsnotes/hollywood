@@ -99,7 +99,8 @@ LSFSNode *LSFSModelPrivate::node(const QString &path, bool fetch) const
 {
     Q_Q(const LSFSModel);
     Q_UNUSED(q);
-    if (path.isEmpty() || path == myComputer() || path.startsWith(QLatin1Char(':')))
+    if (path.isEmpty() || path == myComputer()
+        || path.startsWith(QLatin1Char(':')))
         return const_cast<LSFSNode*>(&root);
 
     // Construct the nodes up to the new root path if they need to be built
@@ -112,7 +113,8 @@ LSFSNode *LSFSModelPrivate::node(const QString &path, bool fetch) const
 
     // ### TODO can we use bool QAbstractFileEngine::caseSensitive() const?
     QStringList pathElements = absolutePath.split(QLatin1Char('/'), Qt::SkipEmptyParts);
-    if ((pathElements.isEmpty()) && QDir::fromNativeSeparators(longPath) != QLatin1String("/"))
+    if ((pathElements.isEmpty())
+        && QDir::fromNativeSeparators(longPath) != QLatin1String("/"))
         return const_cast<LSFSNode*>(&root);
 
     QModelIndex index = QModelIndex(); // start with "My Computer"
@@ -662,13 +664,11 @@ public:
     {
         switch (sortColumn) {
         case 0: {
-#ifndef Q_OS_MAC
             // place directories before files
             bool left = l->isDir();
             bool right = r->isDir();
             if (left ^ right)
                 return left;
-#endif
             return naturalCompare.compare(l->fileName, r->fileName) < 0;
                 }
         case 1:
@@ -857,8 +857,6 @@ bool LSFSModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
 
     bool success = true;
     QString to = filePath(parent) + QDir::separator();
-
-    qDebug() << data->urls();
 
     QList<QUrl> urls = data->urls();
     QList<QUrl>::const_iterator it = urls.constBegin();
@@ -1342,7 +1340,6 @@ void LSFSModelPrivate::removeVisibleFile(LSFSNode *parentNode, int vLocation)
 void LSFSModelPrivate::_q_fileSystemChanged(const QString &path,
                                                    const QVector<QPair<QString, QFileInfo>> &updates)
 {
-#if QT_CONFIG(filesystemwatcher)
     Q_Q(LSFSModel);
     QList<QString> rowsToUpdate;
     QStringList newFiles;
@@ -1357,6 +1354,7 @@ void LSFSModelPrivate::_q_fileSystemChanged(const QString &path,
             addNode(parentNode, fileName, info.fileInfo());
         }
         LSFSNode * node = parentNode->children.value(fileName);
+
         bool isCaseSensitive = parentNode->caseSensitive();
         if (isCaseSensitive) {
             if (node->fileName != fileName)
@@ -1389,6 +1387,11 @@ void LSFSModelPrivate::_q_fileSystemChanged(const QString &path,
                     // The file is not visible, don't do anything
                 }
             }
+        }
+        else
+        {
+            // TODO: hack, but sometimes we don't have it appearing
+            newFiles.append(fileName);
         }
     }
 
@@ -1434,10 +1437,6 @@ void LSFSModelPrivate::_q_fileSystemChanged(const QString &path,
         forceSort = true;
         delayedSort();
     }
-#else
-    Q_UNUSED(path);
-    Q_UNUSED(updates);
-#endif // filesystemwatcher
 }
 
 void LSFSModelPrivate::_q_resolvedName(const QString &fileName, const QString &resolvedName)

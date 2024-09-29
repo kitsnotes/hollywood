@@ -13,10 +13,12 @@ LSExtendedFileInfo::LSExtendedFileInfo(const QFileInfo &info)
 
 bool LSExtendedFileInfo::operator ==(const LSExtendedFileInfo &fileInfo) const
 {
-    return m_info == fileInfo.m_info
+    bool is_equal = m_info == fileInfo.m_info
             && displayType == fileInfo.displayType
             && permissions() == fileInfo.permissions()
             && lastModified() == fileInfo.lastModified();
+
+    return is_equal;
 }
 
 LSExtendedFileInfo::Type LSExtendedFileInfo::type() const

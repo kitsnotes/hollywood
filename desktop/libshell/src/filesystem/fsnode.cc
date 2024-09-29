@@ -120,7 +120,7 @@ bool LSFSNode::isHidden() const { return fileInfo().isHidden(); }
 bool LSFSNode::isSymLink() const { return fileInfo().isSymLink(); }
 
 /* TODO: fix this */
-bool LSFSNode::caseSensitive() const { /* if (info) return info.data()->isCaseSensitive(); */ return true; }
+bool LSFSNode::caseSensitive() const { if (info) return info.data()->isCaseSensitive(); return true; }
 
 bool LSFSNode::isDesktopFile() const
 {

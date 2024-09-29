@@ -4,6 +4,7 @@
 #include <QFileInfo>
 #include <QIcon>
 #include <QString>
+#include <QtCore/private/qfilesystemengine_p.h>
 
 class LSDesktopEntry;
 class LSExtendedFileInfo
@@ -21,7 +22,9 @@ public:
     inline bool isDir() { return type() == Dir; }
     inline bool isFile() { return type() == File; }
     inline bool isSystem() { return type() == System; }
-
+    bool isCaseSensitive() const {
+        return QFileSystemEngine::isCaseSensitive();
+    }
     Type type() const;
     QFile::Permissions permissions() const;
     bool isSymLink() const;

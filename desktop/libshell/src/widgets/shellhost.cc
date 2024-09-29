@@ -1505,8 +1505,8 @@ void LSEmbeddedShellHost::updateRootIndex(const QModelIndex &idx, bool internal)
     // we shouldn't do the following two in desktop mode
     p->m_filesColumn->setRootIndex(idx);
     p->m_filesTable->setRootIndex(idx);
-    while(p->m_model->canFetchMore(idx.parent()))
-        p->m_model->fetchMore(idx.parent());
+    while(p->m_model->canFetchMore(idx))
+        p->m_model->fetchMore(idx);
 
     p->m_currentFsRoot = idx;
 

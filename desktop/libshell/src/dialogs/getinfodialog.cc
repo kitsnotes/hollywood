@@ -151,6 +151,7 @@ LSGetInfoDialogPrivate::LSGetInfoDialogPrivate(LSGetInfoDialog *parent)
     m_gx->setText(QApplication::tr("Execute"));
     m_ox->setText(QApplication::tr("Execute"));
 
+    //m_mime->cacheAllDesktops();
 }
 
 QFrame *LSGetInfoDialogPrivate::makeLine()
@@ -218,6 +219,7 @@ void LSGetInfoDialog::reloadInfo()
         p->m_openwithlabel->setVisible(false);
         p->m_openwith->setVisible(false);
     }
+
     QDateTime ctime = QDateTime::fromSecsSinceEpoch(sb.st_ctim.tv_sec);
     QDateTime mtime = QDateTime::fromSecsSinceEpoch(sb.st_mtim.tv_sec);
     QDateTime atime = QDateTime::fromSecsSinceEpoch(sb.st_atim.tv_sec);
@@ -225,6 +227,7 @@ void LSGetInfoDialog::reloadInfo()
     p->m_mtime->setText(l.toString(mtime));
     p->m_atime->setText(l.toString(atime));
 
+    qDebug() << "getinfo" << mime.name();
     auto def = p->m_mime->defaultApp(mime.name());
     auto apps = p->m_mime->apps(mime.name());
 

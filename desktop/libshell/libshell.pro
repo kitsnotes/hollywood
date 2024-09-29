@@ -1,6 +1,6 @@
 include(../include/global.pri)
 
-QT += network widgets-private svg dbus
+QT += core-private network widgets-private svg dbus
 
 CONFIG(debug, debug|release) {
     TARGET = shelld-$${HOLLYWOOD_APIVERSION}
