@@ -17,6 +17,7 @@ public:
         FilePathRole = Qt::UserRole + 1,
         FileNameRole = Qt::UserRole + 2,
         FilePermissions = Qt::UserRole + 3,
+
         FileOwner = Qt::UserRole + 4,
         FileGroup = Qt::UserRole + 5
     };

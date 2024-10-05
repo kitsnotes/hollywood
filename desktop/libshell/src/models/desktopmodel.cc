@@ -152,6 +152,7 @@ QUrl LSDesktopModel::url(const QModelIndex &index) const
 
 bool LSDesktopModel::isTrash(const QModelIndex &index) const
 {
+    // trash is *always* the last item in the index
     if(index.row() == p->m_files.count())
         return true;
 
@@ -160,6 +161,9 @@ bool LSDesktopModel::isTrash(const QModelIndex &index) const
 
 bool LSDesktopModel::isDesktop(const QModelIndex &index) const
 {
+    // return false on trash
+    if(index.row() >= p->m_files.count())
+        return false;
     if(p->m_files.at(index.row())->isDesktopFile())
         return true;
 
@@ -168,6 +172,9 @@ bool LSDesktopModel::isDesktop(const QModelIndex &index) const
 
 LSDesktopEntry *LSDesktopModel::desktopFileForIndex(const QModelIndex &index)
 {
+    // return nullptr on trash
+    if(index.row() >= p->m_files.count())
+        return nullptr;
     if(p->m_files.at(index.row())->isDesktopFile())
         return p->m_files.at(index.row())->m_desktop;
 
