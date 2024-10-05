@@ -1,5 +1,4 @@
-#ifndef LSPLACEMODEL_H
-#define LSPLACEMODEL_H
+#pragma once
 
 #include <QStandardItemModel>
 #include <QStandardItem>
@@ -38,5 +37,3 @@ private:
     QList<PlaceItem> m_favorites;
     QList<QStandardItem*> m_favoriteItems;
 };
-
-#endif // LSPLACEMODEL_H

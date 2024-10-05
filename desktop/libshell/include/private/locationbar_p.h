@@ -1,5 +1,4 @@
-#ifndef LOCATIONBAR_P_H
-#define LOCATIONBAR_P_H
+#pragma once
 
 #include <QToolButton>
 #include <QScrollArea>
@@ -26,5 +25,3 @@ private:
     QUrl m_currentPath;   // currently active path
     PathButton* m_toggledBtn;
 };
-
-#endif // LOCATIONBAR_P_H

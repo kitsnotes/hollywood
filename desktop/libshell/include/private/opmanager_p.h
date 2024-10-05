@@ -1,5 +1,4 @@
-#ifndef OPERATIONMANAGER_H
-#define OPERATIONMANAGER_H
+#pragma once
 
 #include <QObject>
 #include <QUuid>
@@ -45,5 +44,3 @@ private:
     QMap<QUuid, operation_t> m_threads;
     OperationManagerDialog *m_dialog;
 };
-
-#endif // OPERATIONMANAGER_H

@@ -1,5 +1,4 @@
-#ifndef EXECUTOR_P_H
-#define EXECUTOR_P_H
+#pragma once
 
 #include <QProcess>
 
@@ -19,5 +18,3 @@ private:
     QStringList m_arguments;
     LSDesktopEntry *m_dt = nullptr;
 };
-
-#endif // EXECUTOR_P_H

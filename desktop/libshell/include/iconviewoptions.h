@@ -1,5 +1,4 @@
-#ifndef ICONVIEWOPTIONS_H
-#define ICONVIEWOPTIONS_H
+#pragma once
 
 #include "libshell_int.h"
 
@@ -14,5 +13,3 @@ public:
 private:
     LSIconViewOptionsPrivate *p;
 };
-
-#endif // ICONVIEWOPTIONS_H

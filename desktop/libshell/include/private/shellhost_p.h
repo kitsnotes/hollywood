@@ -1,5 +1,4 @@
-#ifndef SHELLHOST_P_H
-#define SHELLHOST_P_H
+#pragma once
 
 #include <QWidget>
 #include <QAction>
@@ -80,5 +79,3 @@ private:
     QModelIndex m_currentFsRoot;
     bool m_clipboardHasPaste = false;
 };
-
-#endif // SHELLHOST_P_H

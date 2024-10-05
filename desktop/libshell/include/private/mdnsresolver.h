@@ -1,5 +1,4 @@
-#ifndef MDNSRESOLVER_H
-#define MDNSRESOLVER_H
+#pragma once
 
 #ifdef USE_DNSSD
 #include <QtCore/QObject>
@@ -40,4 +39,3 @@ private:
     int bonjourPort;
 };
 #endif // USE_DNSSD
-#endif // MDNSRESOLVER_H

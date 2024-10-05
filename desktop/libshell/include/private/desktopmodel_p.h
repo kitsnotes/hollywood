@@ -1,6 +1,4 @@
-#ifndef DESKTOPMODEL_P_H
-#define DESKTOPMODEL_P_H
-
+#pragma once
 #include <QAbstractListModel>
 #include <QFile>
 #include <QDir>
@@ -31,5 +29,3 @@ private:
     bool m_readOnly = true;
     QList<LSFSNode*> m_files;
 };
-
-#endif // DESKTOPMODEL_P_H

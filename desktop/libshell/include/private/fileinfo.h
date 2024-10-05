@@ -1,5 +1,4 @@
-#ifndef LSEXTENDEDFILEINFO_H
-#define LSEXTENDEDFILEINFO_H
+#pragma once
 
 #include <QFileInfo>
 #include <QIcon>
@@ -39,5 +38,3 @@ public:
 private:
     QFileInfo m_info;
 };
-
-#endif // LSEXTENDEDFILEINFO_H

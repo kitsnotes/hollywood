@@ -2,8 +2,7 @@
 // (C) 2024 Originull Software
 // SPDX-License-Identifier: LGPL-2.1
 
-#ifndef LSEXECUTOR_H
-#define LSEXECUTOR_H
+#pragma once
 
 #include <QObject>
 #include "libshell_int.h"
@@ -29,5 +28,3 @@ signals:
 private:
     ExecutorPrivate *p;
 };
-
-#endif // LSEXECUTOR_H

@@ -1,5 +1,4 @@
-#ifndef APPMODEL_P_H
-#define APPMODEL_P_H
+#pragma once
 
 #include <QList>
 
@@ -16,5 +15,3 @@ private:
     QList<LSDesktopEntry *> m_allApps;
     ApplicationModel *d;
 };
-
-#endif // APPMODEL_P_H

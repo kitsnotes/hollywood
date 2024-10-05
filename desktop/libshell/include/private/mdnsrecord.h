@@ -1,5 +1,4 @@
-#ifndef MDNSRECORD_H
-#define MDNSRECORD_H
+#pragma once
 #ifdef USE_DNSSD
 #include <QtCore/QMetaType>
 #include <QtCore/QString>
@@ -29,4 +28,3 @@ public:
 
 Q_DECLARE_METATYPE(LSMDNSRecord)
 #endif // USE_DNSSD
-#endif // MDNSRECORD_H

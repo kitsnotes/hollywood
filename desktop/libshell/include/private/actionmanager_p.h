@@ -1,5 +1,4 @@
-#ifndef ACTIONMANAGER_P_H
-#define ACTIONMANAGER_P_H
+#pragma once
 
 #include <QAction>
 #include <QActionGroup>
@@ -63,5 +62,3 @@ private:
     QActionGroup *m_sortcol;
     QActionGroup *m_sortorder;
 };
-
-#endif // ACTIONMANAGER_P_H

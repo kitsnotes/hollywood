@@ -1,5 +1,4 @@
-#ifndef GETINFODIALOG_H
-#define GETINFODIALOG_H
+#pragma once
 
 #include <hollywood/preferencedialog.h>
 #include "libshell_int.h"
@@ -17,4 +16,3 @@ private:
     LSGetInfoDialogPrivate *p;
 };
 
-#endif // GETINFODIALOG_H

@@ -1,5 +1,4 @@
-#ifndef LIBSHELL_INT_H
-#define LIBSHELL_INT_H
+#pragma once
 
 #include <QDebug>
 
@@ -123,4 +122,3 @@ namespace HWShell
 #  define LIBSHELL_EXPORT Q_DECL_IMPORT
 #endif
 
-#endif // LIBSHELL_INT_H

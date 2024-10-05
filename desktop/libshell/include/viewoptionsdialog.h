@@ -1,5 +1,4 @@
-#ifndef VIEWOPTIONSDIALOG_H
-#define VIEWOPTIONSDIALOG_H
+#pragma once
 
 #include "libshell_int.h"
 
@@ -20,5 +19,3 @@ private:
 private:
     LSViewOptionsDialogPrivate *p;
 };
-
-#endif // VIEWOPTIONSDIALOG_H

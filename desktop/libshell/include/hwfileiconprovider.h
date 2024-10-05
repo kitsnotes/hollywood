@@ -1,5 +1,4 @@
-#ifndef HWFILEICONPROVIDER_H
-#define HWFILEICONPROVIDER_H
+#pragma once
 
 #include <QFileIconProvider>
 #include <QObject>
@@ -12,5 +11,3 @@ public:
     QIcon icon(QFileIconProvider::IconType type) const override;
     QIcon icon(const QFileInfo &info) const override;
 };
-
-#endif // HWFILEICONPROVIDER_H

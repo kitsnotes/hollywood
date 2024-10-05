@@ -1,5 +1,4 @@
-#ifndef BONJOURSERVICEBROWSER_H
-#define BONJOURSERVICEBROWSER_H
+#pragma once
 
 #ifdef USE_DNSSD
 #include <QtCore/QObject>
@@ -46,4 +45,3 @@ private:
 };
 
 #endif // USE_DNSSD
-#endif // LSMDNSBROWSER_H

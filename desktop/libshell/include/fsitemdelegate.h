@@ -1,5 +1,4 @@
-#ifndef LSFSITEMDELEGATE_H
-#define LSFSITEMDELEGATE_H
+#pragma once
 
 #include <QStyledItemDelegate>
 #include <QObject>
@@ -29,5 +28,3 @@ private:
 private:
     LSFSItemDelegatePrivate *p;
 };
-
-#endif // LSFSITEMDELEGATE_H

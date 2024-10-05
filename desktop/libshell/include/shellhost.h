@@ -1,5 +1,4 @@
-#ifndef SHELLHOST_H
-#define SHELLHOST_H
+#pragma once
 
 #include "libshell_int.h"
 
@@ -113,5 +112,3 @@ private:
 private:
     LSEmbeddedShellHostPrivate *p;
 };
-
-#endif // SHELLHOST_H

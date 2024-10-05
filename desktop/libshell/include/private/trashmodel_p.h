@@ -2,8 +2,7 @@
 // (C) 2024 Originull Software
 // SPDX-License-Identifier: LGPL-2.1
 
-#ifndef TRASHMODEL_P_H
-#define TRASHMODEL_P_H
+#pragma once
 
 #include "trashmodel.h"
 #include <private/qabstractitemmodel_p.h>
@@ -146,6 +145,4 @@ public:
 
 };
 Q_DECLARE_TYPEINFO(LSTrashModelPrivate::Fetching, Q_MOVABLE_TYPE);
-
-#endif
 

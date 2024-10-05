@@ -2,8 +2,7 @@
 // (C) 2024 Originull Software
 // SPDX-License-Identifier: LGPL-2.1
 
-#ifndef FILESYSTEMMODEL_H
-#define FILESYSTEMMODEL_H
+#pragma once
 
 #include <QtCore/qabstractitemmodel.h>
 #include <QtCore/qpair.h>
@@ -163,7 +162,4 @@ inline QString LSFSModel::fileName(const QModelIndex &aindex) const
 { return aindex.data(Qt::DisplayRole).toString(); }
 inline QIcon LSFSModel::fileIcon(const QModelIndex &aindex) const
 { return qvariant_cast<QIcon>(aindex.data(Qt::DecorationRole)); }
-
-
-#endif // FILESYSTEMMODEL_H
 

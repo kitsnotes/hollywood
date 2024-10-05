@@ -2,9 +2,8 @@
 // (C) 2024 Originull Software
 // SPDX-License-Identifier: LGPL-2.1
 
-#ifndef LSINODEITEM_H
-#define LSINODEITEM_H
-
+#pragma once
+#pragma once
 #include "libshell_int.h"
 #include <sys/xattr.h>
 
@@ -68,5 +67,3 @@ public:
     int  m_dirtyChildrenIndex = -1;
 
 };
-
-#endif // LSINODEITEM_H

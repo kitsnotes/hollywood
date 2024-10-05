@@ -4,9 +4,7 @@
 # Available under the 3-clause BSD license
 # See the LICENSE file for full details
 */
-
-#ifndef UDISKS2_H
-#define UDISKS2_H
+#pragma once
 
 #include <QStringList>
 
@@ -43,5 +41,3 @@ public:
     static const QString ejectDevice(QString path);
     static const QStringList getDevices();
 };
-
-#endif // UDISKS2_H

@@ -1,7 +1,6 @@
 /* This implementation was based upon libqtxdg */
 
-#ifndef LSDESKTOPENTRY_H
-#define LSDESKTOPENTRY_H
+#pragma once
 
 #include "libshell_int.h"
 
@@ -59,5 +58,3 @@ private:
 };
 
 typedef QList<LSDesktopEntry> LSDesktopEntryList;
-
-#endif // LSDESKTOPENTRY_H

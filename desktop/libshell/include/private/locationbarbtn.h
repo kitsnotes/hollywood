@@ -16,9 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
-
-#ifndef FM_PATHBAR_P_H
-#define FM_PATHBAR_P_H
+#pragma once
 
 #include <QToolButton>
 #include <QStyle>
@@ -76,4 +74,3 @@ private:
     std::string name_;
 };
 
-#endif // FM_PATHBAR_P_H

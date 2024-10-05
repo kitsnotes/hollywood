@@ -9,8 +9,7 @@
 ** This file, like the rest of libshell is licensed under LGPL 2.1.
 ****************************************************************************/
 
-#ifndef FILEINFOGATHERER_H
-#define FILEINFOGATHERER_H
+#pragma once
 
 #include <qthread.h>
 #include <qmutex.h>
@@ -88,6 +87,3 @@ private:
     HWFileIconProvider defaultProvider;
     bool m_watching = true;
 };
-
-#endif // FILEINFOGATHERER_H
-

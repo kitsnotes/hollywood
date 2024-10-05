@@ -1,5 +1,4 @@
-#ifndef LSPLACEVIEW_H
-#define LSPLACEVIEW_H
+#pragma once
 
 #include <QTreeView>
 
@@ -9,5 +8,3 @@ class LSPlaceView : public QTreeView
 public:
     explicit LSPlaceView(QWidget *parent = nullptr);
 };
-
-#endif // LSPLACEVIEW_H

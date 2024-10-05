@@ -1,5 +1,4 @@
-#ifndef COLUMNPREVIEW_P_H
-#define COLUMNPREVIEW_P_H
+#pragma once
 
 #include <QWidget>
 #include <QtCore/QVariant>
@@ -35,5 +34,3 @@ private:
     QTableWidget *m_fileProperties;
     QSpacerItem *m_endSpacer;
 };
-
-#endif // COLUMNPREVIEW_P_H

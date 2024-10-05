@@ -1,5 +1,4 @@
-#ifndef MIMEAPPS_P_H
-#define MIMEAPPS_P_H
+#pragma once
 
 #include <QList>
 #include <QMutex>
@@ -24,5 +23,3 @@ private:
     QString m_defaultsFile;
     QString m_localMimeCacheFile;
 };
-
-#endif // MIMEAPPS_P_H

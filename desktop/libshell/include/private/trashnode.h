@@ -2,8 +2,7 @@
 // (C) 2024 Originull Software
 // SPDX-License-Identifier: LGPL-2.1
 
-#ifndef TRASHNODE_H
-#define TRASHNODE_H
+#pragma once
 
 #include <sys/xattr.h>
 
@@ -56,5 +55,3 @@ public:
     QDateTime m_deleteTime;
     QString m_origPath;
 };
-
-#endif // TRASHNODE_H

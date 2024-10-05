@@ -4,8 +4,7 @@
  *
  */
 
-#ifndef LOCATIONBAR_H
-#define LOCATIONBAR_H
+#pragma once
 
 #include "libshell_int.h"
 #include <QWidget>
@@ -53,5 +52,3 @@ private:
 private:
     LSLocationBarPrivate *p;
 };
-
-#endif // LOCATIONBAR_H

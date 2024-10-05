@@ -2,8 +2,7 @@
 // (C) 2024 Originull Software
 // SPDX-License-Identifier: LGPL-2.1
 
-#ifndef COMMONFUNCTIONS_P_H
-#define COMMONFUNCTIONS_P_H
+#pragma once
 
 #include <QObject>
 
@@ -25,5 +24,3 @@ private:
     QUndoStack *m_undo = nullptr;
     OperationManager *m_opmgr = nullptr;
 };
-
-#endif // COMMONFUNCTIONS_P_H

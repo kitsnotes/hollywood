@@ -1,5 +1,4 @@
-#ifndef OPMANAGER_H
-#define OPMANAGER_H
+#pragma once
 
 #include <QObject>
 #include "libshell_int.h"
@@ -55,5 +54,3 @@ signals:
 private:
     OperationManagerPrivate *p;
 };
-
-#endif // OPMANAGER_H

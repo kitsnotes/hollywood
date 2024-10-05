@@ -1,5 +1,4 @@
-#ifndef LSDIRECTORIES_H
-#define LSDIRECTORIES_H
+#pragma once
 
 #include "libshell_int.h"
 
@@ -37,5 +36,3 @@ public:
     static void cleanAndAddPostfix(QStringList &dirs, const QString& postfix);
     static QString userDirFallback(LSDirectories::UserDirectory dir);
 };
-
-#endif // LSDIRECTORIES_H

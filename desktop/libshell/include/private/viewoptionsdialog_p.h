@@ -2,8 +2,7 @@
 // (C) 2024 Originull Software
 // SPDX-License-Identifier: LGPL-2.1
 
-#ifndef VIEWOPTIONSDIALOG_P_H
-#define VIEWOPTIONSDIALOG_P_H
+#pragma once
 
 #include <QVBoxLayout>
 #include "libshell_int.h"
@@ -24,4 +23,3 @@ private:
     QWidget *m_current = nullptr;
 };
 
-#endif // VIEWOPTIONSDIALOG_P_H

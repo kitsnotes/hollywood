@@ -4,8 +4,7 @@
 // (C) 2009 Nokia Corporation
 // SPDX-License-Identifier: LGPL-2.1
 
-#ifndef FILEOPERATION_H
-#define FILEOPERATION_H
+#pragma once
 
 #include <QtCore/QObject>
 #include <QUrl>
@@ -256,5 +255,3 @@ private:
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(FileOperation::CopyFlags)
-
-#endif

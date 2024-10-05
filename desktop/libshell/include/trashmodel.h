@@ -2,8 +2,7 @@
 // (C) 2024 Originull Software
 // SPDX-License-Identifier: LGPL-2.1
 
-#ifndef TRASHMODEL_H
-#define TRASHMODEL_H
+#pragma once
 
 #include <QtCore/qabstractitemmodel.h>
 #include <QtCore/qpair.h>
@@ -135,6 +134,3 @@ private:
     Q_PRIVATE_SLOT(d_func(), void _hwtrash_resolvedName(const QString &fileName, const QString &resolvedName))
 
 };
-
-#endif // TRASHMODEL_H
-

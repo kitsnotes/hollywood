@@ -2,8 +2,7 @@
 // (C) 2024 Originull Software
 // SPDX-License-Identifier: LGPL-2.1
 
-#ifndef FSITEMDELEGATE_P_H
-#define FSITEMDELEGATE_P_H
+#pragma once
 
 #include <QSize>
 #include <QColor>
@@ -25,5 +24,3 @@ private:
     bool m_shadowHidden;
     mutable bool m_hasEditor;
 };
-
-#endif // FSITEMDELEGATE_P_H

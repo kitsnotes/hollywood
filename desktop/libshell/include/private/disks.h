@@ -5,8 +5,7 @@
 # See the LICENSE file for full details
 */
 
-#ifndef DISKS_H
-#define DISKS_H
+#pragma once
 
 #include <QObject>
 #include <QMap>
@@ -83,5 +82,3 @@ private slots:
     void handleDeviceErrorMessage(QString devicePath, QString deviceError);
     void checkUDisks();
 };
-
-#endif // DISKS_H

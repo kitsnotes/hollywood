@@ -1,5 +1,4 @@
-#ifndef LSOPPROGRESSWIDGET_H
-#define LSOPPROGRESSWIDGET_H
+#pragma once
 
 #include <QWidget>
 #include <QtCore/QVariant>
@@ -48,5 +47,3 @@ private:
     QLabel *m_error = nullptr;
     QDialogButtonBox *m_errorButtons = nullptr;
 };
-
-#endif // LSOPPROGRESSWIDGET_H

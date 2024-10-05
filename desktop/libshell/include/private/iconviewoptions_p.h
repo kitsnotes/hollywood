@@ -1,5 +1,4 @@
-#ifndef ICONVIEWOPTIONS_P_H
-#define ICONVIEWOPTIONS_P_H
+#pragma once
 
 #include <QListView>
 #include <QComboBox>
@@ -31,5 +30,3 @@ private:
     QCheckBox *m_itemInfo;
     QPushButton *m_setDefaults;
 };
-
-#endif // ICONVIEWOPTIONS_P_H

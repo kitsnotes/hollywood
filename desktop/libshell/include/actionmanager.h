@@ -2,8 +2,7 @@
 // (C) 2024 Originull Software
 // SPDX-License-Identifier: LGPL-2.1
 
-#ifndef LSACTIONMANAGER_H
-#define LSACTIONMANAGER_H
+#pragma once
 
 #include "libshell_int.h"
 
@@ -26,5 +25,3 @@ private:
 private:
     LSActionManagerPrivate *d;
 };
-
-#endif // LSACTIONMANAGER_H

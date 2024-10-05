@@ -2,8 +2,7 @@
 // (C) 2024 Originull Software
 // SPDX-License-Identifier: LGPL-2.1
 
-#ifndef TRASHINFOGATHERER_H
-#define TRASHINFOGATHERER_H
+#pragma once
 
 #include <qthread.h>
 #include <qmutex.h>
@@ -79,6 +78,3 @@ private:
     HWFileIconProvider defaultProvider;
     bool m_watching = true;
 };
-
-#endif // TRASHINFOGATHERER_H
-

@@ -1,5 +1,4 @@
-#ifndef SHELLUNDO_P_H
-#define SHELLUNDO_P_H
+#pragma once
 
 #include <QUndoCommand>
 #include <QUrl>
@@ -20,5 +19,3 @@ private:
     QString m_newName;
     QFileSystemWatcher *m_watch;
 };
-
-#endif // SHELLUNDO_P_H

@@ -2,8 +2,7 @@
 // (C) 2024 Originull Software
 // SPDX-License-Identifier: LGPL-2.1
 
-#ifndef LSCOLUMNPREVIEWWIDGET_H
-#define LSCOLUMNPREVIEWWIDGET_H
+#pragma once
 
 #include <QWidget>
 
@@ -21,5 +20,3 @@ signals:
 private:
     LSColumnPreviewPrivate *p;
 };
-
-#endif // LSCOLUMNPREVIEWWIDGET_H

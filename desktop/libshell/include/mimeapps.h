@@ -1,9 +1,8 @@
-#ifndef LSMIMEAPPS_H
-#define LSMIMEAPPS_H
 /*
  * derived from the implementation in libqtxdg
  * Copyright (C) 2018  Luís Pereira <luis.artur.pereira@gmail.com>
  */
+#pragma once
 
 #include <QObject>
 
@@ -42,5 +41,3 @@ private slots:
 private:
     LSMimeApplicationsPrivate *p;
 };
-
-#endif // LSMIMEAPPS_H
