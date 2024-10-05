@@ -158,7 +158,7 @@ void LSCommonFunctions::showGetInfoDialog(const QUrl &target, QWidget *parent)
     auto dlg = new LSGetInfoDialog(target, parent);
     connect(dlg, &QDialog::accepted, dlg, &QWidget::deleteLater);
     connect(dlg, &QDialog::rejected, dlg, &QWidget::deleteLater);
-    dlg->open();
+    dlg->show();
 }
 
 QUrl LSCommonFunctions::newFolder(const QUrl &target, QWidget *parent)

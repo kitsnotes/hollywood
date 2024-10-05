@@ -3,7 +3,7 @@ include(../include/global.pri)
 QT += core-private network widgets-private svg dbus
 
 CONFIG(debug, debug|release) {
-    TARGET = shelld-$${HOLLYWOOD_APIVERSION}
+    TARGET = shell-$${HOLLYWOOD_APIVERSION}
 } else {
     TARGET = shell-$${HOLLYWOOD_APIVERSION}
 }
@@ -34,6 +34,7 @@ SOURCES += \
     src/core/shellundo.cc \
     src/core/udisks2.cc \
     src/dialogs/getinfodialog.cc \
+    src/dialogs/getinfowidgets.cc \
     src/dialogs/viewoptionsdialog.cc \
     src/filesystem/fileinfo.cc \
     src/filesystem/fileinfogatherer.cc \
@@ -71,6 +72,7 @@ HEADERS += \
     include/private/columnpreview_p.h \
     include/private/desktopmodel_p.h \
     include/private/disks.h \
+    include/private/getinfowidgets_p.h \
     include/private/opmanager_p.h \
     include/private/shellundo_p.h \
     include/private/udisks2.h \

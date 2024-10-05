@@ -368,6 +368,20 @@ void DesktopWindow::viewOptionsClosed()
     saveViewOptions();
 }
 
+void DesktopWindow::getInfoRequested()
+{
+    if(m_view->selectionModel()->selectedIndexes().count() == 1)
+    {
+        // show a dialog for our one file
+        auto url = QUrl(m_model->url(m_view->selectionModel()->selectedIndexes().first()));
+        LSCommonFunctions::instance()->showGetInfoDialog(url, this);
+    }
+    else
+    {
+        // multiple selection info requested
+    }
+}
+
 void DesktopWindow::canUndoChanged()
 {
     bool canundo = LSCommonFunctions::instance()->undoStack()->canUndo();
@@ -619,19 +633,20 @@ void DesktopWindow::setupMenuBar()
     menu_File->addMenu(menu_Open_With);
     menu_Open_With->addAction(shellAction(HWShell::ACT_FILE_OPEN_WITH));
     menu_File->addAction(shellAction(HWShell::ACT_FILE_GET_INFO));
+    connect(shellAction(HWShell::ACT_FILE_GET_INFO), &QAction::triggered, this, &DesktopWindow::getInfoRequested);
     menu_File->addAction(shellAction(HWShell::ACT_FILE_RENAME));
-    connect(shellAction(HWShell::ACT_FILE_RENAME), &QAction::toggled, this, &DesktopWindow::rename);
+    connect(shellAction(HWShell::ACT_FILE_RENAME), &QAction::triggered, this, &DesktopWindow::rename);
     menu_File->addAction(shellAction(HWShell::ACT_FILE_ARCHIVE));
-    connect(shellAction(HWShell::ACT_FILE_ARCHIVE), &QAction::toggled, this, &DesktopWindow::archive);
+    connect(shellAction(HWShell::ACT_FILE_ARCHIVE), &QAction::triggered, this, &DesktopWindow::archive);
     menu_File->addSeparator();
     menu_File->addAction(shellAction(HWShell::ACT_FILE_TRASH));
-    connect(shellAction(HWShell::ACT_FILE_TRASH), &QAction::toggled, this, &DesktopWindow::trash);
+    connect(shellAction(HWShell::ACT_FILE_TRASH), &QAction::triggered, this, &DesktopWindow::trash);
     //menu_File->addAction(shellAction(HWShell::ACT_FILE_EJECT));
     menu_Edit->addAction(shellAction(HWShell::ACT_EDIT_UNDO));
-    connect(shellAction(HWShell::ACT_EDIT_UNDO), &QAction::toggled,
+    connect(shellAction(HWShell::ACT_EDIT_UNDO), &QAction::triggered,
             LSCommonFunctions::instance()->undoStack(), &QUndoStack::undo);
     menu_Edit->addAction(shellAction(HWShell::ACT_EDIT_REDO));
-    connect(shellAction(HWShell::ACT_EDIT_REDO), &QAction::toggled,
+    connect(shellAction(HWShell::ACT_EDIT_REDO), &QAction::triggered,
             LSCommonFunctions::instance()->undoStack(), &QUndoStack::redo);
     shellAction(HWShell::ACT_EDIT_UNDO)->setEnabled(false);
     shellAction(HWShell::ACT_EDIT_REDO)->setEnabled(false);

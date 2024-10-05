@@ -32,6 +32,7 @@ private slots:
     void trash();
     void viewOptionsChanged();
     void viewOptionsClosed();
+    void getInfoRequested();
 private:
     void setupActions();
     void setupMenuBar();

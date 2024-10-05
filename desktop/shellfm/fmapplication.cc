@@ -323,7 +323,7 @@ int main(int argc, char *argv[])
     p.addHelpOption();
     p.addVersionOption();
 
-#ifndef QT_DEBUG
+//#ifndef QT_DEBUG
     if(!a.checkSocket())
         return 0;
     a.createDBusInterfaces();
@@ -341,9 +341,9 @@ int main(int argc, char *argv[])
             a.createDesktop();
         });
     }
-#else
-    a.newFileWindow();
-#endif
+//#else
+//    a.newFileWindow();
+//#endif
     // required so sub-processes do not get qt-shell
     qputenv("QT_WAYLAND_SHELL_INTEGRATION", "xdg-shell");
     return a.exec();

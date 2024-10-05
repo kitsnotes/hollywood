@@ -1,5 +1,8 @@
-#ifndef GETINFODIALOG_P_H
-#define GETINFODIALOG_P_H
+// Hollywood Shell Library
+// (C) 2024 Originull Software
+// SPDX-License-Identifier: LGPL-2.1
+
+#pragma once
 
 #include <QUrl>
 #include <QComboBox>
@@ -13,58 +16,34 @@
 #include <sys/stat.h>
 #include <QTreeView>
 
-#include "hwfileiconprovider.h"
-
 class LSMimeApplications;
+class HWFileIconProvider;
 class LSGetInfoDialog;
+class LSGeneralInfoWidget;
+class LSPermissionsAclWidget;
+class LSDesktopEntryInfoWidget;
+
 class LSGetInfoDialogPrivate
 {
     friend class LSGetInfoDialog;
-    LSGetInfoDialogPrivate(LSGetInfoDialog *parent);
+    friend class LSGeneralInfoWidget;
+    friend class LSPermissionsAclWidget;
+    friend class LSDesktopEntryInfoWidget;
+
+    LSGetInfoDialogPrivate(const QUrl &target, LSGetInfoDialog *parent);
     ~LSGetInfoDialogPrivate() = default;
     LSGetInfoDialog *d;
-    QFrame *makeLine();
+    bool isDesktop() const;
+    QString targetFile() const;
+    QFrame *makeLine(QWidget *parent);
 
-    QUrl m_target;
-    LSMimeApplications *m_mime;
-    HWFileIconProvider *m_icons;
+    QString m_target;
+    LSMimeApplications *m_mime = nullptr;
+    HWFileIconProvider *m_icons = nullptr;
     bool m_init = true;
     ino_t m_inode;
 
-    QWidget *m_info;
-    QLabel *m_pixmap;
-    QLineEdit *m_filename;
-    QLabel *m_fileinfo;
-    QLabel *m_filesize;
-    QLabel *m_mimetype;
-
-    QFormLayout *m_labels;
-    QFrame *m_beforeOpenWithLine;
-    QLabel *m_openwithlabel;
-    QComboBox *m_openwith;
-
-    QLabel *m_location;
-    QLabel *m_disksize;
-    QLabel *m_ctime;
-    QLabel *m_mtime;
-    QLabel *m_atime;
-
-    QWidget *m_perms;
-    QComboBox *m_user;
-    QComboBox *m_group;
-
-    QCheckBox *m_ur;
-    QCheckBox *m_uw;
-    QCheckBox *m_ux;
-    QCheckBox *m_gr;
-    QCheckBox *m_gw;
-    QCheckBox *m_gx;
-    QCheckBox *m_or;
-    QCheckBox *m_ow;
-    QCheckBox *m_ox;
-
-    QTreeView *m_acl;
-
+    LSDesktopEntryInfoWidget *m_desktop = nullptr;
+    LSGeneralInfoWidget *m_info = nullptr;
+    LSPermissionsAclWidget *m_perms = nullptr;
 };
-
-#endif // GETINFODIALOG_P_H
