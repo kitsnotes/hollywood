@@ -1,5 +1,4 @@
-#ifndef ABOUTWINDOW_H
-#define ABOUTWINDOW_H
+#pragma once
 
 #include <QDialog>
 #include <QtCore/QVariant>
@@ -90,4 +89,20 @@ private:
 
     QList<CpuID> m_cpus;
 };
-#endif // ABOUTWINDOW_H
+
+class AboutApplication : public QApplication
+{
+    Q_OBJECT
+public:
+    AboutApplication(int &argc, char **argv);
+    static AboutApplication* instance() { return static_cast<AboutApplication*>(QApplication::instance()); }
+    void showWindow();
+    bool openSettingsApplet(const QString &settings);
+public slots:
+    void openSystemReport();
+    void aboutMyRights();
+    void launchHelp();
+    void openSoftwareUpdate();
+private:
+    AboutWindow *m_about = nullptr;
+};

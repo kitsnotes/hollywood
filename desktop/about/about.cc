@@ -9,6 +9,8 @@
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
 #include <QMenuBar>
+#include <QApplication>
+#include <QDBusInterface>
 
 #include <unistd.h>
 #include <sys/utsname.h>
@@ -16,6 +18,8 @@
 #include <GLES3/gl3.h>
 
 #include "../sysmon/include/lscpu-arm.h"
+
+#include <hollywood/hollywood.h>
 
 AboutWindow::AboutWindow(QWidget *parent)
     : QDialog(parent)
@@ -38,11 +42,9 @@ AboutWindow::AboutWindow(QWidget *parent)
     renderer.render(&pd, r);
 
     setupUi();
-    QPixmap logo(60,60);
-    QPainter pmp(&logo);
-    renderer.load(QString(":/Logo"));
-    renderer.render(&pmp, QRect(0,0,60,60));
-    logo_icon->setPixmap(logo);
+    QPixmap orl(":/Logo");
+    orl = orl.scaledToWidth(60,Qt::SmoothTransformation);
+    logo_icon->setPixmap(orl);
 
     QFont font = hw_train->font();
     font.setPixelSize(35);
@@ -202,6 +204,13 @@ void AboutWindow::setupUi()
     m_help = new QPushButton(this);
     hl_buttons->addWidget(m_help);
     vl_main->addLayout(hl_buttons);
+
+    //connect(m_sysreport, &QPushButton::pressed, AboutApplication::instance(), &AboutApplication::openSystemReport);
+    connect(m_update, &QPushButton::pressed, AboutApplication::instance(), &AboutApplication::openSoftwareUpdate);
+    connect(m_rights, &QPushButton::pressed, AboutApplication::instance(), &AboutApplication::aboutMyRights);
+    connect(m_help, &QPushButton::pressed, AboutApplication::instance(), &AboutApplication::launchHelp);
+
+    m_sysreport->setEnabled(false);
 
     hollywood_label->setText(QCoreApplication::translate("AboutWindow", "Hollywood", nullptr));
     hw_train->setText(QCoreApplication::translate("AboutWindow", "Edge", nullptr));
@@ -491,18 +500,94 @@ void AboutWindow::populateGPU()
     m_gpu->setText(renderer);
 }
 
+bool AboutApplication::openSettingsApplet(const QString &settings)
+{
+    QDBusInterface ldb(HOLLYWOOD_SESSION_DBUS, HOLLYWOOD_SESSION_DBUSOBJ, HOLLYWOOD_SESSION_DBUSPATH);
+
+    if(!ldb.isValid())
+    {
+        qDebug() << QString("Could not call session DBUS interface. Command: openSettingsApplet");
+        return false;
+    }
+
+    QDBusMessage msg = ldb.call("openSettingsApplet", settings);
+
+    if(msg.arguments().isEmpty() || msg.arguments().constFirst().isNull())
+        return true;
+
+    auto response = msg.arguments().constFirst();
+
+    if(msg.arguments().isEmpty())
+        return true;
+
+    if(response.isNull())
+        return true;
+
+    if(response.toBool())
+        return true;
+
+    return false;
+}
+
+AboutApplication::AboutApplication(int &argc, char **argv)
+    : QApplication(argc, argv)
+{
+    setApplicationVersion("1.0");
+    setApplicationDisplayName(tr("About This Computer"));
+    setApplicationName(tr("hwabout"));
+    setOrganizationDomain("originull.org");
+    setOrganizationName(tr("Originull Software"));
+    setDesktopFileName("org.originull.about");
+    auto menubar = new QMenuBar(nullptr);
+    auto file = menubar->addMenu(tr("&File"));
+    auto save = file->addAction(tr("&Save System Report..."));
+    save->setShortcut(QKeySequence(QKeySequence::Save));
+    save->setDisabled(true);
+    file->addSeparator();
+    auto quit = file->addAction(tr("&Quit"));
+    quit->setShortcut(QKeySequence(QKeySequence::Quit));
+    connect(quit, &QAction::triggered, this, &AboutApplication::quit);
+    //menubar->addMenu(tr("&Window"));
+    auto help = menubar->addMenu(tr("&Help"));
+    auto contents = help->addAction(tr("Get System &Help"));
+    connect(contents, &QAction::triggered, this, &AboutApplication::launchHelp);
+    auto rights = help->addAction(tr("&About My Rights"));
+    connect(rights, &QAction::triggered, this, &AboutApplication::aboutMyRights);
+    menubar->setVisible(false);
+}
+
+void AboutApplication::showWindow()
+{
+    if(m_about == nullptr)
+        m_about = new AboutWindow();
+
+    m_about->show();
+}
+
+void AboutApplication::openSystemReport()
+{
+
+}
+
+void AboutApplication::aboutMyRights()
+{
+
+}
+
+void AboutApplication::launchHelp()
+{
+
+}
+
+void AboutApplication::openSoftwareUpdate()
+{
+    openSettingsApplet("org.originull.hwsettings");
+    quit();
+}
 
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
-    a.setApplicationVersion("1.0");
-
-    auto menubar = new QMenuBar(nullptr);
-    menubar->addMenu(a.tr("&File"));
-    menubar->addMenu(a.tr("&Window"));
-    menubar->addMenu(a.tr("&Help"));
-    menubar->setVisible(false);
-    AboutWindow w;
-    w.show();
+    AboutApplication a(argc, argv);
+    a.showWindow();
     return a.exec();
 }

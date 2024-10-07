@@ -1,6 +1,6 @@
 include(../include/global.pri)
 
-QT       += core gui widgets svg opengl
+QT       += core gui widgets svg opengl dbus
 TARGET = hwabout
 SOURCES += \
     about.cc
