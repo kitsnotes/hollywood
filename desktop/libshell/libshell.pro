@@ -32,7 +32,6 @@ SOURCES += \
     src/core/fileoperation.cc \
     src/core/opmanager.cc \
     src/core/shellundo.cc \
-    src/core/udisks2.cc \
     src/dialogs/getinfodialog.cc \
     src/dialogs/getinfowidgets.cc \
     src/dialogs/viewoptionsdialog.cc \
@@ -55,6 +54,7 @@ SOURCES += \
     src/widgets/locationbar.cpp \
     src/widgets/placeview.cc \
     src/widgets/progresswidget.cc \
+    src/widgets/sectionwidget.cc \
     src/widgets/shellhost.cc \
     src/xdg/directories.cc \
     src/xdg/desktopentry.cc \
@@ -74,8 +74,8 @@ HEADERS += \
     include/private/disks.h \
     include/private/getinfowidgets_p.h \
     include/private/opmanager_p.h \
+    include/private/sectionwidget.h \
     include/private/shellundo_p.h \
-    include/private/udisks2.h \
     include/private/fileinfogatherer_p.h \
     include/private/fileoperation.h \
     include/private/filesystemmodel_p.h \
