@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QToolBar>
+#include <QSpacerItem>
 
 class HWPreferenceDialog;
 class HWPreferenceDialogPrivate
@@ -13,7 +14,7 @@ private:
     ~HWPreferenceDialogPrivate() = default;
     HWPreferenceDialog *d;
     bool m_animate = true;
-    int m_index = 0;
+    int m_index = -1;
     QToolBar *m_tool = nullptr;
     QWidget *m_placeholder = nullptr;
     QWidget *m_current = nullptr;
@@ -21,7 +22,9 @@ private:
     QList<QWidget*> m_tabcontent;
     QAction *m_leftSpacerAct = nullptr;
     QAction *m_rightSpacerAct = nullptr;
+    QSpacerItem *m_spacer = nullptr;
 
+    bool m_first_animate = false;
 };
 
 #endif // PREFERENCEDIALOG_P_H

@@ -9,6 +9,7 @@ HWPreferenceDialogPrivate::HWPreferenceDialogPrivate(HWPreferenceDialog *parent)
     , m_tool(new QToolBar(parent))
     , m_placeholder(new QWidget(parent))
     , m_current(m_placeholder)
+    , m_spacer(new QSpacerItem(1,1,QSizePolicy::Minimum, QSizePolicy::MinimumExpanding))
 {
 
 }
@@ -25,6 +26,7 @@ HWPreferenceDialog::HWPreferenceDialog(QWidget *parent)
     setLayout(layout);
 
     layout->addWidget(p->m_tool);
+    layout->addSpacerItem(p->m_spacer);
     layout->addWidget(p->m_placeholder, 1);
     auto lspacer = new QWidget(p->m_tool);
     auto rspacer = new QWidget(p->m_tool);
@@ -86,6 +88,9 @@ void HWPreferenceDialog::setAnimated(bool animated)
 
 void HWPreferenceDialog::setCurrentIndex(int index)
 {
+    if(currentIndex() == index)
+        return;
+
     if(index > p->m_tabs.count()-1)
         return;
 
@@ -98,32 +103,41 @@ void HWPreferenceDialog::setCurrentIndex(int index)
     for(auto view : p->m_tabcontent)
         view->setVisible(false);
 
-    p->m_tabcontent[index]->setVisible(true);
-    if(p->m_animate)
+    if(p->m_animate && p->m_first_animate)
     {
         auto animation = new QPropertyAnimation(this, "size");
         QSize start = size();
-        auto wheight = p->m_tabcontent[index]->minimumHeight();
+        auto wheight = p->m_tabcontent[index]->minimumSizeHint().height();
         QSize end = QSize(width(), wheight+p->m_tool->height());
         animation->setStartValue(start);
         animation->setEndValue(end);
         animation->setDuration(190);
         animation->setEasingCurve(QEasingCurve::InOutQuad);
         animation->start(QAbstractAnimation::DeleteWhenStopped);
+        connect(animation, &QAbstractAnimation::finished, this, [index,this]() {
+            layout()->replaceWidget(p->m_current, p->m_tabcontent[index]);
+            p->m_current = p->m_tabcontent[index];
+            p->m_current->setVisible(true);
+            p->m_index = index;
+            p->m_tabs[index]->setChecked(true);
+            update();
+            emit currentIndexChanged(index);
+        });
     }
     else
     {
         auto wheight = p->m_tabcontent[index]->heightForWidth(width());
         QSize end = QSize(width(), wheight+p->m_tool->height());
         resize(end);
+        layout()->replaceWidget(p->m_current, p->m_tabcontent[index]);
+        p->m_current = p->m_tabcontent[index];
+        p->m_current->setVisible(true);
+        p->m_index = index;
+        p->m_tabs[index]->setChecked(true);
+        p->m_first_animate = true;
+        update();
+        emit currentIndexChanged(index);
     }
-
-    layout()->replaceWidget(p->m_current, p->m_tabcontent[index]);
-    p->m_current = p->m_tabcontent[index];
-    p->m_current->setVisible(true);
-    p->m_index = index;
-    p->m_tabs[index]->setChecked(true);
-    emit currentIndexChanged(index);
 }
 
 void HWPreferenceDialog::show()
@@ -151,6 +165,10 @@ void HWPreferenceDialog::tabActionTriggered()
     Q_ASSERT(senderObj);
 
     if(p->m_tabs.contains(senderObj))
-         setCurrentIndex(p->m_tabs.indexOf(senderObj));
-}
+    {
+        setCurrentIndex(p->m_tabs.indexOf(senderObj));
+        auto idx = p->m_tabs.indexOf(senderObj);
 
+        p->m_tabs[idx]->setChecked(true);
+    }
+}
