@@ -30,17 +30,19 @@
 class LSSectionWidget : public QWidget
 {
     Q_OBJECT
+public:
+    explicit LSSectionWidget(const QString & title = "", const int animationDuration = 100, QWidget* parent = nullptr, bool expanded = false);
+    void setContentLayout(QLayout & contentLayout);
+public slots:
+    void toggle(bool collapsed);
+    void toggleWithoutAnimation(bool collapsed);
 private:
     QGridLayout* mainLayout;
     QToolButton* toggleButton;
     QFrame* headerLine;
     QParallelAnimationGroup* toggleAnimation;
-    QScrollArea* contentArea;
+    QWidget* contentArea;
     int animationDuration;
-public slots:
-    void toggle(bool collapsed);
-public:
-    explicit LSSectionWidget(const QString & title = "", const int animationDuration = 100, QWidget* parent = nullptr);
-
-    void setContentLayout(QLayout & contentLayout);
+    int collapsedHeight;
+    int contentHeight;
 };

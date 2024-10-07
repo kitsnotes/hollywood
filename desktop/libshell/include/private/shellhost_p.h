@@ -1,3 +1,7 @@
+// Hollywood Shell Library
+// (C) 2024 Originull Software
+// SPDX-License-Identifier: LGPL-3.0-only
+
 #pragma once
 
 #include <QWidget>
@@ -16,6 +20,7 @@
 #include "shellhost.h"
 #include "trashmodel.h"
 
+class LSSectionWidget;
 class ApplicationModel;
 class LSLocationBar;
 class LSActionManager;
@@ -42,7 +47,10 @@ private:
     LSLocationBar *m_location = nullptr;
     QSplitter *m_mainSplitter;
 
+    LSSectionWidget* m_favoriteSection;
     LSPlaceView *m_treeFavorites;
+
+    LSSectionWidget* m_directorySection;
     LSPlaceView *m_treeDirs;
 
     QColumnView *m_filesColumn;

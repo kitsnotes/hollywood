@@ -22,6 +22,7 @@
 #include "commonfunctions.h"
 #include "opmanager.h"
 #include "trashmodel.h"
+#include "sectionwidget.h"
 
 #include <QUndoStack>
 #include <QDBusInterface>
@@ -35,6 +36,8 @@
 LSEmbeddedShellHostPrivate::LSEmbeddedShellHostPrivate(LSEmbeddedShellHost *parent, OperationManager *ops)
     : d(parent)
     , m_actions(new LSActionManager(parent))
+    , m_favoriteSection(new LSSectionWidget(QApplication::tr("Favorites"), 100, parent, false))
+    , m_directorySection(new LSSectionWidget(QApplication::tr("Filesystem"), 100, parent))
     , m_filesList(new QListView(parent))
     , m_model(new LSFSModel(parent))
     , m_apps(new ApplicationModel(parent))
@@ -70,34 +73,42 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
     p->m_mainSplitter->setStretchFactor(1, 15);
 
     /* Setup the places and directory trees (left side of p->m_mainSplitter) */
-    auto treewidget = new QWidget(this);
-    auto treelayout = new QVBoxLayout(treewidget);
-    treewidget->setLayout(treelayout);
-    treelayout->setContentsMargins(0,0,0,0);
-    p->m_treeFavorites = new LSPlaceView(this);
+    auto sidebarwidget = new QWidget(this);
+    auto treelayout = new QVBoxLayout(sidebarwidget);
+    sidebarwidget->setLayout(treelayout);
+    treelayout->setSpacing(3);
+    treelayout->setContentsMargins(0,10,0,0);
+    p->m_treeFavorites = new LSPlaceView(p->m_favoriteSection);
     p->m_treeFavorites->setObjectName(QString::fromUtf8("PlacesTree"));
     p->m_treeFavorites->setModel(p->m_placeModel);
-    p->m_treeFavorites->expandAll();
     p->m_treeFavorites->setDropIndicatorShown(true);
     p->m_treeFavorites->setDragDropMode(QAbstractItemView::DropOnly);
     connect(p->m_treeFavorites, &QTreeView::clicked, this, &LSEmbeddedShellHost::placeClicked);
 
-    treelayout->addWidget(p->m_treeFavorites);
+    auto *favlayout = new QVBoxLayout;
+    favlayout->setContentsMargins(2,1,0,0);
+    favlayout->setSpacing(0);
+    favlayout->setSizeConstraint(QVBoxLayout::SetFixedSize);
+    favlayout->addWidget(p->m_treeFavorites);
+    p->m_favoriteSection->setContentLayout(*favlayout);
+    treelayout->addWidget(p->m_favoriteSection);
+    p->m_favoriteSection->toggleWithoutAnimation(true);
 
     p->m_treeDirs = new LSPlaceView(this);
-    p->m_treeDirs->setVisible(false);
     p->m_treeDirs->setObjectName(QString::fromUtf8("DirectoryTree"));
     p->m_sidebarModel->setFilter(QDir::Dirs);
     p->m_treeDirs->setModel(p->m_sidebarModel);
-    for(int i = 1; i < p->m_sidebarModel->columnCount(); ++i)
-        p->m_treeDirs->setColumnHidden(i, true);
 
-    p->m_treeDirs->setHeaderHidden(true);
+    auto *dirlayout = new QVBoxLayout;
+    dirlayout->setContentsMargins(2,1,0,0);
+    dirlayout->setSpacing(0);
+    dirlayout->addWidget(p->m_treeDirs);
+    p->m_directorySection->setContentLayout(*dirlayout);
+    treelayout->addWidget(p->m_directorySection);
+    sidebarwidget->setMaximumWidth(155);
+    sidebarwidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 
-    treelayout->addWidget(p->m_treeDirs, true);
-    treewidget->setMaximumWidth(155);
-    treewidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-    treelayout->setSpacing(3);
+    treelayout->addSpacerItem(new QSpacerItem(1,1,QSizePolicy::Minimum,QSizePolicy::Expanding));
 
     /* setup tab bar host (right side of p->m_mainSplitter) */
     p->m_tabWndHost = new QWidget(p->m_mainSplitter);
@@ -155,7 +166,7 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
     p->m_filesColumn->setVisible(false);
     p->m_filesTable->setVisible(false);
     p->m_tabWndHostLayout->addWidget(p->m_filesList);
-    p->m_mainSplitter->addWidget(treewidget);
+    p->m_mainSplitter->addWidget(sidebarwidget);
     p->m_mainSplitter->addWidget(p->m_tabWndHost);
     p->m_viewOptions->attachIconView(p->m_filesList);
 

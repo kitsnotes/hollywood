@@ -5,15 +5,11 @@
 #include "placeview.h"
 
 LSPlaceView::LSPlaceView(QWidget *parent)
-    :QTreeView(parent)
+    :QListView(parent)
 {
-    setHeaderHidden(true);
-    setAnimated(true);
-    setRootIsDecorated(false);
     setEditTriggers(QAbstractItemView::NoEditTriggers);
     setSelectionMode(QAbstractItemView::SingleSelection);
-
-    setIndentation(3);
+    setUniformItemSizes(true);
     setIconSize(QSize(24, 24));
 
     setFrameShape(QFrame::NoFrame);
@@ -23,4 +19,27 @@ LSPlaceView::LSPlaceView(QWidget *parent)
     setPalette(p);
     viewport()->setAutoFillBackground(false);
     setMinimumHeight(100);
+}
+
+void LSPlaceView::setModel(QAbstractItemModel *model)
+{
+    QListView::setModel(model);
+    resizeDesired();
+}
+
+void LSPlaceView::dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QList<int> &roles)
+{
+    resizeDesired();
+    QListView::dataChanged(topLeft, bottomRight, roles);
+}
+
+void LSPlaceView::resizeDesired()
+{
+    int rows = model()->rowCount();
+    int size = rows * (iconSize().height()+4);
+    int gap = rows * spacing();
+    int dheight = rows+size+gap;
+    qDebug() << "desired height" << dheight;
+    setMinimumHeight(dheight);
+    setMaximumHeight(dheight);
 }

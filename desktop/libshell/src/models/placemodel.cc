@@ -5,17 +5,15 @@
 #include "placemodel.h"
 
 LSPlaceModel::LSPlaceModel(QObject *parent)
-    : QStandardItemModel(parent),
-      m_favoriteRoot(new QStandardItem(tr("Favorites")))
+    : QStandardItemModel(parent)
 {
-    m_favoriteRoot->setSelectable(false);
-    appendRow(m_favoriteRoot);
+    //appendRow(m_favoriteRoot);
     populateFavorites();
     for(PlaceItem pi : m_favorites)
     {
         QStandardItem *item = new QStandardItem(pi.displayIcon, pi.displayName);
         item->setData(pi.location);
-        m_favoriteRoot->appendRow(item);
+        appendRow(item);
         m_favoriteItems.append(item);
     }
 }

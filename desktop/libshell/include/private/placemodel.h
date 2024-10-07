@@ -33,7 +33,6 @@ private:
     PlaceItem constructLocalPlace(const QString &path);
     void populateFavorites();
 private:
-    QStandardItem *m_favoriteRoot;
     QList<PlaceItem> m_favorites;
     QList<QStandardItem*> m_favoriteItems;
 };

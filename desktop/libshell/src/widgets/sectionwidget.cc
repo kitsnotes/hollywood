@@ -22,13 +22,13 @@
 
 #include "sectionwidget.h"
 
-LSSectionWidget::LSSectionWidget(const QString & title, const int animationDuration, QWidget* parent)
+LSSectionWidget::LSSectionWidget(const QString & title, const int animationDuration, QWidget* parent, bool expanded)
     : QWidget(parent), animationDuration(animationDuration)
 {
     toggleButton = new QToolButton(this);
     headerLine = new QFrame(this);
     toggleAnimation = new QParallelAnimationGroup(this);
-    contentArea = new QScrollArea(this);
+    contentArea = new QWidget(this);
     mainLayout = new QGridLayout(this);
 
     toggleButton->setStyleSheet("QToolButton {border: none;}");
@@ -38,21 +38,22 @@ LSSectionWidget::LSSectionWidget(const QString & title, const int animationDurat
     toggleButton->setCheckable(true);
     toggleButton->setChecked(false);
 
-    headerLine->setFrameShape(QFrame::HLine);
-    headerLine->setFrameShadow(QFrame::Sunken);
+    headerLine->setFrameShape(QFrame::NoFrame);
     headerLine->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Maximum);
 
-    contentArea->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-
-    // start out collapsed
     contentArea->setMaximumHeight(0);
     contentArea->setMinimumHeight(0);
+    toggleButton->setArrowType(expanded ? Qt::ArrowType::DownArrow : Qt::ArrowType::RightArrow);
 
     // let the entire widget grow and shrink with its content
     toggleAnimation->addAnimation(new QPropertyAnimation(this, "minimumHeight"));
     toggleAnimation->addAnimation(new QPropertyAnimation(this, "maximumHeight"));
     toggleAnimation->addAnimation(new QPropertyAnimation(contentArea, "maximumHeight"));
 
+    connect(toggleAnimation, &QParallelAnimationGroup::finished, this, [this]() {
+        if(toggleButton->arrowType() == Qt::ArrowType::RightArrow)
+            contentArea->setEnabled(false);
+    });
     mainLayout->setVerticalSpacing(0);
     mainLayout->setContentsMargins(0, 0, 0, 0);
 
@@ -66,10 +67,34 @@ LSSectionWidget::LSSectionWidget(const QString & title, const int animationDurat
 }
 
 
-void LSSectionWidget::toggle(bool collapsed) {
+void LSSectionWidget::toggle(bool collapsed)
+{
     toggleButton->setArrowType(collapsed ? Qt::ArrowType::DownArrow : Qt::ArrowType::RightArrow);
     toggleAnimation->setDirection(collapsed ? QAbstractAnimation::Forward : QAbstractAnimation::Backward);
+    contentArea->setEnabled(true);
     toggleAnimation->start();
+}
+
+void LSSectionWidget::toggleWithoutAnimation(bool collapsed)
+{
+    toggleButton->setArrowType(collapsed ? Qt::ArrowType::DownArrow : Qt::ArrowType::RightArrow);
+    if(!collapsed)
+    {
+        setMinimumHeight(collapsedHeight);
+        setMaximumHeight(collapsedHeight);
+        contentArea->setMaximumHeight(0);
+    }
+    else
+    {
+        setMinimumHeight(collapsedHeight+contentHeight);
+        setMaximumHeight(collapsedHeight+contentHeight);
+        setMinimumHeight(contentHeight);
+        setMaximumHeight(contentHeight);
+        contentArea->setMaximumHeight(contentHeight);
+        disconnect(toggleButton, &QToolButton::toggled, this, &LSSectionWidget::toggle);
+        toggleButton->setChecked(true);
+        connect(toggleButton, &QToolButton::toggled, this, &LSSectionWidget::toggle);
+    }
 }
 
 
@@ -77,8 +102,8 @@ void LSSectionWidget::setContentLayout(QLayout & contentLayout)
 {
     delete contentArea->layout();
     contentArea->setLayout(&contentLayout);
-    const auto collapsedHeight = sizeHint().height() - contentArea->maximumHeight();
-    auto contentHeight = contentLayout.sizeHint().height();
+    collapsedHeight = sizeHint().height() - contentArea->maximumHeight();
+    contentHeight = contentLayout.sizeHint().height();
 
     for (int i = 0; i < toggleAnimation->animationCount() - 1; ++i)
     {
