@@ -8,6 +8,7 @@
 
 class QUndoStack;
 class OperationManager;
+class LSUDisks;
 class LSCommonFunctions;
 class LSCommonFunctionsPrivate : public QObject
 {
@@ -23,4 +24,5 @@ public slots:
 private:
     QUndoStack *m_undo = nullptr;
     OperationManager *m_opmgr = nullptr;
+    LSUDisks *m_udisks = nullptr;
 };

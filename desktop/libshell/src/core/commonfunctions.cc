@@ -15,6 +15,7 @@
 #include "getinfodialog.h"
 #include "opmanager.h"
 #include "shellundo_p.h"
+#include "disks.h"
 
 LSCommonFunctions *g_common_func = nullptr;
 
@@ -23,6 +24,7 @@ LSCommonFunctionsPrivate::LSCommonFunctionsPrivate(LSCommonFunctions *parent)
     , d(parent)
     , m_undo(new QUndoStack)
     , m_opmgr(new OperationManager)
+    , m_udisks(new LSUDisks)
 {
     connect(QApplication::clipboard(), &QClipboard::dataChanged,
             this, &LSCommonFunctionsPrivate::clipboardDataChanged);
@@ -221,6 +223,11 @@ OperationManager *LSCommonFunctions::operationManager()
 QUndoStack *LSCommonFunctions::undoStack()
 {
     return p->m_undo;
+}
+
+LSUDisks *LSCommonFunctions::udiskManager()
+{
+    return p->m_udisks;
 }
 
 void LSCommonFunctions::showErrorDialog(const QString &heading, const QString &msg, QWidget *parent, const QMessageBox::Icon icon)

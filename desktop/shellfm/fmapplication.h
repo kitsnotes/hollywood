@@ -7,6 +7,7 @@
 #include <QLocalServer>
 #include <hollywood/aboutdialog.h>
 
+#include "private/disks.h"
 #include "filewindow.h"
 
 class HWPrivateWaylandProtocol;
@@ -49,6 +50,12 @@ private slots:
     void settingsChanged();
     void canUndoChanged();
     void canRedoChanged();
+    void disksUpdated();
+    void mediaChanged(QString path, bool media);
+    void mountpointChanged(QString path, QString mountpoint);
+    void deviceErrorMessage(QString path, QString error);
+    void foundNewDevice(QString path);
+    void removedDevice(QString path);
 private:
     void checkForSessionStartup();
 private:

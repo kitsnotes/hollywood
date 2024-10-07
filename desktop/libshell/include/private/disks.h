@@ -12,13 +12,48 @@
 #include <QtDBus/QDBusInterface>
 #include <QtDBus/QDBusObjectPath>
 #include <QTimer>
+#include <QStringList>
 
-class Device : public QObject
+#define DBUS_SERVICE "org.freedesktop.UDisks2"
+#define DBUS_PATH "/org/freedesktop/UDisks2"
+#define DBUS_OBJMANAGER "org.freedesktop.DBus.ObjectManager"
+#define DBUS_PROPERTIES "org.freedesktop.DBus.Properties"
+#define DBUS_INTROSPECTABLE "org.freedesktop.DBus.Introspectable"
+#define DBUS_DEVICE_ADDED "InterfacesAdded"
+#define DBUS_DEVICE_REMOVED "InterfacesRemoved"
+
+class uDisks2
+{
+public:
+    static const QString getDrivePath(QString path);
+    static bool hasPartition(QString path);
+    static const QString getFileSystem(QString path);
+    static bool isRemovable(QString path);
+    static bool isOptical(QString path);
+    static bool hasMedia(QString path);
+    static bool hasOpticalMedia(QString path);
+    static bool canEject(QString path);
+    static bool opticalMediaIsBlank(QString path);
+    static int opticalDataTracks(QString path);
+    static int opticalAudioTracks(QString path);
+    static const QString getMountPointOptical(QString path);
+    static const QString getMountPoint(QString path);
+    static const QString getDeviceName(QString path);
+    static const QString getDeviceLabel(QString path);
+    static const QString mountDevice(QString path);
+    static const QString mountOptical(QString path);
+    static const QString unmountDevice(QString path);
+    static const QString unmountOptical(QString path);
+    static const QString ejectDevice(QString path);
+    static const QStringList getDevices();
+};
+
+class LSUDiskDevice : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit Device(const QString block, QObject *parent = Q_NULLPTR);
+    explicit LSUDiskDevice(const QString block, QObject *parent = Q_NULLPTR);
     QString name;
     QString path;
     QString dev;
@@ -52,13 +87,13 @@ private slots:
     void handlePropertiesChanged(const QString &interfaceType, const QMap<QString, QVariant> &changedProperties);
 };
 
-class Disks : public QObject
+class LSUDisks : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit Disks(QObject *parent = Q_NULLPTR);
-    QMap<QString, Device*> devices;
+    explicit LSUDisks(QObject *parent = Q_NULLPTR);
+    QMap<QString, LSUDiskDevice*> devices;
 
 private:
     QDBusInterface *dbus;

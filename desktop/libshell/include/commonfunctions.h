@@ -9,6 +9,7 @@
 #include <QMessageBox>
 
 class OperationManager;
+class LSUDisks;
 class LSCommonFunctionsPrivate;
 class LSCommonFunctions : public QObject
 {
@@ -25,6 +26,7 @@ public:
     QUrl newFolder(const QUrl &target, QWidget *parent = nullptr);
     OperationManager* operationManager();
     QUndoStack* undoStack();
+    LSUDisks* udiskManager();
 signals:
     void pasteAvailable(bool enable, uint count);
 private:

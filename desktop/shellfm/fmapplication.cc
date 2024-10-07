@@ -9,6 +9,7 @@
 #include "getinfodialog.h"
 #include "opmanager.h"
 #include "commonfunctions.h"
+#include "private/disks.h"
 
 FMApplication::FMApplication(int &argc, char **argv)
     :QApplication(argc, argv)
@@ -23,11 +24,29 @@ FMApplication::FMApplication(int &argc, char **argv)
     setOrganizationDomain(HOLLYWOOD_OS_DOMAIN);
     setWindowIcon(QIcon::fromTheme("system-file-manager"));
     setOrganizationName(HOLLYWOOD_OS_ORGNAME);
+
+    // Common Functions hold some singletons
+    // used in both shellfm and libshell
+    // calling ::instance will initialize these
     LSCommonFunctions::instance();
+
     connect(LSCommonFunctions::instance()->undoStack(), &QUndoStack::canUndoChanged, this, &FMApplication::canUndoChanged);
     connect(LSCommonFunctions::instance()->undoStack(), &QUndoStack::undoTextChanged, this, &FMApplication::canUndoChanged);
     connect(LSCommonFunctions::instance()->undoStack(), &QUndoStack::canRedoChanged, this, &FMApplication::canRedoChanged);
     connect(LSCommonFunctions::instance()->undoStack(), &QUndoStack::redoTextChanged, this, &FMApplication::canRedoChanged);
+
+    connect(LSCommonFunctions::instance()->udiskManager(), &LSUDisks::updatedDevices,
+            this, &FMApplication::disksUpdated);
+    connect(LSCommonFunctions::instance()->udiskManager(), &LSUDisks::mediaChanged,
+            this, &FMApplication::mediaChanged);
+    connect(LSCommonFunctions::instance()->udiskManager(), &LSUDisks::mountpointChanged,
+            this, &FMApplication::mountpointChanged);
+    connect(LSCommonFunctions::instance()->udiskManager(), &LSUDisks::deviceErrorMessage,
+            this, &FMApplication::deviceErrorMessage);
+    connect(LSCommonFunctions::instance()->udiskManager(), &LSUDisks::foundNewDevice,
+            this, &FMApplication::foundNewDevice);
+    connect(LSCommonFunctions::instance()->udiskManager(), &LSUDisks::removedDevice,
+            this, &FMApplication::removedDevice);
 }
 
 void FMApplication::aboutApplication()
@@ -156,6 +175,39 @@ void FMApplication::canUndoChanged()
 void FMApplication::canRedoChanged()
 {
     m_desktop->canRedoChanged();
+}
+
+void FMApplication::disksUpdated()
+{
+    qDebug() << "diskUpdated";
+}
+
+void FMApplication::mediaChanged(QString path, bool media)
+{
+    qDebug() << "mediaChanged" << path << media;
+    auto dev = LSCommonFunctions::instance()->udiskManager()->devices[path];
+    if(media == true)
+        dev->mount();
+}
+
+void FMApplication::mountpointChanged(QString path, QString mountpoint)
+{
+    qDebug() << "mountpointChanged" << path << mountpoint;
+}
+
+void FMApplication::deviceErrorMessage(QString path, QString error)
+{
+    qDebug() << "deviceErrorMessage" << path << error;
+}
+
+void FMApplication::foundNewDevice(QString path)
+{
+    qDebug() << "foundNewDevice" << path;
+}
+
+void FMApplication::removedDevice(QString path)
+{
+    qDebug() << "removedDevice" << path;
 }
 
 void FMApplication::createDBusInterfaces()
