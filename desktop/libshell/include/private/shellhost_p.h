@@ -50,6 +50,10 @@ private:
     LSSectionWidget* m_favoriteSection;
     LSPlaceView *m_treeFavorites;
 
+    LSSectionWidget* m_deviceSection;
+    LSPlaceView *m_treeDevices;
+    LSDiskModel *m_driveModel;
+
     LSSectionWidget* m_directorySection;
     LSPlaceView *m_treeDirs;
 
