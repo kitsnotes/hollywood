@@ -1,6 +1,6 @@
 // Hollywood Shell Library
 // (C) 2024 Originull Software
-// SPDX-License-Identifier: LGPL-2.1
+// SPDX-License-Identifier: LGPL-3.0-only
 
 #include "getinfowidgets_p.h"
 #include "getinfodialog_p.h"
@@ -9,17 +9,18 @@
 #include "hwfileiconprovider.h"
 #include "mimeapps.h"
 #include "desktopentry.h"
-#include "hwfileiconprovider.h"
+#include "sectionwidget.h"
+#include "commonfunctions.h"
+#include "disks.h"
 
 #include <QVBoxLayout>
 #include <QGroupBox>
 #include <QLabel>
 #include <QApplication>
 #include <QMimeDatabase>
-
+#include <sys/statvfs.h>
 #include <pwd.h>
 #include <grp.h>
-
 
 LSGeneralInfoWidget::LSGeneralInfoWidget(LSGetInfoDialogPrivate *parent)
     : QWidget(parent->d)
@@ -61,6 +62,43 @@ LSGeneralInfoWidget::LSGeneralInfoWidget(LSGetInfoDialogPrivate *parent)
     auto l_ct = new QLabel(QApplication::tr("Created:"), this);
     auto l_mod = new QLabel(QApplication::tr("Modified:"), this);
     auto l_at = new QLabel(QApplication::tr("Accessed:"), this);
+
+    if(p->m_target.startsWith("/dev/"))
+    {
+        // we are supplied a /dev link ....
+        auto dev =
+            LSCommonFunctions::instance()->udiskManager()->
+            deviceForDevPath(p->m_target);
+        if(dev)
+            m_mountDevice = dev;
+    }
+    else
+    {
+        auto dev =
+            LSCommonFunctions::instance()->udiskManager()->
+            deviceForMountpath(p->m_target);
+
+        if(dev)
+            m_mountDevice = dev;
+    }
+
+    if(m_mountDevice)
+    {
+        l_loc->setText(QApplication::tr("Mount Point:"));
+        l_mt->setText(QApplication::tr("UNIX Device:"));
+        l_ds->setText(QApplication::tr("Filesystem type:"));
+        l_ct->setText(QApplication::tr("Capacity:"));
+        l_mod->setText(QApplication::tr("Available:"));
+        l_at->setText(QApplication::tr("Used:"));
+        if(m_mountDevice->mountpoint().isEmpty())
+        {
+            l_mod->setVisible(false);
+            l_at->setVisible(false);
+            m_mtime->setVisible(false);
+            m_atime->setVisible(false);
+        }
+    }
+
     m_openwithlabel->setText(QApplication::tr("Open with:"));
 
     m_labels->setLabelAlignment(Qt::AlignRight);
@@ -71,57 +109,100 @@ LSGeneralInfoWidget::LSGeneralInfoWidget(LSGetInfoDialogPrivate *parent)
     m_labels->addRow(l_mod, m_mtime);
     m_labels->addRow(l_at, m_atime);
     m_beforeOpenWithLine = p->makeLine(this);
-    m_labels->setWidget(m_labels->rowCount(), QFormLayout::SpanningRole, m_beforeOpenWithLine);
+    m_labels->setWidget(m_labels->rowCount(),
+                        QFormLayout::SpanningRole,
+                        m_beforeOpenWithLine);
     m_labels->addRow(m_openwithlabel, m_openwith);
 
     vb_main->addLayout(hl_files);
     vb_main->addWidget(p->makeLine(this));
     vb_main->addLayout(m_labels);
     vb_main->addItem(new QSpacerItem(1,1,QSizePolicy::Fixed,QSizePolicy::MinimumExpanding));
+
+    QMimeDatabase m;
+    auto mime = m.mimeTypeForFile(p->m_target);
+    if(mime.name() == "inode/directory"
+        || m_mountDevice)
+        disableOpenWith();
 }
 
 void LSGeneralInfoWidget::reloadInfo(struct stat sb)
 {
-    QFileInfo f(p->m_target);
-    auto pm = p->m_icons->icon(f);
-    auto pixmap = pm.pixmap(64,64);
-    pixmap = pixmap.scaled(40,40);
-    m_pixmap->setPixmap(pixmap);
-    m_filename->setText(f.fileName());
-
     QLocale l;
-    auto filesize = l.formattedDataSize(sb.st_size).replace(' ', '\n');
-    m_filesize->setText(filesize);
+    QFileInfo f(p->m_target);
+    if(m_mountDevice == nullptr)
+    {
+        auto pm = p->m_icons->icon(f);
+        auto pixmap = pm.pixmap(64,64);
+        pixmap = pixmap.scaled(40,40);
+        m_pixmap->setPixmap(pixmap);
+        m_filename->setText(f.fileName());
 
-    auto disk_size = sb.st_blksize * sb.st_blocks;
-    m_disksize->setText(l.formattedDataSize(disk_size));
+        auto filesize = l.formattedDataSize(sb.st_size).replace(' ', '\n');
+        m_filesize->setText(filesize);
 
-    QMimeDatabase m;
-    auto mime = m.mimeTypeForFile(p->m_target);
-    m_fileinfo->setText(mime.comment());
-    m_mimetype->setText(mime.name());
-    m_location->setText(f.canonicalPath());
+        auto disk_size = sb.st_blksize * sb.st_blocks;
+        m_disksize->setText(l.formattedDataSize(disk_size));
 
-    if(mime.name() == "inode/directory")
-        disableOpenWith();
+        QMimeDatabase m;
+        auto mime = m.mimeTypeForFile(p->m_target);
+        m_fileinfo->setText(mime.comment());
+        m_mimetype->setText(mime.name());
+        m_location->setText(f.canonicalPath());
 
-    QDateTime ctime = QDateTime::fromSecsSinceEpoch(sb.st_ctim.tv_sec);
-    QDateTime mtime = QDateTime::fromSecsSinceEpoch(sb.st_mtim.tv_sec);
-    QDateTime atime = QDateTime::fromSecsSinceEpoch(sb.st_atim.tv_sec);
-    m_ctime->setText(l.toString(ctime));
-    m_mtime->setText(l.toString(mtime));
-    m_atime->setText(l.toString(atime));
+        QDateTime ctime = QDateTime::fromSecsSinceEpoch(sb.st_ctim.tv_sec);
+        QDateTime mtime = QDateTime::fromSecsSinceEpoch(sb.st_mtim.tv_sec);
+        QDateTime atime = QDateTime::fromSecsSinceEpoch(sb.st_atim.tv_sec);
+        m_ctime->setText(l.toString(ctime));
+        m_mtime->setText(l.toString(mtime));
+        m_atime->setText(l.toString(atime));
 
-    auto def = p->m_mime->defaultApp(mime.name());
-    auto apps = p->m_mime->apps(mime.name());
+        auto def = p->m_mime->defaultApp(mime.name());
+        auto apps = p->m_mime->apps(mime.name());
 
-    if(def)
-        m_openwith->addItem(def->icon(), def->value("Name").toString());
+        if(def)
+            m_openwith->addItem(def->icon(), def->value("Name").toString());
 
-    for(auto a : apps)
-        m_openwith->addItem(a->icon(), a->value("Name").toString());
-
-
+        for(auto a : apps)
+            m_openwith->addItem(a->icon(), a->value("Name").toString());
+    }
+    else
+    {
+        auto pm = m_mountDevice->icon();
+        auto pixmap = pm.pixmap(64,64);
+        pixmap = pixmap.scaled(40,40);
+        m_pixmap->setPixmap(pixmap);
+        m_filename->setText(m_mountDevice->name());
+        m_filename->setEnabled(false);
+        m_location->setText(m_mountDevice->mountpoint());
+        m_fileinfo->setText(m_mountDevice->currentMediaDisplayName());
+        m_mimetype->setText(m_mountDevice->devDevice());
+        m_disksize->setText(m_mountDevice->filesystem());
+        if(!m_mountDevice->mountpoint().isEmpty())
+        {
+            // if we are mounted we can use statvfs
+            // to get our info:
+            struct statvfs stat;
+            if(statvfs(m_mountDevice->mountpoint().toUtf8().data(), &stat) == 0)
+            {
+                unsigned long totalSize = stat.f_frsize * stat.f_blocks;
+                unsigned long usedSize = stat.f_frsize * (stat.f_blocks - stat.f_bfree);
+                unsigned long freeSize = stat.f_frsize * stat.f_bfree;
+                // capacity
+                m_ctime->setText(l.formattedDataSize(totalSize));
+                // available (free)
+                m_mtime->setText(l.formattedDataSize(freeSize));
+                // used
+                m_atime->setText(l.formattedDataSize(usedSize));
+            }
+        }
+        else
+        {
+            // not mounted - see what else we can do (comes in bytes)
+            auto size = m_mountDevice->blockDeviceSize();
+            m_ctime->setText(l.formattedDataSize(size));
+        }
+    }
 }
 
 void LSGeneralInfoWidget::disableOpenWith()
@@ -301,6 +382,8 @@ LSDesktopEntryInfoWidget::LSDesktopEntryInfoWidget(LSGetInfoDialogPrivate *paren
     , m_term(new QCheckBox(this))
     , m_dbus(new QCheckBox(this))
     , m_gpu(new QCheckBox(this))
+    , m_sectionMimeTypes(new LSSectionWidget(tr("MIME Types"), 100, this))
+    , m_mimeTypes(new QListWidget(m_sectionMimeTypes))
     , p(parent)
 {
     m_icon->setMinimumSize(48,48);
@@ -322,9 +405,15 @@ LSDesktopEntryInfoWidget::LSDesktopEntryInfoWidget(LSGetInfoDialogPrivate *paren
     m_term->setText(tr("Launch in terminal"));
     m_dbus->setText(tr("Activate with DBus"));
     m_gpu->setText(tr("Start on discrete GPU"));
+
     auto toplayout = new QHBoxLayout;
     toplayout->addWidget(m_icon);
     toplayout->addWidget(m_name);
+
+    auto mimelayout = new QVBoxLayout(this);
+    mimelayout->addWidget(m_mimeTypes);
+    m_sectionMimeTypes->setContentLayout(*mimelayout);
+
     form->addRow(p->makeLine(this));
     form->addRow(commentLabel, m_comment);
     form->addRow(programLabel, m_program);
@@ -337,6 +426,7 @@ LSDesktopEntryInfoWidget::LSDesktopEntryInfoWidget(LSGetInfoDialogPrivate *paren
 
     mainLayout->addLayout(toplayout);
     mainLayout->addLayout(form);
+    mainLayout->addWidget(m_sectionMimeTypes);
     /* QDialogButtonBox* buttonBar = new QDialogButtonBox(QDialogButtonBox::Apply | QDialogButtonBox::SaveAs, this);
     mainLayout->addWidget(buttonBar, 6, 0, 1, 2); */
 }

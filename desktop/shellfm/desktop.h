@@ -30,6 +30,7 @@ private slots:
     void rename();
     void archive();
     void trash();
+    void eject();
     void viewOptionsChanged();
     void viewOptionsClosed();
     void getInfoRequested();

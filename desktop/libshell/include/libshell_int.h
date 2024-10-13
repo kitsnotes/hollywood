@@ -78,6 +78,7 @@ namespace HWShell
         ACT_FILE_RENAME,
         ACT_FILE_ARCHIVE,
         ACT_FILE_TRASH,
+        ACT_FILE_EJECT,
         ACT_FILE_OPEN,
         ACT_FILE_OPEN_WITH,
         ACT_EDIT_UNDO,

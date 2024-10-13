@@ -13,33 +13,17 @@ LSPlaceView::LSPlaceView(QWidget *parent)
     setIconSize(QSize(24, 24));
 
     setFrameShape(QFrame::NoFrame);
+    setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
     QPalette p = palette();
     p.setColor(QPalette::Base, QColor(Qt::transparent));
     p.setColor(QPalette::Text, p.color(QPalette::WindowText));
     setPalette(p);
     viewport()->setAutoFillBackground(false);
-    setMinimumHeight(100);
+    setMinimumWidth(450);
 }
 
 void LSPlaceView::setModel(QAbstractItemModel *model)
 {
     QListView::setModel(model);
-    resizeDesired();
-}
-
-void LSPlaceView::dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QList<int> &roles)
-{
-    resizeDesired();
-    QListView::dataChanged(topLeft, bottomRight, roles);
-}
-
-void LSPlaceView::resizeDesired()
-{
-    int rows = model()->rowCount();
-    int size = rows * (iconSize().height()+4);
-    int gap = rows * spacing();
-    int dheight = rows+size+gap;
-    qDebug() << "desired height" << dheight;
-    setMinimumHeight(dheight);
-    setMaximumHeight(dheight);
+    updateGeometry();
 }

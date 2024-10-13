@@ -193,11 +193,50 @@ void DesktopWindow::trash()
 
 }
 
+void DesktopWindow::eject()
+{
+    for(auto idx : m_view->selectionModel()->selectedIndexes())
+    {
+        if(m_model->isDevice(idx))
+        {
+            auto device = m_model->deviceForIndex(idx);
+            if(device)
+            {
+                qDebug() << "ejecting" << device->name();
+                device->eject();
+            }
+        }
+    }
+}
+
 void DesktopWindow::activated(const QModelIndex &idx)
 {
     if(m_model->isTrash(idx))
     {
         FMApplication::instance()->newFileWindow(QUrl("trash://"));
+        return;
+    }
+
+    if(m_model->isDevice(idx))
+    {
+        auto dev = m_model->deviceForIndex(idx);
+        if(dev)
+        {
+            auto mountpoint = dev->mountpoint();
+            if(!mountpoint.isEmpty())
+            {
+                FMApplication::instance()->newFileWindow(QUrl::fromLocalFile(mountpoint));
+                return;
+            }
+            else
+            {
+                // not mounted - handle that...
+                // this is a device that is unmounted...
+                // mount it up:
+                dev->mount();
+                // TODO: check for mount, and open it:
+            }
+        }
         return;
     }
 
@@ -235,12 +274,14 @@ void DesktopWindow::contextMenu(const QPoint &pos)
         bool single = m_view->selectionModel()->selectedIndexes().count() == 1 ? true : false;
         bool isdesktop = false;
         bool istrash = false;
+        bool isdisk = false;
 
         if(single)
         {
             auto idx = m_view->selectionModel()->selectedIndexes().first();
             isdesktop = m_model->isDesktop(idx);
             istrash = m_model->isTrash(idx);
+            isdisk = m_model->isDevice(idx);
         }
 
         QModelIndex pointIndex = m_view->indexAt(pos);
@@ -264,8 +305,10 @@ void DesktopWindow::contextMenu(const QPoint &pos)
         menu->addAction(shellAction(HWShell::ACT_FILE_RENAME));
         menu->addAction(shellAction(HWShell::ACT_EDIT_COPY));
         menu->addSeparator();
-        if(!istrash)
+        if(!istrash && !isdisk)
             menu->addAction(shellAction(HWShell::ACT_FILE_TRASH));
+        if(isdisk)
+            menu->addAction(shellAction(HWShell::ACT_FILE_EJECT));
         menu->addSeparator();
         menu->addAction(shellAction(HWShell::ACT_FILE_GET_INFO));
 
@@ -308,12 +351,22 @@ void DesktopWindow::updateSingleActionStrings()
                                                          .arg(tr("&Open")).arg(desktop->value("Name").toString()));
         shellAction(HWShell::ACT_FILE_OPEN)->setIcon(desktop->icon());
     }
+    if(m_model->isDevice(idx))
+    {
+        auto dev = m_model->deviceForIndex(idx);
+        if(dev)
+        {
+            if(dev->canEject())
+                shellAction(HWShell::ACT_FILE_EJECT)->setText(tr("&Eject %1").arg(dev->name()));
+        }
+    }
 }
 
 void DesktopWindow::resetActionStrings()
 {
     shellAction(HWShell::ACT_FILE_OPEN)->setText(tr("&Open"));
     shellAction(HWShell::ACT_FILE_OPEN)->setIcon(QIcon());
+    shellAction(HWShell::ACT_FILE_EJECT)->setText(tr("&Eject"));
 }
 
 void DesktopWindow::disableFileActions()
@@ -321,6 +374,7 @@ void DesktopWindow::disableFileActions()
     shellAction(HWShell::ACT_FILE_OPEN)->setEnabled(false);
     shellAction(HWShell::ACT_FILE_ARCHIVE)->setEnabled(false);
     shellAction(HWShell::ACT_FILE_GET_INFO)->setEnabled(false);
+    shellAction(HWShell::ACT_FILE_EJECT)->setEnabled(false);
     shellAction(HWShell::ACT_FILE_RENAME)->setEnabled(false);
     shellAction(HWShell::ACT_FILE_TRASH)->setEnabled(false);
     shellAction(HWShell::ACT_EDIT_CUT)->setEnabled(false);
@@ -330,13 +384,38 @@ void DesktopWindow::disableFileActions()
 
 void DesktopWindow::enableFileActions()
 {
+    bool enablefile = false;
+    bool enabledevice = false;
+    for(auto idx : m_view->selectionModel()->selectedIndexes())
+    {
+        if(m_model->isDevice(idx))
+            enabledevice = true;
+
+        auto fileinfo = m_model->fileInfo(idx);
+        if(fileinfo == QFileInfo())
+            continue;
+        else
+            enablefile = true;
+
+        if(enablefile && enabledevice)
+            break;
+    }
+
     shellAction(HWShell::ACT_FILE_OPEN)->setEnabled(true);
-    shellAction(HWShell::ACT_FILE_ARCHIVE)->setEnabled(true);
+    shellAction(HWShell::ACT_EDIT_COPY)->setEnabled(true);
     shellAction(HWShell::ACT_FILE_GET_INFO)->setEnabled(true);
     shellAction(HWShell::ACT_FILE_RENAME)->setEnabled(true);
-    shellAction(HWShell::ACT_FILE_TRASH)->setEnabled(true);
-    shellAction(HWShell::ACT_EDIT_COPY)->setEnabled(true);
-    menu_Open_With->setEnabled(true);
+
+    if(enablefile)
+    {
+        shellAction(HWShell::ACT_FILE_TRASH)->setEnabled(true);
+        shellAction(HWShell::ACT_FILE_ARCHIVE)->setEnabled(true);
+        if(m_view->selectionModel()->selectedIndexes().count() == 1)
+            menu_Open_With->setEnabled(true);
+    }
+
+    if(enabledevice)
+        shellAction(HWShell::ACT_FILE_EJECT)->setEnabled(true);
 }
 
 void DesktopWindow::viewActionsToggled(bool toggle)
@@ -373,6 +452,24 @@ void DesktopWindow::getInfoRequested()
     if(m_view->selectionModel()->selectedIndexes().count() == 1)
     {
         // show a dialog for our one file
+        if(m_model->isDevice(m_view->selectionModel()->selectedIndexes().first()))
+        {
+            auto dev = m_model->deviceForIndex(m_view->selectionModel()->selectedIndexes().first());
+            if(dev)
+            {
+                auto mountpoint = dev->mountpoint();
+                if(!mountpoint.isEmpty())
+                    LSCommonFunctions::instance()->showGetInfoDialog(QUrl::fromLocalFile(mountpoint), this);
+                else
+                {
+                    // not mounted - get the /dev item
+                    auto devpath = dev->devDevice();
+                    LSCommonFunctions::instance()->showGetInfoDialog(QUrl::fromLocalFile(devpath), this);
+                }
+            }
+            return;
+        }
+
         auto url = QUrl(m_model->url(m_view->selectionModel()->selectedIndexes().first()));
         LSCommonFunctions::instance()->showGetInfoDialog(url, this);
     }
@@ -641,7 +738,8 @@ void DesktopWindow::setupMenuBar()
     menu_File->addSeparator();
     menu_File->addAction(shellAction(HWShell::ACT_FILE_TRASH));
     connect(shellAction(HWShell::ACT_FILE_TRASH), &QAction::triggered, this, &DesktopWindow::trash);
-    //menu_File->addAction(shellAction(HWShell::ACT_FILE_EJECT));
+    menu_File->addAction(shellAction(HWShell::ACT_FILE_EJECT));
+    connect(shellAction(HWShell::ACT_FILE_EJECT), &QAction::triggered, this, &DesktopWindow::eject);
     menu_Edit->addAction(shellAction(HWShell::ACT_EDIT_UNDO));
     connect(shellAction(HWShell::ACT_EDIT_UNDO), &QAction::triggered,
             LSCommonFunctions::instance()->undoStack(), &QUndoStack::undo);

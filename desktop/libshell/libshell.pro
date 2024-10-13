@@ -46,6 +46,7 @@ SOURCES += \
     src/mdns/mdnsresolver.cc \
     src/models/appmodel.cc \
     src/models/desktopmodel.cc \
+    src/models/diskmodel.cc \
     src/models/filesystemmodel.cc \
     src/models/placemodel.cc \
     src/models/trashmodel.cc \
@@ -73,6 +74,7 @@ HEADERS += \
     include/private/desktopmodel_p.h \
     include/private/disks.h \
     include/private/getinfowidgets_p.h \
+    include/private/lsdiskmodel.h \
     include/private/opmanager_p.h \
     include/private/sectionwidget.h \
     include/private/shellundo_p.h \

@@ -6,7 +6,6 @@
 */
 
 #include "disks.h"
-#include "udisks2.h"
 #include <QDebug>
 #include <QTimer>
 #include <QtDBus/QDBusConnection>
@@ -16,41 +15,126 @@
 #include <QDBusReply>
 #include <QDBusInterface>
 #include <QXmlStreamReader>
-#include <QDebug>
 #include <QProcess>
 #include <QFile>
 #include <QTextStream>
+#include <QIcon>
+#include <QMap>
+
+static QMap<QString,QString> g_device_names{{"thumb", "USB Flash Drive"},
+                                            {"flash", "Flash Card"},
+                                            {"flash_cf", "CompactFlash Card"},
+                                            {"flash_ms", "MemoryStick"},
+                                            {"flash_sm", "SmartMedia"},
+                                            {"flash_sd", "Secure Digital"},
+                                            {"flash_sdhc", "Secure Digital (High Capacity)"},
+                                            {"flash_sdxc", "Secure Digital (eXtended Capacity)"},
+                                            {"flash_sdio", "Secure Digital (Input Output)"},
+                                            {"flash_sd_combo", "Secure Digital (IO/Storage Combo)"},
+                                            {"flash_mmc", "MultiMediaCard"},
+                                            {"floppy", "Floppy Disk"},
+                                            {"floppy_zip", "Zip Disk"},
+                                            {"floppy_jaz", "Jaz Disk"},
+                                            {"optical", "Optical Disc"},
+                                            {"optical_cd", "CD-ROM"},
+                                            {"optical_cd_r", "CD-R"},
+                                            {"optical_cd_rw", "CD-RW"},
+                                            {"optical_dvd", "DVD-ROM"},
+                                            {"optical_dvd_r", "DVD-R"},
+                                            {"optical_dvd_rw", "DVD-RW"},
+                                            {"optical_dvd_ram", "DVD-RAM"},
+                                            {"optical_dvd_plus_r", "DVD+R"},
+                                            {"optical_dvd_plus_rw", "DVD+RW"},
+                                            {"optical_dvd_plus_r_dl", "DVD+R (Dual Layer)"},
+                                            {"optical_dvd_plus_rw_dl", "DVD+RW (Dual Layer)"},
+                                            {"optical_bd", "BD-ROM"},
+                                            {"optical_bd_r", "BD-R"},
+                                            {"optical_bd_re", "BD-RE"},
+                                            {"optical_hddvd", "HD-DVD"},
+                                            {"optical_hddvd_r", "HD-DVD (Recordable}"},
+                                            {"optical_hddvd_rw", "HD-DVD (Rewritable)"},
+                                            {"optical_mo", "Magneto Optical"},
+                                            {"optical_mrw", "Can read Mount Rainer media"},
+                                            {"optical_mrw_w", "Can write Mount Rainer media"}};
 
 LSUDiskDevice::LSUDiskDevice(const QString block, QObject *parent)
     : QObject(parent)
-    , path(block)
-    , isOptical(false)
-    , isRemovable(false)
-    , hasMedia(false)
-    , opticalDataTracks(0)
-    , opticalAudioTracks(0)
-    , isBlankDisc(false)
-    , hasPartition(false)
-    , dbus(0)
+    , m_dbus(nullptr)
+    , m_path(block)
+    , m_isOptical(false)
+    , m_removable(false)
+    , m_hasMedia(false)
+    , m_opticalDataTracks(0)
+    , m_opticalAudioTracks(0)
+    , m_isBlankDisc(false)
+    , m_hasPartition(false)
 {
     QDBusConnection system = QDBusConnection::systemBus();
-    dbus = new QDBusInterface(DBUS_SERVICE, path, QString("%1.Block").arg(DBUS_SERVICE), system, parent);
-    system.connect(dbus->service(), dbus->path(), DBUS_PROPERTIES, "PropertiesChanged", this, SLOT(handlePropertiesChanged(QString,QMap<QString,QVariant>)));
+    m_dbus = new QDBusInterface(DBUS_SERVICE, m_path, QString("%1.Block").arg(DBUS_SERVICE), system, parent);
+    system.connect(m_dbus->service(), m_dbus->path(), DBUS_PROPERTIES, "PropertiesChanged", this, SLOT(handlePropertiesChanged(QString,QMap<QString,QVariant>)));
     updateDeviceProperties();
+}
+
+bool LSUDiskDevice::isLoopDevice() const
+{
+    if(m_path.isEmpty())
+        return false;
+    QStringList pathparts = path().split("/");
+    auto devlst = pathparts.takeLast();
+    auto type = pathparts.takeLast();
+    if(type == "block_devices"
+        && devlst.startsWith("loop"))
+        return true;
+
+    return false;
+}
+
+QVariant LSUDiskDevice::queryDriveProperty(const QString &property) const
+{
+    QDBusInterface iface(DBUS_SERVICE,
+                         m_drive,
+                         QString("%1.Drive").arg(DBUS_SERVICE),
+                         QDBusConnection::systemBus());
+
+    if (!iface.isValid())
+        return QVariant();
+    return iface.property(property.toUtf8());
+}
+
+QVariant LSUDiskDevice::queryBlockProperty(const QString &property) const
+{
+    QDBusInterface iface(DBUS_SERVICE,
+                         m_path,
+                         QString("%1.Block").arg(DBUS_SERVICE),
+                         QDBusConnection::systemBus());
+
+    if (!iface.isValid())
+        return QVariant();
+    return iface.property(property.toUtf8());
+}
+
+QVariant LSUDiskDevice::queryPartitionProperty(const QString &property) const
+{
+    QDBusInterface iface(DBUS_SERVICE,
+                         m_path,
+                         QString("%1.Partition").arg(DBUS_SERVICE),
+                         QDBusConnection::systemBus());
+
+    if (!iface.isValid())
+        return QVariant();
+    return iface.property(property.toUtf8());
 }
 
 void LSUDiskDevice::mount()
 {
-    qDebug() << "mount?" << path << mountpoint;
-    if (!dbus->isValid() || !mountpoint.isEmpty()) { return; }
+    if (!m_dbus->isValid() || !m_mountpoint.isEmpty()) { return; }
     QString reply;
-    if (isOptical) {
-        reply = uDisks2::mountOptical(path);
-        qDebug() << "optical=" << uDisks2::getMountPointOptical(path);
+    if (m_isOptical) {
+        reply = mountOptical();
     }
-    else { reply = uDisks2::mountDevice(path); }
+    else { reply = mountDevice(); }
     if (!reply.isEmpty()) {
-        emit errorMessage(path, reply);
+        emit errorMessage(m_path, reply);
         return;
     }
     updateDeviceProperties();
@@ -58,68 +142,70 @@ void LSUDiskDevice::mount()
 
 void LSUDiskDevice::unmount()
 {
-    if (!dbus->isValid() || (mountpoint.isEmpty() && !isOptical)) { return; }
+    if (!m_dbus->isValid() || (m_mountpoint.isEmpty() && !m_isOptical)) { return; }
     QString reply;
-    if (isOptical) { reply = uDisks2::unmountOptical(path); }
-    else { reply = uDisks2::unmountDevice(path); }
+    if (m_isOptical) { reply = unmountOptical(); }
+    else { reply = unmountDevice(); }
     updateDeviceProperties();
-    if (!reply.isEmpty() || (!mountpoint.isEmpty())) {
-        if (reply.isEmpty()) { reply = QObject::tr("Failed to umount %1").arg(name); }
-        emit errorMessage(path, reply);
+    if (!reply.isEmpty() || (!m_mountpoint.isEmpty())) {
+        if (reply.isEmpty()) { reply = QObject::tr("Failed to umount %1").arg(m_name); }
+        emit errorMessage(m_path, reply);
         return;
     }
-    if (isOptical) { eject(); }
+    if (m_isOptical) { eject(); }
 }
 
 void LSUDiskDevice::eject()
 {
-    if (!dbus->isValid()) { return; }
-    QString reply = uDisks2::ejectDevice(drive);
+    if (!m_dbus->isValid()) { return; }
+    QString reply = ejectDevice();
     updateDeviceProperties();
     if (!reply.isEmpty()/* || hasMedia*/) {
-        if (reply.isEmpty()) { reply = QObject::tr("Failed to eject %1").arg(name); }
-        emit errorMessage(path, reply);
+        if (reply.isEmpty()) { reply = QObject::tr("Failed to eject %1").arg(m_name); }
+        emit errorMessage(m_path, reply);
     }
 }
 
 void LSUDiskDevice::updateDeviceProperties()
 {
-    if (!dbus->isValid()) { return; }
+    if (!m_dbus->isValid()) { return; }
 
-    bool hadMedia =  hasMedia;
-    QString lastMountpoint = mountpoint;
-    QString lastName = name;
+    bool hadMedia =  m_hasMedia;
+    QString lastMountpoint = m_mountpoint;
+    QString lastName = m_name;
 
-    drive = uDisks2::getDrivePath(path);
-    name = uDisks2::getDeviceLabel(path);
+    auto driveObj = queryBlockProperty("Drive");
+    QDBusObjectPath drive = driveObj.value<QDBusObjectPath>();
+    m_drive = drive.path();
+    m_name = queryBlockProperty("IdLabel").toString();
 
-    if (name.isEmpty()) { name = uDisks2::getDeviceName(drive); }
-    if (name.isEmpty()) { name = QObject::tr("Storage"); }
+    if (m_name.isEmpty()) { m_name = getDeviceName(); }
+    if (m_name.isEmpty()) { m_name = QObject::tr("Storage"); }
 
-    dev = path.split("/").takeLast();
-    isRemovable = uDisks2::isRemovable(drive);
-    filesystem = uDisks2::getFileSystem(path);
-    isOptical = uDisks2::isOptical(drive);
-    if (isOptical) {
-        mountpoint = uDisks2::getMountPointOptical(path);
-    } else {
-        mountpoint = uDisks2::getMountPoint(path);
-    }
-    hasMedia = uDisks2::hasMedia(drive);
-    opticalDataTracks = uDisks2::opticalDataTracks(drive);
-    opticalAudioTracks = uDisks2::opticalAudioTracks(drive);
-    isBlankDisc = uDisks2::opticalMediaIsBlank(drive);
-    hasPartition = uDisks2::hasPartition(path);
+    dev = m_path.split("/").takeLast();
+    m_removable = queryDriveProperty("Removable").toBool();
+    m_filesystem = queryBlockProperty("IdType").toString();
+    m_isOptical = isOptical();
+    m_mountpoint = getMountPoint();
 
-    if (hadMedia != hasMedia) {
-        emit mediaChanged(path, hasMedia);
-    }
-    if (lastMountpoint != mountpoint) {
-        emit mountpointChanged(path, mountpoint);
-    }
-    if (lastName != name) {
-        emit nameChanged(path, name);
-    }
+    m_hintIgnore = queryBlockProperty("HintIgnore").toBool();
+    m_hasMedia = queryDriveProperty("MediaAvailable").toBool();
+    m_currentMediaType = queryDriveProperty("Media").toString();
+    m_supportedMediaTypes = queryDriveProperty("MediaCompatibility").toStringList();
+    m_opticalDataTracks = queryDriveProperty("OpticalNumDataTracks").toInt();
+    m_opticalAudioTracks = queryDriveProperty("OpticalNumAudioTracks").toInt();
+    m_isBlankDisc = queryDriveProperty("OpticalBlank").toBool();
+    m_hasPartition = queryBlockProperty("Number").toUInt() >= 1 ? true : false;
+    m_blockSize = queryBlockProperty("Size").toULongLong();
+
+    if (hadMedia != m_hasMedia)
+        emit mediaChanged(m_path, m_hasMedia);
+
+    if (lastMountpoint != m_mountpoint)
+        emit mountpointChanged(m_path, m_mountpoint);
+
+    if (lastName != m_name)
+        emit nameChanged(m_path, m_name);
 }
 
 void LSUDiskDevice::handlePropertiesChanged(const QString &interfaceType, const QMap<QString, QVariant> &changedProperties)
@@ -127,6 +213,283 @@ void LSUDiskDevice::handlePropertiesChanged(const QString &interfaceType, const 
     Q_UNUSED(interfaceType)
     Q_UNUSED(changedProperties)
     updateDeviceProperties();
+}
+
+bool LSUDiskDevice::isOptical() const
+{
+    QDBusInterface iface(DBUS_SERVICE,
+                         m_drive,
+                         QString("%1.Drive").arg(DBUS_SERVICE),
+                         QDBusConnection::systemBus());
+    if (!iface.isValid()) { return false; }
+    QStringList compat = iface.property("MediaCompatibility").toStringList();
+    for (int i=0;i<compat.size();i++) {
+        if (compat.at(i).startsWith("optical_")) { return true; }
+    }
+    return false;
+}
+
+bool LSUDiskDevice::hasOpticalMedia()
+{
+    QDBusInterface iface(DBUS_SERVICE,
+                         m_drive,
+                         QString("%1.Drive").arg(DBUS_SERVICE),
+                         QDBusConnection::systemBus());
+    if (!iface.isValid()) { return false; }
+    QString type = iface.property("Media").toString();
+    if (type.startsWith("optical_")) { return true; }
+    return false;
+}
+
+bool LSUDiskDevice::canEject()
+{
+    return queryDriveProperty("Ejectable").toBool();
+}
+
+bool LSUDiskDevice::hasMedia() const { return m_hasMedia; }
+
+bool LSUDiskDevice::hasPartition() const { return m_hasPartition; }
+
+bool LSUDiskDevice::removable() const { return m_removable; }
+
+QString LSUDiskDevice::name() const
+{
+    if(isOptical() && isBlankDisc())
+    {
+        auto type = tr("Disc");
+        if(g_device_names.contains(m_currentMediaType))
+            type = g_device_names[m_currentMediaType];
+        return tr("Blank %1").arg(type);
+    }
+
+    return m_name;
+}
+
+QString LSUDiskDevice::path() const { return m_path; }
+
+QString LSUDiskDevice::mountpoint() const { return m_mountpoint; }
+
+QString LSUDiskDevice::filesystem() const { return m_filesystem; }
+
+QIcon LSUDiskDevice::icon() const
+{
+    // ISO 9660/UDF loop device ISO mount
+    if(isLoopDevice() && (filesystem() == "iso9660" || filesystem() == "udf"))
+        return QIcon::fromTheme("application-x-cd-image");
+
+    if(isOptical())
+    {
+        if(hasMedia())
+        {
+            if(isBlankDisc())
+                return QIcon::fromTheme("media-optical-recordable", QIcon::fromTheme("media-optical"));
+            else
+            {
+                // TODO: see if we have audio / video
+                return QIcon::fromTheme("media-optical-data");
+            }
+        }
+        else
+        {
+            // drive is empty - show a icon corresponding to the drive type
+            auto media = supportedMedia();
+            // icon preference: bluray/hddvd - dvd - cd
+            if(media.contains("optical_bd") || media.contains("optical_hddvd"))
+                return QIcon::fromTheme("media-optical-blu-ray", QIcon::fromTheme("media-optical"));
+
+            if(media.contains("optical_dvd"))
+                return QIcon::fromTheme("media-optical-dvd", QIcon::fromTheme("media-optical"));
+
+            return QIcon::fromTheme("media-optical");
+        }
+    }
+
+    if(mountpoint() == "/")
+        return QIcon::fromTheme("drive-harddisk-root",
+                                QIcon::fromTheme("drive-harddisk"));
+
+    if(removable())
+        return QIcon::fromTheme("drive-removable-media");
+
+    return QIcon::fromTheme("drive-harddisk");
+}
+
+bool LSUDiskDevice::hintIgnore() const { return m_hintIgnore; }
+
+bool LSUDiskDevice::isBlankDisc() const
+{
+    return m_isBlankDisc;
+}
+
+QString LSUDiskDevice::currentMedia() const
+{
+    return m_currentMediaType;
+}
+
+QStringList LSUDiskDevice::supportedMedia() const
+{
+    return m_supportedMediaTypes;
+}
+
+QString LSUDiskDevice::currentMediaDisplayName() const
+{
+    if(!m_currentMediaType.isEmpty())
+    {
+        if(g_device_names.contains(m_currentMediaType))
+            return g_device_names[m_currentMediaType];
+        else // we should never get to this point
+            return tr("Unknown UDisk2 Device Type");
+    }
+
+    if(mountpoint() == "/")
+        return tr("System Partition");
+
+    if(mountpoint() == "/efi" ||
+        mountpoint() == "/boot/efi")
+        return tr("EFI System Partition");
+
+    return m_currentMediaType;
+}
+
+QString LSUDiskDevice::devDevice() const
+{
+    if(m_path.isEmpty())
+        return QString();
+
+    auto dev = m_path.split("/").takeLast();
+    return QString("/dev/%1").arg(dev);
+}
+
+qulonglong LSUDiskDevice::blockDeviceSize() const
+{
+    return m_blockSize;
+}
+
+QString LSUDiskDevice::getMountPointOptical() const
+{
+    QString mountpoint;
+    QString device = m_path.split("/").takeLast();
+    if (device.isEmpty()) { return mountpoint; }
+    QFile mtabFile("/etc/mtab");
+    if (!mtabFile.open(QIODevice::ReadOnly)) { return QString(); }
+    QString mtab = mtabFile.readAll();
+    QStringList lines = mtab.split("\n");
+    QVector<QStringList> result;
+    for (int i=0;i<lines.size();++i) {
+        QString line = lines.at(i);
+        QStringList info = line.split(" ", Qt::SkipEmptyParts);
+        if (info.size()>=2) {
+            QString dev = info.at(0);
+            QString mnt = info.at(1);
+            if (dev == QString("/dev/%1").arg(device)) { mountpoint = mnt; }
+        }
+    }
+    mtabFile.close();
+    mountpoint.remove('\u0000');
+    return mountpoint;
+}
+
+QString LSUDiskDevice::getMountPoint() const
+{
+    QString mountpoint;
+    QDBusMessage message = QDBusMessage::createMethodCall(DBUS_SERVICE,
+                                                          m_path,
+                                                          DBUS_PROPERTIES,
+                                                          "Get");
+    QList<QVariant> args;
+    args << QString("%1.Filesystem").arg(DBUS_SERVICE) << "MountPoints";
+    message.setArguments(args);
+    QDBusMessage reply = QDBusConnection::systemBus().call(message);
+    QStringList mountpoints;
+    QList<QByteArray> argList;
+    foreach (QVariant arg, reply.arguments()) {
+        if (!arg.value<QDBusVariant>().variant().isValid()) { continue; }
+        arg.value<QDBusVariant>().variant().value<QDBusArgument>() >> argList;
+    }
+    foreach (QByteArray point, argList) { mountpoints.append(point); }
+    mountpoint = mountpoints.join("");
+    // TODO: fix ugly hack
+    mountpoint.remove('\u0000');
+    return mountpoint;
+}
+
+QString LSUDiskDevice::getDeviceName() const
+{
+    QDBusInterface iface(DBUS_SERVICE,
+                         m_drive,
+                         QString("%1.Drive").arg(DBUS_SERVICE),
+                         QDBusConnection::systemBus());
+    if (!iface.isValid()) { return QString(); }
+    QString name = iface.property("Vendor").toString().simplified();
+    if (!name.isEmpty()) { name.append(" "); }
+    name.append(iface.property("Model").toString().simplified());
+    return name;
+}
+
+QString LSUDiskDevice::mountDevice() const
+{
+    QDBusInterface filesystem(DBUS_SERVICE,
+                              m_path,
+                              QString("%1.Filesystem").arg(DBUS_SERVICE),
+                              QDBusConnection::systemBus());
+    if (!filesystem.isValid()) { return QObject::tr("Failed D-Bus connection."); }
+    QVariantMap options;
+
+    auto fs = queryBlockProperty("IdType").toString();
+    if (fs == "vfat") { options.insert("options", "flush"); }
+    QDBusReply<QString> mountpoint =  filesystem.call("Mount", options);
+    return mountpoint.error().message();
+}
+
+QString LSUDiskDevice::mountOptical() const
+{
+    // something is broken somewhere in udev/udisk, whatever ...
+    // So we need to handle opticals using udisks cmd
+    // https://bugs.archlinux.org/task/49643
+    // https://bugs.freedesktop.org/show_bug.cgi?id=52357
+
+    QProcess proc;
+    proc.setProgram(QString("udisksctl"));
+    proc.setArguments(QStringList() << "mount" << "-b" << QString("/dev/%1").arg((m_path.split("/").takeLast())));
+    proc.start();
+    proc.waitForFinished();
+    return QString();
+}
+
+QString LSUDiskDevice::unmountDevice() const
+{
+    QDBusInterface filesystem(DBUS_SERVICE,
+                              m_path,
+                              QString("%1.Filesystem").arg(DBUS_SERVICE),
+                              QDBusConnection::systemBus());
+    if (!filesystem.isValid()) { return QObject::tr("Failed D-Bus connection."); }
+    QDBusMessage reply = filesystem.call("Unmount", QVariantMap());
+    return reply.arguments().first().toString();
+}
+
+QString LSUDiskDevice::unmountOptical() const
+{
+    // something is broken somewhere in udev/udisk, whatever ...
+    // So we need to handle opticals using udisks cmd
+    // https://bugs.archlinux.org/task/49643
+    // https://bugs.freedesktop.org/show_bug.cgi?id=52357
+    QProcess proc;
+    proc.setProgram(QString("udisks2"));
+    proc.setArguments(QStringList() << "unmount" << "-b" << QString("/dev/%1").arg((m_path.split("/").takeLast())));
+    proc.start();
+    proc.waitForFinished();
+    return QString();
+}
+
+QString LSUDiskDevice::ejectDevice() const
+{
+    QDBusInterface filesystem(DBUS_SERVICE,
+                              m_drive,
+                              QString("%1.Drive").arg(DBUS_SERVICE),
+                              QDBusConnection::systemBus());
+    if (!filesystem.isValid()) { return QObject::tr("Failed D-Bus connection."); }
+    QDBusMessage reply = filesystem.call("Eject", QVariantMap());
+    return reply.arguments().first().toString();
 }
 
 LSUDisks::LSUDisks(QObject *parent)
@@ -137,6 +500,28 @@ LSUDisks::LSUDisks(QObject *parent)
     timer.setInterval(60000);
     connect(&timer, SIGNAL(timeout()), this, SLOT(checkUDisks()));
     timer.start();
+}
+
+LSUDiskDevice *LSUDisks::deviceForMountpath(const QString &mount)
+{
+    for(auto dev : devices.values())
+    {
+        if(dev->mountpoint() == mount)
+            return dev;
+    }
+
+    return nullptr;
+}
+
+LSUDiskDevice *LSUDisks::deviceForDevPath(const QString &mount)
+{
+    for(auto dev : devices.values())
+    {
+        if(dev->devDevice() == mount)
+            return dev;
+    }
+
+    return nullptr;
 }
 
 void LSUDisks::setupDBus()
@@ -154,7 +539,7 @@ void LSUDisks::scanDevices()
 {
     if (!dbus) { return; }
     if (!dbus->isValid()) { return; }
-    QStringList foundDevices = uDisks2::getDevices();
+    QStringList foundDevices = getDevices();
     for (int i=0;i<foundDevices.size();i++) {
         QString foundDevicePath = foundDevices.at(i);
         bool hasDevice = devices.contains(foundDevicePath);
@@ -166,6 +551,30 @@ void LSUDisks::scanDevices()
         devices[foundDevicePath] = newDevice;
     }
     emit updatedDevices();
+}
+
+const QStringList LSUDisks::getDevices()
+{
+    QStringList result;
+    QDBusMessage call = QDBusMessage::createMethodCall(DBUS_SERVICE,
+                                                       QString("%1/block_devices").arg(DBUS_PATH),
+                                                       DBUS_INTROSPECTABLE,
+                                                       "Introspect");
+    QDBusPendingReply<QString> reply = QDBusConnection::systemBus().call(call);
+    QList<QDBusObjectPath> devices;
+    if (reply.isError()) { return result; }
+    QXmlStreamReader xml(reply.value());
+    while (!xml.atEnd()) {
+        xml.readNext();
+        if (xml.tokenType() == QXmlStreamReader::StartElement && xml.name().toString() == "node" ) {
+            QString name = xml.attributes().value("name").toString();
+            if(!name.isEmpty()) { devices << QDBusObjectPath("/org/freedesktop/UDisks2/block_devices/" + name); }
+        }
+    }
+    foreach (QDBusObjectPath device, devices) {
+        result << device.path();
+    }
+    return result;
 }
 
 void LSUDisks::deviceAdded(const QDBusObjectPath &obj)
@@ -188,11 +597,11 @@ void LSUDisks::deviceRemoved(const QDBusObjectPath &obj)
     if (path.startsWith(QString("%1/jobs").arg(DBUS_PATH))) { return; }
 
     if (deviceExists) {
-        if (uDisks2::getDevices().contains(path)) { return; }
+        if (getDevices().contains(path)) { return; }
+        emit removedDevice(path);
         delete devices.take(path);
     }
     scanDevices();
-    emit removedDevice(path);
 }
 
 void LSUDisks::handleDeviceMediaChanged(QString devicePath, bool mediaPresent)
@@ -220,275 +629,5 @@ void LSUDisks::checkUDisks()
     if (dbus->isValid()) { scanDevices(); }
 }
 
-const QString uDisks2::getDrivePath(QString path)
-{
-    QDBusInterface iface(DBUS_SERVICE,
-                         path,
-                         QString("%1.Block").arg(DBUS_SERVICE),
-                         QDBusConnection::systemBus());
-    if (!iface.isValid()) { return QString(); }
-    QDBusObjectPath drive = iface.property("Drive").value<QDBusObjectPath>();
-    return drive.path();
-}
 
-bool uDisks2::hasPartition(QString path)
-{
-    QDBusInterface iface(DBUS_SERVICE,
-                         path,
-                         QString("%1.Partition").arg(DBUS_SERVICE),
-                         QDBusConnection::systemBus());
-    if (!iface.isValid()) { return false; }
-    if (iface.property("Number").toUInt()>=1) { return true; }
-    return false;
-}
 
-const QString uDisks2::getFileSystem(QString path)
-{
-    QDBusInterface iface(DBUS_SERVICE,
-                         path,
-                         QString("%1.Block").arg(DBUS_SERVICE),
-                         QDBusConnection::systemBus());
-    if (!iface.isValid()) { return QString(); }
-    return iface.property("IdType").toString();
-}
-
-bool uDisks2::isRemovable(QString path)
-{
-    QDBusInterface iface(DBUS_SERVICE,
-                         path,
-                         QString("%1.Drive").arg(DBUS_SERVICE),
-                         QDBusConnection::systemBus());
-    if (!iface.isValid()) { return false; }
-    return iface.property("Removable").toBool();
-}
-
-bool uDisks2::isOptical(QString path)
-{
-    QDBusInterface iface(DBUS_SERVICE,
-                         path,
-                         QString("%1.Drive").arg(DBUS_SERVICE),
-                         QDBusConnection::systemBus());
-    if (!iface.isValid()) { return false; }
-    QStringList compat = iface.property("MediaCompatibility").toStringList();
-    for (int i=0;i<compat.size();i++) {
-        if (compat.at(i).startsWith("optical_")) { return true; }
-    }
-    return false;
-}
-
-bool uDisks2::hasMedia(QString path)
-{
-    QDBusInterface iface(DBUS_SERVICE,
-                         path,
-                         QString("%1.Drive").arg(DBUS_SERVICE),
-                         QDBusConnection::systemBus());
-    if (!iface.isValid()) { return false; }
-    return iface.property("MediaAvailable").toBool();
-}
-
-bool uDisks2::hasOpticalMedia(QString path)
-{
-    QDBusInterface iface(DBUS_SERVICE,
-                         path,
-                         QString("%1.Drive").arg(DBUS_SERVICE),
-                         QDBusConnection::systemBus());
-    if (!iface.isValid()) { return false; }
-    QString type = iface.property("Media").toString();
-    if (type.startsWith("optical_")) { return true; }
-    return false;
-}
-
-bool uDisks2::canEject(QString path)
-{
-    QDBusInterface iface(DBUS_SERVICE,
-                         path,
-                         QString("%1.Drive").arg(DBUS_SERVICE),
-                         QDBusConnection::systemBus());
-    if (!iface.isValid()) { return false; }
-    return iface.property("Ejectable").toBool();
-}
-
-bool uDisks2::opticalMediaIsBlank(QString path)
-{
-    QDBusInterface iface(DBUS_SERVICE,
-                         path,
-                         QString("%1.Drive").arg(DBUS_SERVICE),
-                         QDBusConnection::systemBus());
-    if (!iface.isValid()) { return false; }
-    return iface.property("OpticalBlank").toBool();
-}
-
-int uDisks2::opticalDataTracks(QString path)
-{
-    QDBusInterface iface(DBUS_SERVICE,
-                         path,
-                         QString("%1.Drive").arg(DBUS_SERVICE),
-                         QDBusConnection::systemBus());
-    if (!iface.isValid()) { return false; }
-    return iface.property("OpticalNumDataTracks").toBool();
-}
-
-int uDisks2::opticalAudioTracks(QString path)
-{
-    QDBusInterface iface(DBUS_SERVICE,
-                         path,
-                         QString("%1.Drive").arg(DBUS_SERVICE),
-                         QDBusConnection::systemBus());
-    if (!iface.isValid()) { return false; }
-    return iface.property("OpticalNumAudioTracks").toBool();
-}
-
-const QString uDisks2::getMountPointOptical(QString path)
-{
-    QString mountpoint;
-    QString device = path.split("/").takeLast();
-    if (device.isEmpty()) { return mountpoint; }
-    QFile mtabFile("/etc/mtab");
-    if (!mtabFile.open(QIODevice::ReadOnly)) { return QString(); }
-    QString mtab = mtabFile.readAll();
-    QStringList lines = mtab.split("\n");
-    QVector<QStringList> result;
-    for (int i=0;i<lines.size();++i) {
-        QString line = lines.at(i);
-        QStringList info = line.split(" ", Qt::SkipEmptyParts);
-        if (info.size()>=2) {
-            QString dev = info.at(0);
-            QString mnt = info.at(1);
-            if (dev == QString("/dev/%1").arg(device)) { mountpoint = mnt; }
-        }
-    }
-    mtabFile.close();
-    return mountpoint;
-}
-
-const QString uDisks2::getMountPoint(QString path)
-{
-    QString mountpoint;
-    QDBusMessage message = QDBusMessage::createMethodCall(DBUS_SERVICE,
-                                                          path,
-                                                          DBUS_PROPERTIES,
-                                                          "Get");
-    QList<QVariant> args;
-    args << QString("%1.Filesystem").arg(DBUS_SERVICE) << "MountPoints";
-    message.setArguments(args);
-    QDBusMessage reply = QDBusConnection::systemBus().call(message);
-    QStringList mountpoints;
-    QList<QByteArray> argList;
-    foreach (QVariant arg, reply.arguments()) {
-        if (!arg.value<QDBusVariant>().variant().isValid()) { continue; }
-        arg.value<QDBusVariant>().variant().value<QDBusArgument>() >> argList;
-    }
-    foreach (QByteArray point, argList) { mountpoints.append(point); }
-    mountpoint = mountpoints.join("");
-    return mountpoint;
-}
-
-const QString uDisks2::getDeviceName(QString path)
-{
-    QDBusInterface iface(DBUS_SERVICE,
-                         path,
-                         QString("%1.Drive").arg(DBUS_SERVICE),
-                         QDBusConnection::systemBus());
-    if (!iface.isValid()) { return QString(); }
-    QString name = iface.property("Vendor").toString().simplified();
-    if (!name.isEmpty()) { name.append(" "); }
-    name.append(iface.property("Model").toString().simplified());
-    return name;
-}
-
-const QString uDisks2::getDeviceLabel(QString path)
-{
-    QDBusInterface iface(DBUS_SERVICE,
-                         path,
-                         QString("%1.Block").arg(DBUS_SERVICE),
-                         QDBusConnection::systemBus());
-    if (!iface.isValid()) { return QString(); }
-    return iface.property("IdLabel").toString();
-}
-
-const QString uDisks2::mountDevice(QString path)
-{
-    QDBusInterface filesystem(DBUS_SERVICE,
-                              path,
-                              QString("%1.Filesystem").arg(DBUS_SERVICE),
-                              QDBusConnection::systemBus());
-    if (!filesystem.isValid()) { return QObject::tr("Failed D-Bus connection."); }
-    QVariantMap options;
-    if (getFileSystem(path) == "vfat") { options.insert("options", "flush"); }
-    QDBusReply<QString> mountpoint =  filesystem.call("Mount", options);
-    return mountpoint.error().message();
-}
-
-const QString uDisks2::mountOptical(QString path)
-{
-    // something is broken somewhere in udev/udisk, whatever ...
-    // So we need to handle opticals using udisks cmd
-    // https://bugs.archlinux.org/task/49643
-    // https://bugs.freedesktop.org/show_bug.cgi?id=52357
-    QProcess proc;
-    proc.setProgram(QString("udisks"));
-    proc.setArguments(QStringList() << "--mount" << QString("/dev/%1").arg((path.split("/").takeLast())));
-    proc.start();
-    proc.waitForFinished();
-    return QString();
-}
-
-const QString uDisks2::unmountDevice(QString path)
-{
-    QDBusInterface filesystem(DBUS_SERVICE,
-                              path,
-                              QString("%1.Filesystem").arg(DBUS_SERVICE),
-                              QDBusConnection::systemBus());
-    if (!filesystem.isValid()) { return QObject::tr("Failed D-Bus connection."); }
-    QDBusMessage reply = filesystem.call("Unmount", QVariantMap());
-    return reply.arguments().first().toString();
-}
-
-const QString uDisks2::unmountOptical(QString path)
-{
-    // something is broken somewhere in udev/udisk, whatever ...
-    // So we need to handle opticals using udisks cmd
-    // https://bugs.archlinux.org/task/49643
-    // https://bugs.freedesktop.org/show_bug.cgi?id=52357
-    QProcess proc;
-    proc.setProgram(QString("udisks"));
-    proc.setArguments(QStringList() << "--unmount" << QString("/dev/%1").arg((path.split("/").takeLast())));
-    proc.start();
-    proc.waitForFinished();
-    return QString();
-}
-
-const QString uDisks2::ejectDevice(QString path)
-{
-    QDBusInterface filesystem(DBUS_SERVICE,
-                              path,
-                              QString("%1.Drive").arg(DBUS_SERVICE),
-                              QDBusConnection::systemBus());
-    if (!filesystem.isValid()) { return QObject::tr("Failed D-Bus connection."); }
-    QDBusMessage reply = filesystem.call("Eject", QVariantMap());
-    return reply.arguments().first().toString();
-}
-
-const QStringList uDisks2::getDevices()
-{
-    QStringList result;
-    QDBusMessage call = QDBusMessage::createMethodCall(DBUS_SERVICE,
-                                                       QString("%1/block_devices").arg(DBUS_PATH),
-                                                       DBUS_INTROSPECTABLE,
-                                                       "Introspect");
-    QDBusPendingReply<QString> reply = QDBusConnection::systemBus().call(call);
-    QList<QDBusObjectPath> devices;
-    if (reply.isError()) { return result; }
-    QXmlStreamReader xml(reply.value());
-    while (!xml.atEnd()) {
-        xml.readNext();
-        if (xml.tokenType() == QXmlStreamReader::StartElement && xml.name().toString() == "node" ) {
-            QString name = xml.attributes().value("name").toString();
-            if(!name.isEmpty()) { devices << QDBusObjectPath("/org/freedesktop/UDisks2/block_devices/" + name); }
-        }
-    }
-    foreach (QDBusObjectPath device, devices) {
-        result << device.path();
-    }
-    return result;
-}

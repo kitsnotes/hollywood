@@ -1,6 +1,6 @@
 // Hollywood Shell Library
 // (C) 2024 Originull Software
-// SPDX-License-Identifier: LGPL-2.1
+// SPDX-License-Identifier: LGPL-3.0-only
 
 #pragma once
 
@@ -12,9 +12,11 @@
 #include <QLabel>
 #include <QFormLayout>
 #include <QToolButton>
+#include <QListWidget>
 
+class LSUDiskDevice;
+class LSSectionWidget;
 class LSGetInfoDialogPrivate;
-
 class LSGeneralInfoWidget : public QWidget
 {
     Q_OBJECT
@@ -41,6 +43,9 @@ private:
     QLabel *m_ctime = nullptr;
     QLabel *m_mtime = nullptr;
     QLabel *m_atime = nullptr;
+
+    LSUDiskDevice *m_mountDevice = nullptr;
+
     LSGetInfoDialogPrivate *p;
 };
 
@@ -89,7 +94,8 @@ private:
     QCheckBox* m_term = nullptr;
     QCheckBox* m_dbus = nullptr;
     QCheckBox* m_gpu = nullptr;
-
+    LSSectionWidget* m_sectionMimeTypes = nullptr;
+    QListWidget* m_mimeTypes = nullptr;
     //QDialogButtonBox* buttonBar = nullptr;
 
     LSGetInfoDialogPrivate *p;

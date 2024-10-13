@@ -86,10 +86,9 @@ void LSSectionWidget::toggleWithoutAnimation(bool collapsed)
     }
     else
     {
+        updateGeometry();
         setMinimumHeight(collapsedHeight+contentHeight);
         setMaximumHeight(collapsedHeight+contentHeight);
-        setMinimumHeight(contentHeight);
-        setMaximumHeight(contentHeight);
         contentArea->setMaximumHeight(contentHeight);
         disconnect(toggleButton, &QToolButton::toggled, this, &LSSectionWidget::toggle);
         toggleButton->setChecked(true);

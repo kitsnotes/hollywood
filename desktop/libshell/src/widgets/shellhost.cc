@@ -23,6 +23,8 @@
 #include "opmanager.h"
 #include "trashmodel.h"
 #include "sectionwidget.h"
+#include "lsdiskmodel.h"
+#include "disks.h"
 
 #include <QUndoStack>
 #include <QDBusInterface>
@@ -37,6 +39,8 @@ LSEmbeddedShellHostPrivate::LSEmbeddedShellHostPrivate(LSEmbeddedShellHost *pare
     : d(parent)
     , m_actions(new LSActionManager(parent))
     , m_favoriteSection(new LSSectionWidget(QApplication::tr("Favorites"), 100, parent, false))
+    , m_deviceSection(new LSSectionWidget(QApplication::tr("Devices")))
+    , m_driveModel(new LSDiskModel(parent))
     , m_directorySection(new LSSectionWidget(QApplication::tr("Filesystem"), 100, parent))
     , m_filesList(new QListView(parent))
     , m_model(new LSFSModel(parent))
@@ -94,6 +98,23 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
     treelayout->addWidget(p->m_favoriteSection);
     p->m_favoriteSection->toggleWithoutAnimation(true);
 
+    p->m_treeDevices = new LSPlaceView(this);
+    p->m_treeDevices->setModel(p->m_driveModel);
+    connect(p->m_treeDevices, &QListView::clicked, this, [this](const QModelIndex &idx) {
+        if(QApplication::style()->styleHint(QStyle::SH_ItemView_ActivateItemOnSingleClick) == 0)
+            deviceActivated(idx);
+    });
+    connect(p->m_treeDevices, &QListView::activated,
+            this, &LSEmbeddedShellHost::deviceActivated);
+
+    auto *devlayout = new QVBoxLayout;
+    devlayout->setContentsMargins(2,1,0,0);
+    devlayout->setSpacing(0);
+    devlayout->addWidget(p->m_treeDevices);
+    p->m_deviceSection->setContentLayout(*devlayout);
+    treelayout->addWidget(p->m_deviceSection);
+    p->m_deviceSection->toggleWithoutAnimation(true);
+
     p->m_treeDirs = new LSPlaceView(this);
     p->m_treeDirs->setObjectName(QString::fromUtf8("DirectoryTree"));
     p->m_sidebarModel->setFilter(QDir::Dirs);
@@ -107,9 +128,10 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
     treelayout->addWidget(p->m_directorySection);
     sidebarwidget->setMaximumWidth(155);
     sidebarwidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-
     treelayout->addSpacerItem(new QSpacerItem(1,1,QSizePolicy::Minimum,QSizePolicy::Expanding));
 
+    p->m_treeDirs->setVisible(false);
+    p->m_directorySection->setVisible(false);
     /* setup tab bar host (right side of p->m_mainSplitter) */
     p->m_tabWndHost = new QWidget(p->m_mainSplitter);
     p->m_tabWndHostLayout = new QVBoxLayout(p->m_tabWndHost);
@@ -709,6 +731,27 @@ void LSEmbeddedShellHost::placeClicked(const QModelIndex &idx)
     navigateToUrl(p->m_placeModel->place(idx).location);
 }
 
+void LSEmbeddedShellHost::deviceActivated(const QModelIndex &idx)
+{
+    auto device = p->m_driveModel->device(idx);
+    if(device)
+    {
+        if(!device->mountpoint().isEmpty())
+        {
+            // this should be somewhere we can go...
+            navigateToPath(device->mountpoint());
+            return;
+        }
+        else
+        {
+            // this is a device that is unmounted...
+            // mount it up:
+            device->mount();
+            // TODO: check for mount, and open it:
+        }
+    }
+}
+
 void LSEmbeddedShellHost::updateColumnWidget(const QModelIndex &idx)
 {
     p->m_columnPreview->updateFileInfo(p->m_model->fileInfo(idx));
@@ -1258,10 +1301,21 @@ void LSEmbeddedShellHost::enableActionsForFileSelection(bool multiple)
 void LSEmbeddedShellHost::updatePlaceModelSelection(const QUrl &place)
 {
     p->m_treeFavorites->selectionModel()->clear();
+    p->m_treeDevices->selectionModel()->clear();
     if(p->m_placeModel->hasPlaceForUrl(place))
     {
         const QModelIndex idx = p->m_placeModel->indexForPlace(p->m_placeModel->place(place));
         p->m_treeFavorites->selectionModel()->select(idx, QItemSelectionModel::Select);
+    }
+
+    if(place.scheme() == "file")
+    {
+        auto dev = p->m_driveModel->deviceForMount(place.toLocalFile());
+        if(dev != nullptr)
+        {
+            const QModelIndex idx = p->m_driveModel->indexOf(dev);
+            p->m_treeDevices->selectionModel()->select(idx, QItemSelectionModel::Select);
+        }
     }
 }
 

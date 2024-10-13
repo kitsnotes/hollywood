@@ -22,82 +22,90 @@
 #define DBUS_DEVICE_ADDED "InterfacesAdded"
 #define DBUS_DEVICE_REMOVED "InterfacesRemoved"
 
-class uDisks2
-{
-public:
-    static const QString getDrivePath(QString path);
-    static bool hasPartition(QString path);
-    static const QString getFileSystem(QString path);
-    static bool isRemovable(QString path);
-    static bool isOptical(QString path);
-    static bool hasMedia(QString path);
-    static bool hasOpticalMedia(QString path);
-    static bool canEject(QString path);
-    static bool opticalMediaIsBlank(QString path);
-    static int opticalDataTracks(QString path);
-    static int opticalAudioTracks(QString path);
-    static const QString getMountPointOptical(QString path);
-    static const QString getMountPoint(QString path);
-    static const QString getDeviceName(QString path);
-    static const QString getDeviceLabel(QString path);
-    static const QString mountDevice(QString path);
-    static const QString mountOptical(QString path);
-    static const QString unmountDevice(QString path);
-    static const QString unmountOptical(QString path);
-    static const QString ejectDevice(QString path);
-    static const QStringList getDevices();
-};
-
 class LSUDiskDevice : public QObject
 {
     Q_OBJECT
-
 public:
-    explicit LSUDiskDevice(const QString block, QObject *parent = Q_NULLPTR);
-    QString name;
-    QString path;
-    QString dev;
-    QString drive;
-    QString mountpoint;
-    QString filesystem;
-    bool isOptical;
-    bool isRemovable;
-    bool hasMedia;
-    int opticalDataTracks;
-    int opticalAudioTracks;
-    bool isBlankDisc;
-    bool hasPartition;
-
-private:
-    QDBusInterface *dbus;
-
+    explicit LSUDiskDevice(const QString block, QObject *parent = nullptr);
+    bool isLoopDevice() const;
+    bool isOptical() const;
+    bool hasOpticalMedia();
+    bool canEject();
+    bool hasMedia() const;
+    bool hasPartition() const;
+    bool removable() const;
+    QString name() const;
+    QString path() const;
+    QString mountpoint() const;
+    QString filesystem() const;
+    QIcon icon() const;
+    bool hintIgnore() const;
+    bool isBlankDisc() const;
+    QString currentMedia() const;
+    QStringList supportedMedia() const;
+    QString currentMediaDisplayName() const;
+    QString devDevice() const;
+    qulonglong blockDeviceSize() const;
 signals:
     void mediaChanged(QString devicePath, bool mediaPresent);
     void mountpointChanged(QString devicePath, QString deviceMountpoint);
     void nameChanged(QString devicePath, QString deviceName);
     void errorMessage(QString devicePath, QString deviceError);
-
 public slots:
     void mount();
     void unmount();
     void eject();
-
 private slots:
     void updateDeviceProperties();
     void handlePropertiesChanged(const QString &interfaceType, const QMap<QString, QVariant> &changedProperties);
+private:
+    QVariant queryDriveProperty(const QString &property) const;
+    QVariant queryBlockProperty(const QString &property) const;
+    QVariant queryPartitionProperty(const QString &property) const;
+
+    QString getMountPointOptical() const;
+    QString getMountPoint() const;
+    QString getDeviceName() const;
+    QString mountDevice() const;
+    QString mountOptical() const;
+    QString unmountDevice() const;
+    QString unmountOptical() const;
+    QString ejectDevice() const;
+
+    QDBusInterface *m_dbus;
+    QString m_name = QString();
+    QString m_path = QString();
+    QString dev = QString();
+    QString m_drive = QString();
+    QStringList m_supportedMediaTypes = QStringList();
+    QString m_mountpoint = QString();
+    QString m_filesystem = QString();
+    bool m_isOptical = false;
+    bool m_removable = false;
+    bool m_hasMedia = false;
+    QString m_currentMediaType = QString();
+    int m_opticalDataTracks = 0;
+    int m_opticalAudioTracks = 0;
+    bool m_isBlankDisc = false;
+    bool m_hasPartition = false;
+    bool m_hintIgnore = false;
+    qulonglong m_blockSize = 0;
 };
 
 class LSUDisks : public QObject
 {
     Q_OBJECT
-
 public:
-    explicit LSUDisks(QObject *parent = Q_NULLPTR);
+    explicit LSUDisks(QObject *parent = nullptr);
     QMap<QString, LSUDiskDevice*> devices;
+    LSUDiskDevice* deviceForMountpath(const QString &mount);
+    LSUDiskDevice* deviceForDevPath(const QString &mount);
 
 private:
     QDBusInterface *dbus;
     QTimer timer;
+private:
+    static const QStringList getDevices();
 
 signals:
     void updatedDevices();
@@ -116,4 +124,5 @@ private slots:
     void handleDeviceMountpointChanged(QString devicePath, QString deviceMountpoint);
     void handleDeviceErrorMessage(QString devicePath, QString deviceError);
     void checkUDisks();
+
 };

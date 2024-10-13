@@ -179,15 +179,18 @@ void FMApplication::canRedoChanged()
 
 void FMApplication::disksUpdated()
 {
-    qDebug() << "diskUpdated";
+
 }
 
 void FMApplication::mediaChanged(QString path, bool media)
 {
-    qDebug() << "mediaChanged" << path << media;
+    // this is only emitted for CD optical media
     auto dev = LSCommonFunctions::instance()->udiskManager()->devices[path];
-    if(media == true)
-        dev->mount();
+    if(dev)
+    {
+        if(media == true)
+            dev->mount();
+    }
 }
 
 void FMApplication::mountpointChanged(QString path, QString mountpoint)
@@ -202,7 +205,13 @@ void FMApplication::deviceErrorMessage(QString path, QString error)
 
 void FMApplication::foundNewDevice(QString path)
 {
-    qDebug() << "foundNewDevice" << path;
+    auto dev = LSCommonFunctions::instance()->udiskManager()->devices[path];
+    if(dev)
+    {
+        qDebug() << dev->name() << dev->filesystem();
+        if(dev->removable() && !dev->filesystem().isEmpty())
+            dev->mount();
+    }
 }
 
 void FMApplication::removedDevice(QString path)

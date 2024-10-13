@@ -1,12 +1,14 @@
 // Hollywood Shell Library
 // (C) 2024 Originull Software
-// SPDX-License-Identifier: LGPL-2.1
+// SPDX-License-Identifier: LGPL-3.0-only
 
 #pragma once
 
 #include <QAbstractListModel>
 #include <QFileInfo>
 #include "libshell_int.h"
+
+class LSUDiskDevice;
 class LSDesktopEntry;
 class LSDesktopModelPrivate;
 class LIBSHELL_EXPORT LSDesktopModel : public QAbstractListModel
@@ -34,9 +36,16 @@ public:
     bool isDesktop(const QModelIndex &index) const;
     bool isHidden(const QModelIndex &index) const;
     bool isSymlink(const QModelIndex &index) const;
-    LSDesktopEntry *desktopFileForIndex(const QModelIndex &index);
+    bool isDevice(const QModelIndex &index) const;
+    LSDesktopEntry* desktopFileForIndex(const QModelIndex &index);
+    LSUDiskDevice*  deviceForIndex(const QModelIndex &index);
 private slots:
     void refreshDesktopFolder();
+    void mediaChanged(QString path, bool media);
+    void mountpointChanged(QString path, QString mountpoint);
+    void foundNewDevice(QString path);
+    void removedDevice(QString path);
 private:
+    friend class LSDesktopModelPrivate;
     LSDesktopModelPrivate *p;
 };

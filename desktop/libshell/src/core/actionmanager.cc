@@ -37,6 +37,8 @@ QAction* LSActionManager::shellAction(HWShell::ShellActions action)
         return d->actionAdd_to_Archive;
     case HWShell::ACT_FILE_TRASH:
         return d->actionMove_to_Trash;
+    case HWShell::ACT_FILE_EJECT:
+        return d->a_Eject_Volume;
     case HWShell::ACT_FILE_OPEN_WITH:
         return d->a_OpenWith;
     case HWShell::ACT_EDIT_UNDO:
@@ -308,7 +310,7 @@ void LSActionManager::setupActions()
     d->a_Rename->setText(tr("&Rename"));
     d->actionAdd_to_Archive->setText(tr("Add to Archive"));
     d->actionMove_to_Trash->setText(tr("Move to &Trash"));
-    d->a_Eject_Volume->setText(tr("&Eject Volume"));
+    d->a_Eject_Volume->setText(tr("&Eject"));
     d->a_Open->setText(tr("&Open"));
     d->a_OpenWith->setText(tr("Op&en With"));
     d->a_Undo->setText(tr("&Undo"));

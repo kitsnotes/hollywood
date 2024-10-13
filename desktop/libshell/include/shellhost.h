@@ -12,6 +12,7 @@ class LSFSItemDelegate;
 class LSTrashModel;
 class LSLocationBar;
 class LSFSModel;
+class LSDiskModel;
 typedef QList<QUrl> UrlList;
 
 class LSEmbeddedShellHostPrivate;
@@ -68,6 +69,7 @@ private slots:
     void viewActivated(const QModelIndex &idx);
     void viewSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
     void placeClicked(const QModelIndex &idx);
+    void deviceActivated(const QModelIndex &idx);
     void updateColumnWidget(const QModelIndex &idx);
     // model slots
     void modelRootPathChanged(const QString &path);
