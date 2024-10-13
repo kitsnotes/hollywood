@@ -3,6 +3,7 @@
 #include "disks.h"
 
 #include <QStringList>
+#include <QIcon>
 
 LSDiskModel::LSDiskModel(QObject *parent)
     : QAbstractListModel(parent)

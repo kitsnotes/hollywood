@@ -18,6 +18,7 @@
 #include <QLabel>
 #include <QApplication>
 #include <QMimeDatabase>
+#include <QDateTime>
 #include <sys/statvfs.h>
 #include <pwd.h>
 #include <grp.h>
