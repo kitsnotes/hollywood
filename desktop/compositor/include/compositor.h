@@ -13,6 +13,7 @@
 #include <QtWaylandCompositor/qwaylandseat.h>
 #include <QtWaylandCompositor/qwaylanddrag.h>
 #include <QWaylandXdgOutputManagerV1>
+#include <QWaylandViewporter>
 #include <QOpenGLTextureBlitter>
 #include <QTimer>
 #include <QMouseEvent>
@@ -72,7 +73,6 @@ public:
 
     QList<Surface*> surfaceObjects() const { return m_surfaces; }
     QVector<Surface*> surfaceByZOrder() { return m_zorder; }
-    QList<Surface*> desktopSurfaces() const { return m_desktops; }
     QList<SurfaceView*> views() const;
     QList<Surface*> surfaces() { return m_surfaces; }
 
@@ -214,6 +214,8 @@ private:
     QWaylandXdgOutputManagerV1 *m_outputmgr = nullptr;
     // wlroots screencopy protocol
     WlrScreencopyManagerV1 *m_screencopy = nullptr;
+    // wp-viewporter protocol
+    QWaylandViewporter *m_viewporter = nullptr;
     // running under user 'sddm'
     bool m_sddm = false;
 
@@ -224,7 +226,6 @@ private:
 
     OriginullMenuServer *m_menuServer = nullptr;
     uint m_menuServerReserved = 0;
-    QList<Surface*> m_desktops;
 
     // layer shell objects
     QList<Surface*> m_layer_bg;

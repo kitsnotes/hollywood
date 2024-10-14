@@ -355,7 +355,7 @@ QSize Surface::surfaceSize() const
         return surface()->bufferSize();
 
     if(m_layerSurface)
-        return m_ls_size;
+        return surface()->bufferSize();
 
     if(m_qt)
     {
@@ -1534,12 +1534,14 @@ void Surface::reconfigureLayerSurface()
 
 void Surface::onLayerChanged()
 {
+    qDebug() << "layerchanged";
     hwComp->resetLayerShellLayer(this);
     m_surfaceInit = true;
 }
 
 void Surface::onLayerShellSizeChanged()
 {
+    qDebug() << "onLayerShellSizeChanged" << m_layerSurface->size();
     if(!m_layerSurface->size().isValid())
         return;
     m_ls_size = m_layerSurface->size();

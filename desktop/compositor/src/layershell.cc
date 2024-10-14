@@ -102,6 +102,7 @@ WlrLayerSurfaceV1::WlrLayerSurfaceV1(QWaylandSurface *surface, QWaylandOutput *o
         bool hasChanged = false;
         if (current.layer != clientPending.layer) {
             current.layer = clientPending.layer;
+            qDebug() << "layerChanged:" << current.layer << clientPending.layer;
             emit layerChanged();
             hasChanged = true;
         }
@@ -188,6 +189,7 @@ QWaylandOutput *WlrLayerSurfaceV1::output() const
 
 WlrLayerShellV1::Layer WlrLayerSurfaceV1::layer() const
 {
+    qDebug() << current.layer;
     return current.layer;
 }
 
@@ -379,5 +381,6 @@ void WlrLayerSurfaceV1::zwlr_layer_surface_v1_set_layer(Resource *resource, uint
         return;
     }
 
+    qDebug() << layer;
     clientPending.layer = static_cast<WlrLayerShellV1::Layer>(layer);
 }

@@ -127,9 +127,6 @@ void OutputWindow::paintGL()
     for(Surface *obj : hwComp->backgroundLayerSurfaces())
         drawTextureForObject(obj);
 
-    for(Surface *obj : hwComp->desktopSurfaces())
-        drawTextureForObject(obj);
-
     for(Surface *obj : hwComp->bottomLayerSurfaces())
         drawTextureForObject(obj);
 
@@ -144,9 +141,6 @@ void OutputWindow::paintGL()
     for(Surface *obj : hwComp->backgroundLayerSurfaces())
         drawPopupsForObject(obj);
 
-    // now let's draw our popups for the desktops
-    for(Surface *obj : hwComp->desktopSurfaces())
-        drawPopupsForObject(obj);
     // now let's draw our popups for the bottomLayerSurfaces
     for(Surface *obj : hwComp->bottomLayerSurfaces())
         drawPopupsForObject(obj);
@@ -490,38 +484,6 @@ Surface* OutputWindow::surfaceAt(const QPointF &point)
         }
     }
 
-    // we should check for children of the desktop now
-    if(ret == nullptr)
-    {
-        const auto views = hwComp->desktopSurfaces();
-        for (auto *s : views) {
-            for(auto *surface : s->childSurfaceObjects())
-            {
-                if (surface == m_dragIconSurfaceObject)
-                    continue;
-                QRectF geom(surface->surfacePosition(), surface->surface()->bufferSize()*surface->surface()->bufferScale());
-                if (geom.contains(adjustedPoint))
-                    ret = surface;
-            }
-        }
-    }
-
-    // we should check for children of the background layer surfaces
-    if(ret == nullptr)
-    {
-        const auto views = hwComp->backgroundLayerSurfaces();
-        for (auto *s : views) {
-            for(auto *surface : s->childSurfaceObjects())
-            {
-                if (surface == m_dragIconSurfaceObject)
-                    continue;
-                QRectF geom(surface->surfacePosition(), surface->surface()->bufferSize()*surface->surface()->bufferScale());
-                if (geom.contains(adjustedPoint))
-                    ret = surface;
-            }
-        }
-    }
-
     // we should check for children of the bottom layer surfaces
     if(ret == nullptr)
     {
@@ -538,7 +500,24 @@ Surface* OutputWindow::surfaceAt(const QPointF &point)
         }
     }
 
-    // finally go through our standard surfaces by zorder
+    // we should check for children of the background layer surfaces
+    if(ret == nullptr)
+    {
+        const auto views = hwComp->backgroundLayerSurfaces();
+        for (auto *s : views)
+        {
+            for(auto *surface : s->childSurfaceObjects())
+            {
+                if (surface == m_dragIconSurfaceObject)
+                    continue;
+                QRectF geom(surface->surfacePosition(), surface->surface()->bufferSize()*surface->surface()->bufferScale());
+                if (geom.contains(adjustedPoint))
+                    ret = surface;
+            }
+        }
+    }
+
+    // go through our standard surfaces by zorder
     if(ret == nullptr)
     {
         const auto views = hwComp->surfaceByZOrder();
@@ -559,19 +538,7 @@ Surface* OutputWindow::surfaceAt(const QPointF &point)
         }
     }
 
-    // if we're still null see if we're hitting desktop/layer shells
-    if(ret == nullptr)
-    {
-        const auto views = hwComp->desktopSurfaces();
-        for (auto *surface : views) {
-            if (surface == m_dragIconSurfaceObject)
-                continue;
-            QRectF geom(surface->surfacePosition(), surface->surface()->bufferSize()*surface->surface()->bufferScale());
-            if (geom.contains(adjustedPoint))
-                ret = surface;
-        }
-    }
-
+    // target the actual bottom layer surface
     if(ret == nullptr)
     {
         const auto views = hwComp->bottomLayerSurfaces();
@@ -584,17 +551,17 @@ Surface* OutputWindow::surfaceAt(const QPointF &point)
         }
     }
 
+    // target the actual background surface
     if(ret == nullptr)
     {
         const auto views = hwComp->backgroundLayerSurfaces();
         for (auto *surface : views) {
-            if (surface == m_dragIconSurfaceObject)
-                continue;
             QRectF geom(surface->surfacePosition(), surface->surface()->bufferSize()*surface->surface()->bufferScale());
             if (geom.contains(adjustedPoint))
                 ret = surface;
         }
     }
+
     return ret;
 }
 

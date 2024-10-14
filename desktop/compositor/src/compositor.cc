@@ -48,6 +48,7 @@ Compositor::Compositor(bool sddm)
     , m_activation(new XdgActivation(this))
     , m_outputmgr(new QWaylandXdgOutputManagerV1(this))
     , m_screencopy(new WlrScreencopyManagerV1(this))
+    , m_viewporter(new QWaylandViewporter(this))
     , m_sddm(sddm)
     , m_shortcuts(new ShortcutManager(this))
     , m_timeout(new QTimer(this))
@@ -93,6 +94,7 @@ void Compositor::create()
     m_outputmgr->initialize();
     m_screencopy->setExtensionContainer(this);
     m_screencopy->initialize();
+    m_viewporter->initialize();
     connect(m_appMenu, &AppMenuManager::appMenuCreated, this, &Compositor::appMenuCreated);
     connect(m_hwPrivate, &OriginullProtocol::menuServerSet, this, &Compositor::onMenuServerRequest);
     connect(m_hwPrivate, &OriginullProtocol::wallpaperRotationRequested, this, &Compositor::onRotateWallpaper);
@@ -146,6 +148,7 @@ Output *Compositor::outputFor(QWaylandOutput *wloutput)
 
 void Compositor::resetLayerShellLayer(Surface *s)
 {
+    qDebug() << "resetLayerShellLayer" << s->uuid().toString();
     if(!s->layerSurface())
         return;
 
@@ -158,7 +161,21 @@ void Compositor::resetLayerShellLayer(Surface *s)
     switch(s->layerSurface()->layer())
     {
     case WlrLayerShellV1::BackgroundLayer:
-        m_layer_bg.prepend(s);
+        qDebug() << "setting background layer";
+        m_layer_bg.append(s);
+        if(s->m_wndctl)
+        {
+            s->m_wndctl->deleteLater();
+            s->m_wndctl = nullptr;
+        }
+        s->m_surfaceType = Surface::Desktop;
+        s->m_ssd = false;
+        s->m_isShellDesktop = true;
+        s->m_surfacePosition = s->primaryView()->output()->availableGeometry().topLeft();
+        s->m_ls_size = s->primaryView()->output()->availableGeometry().size();
+        s->m_layerSurface->sendConfigure(s->primaryView()->output()->availableGeometry().width(),
+                                         s->primaryView()->output()->availableGeometry().height());
+        s->setPosition(s->primaryView()->output()->availableGeometry().topLeft());
         break;
     case WlrLayerShellV1::BottomLayer:
         m_layer_bottom.prepend(s);
@@ -169,7 +186,6 @@ void Compositor::resetLayerShellLayer(Surface *s)
     case WlrLayerShellV1::OverlayLayer:
         m_layer_overlay.prepend(s);
         break;
-
     }
 }
 
@@ -338,7 +354,6 @@ void Compositor::recycleSurfaceObject(Surface *obj)
 
     m_surfaces.removeOne(obj);
     m_zorder.removeOne(obj);
-    m_desktops.removeOne(obj);
     m_layer_bg.removeOne(obj);
     m_layer_bottom.removeOne(obj);
     m_layer_top.removeOne(obj);
@@ -397,6 +412,7 @@ void Compositor::onMenuServerRequest(OriginullMenuServer *menu)
 
 void Compositor::onDesktopRequest(QWaylandSurface *surface)
 {
+    return;
     auto *sf = findSurfaceObject(surface);
     Q_ASSERT(sf);
     qDebug(lc) << "Compositor::onDesktopRequest" << sf->uuid().toString();
@@ -409,13 +425,6 @@ void Compositor::onDesktopRequest(QWaylandSurface *surface)
         sf->m_wndctl->deleteLater();
         sf->m_wndctl = nullptr;
     }
-    m_desktops.append(sf);
-    sf->m_surfaceType = Surface::Desktop;
-    sf->m_isShellDesktop = true;
-    sf->m_ssd = false;
-    auto start = sf->primaryView()->output()->availableGeometry().topLeft();
-    sf->m_surfacePosition = start;
-    sf->setPosition(start);
 }
 
 
@@ -585,8 +594,8 @@ void Compositor::raiseNextInLine()
     if(raised)
         return;
 
-    if(!raised && m_desktops.count() > 0)
-        activate(m_desktops.last());
+    if(!raised && m_layer_bg.count() > 0)
+        activate(m_layer_bg.last());
 }
 
 void Compositor::onWlShellSurfaceCreated(QWaylandWlShellSurface *wlShellSurface)
@@ -1083,7 +1092,9 @@ void Compositor::activate(Surface *obj)
         // we leave the ordering of children to SurfaceObject
         if((obj->m_xdgTopLevel ||
              obj->m_gtk ||
-             obj->m_qt)&& !obj->isSpecialShellObject())
+             obj->m_qt ||
+             (obj->m_layerSurface && obj->m_layerSurface->layer() == WlrLayerShellV1::BackgroundLayer))
+             && !obj->isSpecialShellObject())
         {
             if(m_menuServer)
                m_menuServer->setTopWindowForMenuServer(obj);
