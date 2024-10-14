@@ -4,6 +4,8 @@
 #include <QMainWindow>
 #include <actionmanager.h>
 
+#include <hollywood/layershellwindow.h>
+
 class LSDesktopModel;
 class LSFSItemDelegate;
 class LSActionManager;
@@ -18,6 +20,7 @@ public:
 signals:
     void openFolder(const QUrl &folder);
 public slots:
+    void show();
     void enablePaste(bool enable, uint count = 0);
 private slots:
     void selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
@@ -85,6 +88,7 @@ private:
     QMenu *menu_Help = nullptr;
 
     DesktopViewOptions *m_viewOptions = nullptr;
+    LayerShellQt::Window *m_lswnd;
 };
 
 #endif // DESKTOPWINDOW_H

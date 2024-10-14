@@ -12,7 +12,9 @@ TARGET = shellfm
 DBUS_ADAPTORS += org.freedesktop.FileManager1.xml
 LIBS += -lshell-$${HOLLYWOOD_APIVERSION}
 
-LIBS += -L../output -lcompositor-$${HOLLYWOOD_APIVERSION} -lcommdlg-$${HOLLYWOOD_APIVERSION}
+LIBS += -L../output -lcompositor-$${HOLLYWOOD_APIVERSION} -lcommdlg-$${HOLLYWOOD_APIVERSION} \
+    -L/usr/lib/qt6/plugins/wayland-shell-integration -lhw-layer-shell
+
 WAYLANDCLIENTSOURCES += ../compositor/protocols/originull-privateapi.xml
 # PKGCONFIG += hwcompositor
 SOURCES += \

@@ -511,6 +511,21 @@ void DesktopWindow::canRedoChanged()
     }
 }
 
+void DesktopWindow::show()
+{
+    QWidget::show();
+    m_lswnd = LayerShellQt::Window::get(windowHandle());
+    if(m_lswnd)
+    {
+        qDebug() << "setting layershell LayerBackground";
+        m_lswnd->setLayer(LayerShellQt::Window::LayerBackground);
+        m_lswnd->setAnchors(LayerShellQt::Window::AnchorTop);
+        m_lswnd->setSize(qApp->primaryScreen()->size());
+        update();
+    }
+
+}
+
 void DesktopWindow::loadViewOptions()
 {
     m_view->setViewMode(QListView::IconMode);

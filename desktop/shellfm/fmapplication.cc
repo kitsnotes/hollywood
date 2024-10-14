@@ -92,8 +92,14 @@ void FMApplication::createDesktop()
     DesktopWindow *w = new DesktopWindow(0);
     connect(w, &DesktopWindow::openFolder, this,
             &FMApplication::openFolderFromDesktop);
+    auto ls = LayerShellQt::Window::get(w->windowHandle());
+    if(ls)
+    {
+        qDebug() << "setting layershell LayerBackground";
+        ls->setLayer(LayerShellQt::Window::LayerBackground);
+    }
     w->show();
-    m_protocol->registerDesktopSurface(w->windowHandle());
+    //m_protocol->registerDesktopSurface(w->windowHandle());
     m_desktop = w;
 }
 
