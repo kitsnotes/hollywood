@@ -7,7 +7,7 @@
 #include "stageclock.h"
 #include "statusnotifier/notifierhost.h"
 #include "battery.h"
-#include "client/privateprotocol.h"
+#include "privatewayland.h"
 
 #include <dbusmenuimporter.h>
 

@@ -7,13 +7,12 @@ TARGET = stage
 INCLUDEPATH += ../shared/
 INCLUDEPATH += ../libshell/include
 INCLUDEPATH += ../libcommdlg/
-INCLUDEPATH += ../libcompositor/include/
 INCLUDEPATH += ../shellintegration/
 INCLUDEPATH += /usr/include/dbusmenu-qt6/
 
 # TODO: prefix with -APIVERSION
-CONFIG(debug): LIBS += -ldbusmenu-qt6 -L../output -lshell-$${HOLLYWOOD_APIVERSION} -lcompositor-$${HOLLYWOOD_APIVERSION} -lcommdlg-$${HOLLYWOOD_APIVERSION} -lhw-layer-shell
-CONFIG(release): LIBS += -ldbusmenu-qt6 -L/usr/lib/qt6/plugins/wayland-shell-integration -lshell-$${HOLLYWOOD_APIVERSION} -lcompositor-$${HOLLYWOOD_APIVERSION} -lcommdlg-$${HOLLYWOOD_APIVERSION} -lhw-layer-shell
+CONFIG(debug): LIBS += -ldbusmenu-qt6 -L../output -lshell-$${HOLLYWOOD_APIVERSION} -lcommdlg-$${HOLLYWOOD_APIVERSION} -lhw-layer-shell
+CONFIG(release): LIBS += -ldbusmenu-qt6 -L/usr/lib/qt6/plugins/wayland-shell-integration -lshell-$${HOLLYWOOD_APIVERSION} -lcommdlg-$${HOLLYWOOD_APIVERSION} -lhw-layer-shell
 
 WAYLANDCLIENTSOURCES += ../compositor/protocols/originull-privateapi.xml
 WAYLANDCLIENTSOURCES += ../compositor/protocols/plasma-window-management.xml

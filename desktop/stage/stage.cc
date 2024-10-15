@@ -24,7 +24,7 @@
 #include <sys/types.h>
 #include <pwd.h>
 #include <unistd.h>
-#include "client/privateprotocol.h"
+#include "privatewayland.h"
 
 #define HWSETTINGS_APP      "org.originull.hwsettings.desktop"
 #define HWSYSMON_APP        "org.originull.sysmon.desktop"
