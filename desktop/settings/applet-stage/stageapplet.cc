@@ -29,7 +29,6 @@ bool StageApplet::loadSettings()
     m_seconds->setChecked(settings.value("ShowSecondsInClock", HOLLYWOOD_STCLK_USESECONDS).toBool());
     m_24hour->setChecked(settings.value("Use24HourClock", HOLLYWOOD_STCLK_24HOUR).toBool());
 
-
     auto layout = settings.value("UseSouthernMode", HOLLYWOOD_STAGE_LAYOUT).toBool();
     if(layout == 0)
         m_northern->setChecked(true);
@@ -271,6 +270,8 @@ void StageApplet::setupWidget()
 
     m_stagesize->addButton(m_small);
     m_stagesize->addButton(m_large);
+    m_combine = new QCheckBox(m_host);
+
     auto label = new QLabel(m_host);
     m_position = new QComboBox(m_host);
 
@@ -291,25 +292,23 @@ void StageApplet::setupWidget()
     fl_main->setLayout(0, QFormLayout::FieldRole, vl_ns);
     fl_main->setWidget(1, QFormLayout::LabelRole, lb_stagesize);
     fl_main->setLayout(1, QFormLayout::FieldRole, hl_stage_size);
-    fl_main->setWidget(2, QFormLayout::LabelRole, label);
-    fl_main->setWidget(2, QFormLayout::FieldRole, m_position);
-    fl_main->setWidget(3, QFormLayout::SpanningRole, line);
-    fl_main->setWidget(4, QFormLayout::FieldRole, m_showclock);
-    fl_main->setWidget(5, QFormLayout::FieldRole, m_showdate);
+    fl_main->setWidget(2, QFormLayout::FieldRole, m_combine);
+    fl_main->setWidget(3, QFormLayout::LabelRole, label);
+    fl_main->setWidget(3, QFormLayout::FieldRole, m_position);
+    fl_main->setWidget(4, QFormLayout::SpanningRole, line);
+    fl_main->setWidget(5, QFormLayout::LabelRole, lbl_clock);
+    fl_main->setWidget(5, QFormLayout::FieldRole, m_showclock);
+    fl_main->setWidget(6, QFormLayout::FieldRole, m_showdate);
 
     m_seconds = new QCheckBox(m_host);
 
-    fl_main->setWidget(6, QFormLayout::FieldRole, m_seconds);
+    fl_main->setWidget(7, QFormLayout::FieldRole, m_seconds);
 
     m_24hour = new QCheckBox(m_host);
     lbl_clock = new QLabel(m_host);
 
-    fl_main->setWidget(7, QFormLayout::FieldRole, m_24hour);
-    fl_main->setItem(8, QFormLayout::FieldRole, new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
-
-    fl_main->setWidget(4, QFormLayout::LabelRole, lbl_clock);
-
-
+    fl_main->setWidget(8, QFormLayout::FieldRole, m_24hour);
+    fl_main->setItem(9, QFormLayout::FieldRole, new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
 
     mainLayout->addLayout(fl_main);
     mainLayout->addItem(new QSpacerItem(149, 20, QSizePolicy::Expanding, QSizePolicy::Minimum));
@@ -318,8 +317,8 @@ void StageApplet::setupWidget()
     lb_layoutdesc->setText(QCoreApplication::translate("StageSettings", "Layout:", nullptr));
     m_northern->setText(QCoreApplication::translate("StageSettings", "Northern", nullptr));
     m_southern->setText(QCoreApplication::translate("StageSettings", "Southern", nullptr));
-    m_layoutdesc->setText(QCoreApplication::translate("StageSettings", "TextLabel", nullptr));
     lb_stagesize->setText(QCoreApplication::translate("StageSettings", "Stage Size:", nullptr));
+    m_combine->setText(QCoreApplication::translate("StageSettings", "Use one button per application.", nullptr));
     m_small->setText(QCoreApplication::translate("StageSettings", "Small", nullptr));
     m_large->setText(QCoreApplication::translate("StageSettings", "Large", nullptr));
     label->setText(QCoreApplication::translate("StageSettings", "Stage Position:", nullptr));
@@ -328,7 +327,5 @@ void StageApplet::setupWidget()
     m_seconds->setText(QCoreApplication::translate("StageSettings", "Show time with seconds.", nullptr));
     m_24hour->setText(QCoreApplication::translate("StageSettings", "Use a 24 hour clock.", nullptr));
 
-    m_southern->setEnabled(false);
-    m_large->setEnabled(false);
 }
 

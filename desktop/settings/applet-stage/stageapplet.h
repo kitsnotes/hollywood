@@ -58,6 +58,7 @@ private:
     QLabel *m_layoutdesc;
     QRadioButton *m_small;
     QRadioButton *m_large;
+    QCheckBox *m_combine;
     QComboBox *m_position;
     QFrame *line;
     QCheckBox *m_showclock;
