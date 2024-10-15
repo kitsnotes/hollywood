@@ -4,11 +4,7 @@ CONFIG -= app_bundle
 QT -= gui
 QT += network dbus
 
-CONFIG(debug, debug|release) {
-    LIBS += -L../output -lshelld-$${HOLLYWOOD_APIVERSION}
-} else {
-    LIBS += -L../output -lshell-$${HOLLYWOOD_APIVERSION}
-}
+LIBS += -L../output -lshell-$${HOLLYWOOD_APIVERSION}
 
 TARGET = session
 INCLUDEPATH += ../libshell/include

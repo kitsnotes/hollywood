@@ -21,6 +21,7 @@ INCLUDEPATH += include/private/
 INCLUDEPATH += ../libcommdlg
 QMAKE_PKGCONFIG_DESCRIPTION = Hollywood Shell Library
 versionAtLeast(QT_VERSION, 6.0.0) {
+    TARGET = shell-$${HOLLYWOOD_APIVERSION}
     LIBS += -L../output -lcommdlg-$${HOLLYWOOD_APIVERSION}
 } else {
     TARGET = shell5-$${HOLLYWOOD_APIVERSION}
