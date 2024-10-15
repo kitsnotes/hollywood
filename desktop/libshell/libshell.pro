@@ -11,12 +11,6 @@ QT += core-private \
     svg \
     dbus
 
-CONFIG(debug, debug|release) {
-    TARGET = shell-$${HOLLYWOOD_APIVERSION}
-} else {
-    TARGET = shell-$${HOLLYWOOD_APIVERSION}
-}
-
 TEMPLATE = lib
 DEFINES += LIBSHELL_LIBRARY
 CONFIG += wayland-scanner wayland-client
@@ -30,7 +24,7 @@ versionAtLeast(QT_VERSION, 6.0.0) {
     LIBS += -L../output -lcommdlg-$${HOLLYWOOD_APIVERSION}
 } else {
     TARGET = shell5-$${HOLLYWOOD_APIVERSION}
-    LIBS += -L../output -lcommdlg-$${HOLLYWOOD_APIVERSION}
+    LIBS += -L../output -lcommdlg5-$${HOLLYWOOD_APIVERSION}
     QMAKE_PKGCONFIG_DESCRIPTION = Hollywood Shell Library (Qt5)
 }
 
