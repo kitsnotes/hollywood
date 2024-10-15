@@ -5,6 +5,7 @@ CONFIG   += c++11 wayland-scanner link_pkgconfig
 
 INCLUDEPATH += ../libshell/include
 INCLUDEPATH += include/
+INCLUDEPATH += ../shellintegration
 INCLUDEPATH += ../libcommdlg
 #QMAKE_LFLAGS += -Wl,--allow-shlib-undefined
 TARGET = shellfm
