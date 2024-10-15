@@ -8,4 +8,4 @@ Terminal=false
 Comment=Assists with installing additional application support libraries.
 Categories=System;Core;Qt;Hollywood;
 X-Hollywood-System=true
-MimeType=application/x-java-archive;application/vnd.android.package-archive;application/x-ms-dos-executable;application/x-msi;
+MimeType=application/x-java-archive;application/vnd.android.package-archive;application/x-ms-dos-executable;application/x-msi;application/java-archive;application/x-msdownload;
