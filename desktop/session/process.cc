@@ -305,6 +305,9 @@ void ManagedProcess::setEnvironmentForProcess()
     if(m_process == NotificationDaemon)
         env.insert("HW_TWILIGHT_SHELL", "1");
 
+    if(m_process == Shell)
+        env.insert("QT_WAYLAND_SHELL_INTEGRATION", "hw-layer-shell");
+
     setProcessEnvironment(env);
 }
 
