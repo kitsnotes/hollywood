@@ -6,14 +6,15 @@ CONFIG   += c++11 wayland-scanner link_pkgconfig
 INCLUDEPATH += ../libshell/include
 INCLUDEPATH += include/
 INCLUDEPATH += ../libcommdlg
-INCLUDEPATH += ../libcompositor/include/
 #QMAKE_LFLAGS += -Wl,--allow-shlib-undefined
 TARGET = shellfm
 DBUS_ADAPTORS += org.freedesktop.FileManager1.xml
 LIBS += -lshell-$${HOLLYWOOD_APIVERSION}
 
-LIBS += -L../output -lcompositor-$${HOLLYWOOD_APIVERSION} -lcommdlg-$${HOLLYWOOD_APIVERSION} \
-    -L/usr/lib/qt6/plugins/wayland-shell-integration -lhw-layer-shell
+LIBS += -L../output \
+        -lcommdlg-$${HOLLYWOOD_APIVERSION} \
+        -L/usr/lib/qt6/plugins/wayland-shell-integration \
+        -lhw-layer-shell
 
 WAYLANDCLIENTSOURCES += ../compositor/protocols/originull-privateapi.xml
 # PKGCONFIG += hwcompositor

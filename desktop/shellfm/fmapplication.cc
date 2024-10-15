@@ -4,7 +4,7 @@
 #include <executor.h>
 #include <QLocalSocket>
 #include <iostream>
-#include "client/privateprotocol.h"
+#include "privatewayland.h"
 #include "filemanager1_adaptor.h"
 #include "getinfodialog.h"
 #include "opmanager.h"
