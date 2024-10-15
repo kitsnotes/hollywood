@@ -9,12 +9,10 @@ SUBDIRS = \
     apkd \
     libcmctl \
     libcommdlg \
-    libcompositor \
     libhwlogind \
     libhwudev \
     libpavu \
     platformtheme \
-    platformplugin \
     editor \
     eglfs \
     elevator \
@@ -37,17 +35,17 @@ SUBDIRS = \
     volctl \
     quickweb
 
-    libshell.depends = libcompositor libcommdlg
+    libshell.depends = libcommdlg
     eglfs.depends = libhwudev libhwlogind
-    compositor.depends = libcompositor libshell eglfs
-    shellfm.depends = libshell libcompositor libcommdlg
+    compositor.depends = libshell eglfs
+    shellfm.depends = libshell libcommdlg
     editor.depends = libcommdlg
     calculator.depends = libcommdlg
     platformtheme.depends = libcommdlg libshell
     settings.depends = libshell libcommdlg libpavu
-    menuserver.depends = libshell libcompositor
+    menuserver.depends = libshell
     terminal.depends = libcommdlg
-    stage.depends = libcompositor libshell libpavu
+    stage.depends = libshell libpavu
     session.depends = libshell
     sysmon.depends = libshell libcommdlg
     popular.depends = libshell libcommdlg
@@ -59,10 +57,8 @@ SUBDIRS = \
 lessThan(QT_MAJOR_VERSION, 6) {
 SUBDIRS = \
     libcommdlg \
-    libcompositor \
     libshell \
     platformtheme \
-    platformplugin \
     style
 }
 
