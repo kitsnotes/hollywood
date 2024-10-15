@@ -43,14 +43,14 @@ void PlasmaWindowManagement::org_kde_plasma_window_management_window_with_uuid(u
     auto pm = new PlasmaWindow(wl, this);
     pm->m_uuid = QUuid::fromString(uuid);
     m_windows.append(pm);
-    Q_EMIT windowCreated(pm);
+    emit windowCreated(pm);
 }
 
 
 void PlasmaWindowManagement::org_kde_plasma_window_management_stacking_order_uuid_changed(const QString &uuids)
 {
     m_stackorder = uuids.split(" ");
-    Q_EMIT stackingOrderChanaged();
+    emit stackingOrderChanaged();
 }
 
 PlasmaWindow::PlasmaWindow(struct ::org_kde_plasma_window *window, PlasmaWindowManagement *p)
@@ -142,6 +142,17 @@ void PlasmaWindow::org_kde_plasma_window_state_changed(uint32_t flags)
         if(m_minimized)
             emit minimizedChanged();
         m_minimized = false;
+    }
+
+    if(flags & ORG_KDE_PLASMA_WINDOW_MANAGEMENT_STATE_SKIPTASKBAR)
+    {
+        m_skip = true;
+        emit skipTaskbarChanged(m_skip);
+    }
+    else
+    {
+        m_skip = false;
+        emit skipTaskbarChanged(m_skip);
     }
 }
 

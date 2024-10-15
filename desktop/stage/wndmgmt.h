@@ -53,6 +53,7 @@ Q_SIGNALS:
     void minimizedChanged();
     void windowClosed();
     void themeIconChanged(const QString &icon);
+    void skipTaskbarChanged(bool skip);
     void activated();
     void deactivated();
 protected:
@@ -76,6 +77,7 @@ protected:
     bool m_maximized = false;
     bool m_minimizable = false;
     bool m_maximizable = false;
+    bool m_skip = false;
 
     PlasmaWindowManagement *m_parent = nullptr;
 };
