@@ -9,7 +9,12 @@ CONFIG += plugin wayland-scanner
 INCLUDEPATH += include/
 INCLUDEPATH += ../libcommdlg
 DEFINES -=QT_NO_SIGNALS_SLOTS_KEYWORDS
-LIBS += -L../output -lcommdlg-$${HOLLYWOOD_APIVERSION}
+
+versionAtLeast(QT_VERSION, 6.0.0) {
+    LIBS += -L../output -lcommdlg-$${HOLLYWOOD_APIVERSION}
+} else {
+    LIBS += -L../output -lcommdlg5-$${HOLLYWOOD_APIVERSION}
+}
 
 WAYLANDCLIENTSOURCES += ../compositor/protocols/appmenu.xml
 
