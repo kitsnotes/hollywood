@@ -60,6 +60,12 @@ add_executable(hollywood-setup ${UI_SOURCES})
 target_link_libraries(hollywood-setup Qt6::Network Qt6::Widgets Qt6::Svg OpenSSL::Crypto)
 
 include_directories("/usr/include/hollywood")
+
+# These entries are for building the main hollywood APK package
+# without any elements installed in the root system. do not remove.
+include_directories("../../../desktop/libcommdlg/hollywood")
+link_directories("../../../desktop/build-qt6/output/")
+
 IF("cxx_std_17" IN_LIST CMAKE_CXX_COMPILE_FEATURES)
     set_property(TARGET hollywood-setup PROPERTY CXX_STANDARD 17)
 ENDIF()
