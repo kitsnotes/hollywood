@@ -1,6 +1,15 @@
 include(../include/global.pri)
 
-QT += core-private network widgets-private svg dbus
+QT += core-private \
+    gui \
+    gui-private \
+    network \
+    widgets \
+    widgets-private \
+    waylandclient \
+    waylandclient-private \
+    svg \
+    dbus
 
 CONFIG(debug, debug|release) {
     TARGET = shell-$${HOLLYWOOD_APIVERSION}
@@ -10,18 +19,18 @@ CONFIG(debug, debug|release) {
 
 TEMPLATE = lib
 DEFINES += LIBSHELL_LIBRARY
-# sDEFINES += USE_DNSSD
+CONFIG += wayland-scanner wayland-client
+WAYLANDCLIENTSOURCES += ../compositor/protocols/originull-privateapi.xml
 
 INCLUDEPATH += include/
 INCLUDEPATH += include/private/
-INCLUDEPATH += ../libcompositor/include
 INCLUDEPATH += ../libcommdlg
 QMAKE_PKGCONFIG_DESCRIPTION = Hollywood Shell Library
 versionAtLeast(QT_VERSION, 6.0.0) {
-    LIBS += -L../output -lcommdlg-$${HOLLYWOOD_APIVERSION} -lcompositor-$${HOLLYWOOD_APIVERSION}
+    LIBS += -L../output -lcommdlg-$${HOLLYWOOD_APIVERSION}
 } else {
     TARGET = shell5-$${HOLLYWOOD_APIVERSION}
-    LIBS += -L../output -lcommdlg-$${HOLLYWOOD_APIVERSION} -lcompositor5-$${HOLLYWOOD_APIVERSION}
+    LIBS += -L../output -lcommdlg-$${HOLLYWOOD_APIVERSION}
     QMAKE_PKGCONFIG_DESCRIPTION = Hollywood Shell Library (Qt5)
 }
 
@@ -31,6 +40,7 @@ SOURCES += \
     src/core/disks.cc \
     src/core/fileoperation.cc \
     src/core/opmanager.cc \
+    src/core/privatewayland.cc \
     src/core/shellundo.cc \
     src/dialogs/getinfodialog.cc \
     src/dialogs/getinfowidgets.cc \
@@ -110,6 +120,7 @@ HEADERS += \
     include/libshell_int.h \
     include/locationbar.h \
     include/mimeapps.h \
+    include/privatewayland.h \
     include/private/shellhost_p.h \
     include/private/viewoptionsdialog_p.h \
     include/shellhost.h \
