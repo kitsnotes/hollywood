@@ -222,10 +222,6 @@ void OutputWindow::drawTextureForObject(Surface *obj)
         {
             QOpenGLFunctions *functions = context()->functions();
 
-            // THIS IS WHERE OUR RESIZE POSITION GETS SET!!!!
-            /* if (m_mouseSelectedSurfaceObject == obj && m_grabState == ResizeGrab && m_resizeAnchored)
-                obj->setPosition(getAnchoredPosition(m_resizeAnchorPosition, m_resizeEdge, s)); */
-
             auto surfaceOrigin = obj->primaryView()->textureOrigin();
             if(m_fbo != nullptr)
             {
@@ -282,6 +278,7 @@ void OutputWindow::drawTextureForObject(Surface *obj)
                 // blit the decorations/shadow from fbo
                 QMatrix4x4 tt_fbo = QOpenGLTextureBlitter::targetTransform(source,
                                                         QRect(m_output->wlOutput()->position(), size()));
+
                 m_textureBlitter.blit(m_fbo->texture(), tt_fbo,
                                       QOpenGLTextureBlitter::OriginBottomLeft,
                                       QOpenGLTexture::RGBAFormat);
@@ -292,12 +289,25 @@ void OutputWindow::drawTextureForObject(Surface *obj)
             functions->glEnable(GL_BLEND);
             functions->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-            QRect source = QRect(obj->surfacePosition().toPoint(), obj->surfaceSize());
+            // render the actual surface content
+            QRect source = QRect(obj->surfacePosition().toPoint(), obj->surface()->destinationSize());
+
             QMatrix4x4 tt_surface = QOpenGLTextureBlitter::targetTransform(source,
                                       QRect(m_output->wlOutput()->position(), size()));
 
+            auto sourceGeom = obj->surface()->sourceGeometry();
+            if(sourceGeom.height() != obj->surface()->bufferSize().height())
+            {
+                // we have a viewport - offset properly
+                auto offset = obj->surface()->bufferSize().height() - sourceGeom.height();
+                sourceGeom.moveTop(offset);
+            }
+
+            QMatrix3x3 src_transform = QOpenGLTextureBlitter::sourceTransform(sourceGeom,
+                                                                              obj->surface()->bufferSize(),
+                                                                              surfaceOrigin);
             m_textureBlitter.bind(currentTarget);
-            m_textureBlitter.blit(texture->textureId(), tt_surface, surfaceOrigin, texture->format());
+            m_textureBlitter.blit(texture->textureId(), tt_surface, src_transform, texture->format());
             m_textureBlitter.release();
 
             functions->glDisable(GL_BLEND);

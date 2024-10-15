@@ -18,6 +18,9 @@ WAYLANDSERVERSOURCES += protocols/gtk.xml
 WAYLANDSERVERSOURCES += protocols/qt-shell-unstable-v1.xml
 WAYLANDSERVERSOURCES += protocols/xdg-shell.xml
 WAYLANDSERVERSOURCES += protocols/xdg-activation-v1.xml
+WAYLANDSERVERSOURCES += protocols/pointer-constraints-unstable-v1.xml
+WAYLANDSERVERSOURCES += protocols/relative-pointer-unstable-v1.xml
+
 
 HEADERS += \
     include/activation.h \
@@ -30,7 +33,9 @@ HEADERS += \
     include/layershell.h \
     include/originull.h \
     include/output.h \
+    include/pointerconstraints.h \
     include/qtshell.h \
+    include/relativepointer.h \
     include/screencopy.h \
     include/shortcuts.h \
     include/surfaceobject.h \
@@ -52,7 +57,9 @@ SOURCES += \
     src/layershell.cc \
     src/originull.cc \
     src/output.cc \
+    src/pointerconstraints.cc \
     src/qtshell.cc \
+    src/relativepointer.cc \
     src/screencopy.cc \
     src/shortcuts.cc \
     src/surfaceobject.cc \

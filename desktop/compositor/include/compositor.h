@@ -53,6 +53,9 @@ class QtSurface;
 class ShortcutManager;
 class XdgActivation;
 class WlrScreencopyManagerV1;
+class RelativePointerManagerV1;
+class PointerConstraintsV1;
+
 class Compositor : public QWaylandCompositor
 {
     Q_OBJECT
@@ -216,6 +219,10 @@ private:
     WlrScreencopyManagerV1 *m_screencopy = nullptr;
     // wp-viewporter protocol
     QWaylandViewporter *m_viewporter = nullptr;
+    // wp-reative-pointer protocol
+    RelativePointerManagerV1 *m_relative_pointer = nullptr;
+    // wp-pointer-constraints protocol
+    PointerConstraintsV1 *m_pointer_constraints = nullptr;
     // running under user 'sddm'
     bool m_sddm = false;
 

@@ -352,23 +352,23 @@ QSize Surface::surfaceSize() const
     }
 
     if(m_fullscreenShell)
-        return surface()->bufferSize();
+        return surface()->destinationSize();
 
     if(m_layerSurface)
-        return surface()->bufferSize();
+        return surface()->destinationSize();
 
     if(m_qt)
     {
         if(m_qt_size.isEmpty())
-            return surface()->bufferSize();
+            return surface()->destinationSize();
         else
             return m_qt_size;
     }
 
     if(m_xdgSurface)
-        return surface()->bufferSize();
+        return surface()->destinationSize();
 
-    return surface()->bufferSize();
+    return surface()->destinationSize();
 }
 
 QSize Surface::decoratedSize() const
@@ -1098,6 +1098,7 @@ void Surface::deactivate()
     {
         QList<HWWaylandXdgToplevel::State> states = m_xdgTopLevel->states();
         states.removeOne(HWWaylandXdgToplevel::ActivatedState);
+        qDebug() << "deactivating" << states;
         m_xdgTopLevel->sendConfigure(surfaceSize(), states);
     }
 

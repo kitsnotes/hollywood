@@ -20,6 +20,8 @@
 #include "fullscreen.h"
 #include "activation.h"
 #include "screencopy.h"
+#include "relativepointer.h"
+#include "pointerconstraints.h"
 
 #include "surfaceobject.h"
 #include "shortcuts.h"
@@ -49,6 +51,8 @@ Compositor::Compositor(bool sddm)
     , m_outputmgr(new QWaylandXdgOutputManagerV1(this))
     , m_screencopy(new WlrScreencopyManagerV1(this))
     , m_viewporter(new QWaylandViewporter(this))
+    , m_relative_pointer(new RelativePointerManagerV1(this))
+    , m_pointer_constraints(new PointerConstraintsV1(this))
     , m_sddm(sddm)
     , m_shortcuts(new ShortcutManager(this))
     , m_timeout(new QTimer(this))
@@ -95,6 +99,8 @@ void Compositor::create()
     m_screencopy->setExtensionContainer(this);
     m_screencopy->initialize();
     m_viewporter->initialize();
+    m_pointer_constraints->initialize();
+    m_relative_pointer->initialize();
     connect(m_appMenu, &AppMenuManager::appMenuCreated, this, &Compositor::appMenuCreated);
     connect(m_hwPrivate, &OriginullProtocol::menuServerSet, this, &Compositor::onMenuServerRequest);
     connect(m_hwPrivate, &OriginullProtocol::wallpaperRotationRequested, this, &Compositor::onRotateWallpaper);
@@ -148,7 +154,6 @@ Output *Compositor::outputFor(QWaylandOutput *wloutput)
 
 void Compositor::resetLayerShellLayer(Surface *s)
 {
-    qDebug() << "resetLayerShellLayer" << s->uuid().toString();
     if(!s->layerSurface())
         return;
 
@@ -161,7 +166,6 @@ void Compositor::resetLayerShellLayer(Surface *s)
     switch(s->layerSurface()->layer())
     {
     case WlrLayerShellV1::BackgroundLayer:
-        qDebug() << "setting background layer";
         m_layer_bg.append(s);
         if(s->m_wndctl)
         {
@@ -412,19 +416,8 @@ void Compositor::onMenuServerRequest(OriginullMenuServer *menu)
 
 void Compositor::onDesktopRequest(QWaylandSurface *surface)
 {
+    Q_UNUSED(surface)
     return;
-    auto *sf = findSurfaceObject(surface);
-    Q_ASSERT(sf);
-    qDebug(lc) << "Compositor::onDesktopRequest" << sf->uuid().toString();
-
-    if(m_zorder.contains(sf))
-        m_zorder.removeOne(sf);
-
-    if(sf->m_wndctl)
-    {
-        sf->m_wndctl->deleteLater();
-        sf->m_wndctl = nullptr;
-    }
 }
 
 
@@ -812,7 +805,6 @@ void Compositor::onRotateWallpaper()
 
 void Compositor::appMenuCreated(AppMenu *m)
 {
-    qDebug() << "appMenuCreated";
     m->surface()->setAppMenu(m);
 }
 
