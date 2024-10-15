@@ -63,7 +63,7 @@ include_directories("/usr/include/hollywood")
 
 # These entries are for building the main hollywood APK package
 # without any elements installed in the root system. do not remove.
-include_directories("../../../desktop/libcommdlg/hollywood")
+include_directories("../../../desktop/libcommdlg")
 link_directories("../../../desktop/build-qt6/output/")
 
 IF("cxx_std_17" IN_LIST CMAKE_CXX_COMPILE_FEATURES)
