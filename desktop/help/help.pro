@@ -15,7 +15,7 @@ HEADERS += \
     application.h \
     helpwindow.h
 
-LIBS += -L../../output -lcommdlg-$${HOLLYWOOD_APIVERSION}
+LIBS += -L../output -lcommdlg-$${HOLLYWOOD_APIVERSION}
 # Default rules for deployment.
 QMAKE_SUBSTITUTES +=org.originull.help.desktop.in
 desktop.path = $$PREFIX/share/applications
