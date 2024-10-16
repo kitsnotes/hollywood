@@ -36,6 +36,7 @@ QWaylandLayerSurface::QWaylandLayerSurface(QWaylandLayerShell *shell, QtWaylandC
     }
     init(shell->get_layer_surface(window->waylandSurface()->object(), output, interface->layer(), interface->scope()));
     connect(interface, &Window::layerChanged, this, [this, interface]() {
+        qDebug() << "SIGNAL LayerSurface::setLayer" << interface->layer();
         setLayer(interface->layer());
     });
 
@@ -66,9 +67,7 @@ QWaylandLayerSurface::QWaylandLayerSurface(QWaylandLayerShell *shell, QtWaylandC
     });
 
     QSize size = window->surfaceSize();
-    qDebug() << size;
     const Window::Anchors anchors = interface->anchors();
-    qDebug() << anchors;
     if ((anchors & Window::AnchorLeft) && (anchors & Window::AnchorRight)) {
         size.setWidth(0);
     }
