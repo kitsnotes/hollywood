@@ -517,7 +517,7 @@ void DesktopWindow::show()
     m_lswnd = LayerShellQt::Window::get(windowHandle());
     if(m_lswnd)
     {
-        qDebug() << "setting layershell LayerBackground";
+        qDebug() << "setting layershell LayerBackground onshow";
         m_lswnd->setLayer(LayerShellQt::Window::LayerBackground);
         m_lswnd->setAnchors(LayerShellQt::Window::AnchorTop);
         m_lswnd->setSize(qApp->primaryScreen()->size());
