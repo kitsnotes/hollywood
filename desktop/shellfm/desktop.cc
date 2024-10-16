@@ -29,6 +29,8 @@ DesktopWindow::DesktopWindow(QWidget *parent)
     setObjectName("DesktopWindow");
     setCentralWidget(m_view);
     m_view->setModel(m_model);
+    m_view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     setAttribute(Qt::WA_NoSystemBackground);
     setAttribute(Qt::WA_TranslucentBackground);
