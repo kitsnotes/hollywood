@@ -1,10 +1,9 @@
 // Hollywood Wayland Compositor
-// (C) 2021, 2022 Cat Stevenson <cat@originull.org>
+// (C) 2021-2024 Originull Software
 // Copyright (C) 2018 The Qt Company Ltd.
 // SPDX-License-Identifier: GPL-3.0-only
 
-#ifndef XDGSHELL_H
-#define XDGSHELL_H
+#pragma once
 
 #include <QtWaylandCompositor/QWaylandCompositorExtension>
 #include <QtWaylandCompositor/QWaylandResource>
@@ -22,9 +21,6 @@
 
 struct wl_resource;
 
-QT_BEGIN_NAMESPACE
-
-
 class QWaylandClient;
 class QWaylandOutput;
 class QWaylandSeat;
@@ -38,6 +34,7 @@ class HWWaylandXdgToplevelPrivate;
 class HWWaylandXdgPopup;
 class HWWaylandXdgPopupPrivate;
 class QWaylandXdgPositioner;
+class WlrLayerSurfaceV1;
 
 class HWWaylandXdgShell : public QWaylandShellTemplate<HWWaylandXdgShell>
 {
@@ -66,15 +63,19 @@ private Q_SLOTS:
     void handleFocusChanged(QWaylandSurface *newSurface, QWaylandSurface *oldSurface);
 };
 
-class HWWaylandXdgSurface : public QWaylandShellSurfaceTemplate<HWWaylandXdgSurface>
+class  HWWaylandXdgSurface : public QWaylandShellSurfaceTemplate<HWWaylandXdgSurface>
 {
     Q_OBJECT
     Q_DECLARE_PRIVATE(HWWaylandXdgSurface)
+#if QT_CONFIG(wayland_compositor_quick)
+    Q_WAYLAND_COMPOSITOR_DECLARE_QUICK_CHILDREN(HWWaylandXdgSurface)
+#endif
     Q_PROPERTY(HWWaylandXdgShell *shell READ shell NOTIFY shellChanged)
     Q_PROPERTY(QWaylandSurface *surface READ surface NOTIFY surfaceChanged)
     Q_PROPERTY(HWWaylandXdgToplevel *toplevel READ toplevel NOTIFY toplevelCreated)
     Q_PROPERTY(HWWaylandXdgPopup *popup READ popup NOTIFY popupCreated)
     Q_PROPERTY(QRect windowGeometry READ windowGeometry NOTIFY windowGeometryChanged)
+    Q_MOC_INCLUDE("qwaylandsurface.h")
 
 public:
     explicit HWWaylandXdgSurface();
@@ -83,7 +84,6 @@ public:
     Q_INVOKABLE void initialize(HWWaylandXdgShell* xdgShell, QWaylandSurface *surface, const QWaylandResource &resource);
 
     Qt::WindowType windowType() const override;
-    QWaylandQuickShellIntegration *createIntegration(QWaylandQuickShellSurfaceItem *item) override;
 
     HWWaylandXdgShell *shell() const;
     QWaylandSurface *surface() const;
@@ -94,6 +94,7 @@ public:
     static const struct wl_interface *interface();
     static QByteArray interfaceName();
     static HWWaylandXdgSurface *fromResource(::wl_resource *resource);
+    QWaylandQuickShellIntegration *createIntegration(QWaylandQuickShellSurfaceItem *item) override;
 
 Q_SIGNALS:
     void shellChanged();
@@ -110,7 +111,7 @@ private Q_SLOTS:
     void handleBufferScaleChanged();
 };
 
-class HWWaylandXdgToplevel : public QObject
+class  HWWaylandXdgToplevel : public QObject
 {
     Q_OBJECT
     Q_DECLARE_PRIVATE(HWWaylandXdgToplevel)
@@ -125,12 +126,9 @@ class HWWaylandXdgToplevel : public QObject
     Q_PROPERTY(bool fullscreen READ fullscreen NOTIFY fullscreenChanged)
     Q_PROPERTY(bool resizing READ resizing NOTIFY resizingChanged)
     Q_PROPERTY(bool activated READ activated NOTIFY activatedChanged)
-// QDoc fails to parse the property type that includes the keyword 'enum'
-#ifndef Q_CLANG_QDOC
+    Q_PROPERTY(bool modal READ isModal NOTIFY modalChanged FINAL REVISION(6,8))
     Q_PROPERTY(enum DecorationMode decorationMode READ decorationMode NOTIFY decorationModeChanged)
-#else
-    Q_PROPERTY(DecorationMode decorationMode READ decorationMode NOTIFY decorationModeChanged)
-#endif
+
 public:
     enum State : uint {
         MaximizedState  = 1,
@@ -175,6 +173,8 @@ public:
     static QWaylandSurfaceRole *role();
     static HWWaylandXdgToplevel *fromResource(::wl_resource *resource);
 
+    bool isModal() const;
+
 Q_SIGNALS:
     void parentToplevelChanged();
     void titleChanged();
@@ -198,12 +198,15 @@ Q_SIGNALS:
 
     void decorationModeChanged();
 
+    Q_REVISION(6, 8) void modalChanged();
+
 private:
     QList<int> statesAsInts() const;
+    void setModal(bool newModal);
+    friend class HWWaylandXdgDialogV1;
 };
 
-class WlrLayerSurfaceV1;
-class HWWaylandXdgPopup : public QObject
+class  HWWaylandXdgPopup : public QObject
 {
     Q_OBJECT
     Q_DECLARE_PRIVATE(HWWaylandXdgPopup)
@@ -224,7 +227,6 @@ class HWWaylandXdgPopup : public QObject
 public:
     HWWaylandXdgSurface *xdgSurface() const;
     HWWaylandXdgSurface *parentXdgSurface() const;
-    WlrLayerSurfaceV1 *parentLayerSurface() const;
     QRect configuredGeometry() const;
 
     // Positioner properties
@@ -243,7 +245,6 @@ public:
 
     static QWaylandSurfaceRole *role();
     static HWWaylandXdgPopup *fromResource(struct ::wl_resource *resource);
-
 Q_SIGNALS:
     void configuredGeometryChanged();
 
@@ -251,10 +252,4 @@ private:
     explicit HWWaylandXdgPopup(HWWaylandXdgSurface *xdgSurface, HWWaylandXdgSurface *parentXdgSurface,
                               QWaylandXdgPositioner *positioner, QWaylandResource &resource);
     friend class HWWaylandXdgSurfacePrivate;
-private slots:
-    void handleRedraw();
 };
-
-QT_END_NAMESPACE
-
-#endif // HWWaylandXDGSHELL_H

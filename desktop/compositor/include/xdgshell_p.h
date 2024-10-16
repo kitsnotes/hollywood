@@ -1,16 +1,14 @@
 // Hollywood Wayland Compositor
-// (C) 2021, 2022 Cat Stevenson <cat@originull.org>
+// (C) 2021-2024 Originull Software
 // Copyright (C) 2018 The Qt Company Ltd.
 // SPDX-License-Identifier: GPL-3.0-only
 
-#ifndef XDGSHELL_P_H
-#define XDGSHELL_P_H
+#pragma once
 
 #include <QtWaylandCompositor/QWaylandCompositorExtension>
 #include <QtWaylandCompositor/QWaylandResource>
 #include <QtWaylandCompositor/QWaylandShell>
 #include <QtWaylandCompositor/QWaylandShellSurface>
-//#include <QtWaylandCompositor/qwaylandquickchildren.h>
 #include <QtWaylandCompositor/private/qwaylandcompositorextension_p.h>
 #include <QtWaylandCompositor/private/qwaylandshell_p.h>
 #include <QtWaylandCompositor/private/qwayland-server-xdg-shell.h>
@@ -22,10 +20,9 @@
 #include "xdgshell.h"
 #include "layershell.h"
 
-struct wl_resource;
+#include <QtWaylandCompositor/QWaylandXdgShell>
 
-QT_BEGIN_NAMESPACE
-
+class WlrLayerSurfaceV1;
 class HWWaylandXdgShellPrivate
         : public QWaylandShellPrivate
         , public QtWaylandServer::xdg_wm_base
@@ -51,8 +48,8 @@ protected:
     void xdg_wm_base_pong(Resource *resource, uint32_t serial) override;
 };
 
-class HWWaylandXdgSurfacePrivate
-        : public QWaylandCompositorExtensionPrivate
+class  HWWaylandXdgSurfacePrivate
+        : public QWaylandShellSurfacePrivate
         , public QtWaylandServer::xdg_surface
 {
     Q_DECLARE_PUBLIC(HWWaylandXdgSurface)
@@ -85,7 +82,7 @@ private:
     void xdg_surface_set_window_geometry(Resource *resource, int32_t x, int32_t y, int32_t width, int32_t height) override;
 };
 
-class HWWaylandXdgToplevelPrivate : public QObjectPrivate, public QtWaylandServer::xdg_toplevel
+class  HWWaylandXdgToplevelPrivate : public QObjectPrivate, public QtWaylandServer::xdg_toplevel
 {
     Q_DECLARE_PUBLIC(HWWaylandXdgToplevel)
 public:
@@ -139,11 +136,12 @@ public:
     QSize m_maxSize;
     QSize m_minSize = {0, 0};
     QWaylandXdgToplevelDecorationV1 *m_decoration = nullptr;
+    bool m_modal = false;
 
     static QWaylandSurfaceRole s_role;
 };
 
-class HWWaylandXdgPopupPrivate : public QObjectPrivate, public QtWaylandServer::xdg_popup
+class  HWWaylandXdgPopupPrivate : public QObjectPrivate, public QtWaylandServer::xdg_popup
 {
     Q_DECLARE_PUBLIC(HWWaylandXdgPopup)
 public:
@@ -165,7 +163,6 @@ private:
     friend class WlrLayerSurfaceV1;
     uint sendConfigure(const QRect &geometry);
     void setParentLayerSurface(WlrLayerSurfaceV1 *surface);
-
 protected:
     void xdg_popup_destroy(Resource *resource) override;
     void xdg_popup_grab(Resource *resource, struct ::wl_resource *seat, uint32_t serial) override;
@@ -179,4 +176,3 @@ private:
     QList<ConfigureEvent> m_pendingConfigures;
 };
 
-#endif // XDGSHELL_P_H

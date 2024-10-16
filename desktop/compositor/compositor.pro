@@ -44,6 +44,7 @@ HEADERS += \
     include/compositor.h \
     include/wndmgmt.h \
     include/wallpaper.h \
+    include/xdgdialog.h \
     include/xdgshell.h \
     include/xdgshell_p.h
 
@@ -68,6 +69,7 @@ SOURCES += \
     src/view.cc \
     src/wndmgmt.cc \
     src/wallpaper.cc \
+    src/xdgdialog.cc \
     src/xdgshell.cc
 
 #QMAKE_SUBSTITUTES += org.originull.compositor.desktop.in

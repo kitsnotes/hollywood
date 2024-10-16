@@ -1,26 +1,27 @@
 // Hollywood Wayland Compositor
-// (C) 2022 Cat Stevenson <cat@originull.org>
+// (C) 2021-2024 Originull Software
 // Copyright (C) 2018 The Qt Company Ltd.
 // SPDX-License-Identifier: GPL-3.0-only
 
 #include "xdgshell.h"
 #include "xdgshell_p.h"
 #include "layershell.h"
+#include "xdgdialog.h"
 
 #include <QtWaylandCompositor/private/qwaylandutils_p.h>
+#include <QtWaylandCompositor/private/qwaylandxdgshell_p.h>
 
 #include <QtWaylandCompositor/QWaylandCompositor>
 #include <QtWaylandCompositor/QWaylandSeat>
 #include <QtWaylandCompositor/QWaylandSurface>
 #include <QtWaylandCompositor/QWaylandSurfaceRole>
 #include <QtWaylandCompositor/QWaylandResource>
+#include <QtWaylandCompositor/QWaylandShellSurfaceTemplate>
 
 #include <QtCore/QObject>
 
 #include <algorithm>
 #include <type_traits>
-
-QT_BEGIN_NAMESPACE
 
 HWWaylandXdgShellPrivate::HWWaylandXdgShellPrivate()
 {
@@ -46,7 +47,7 @@ void HWWaylandXdgShellPrivate::unregisterXdgSurface(HWWaylandXdgSurface *xdgSurf
 
 HWWaylandXdgSurface *HWWaylandXdgShellPrivate::xdgSurfaceFromSurface(QWaylandSurface *surface)
 {
-    for (HWWaylandXdgSurface *xdgSurface : qAsConst(m_xdgSurfaces)) {
+    for (HWWaylandXdgSurface *xdgSurface : std::as_const(m_xdgSurfaces)) {
         if (surface == xdgSurface->surface())
             return xdgSurface;
     }
@@ -107,66 +108,16 @@ void HWWaylandXdgShellPrivate::xdg_wm_base_pong(Resource *resource, uint32_t ser
         qWarning("Received an unexpected pong!");
 }
 
-/*!
- * \qmltype XdgShell
- * \instantiates HWWaylandXdgShell
- * \inqmlmodule QtWayland.Compositor.XdgShell
- * \since 5.12
- * \brief Provides an extension for desktop-style user interfaces.
- *
- * The XdgShell extension provides a way to associate a XdgToplevel or XdgPopup
- * with a regular Wayland surface. Using the XdgToplevel interface, the client
- * can request that the surface is resized, moved, and so on.
- *
- * XdgShell corresponds to the Wayland interface, \c xdg_shell.
- *
- * To provide the functionality of the shell extension in a compositor, create
- * an instance of the XdgShell component and add it to the list of extensions
- * supported by the compositor:
- *
- * \qml
- * import QtWayland.Compositor.XdgShell
- *
- * WaylandCompositor {
- *     XdgShell {
- *         // ...
- *     }
- * }
- * \endqml
- */
-
-/*!
- * \class HWWaylandXdgShell
- * \inmodule QtWaylandCompositor
- * \since 5.12
- * \brief The HWWaylandXdgShell class is an extension for desktop-style user interfaces.
- *
- * The HWWaylandXdgShell extension provides a way to associate a HWWaylandXdgToplevel or
- * HWWaylandXdgPopup with a regular Wayland surface. Using the HWWaylandXdgToplevel interface,
- * the client can request that the surface is resized, moved, and so on.
- *
- * HWWaylandXdgShell corresponds to the Wayland interface, \c xdg_shell.
- */
-
-/*!
- * Constructs a HWWaylandXdgShell object.
- */
 HWWaylandXdgShell::HWWaylandXdgShell()
     : QWaylandShellTemplate<HWWaylandXdgShell>(*new HWWaylandXdgShellPrivate())
 {
 }
 
-/*!
- * Constructs a HWWaylandXdgShell object for the provided \a compositor.
- */
 HWWaylandXdgShell::HWWaylandXdgShell(QWaylandCompositor *compositor)
     : QWaylandShellTemplate<HWWaylandXdgShell>(compositor, *new HWWaylandXdgShellPrivate())
 {
 }
 
-/*!
- * Initializes the shell extension.
- */
 void HWWaylandXdgShell::initialize()
 {
     Q_D(HWWaylandXdgShell);
@@ -182,11 +133,12 @@ void HWWaylandXdgShell::initialize()
 
     connect(compositor, &QWaylandCompositor::defaultSeatChanged,
             this, &HWWaylandXdgShell::handleSeatChanged);
+
+    // Support the dialog extension unconditionally.
+    QObject *dialogExtension = new HWWaylandXdgDialogV1Global(compositor);
+    dialogExtension->setParent(this);
 }
 
-/*!
- * Returns the Wayland interface for the HWWaylandXdgShell.
- */
 const struct wl_interface *HWWaylandXdgShell::interface()
 {
     return HWWaylandXdgShellPrivate::interface();
@@ -197,17 +149,6 @@ QByteArray HWWaylandXdgShell::interfaceName()
     return HWWaylandXdgShellPrivate::interfaceName();
 }
 
-/*!
- * \qmlmethod void QtWaylandCompositor::XdgShell::ping(WaylandClient client)
- *
- * Sends a ping event to \a client. If the client replies to the event the
- * \l pong signal will be emitted.
- */
-
-/*!
- * Sends a ping event to \a client. If the client replies to the event the
- * \l pong signal will be emitted.
- */
 uint HWWaylandXdgShell::ping(QWaylandClient *client)
 {
     Q_D(HWWaylandXdgShell);
@@ -331,6 +272,9 @@ void HWWaylandXdgSurfacePrivate::xdg_surface_get_toplevel(QtWaylandServer::xdg_s
     m_toplevel = new HWWaylandXdgToplevel(q, topLevelResource);
     emit q->toplevelCreated();
     emit m_xdgShell->toplevelCreated(m_toplevel, q);
+    q->connect(m_toplevel, &HWWaylandXdgToplevel::modalChanged, q, [q, this](){
+        q->setModal(m_toplevel->isModal());
+    });
 }
 
 void HWWaylandXdgSurfacePrivate::xdg_surface_get_popup(QtWaylandServer::xdg_surface::Resource *resource, uint32_t id, wl_resource *parentResource, wl_resource *positionerResource)
@@ -425,64 +369,17 @@ void HWWaylandXdgSurfacePrivate::xdg_surface_set_window_geometry(QtWaylandServer
     emit q->windowGeometryChanged();
 }
 
-/*!
- * \qmltype XdgSurface
- * \instantiates HWWaylandXdgSurface
- * \inqmlmodule QtWayland.Compositor.XdgShell
- * \since 5.12
- * \brief XdgSurface provides desktop-style compositor-specific features to an xdg surface.
- *
- * This type is part of the \l{XdgShell} extension and provides a way to
- * extend the functionality of an existing \l{WaylandSurface} with features
- * specific to desktop-style compositors, such as resizing and moving the
- * surface.
- *
- * It corresponds to the Wayland interface \c xdg_surface.
- */
-
-/*!
- * \class HWWaylandXdgSurface
- * \inmodule QtWaylandCompositor
- * \since 5.12
- * \brief The HWWaylandXdgSurface class provides desktop-style compositor-specific features to an xdg surface.
- *
- * This class is part of the HWWaylandXdgShell extension and provides a way to
- * extend the functionality of an existing QWaylandSurface with features
- * specific to desktop-style compositors, such as resizing and moving the
- * surface.
- *
- * It corresponds to the Wayland interface \c xdg_surface.
- */
-
-/*!
- * Constructs a HWWaylandXdgSurface.
- */
 HWWaylandXdgSurface::HWWaylandXdgSurface()
     : QWaylandShellSurfaceTemplate<HWWaylandXdgSurface>(*new HWWaylandXdgSurfacePrivate)
 {
 }
 
-/*!
- * Constructs a HWWaylandXdgSurface for \a surface and initializes it with the
- * given \a xdgShell, \a surface, and resource \a res.
- */
 HWWaylandXdgSurface::HWWaylandXdgSurface(HWWaylandXdgShell *xdgShell, QWaylandSurface *surface, const QWaylandResource &res)
     : QWaylandShellSurfaceTemplate<HWWaylandXdgSurface>(*new HWWaylandXdgSurfacePrivate)
 {
     initialize(xdgShell, surface, res);
 }
 
-/*!
- * \qmlmethod void QtWaylandCompositor::XdgSurface::initialize(object xdgShell, object surface, object client, int id)
- *
- * Initializes the XdgSurface, associating it with the given \a xdgShell, \a surface,
- * \a client, and \a id.
- */
-
-/*!
- * Initializes the HWWaylandXdgSurface, associating it with the given \a xdgShell, \a surface
- * and \a resource.
- */
 void HWWaylandXdgSurface::initialize(HWWaylandXdgShell *xdgShell, QWaylandSurface *surface, const QWaylandResource &resource)
 {
     Q_D(HWWaylandXdgSurface);
@@ -498,45 +395,18 @@ void HWWaylandXdgSurface::initialize(HWWaylandXdgShell *xdgShell, QWaylandSurfac
     QWaylandCompositorExtension::initialize();
 }
 
-/*!
- * \qmlproperty enum QtWaylandCompositor::XdgSurface::windowType
- *
- * This property holds the window type of the XdgSurface.
- */
 Qt::WindowType HWWaylandXdgSurface::windowType() const
 {
     Q_D(const HWWaylandXdgSurface);
     return d->m_windowType;
 }
 
-/*!
- * \qmlproperty rect QtWaylandCompositor::XdgSurface::windowGeometry
- *
- * This property holds the window geometry of the HWWaylandXdgSurface. The window
- * geometry describes the window's visible bounds from the user's perspective.
- * The geometry includes title bars and borders if drawn by the client, but
- * excludes drop shadows. It is meant to be used for aligning and tiling
- * windows.
- */
-
-/*!
- * \property HWWaylandXdgSurface::windowGeometry
- *
- * This property holds the window geometry of the HWWaylandXdgSurface. The window
- * geometry describes the window's visible bounds from the user's perspective.
- * The geometry includes title bars and borders if drawn by the client, but
- * excludes drop shadows. It is meant to be used for aligning and tiling
- * windows.
- */
 QRect HWWaylandXdgSurface::windowGeometry() const
 {
     Q_D(const HWWaylandXdgSurface);
     return d->m_windowGeometry;
 }
 
-/*!
- * \internal
- */
 void HWWaylandXdgSurface::initialize()
 {
     QWaylandCompositorExtension::initialize();
@@ -554,105 +424,40 @@ void HWWaylandXdgSurface::handleBufferScaleChanged()
     d->updateFallbackWindowGeometry();
 }
 
-/*!
- * \qmlproperty XdgShell QtWaylandCompositor::XdgSurface::shell
- *
- * This property holds the shell associated with this XdgSurface.
- */
-
-/*!
- * \property HWWaylandXdgSurface::shell
- *
- * This property holds the shell associated with this HWWaylandXdgSurface.
- */
 HWWaylandXdgShell *HWWaylandXdgSurface::shell() const
 {
     Q_D(const HWWaylandXdgSurface);
     return d->m_xdgShell;
 }
 
-/*!
- * \qmlproperty WaylandSurface QtWaylandCompositor::XdgSurface::surface
- *
- * This property holds the surface associated with this XdgSurface.
- */
-
-/*!
- * \property HWWaylandXdgSurface::surface
- *
- * This property holds the surface associated with this HWWaylandXdgSurface.
- */
 QWaylandSurface *HWWaylandXdgSurface::surface() const
 {
     Q_D(const HWWaylandXdgSurface);
     return d->m_surface;
 }
 
-/*!
- * \qmlproperty XdgToplevel QtWaylandCompositor::XdgSurface::toplevel
- *
- * This property holds the properties and methods that are specific to the
- * toplevel XdgSurface.
- *
- * \sa popup, XdgShell::toplevelCreated
- */
-
-/*!
- * \property HWWaylandXdgSurface::toplevel
- *
- * This property holds the properties and methods that are specific to the
- * toplevel HWWaylandXdgSurface.
- *
- * \sa HWWaylandXdgSurface::popup, HWWaylandXdgShell::toplevelCreated
- */
 HWWaylandXdgToplevel *HWWaylandXdgSurface::toplevel() const
 {
     Q_D(const HWWaylandXdgSurface);
     return d->m_toplevel;
 }
 
-/*!
- * \qmlproperty XdgPopup QtWaylandCompositor::XdgSurface::popup
- *
- * This property holds the properties and methods that are specific to the
- * popup XdgSurface.
- *
- * \sa toplevel, XdgShell::popupCreated
- */
-
-/*!
- * \property HWWaylandXdgSurface::popup
- *
- * This property holds the properties and methods that are specific to the
- * popup HWWaylandXdgSurface.
- *
- * \sa HWWaylandXdgSurface::toplevel, HWWaylandXdgShell::popupCreated
- */
 HWWaylandXdgPopup *HWWaylandXdgSurface::popup() const
 {
     Q_D(const HWWaylandXdgSurface);
     return d->m_popup;
 }
 
-/*!
- * Returns the Wayland interface for the HWWaylandXdgSurface.
- */
 const wl_interface *HWWaylandXdgSurface::interface()
 {
     return HWWaylandXdgSurfacePrivate::interface();
 }
 
-/*!
- * \internal
- */
 QByteArray HWWaylandXdgSurface::interfaceName()
 {
     return HWWaylandXdgSurfacePrivate::interfaceName();
 }
 
-/*!
- * Returns the HWWaylandXdgSurface corresponding to the \a resource.
- */
 HWWaylandXdgSurface *HWWaylandXdgSurface::fromResource(wl_resource *resource)
 {
     if (auto p = QtWayland::fromResource<HWWaylandXdgSurfacePrivate *>(resource))
@@ -667,36 +472,6 @@ QWaylandQuickShellIntegration *HWWaylandXdgSurface::createIntegration(QWaylandQu
 }
 
 
-/*!
- * \qmltype XdgToplevel
- * \instantiates HWWaylandXdgToplevel
- * \inqmlmodule QtWayland.Compositor.XdgShell
- * \since 5.12
- * \brief XdgToplevel represents the toplevel window specific parts of an xdg surface.
- *
- * This type is part of the \l{XdgShell} extension and provides a way to
- * extend the functionality of an XdgSurface with features
- * specific to desktop-style windows.
- *
- * It corresponds to the Wayland interface \c xdg_toplevel.
- */
-
-/*!
- * \class HWWaylandXdgToplevel
- * \inmodule QtWaylandCompositor
- * \since 5.12
- * \brief The HWWaylandXdgToplevel class represents the toplevel window specific parts of an xdg surface.
- *
- * This class is part of the HWWaylandXdgShell extension and provides a way to
- * extend the functionality of an HWWaylandXdgSurface with features
- * specific to desktop-style windows.
- *
- * It corresponds to the Wayland interface \c xdg_toplevel.
- */
-
-/*!
- * Constructs a HWWaylandXdgToplevel for the given \a xdgSurface and \a resource.
- */
 HWWaylandXdgToplevel::HWWaylandXdgToplevel(HWWaylandXdgSurface *xdgSurface, QWaylandResource &resource)
     : QObject(*new HWWaylandXdgToplevelPrivate(xdgSurface, resource))
 {
@@ -714,244 +489,93 @@ HWWaylandXdgToplevel::~HWWaylandXdgToplevel()
     Q_ASSERT(!d->m_decoration);
 }
 
-/*!
- * \qmlproperty XdgSurface QtWaylandCompositor::XdgToplevel::xdgSurface
- *
- * This property holds the XdgSurface for this XdgToplevel.
- */
-
-/*!
- * \property HWWaylandXdgToplevel::xdgSurface
- *
- * This property holds the HWWaylandXdgSurface for this HWWaylandXdgToplevel.
- */
 HWWaylandXdgSurface *HWWaylandXdgToplevel::xdgSurface() const
 {
     Q_D(const HWWaylandXdgToplevel);
     return d->m_xdgSurface;
 }
 
-/*!
- * \qmlproperty XdgToplevel QtWaylandCompositor::XdgToplevel::parentToplevel
- *
- * This property holds the XdgToplevel parent of this XdgToplevel.
- */
-
-/*!
- * \property HWWaylandXdgToplevel::parentToplevel
- *
- * This property holds the XdgToplevel parent of this XdgToplevel.
- *
- */
 HWWaylandXdgToplevel *HWWaylandXdgToplevel::parentToplevel() const
 {
     Q_D(const HWWaylandXdgToplevel);
     return d->m_parentToplevel;
 }
 
-/*!
- * \qmlproperty string QtWaylandCompositor::XdgToplevel::title
- *
- * This property holds the title of the XdgToplevel.
- */
-
-/*!
- * \property HWWaylandXdgToplevel::title
- *
- * This property holds the title of the HWWaylandXdgToplevel.
- */
 QString HWWaylandXdgToplevel::title() const
 {
     Q_D(const HWWaylandXdgToplevel);
     return d->m_title;
 }
 
-/*!
- * \qmlproperty string QtWaylandCompositor::XdgToplevel::appId
- *
- * This property holds the app id of the XdgToplevel.
- */
-
-/*!
- * \property HWWaylandXdgToplevel::appId
- *
- * This property holds the app id of the HWWaylandXdgToplevel.
- */
 QString HWWaylandXdgToplevel::appId() const
 {
     Q_D(const HWWaylandXdgToplevel);
     return d->m_appId;
 }
 
-/*!
- * \qmlproperty size QtWaylandCompositor::XdgToplevel::maxSize
- *
- * This property holds the maximum size of the XdgToplevel as requested by the client.
- *
- * The compositor is free to ignore this value and request a larger size.
- */
-
-/*!
- * \property HWWaylandXdgToplevel::maxSize
- *
- * This property holds the maximum size of the HWWaylandXdgToplevel.
- *
- * The compositor is free to ignore this value and request a larger size.
- */
 QSize HWWaylandXdgToplevel::maxSize() const
 {
     Q_D(const HWWaylandXdgToplevel);
     return d->m_maxSize;
 }
 
-/*!
- * \qmlproperty size QtWaylandCompositor::XdgToplevel::minSize
- *
- * This property holds the minimum size of the XdgToplevel as requested by the client.
- *
- * The compositor is free to ignore this value and request a smaller size.
- */
-
-/*!
- * \property HWWaylandXdgToplevel::minSize
- *
- * This property holds the minimum size of the HWWaylandXdgToplevel.
- *
- * The compositor is free to ignore this value and request a smaller size.
- */
 QSize HWWaylandXdgToplevel::minSize() const
 {
     Q_D(const HWWaylandXdgToplevel);
     return d->m_minSize;
 }
 
-/*!
- * \property HWWaylandXdgToplevel::states
- *
- * This property holds the last states the client acknowledged for this QWaylandToplevel.
- */
 QList<HWWaylandXdgToplevel::State> HWWaylandXdgToplevel::states() const
 {
     Q_D(const HWWaylandXdgToplevel);
     return d->m_lastAckedConfigure.states;
 }
 
-/*!
- * \qmlproperty bool QtWaylandCompositor::XdgToplevel::maximized
- *
- * This property holds whether the client has acknowledged that it should be maximized.
- */
-
-/*!
- * \property HWWaylandXdgToplevel::maximized
- *
- * This property holds whether the client has acknowledged that it should be maximized.
- */
 bool HWWaylandXdgToplevel::maximized() const
 {
     Q_D(const HWWaylandXdgToplevel);
     return d->m_lastAckedConfigure.states.contains(HWWaylandXdgToplevel::State::MaximizedState);
 }
 
-/*!
- * \qmlproperty bool QtWaylandCompositor::XdgToplevel::fullscreen
- *
- * This property holds whether the client has acknowledged that it should be fullscreen.
- */
-
-/*!
- * \property HWWaylandXdgToplevel::fullscreen
- *
- * This property holds whether the client has acknowledged that it should be fullscreen.
- */
 bool HWWaylandXdgToplevel::fullscreen() const
 {
     Q_D(const HWWaylandXdgToplevel);
     return d->m_lastAckedConfigure.states.contains(HWWaylandXdgToplevel::State::FullscreenState);
 }
 
-/*!
- * \qmlproperty bool QtWaylandCompositor::XdgToplevel::resizing
- *
- * This property holds whether the client has acknowledged that it is being resized.
- */
-
-/*!
- * \property HWWaylandXdgToplevel::resizing
- *
- * This property holds whether the client has acknowledged that it is being resized.
- */
 bool HWWaylandXdgToplevel::resizing() const
 {
     Q_D(const HWWaylandXdgToplevel);
     return d->m_lastAckedConfigure.states.contains(HWWaylandXdgToplevel::State::ResizingState);
 }
 
-/*!
- * \qmlproperty bool QtWaylandCompositor::XdgToplevel::activated
- *
- * This property holds whether toplevel is drawing itself as having input focus.
- */
-
-/*!
- * \property HWWaylandXdgToplevel::activated
- *
- * This property holds whether toplevel is drawing itself as having input focus.
- */
 bool HWWaylandXdgToplevel::activated() const
 {
     Q_D(const HWWaylandXdgToplevel);
     return d->m_lastAckedConfigure.states.contains(HWWaylandXdgToplevel::State::ActivatedState);
 }
 
-/*!
- * \enum HWWaylandXdgToplevel::DecorationMode
- *
- * This enum type is used to specify the window decoration mode for toplevel windows.
- *
- * \value ServerSideDecoration The compositor should draw window decorations.
- * \value ClientSideDecoration The client should draw window decorations.
- */
+bool HWWaylandXdgToplevel::isModal() const
+{
+    Q_D(const HWWaylandXdgToplevel);
+    return d->m_modal;
+}
 
-/*!
- * \qmlproperty enumeration QtWaylandCompositor::XdgToplevel::decorationMode
- *
- * This property holds the current window decoration mode for this toplevel.
- *
- * The possible values are:
- * \value XdgToplevel.ServerSideDecoration The compositor should draw window decorations.
- * \value XdgToplevel.ClientSideDecoration The client should draw window decorations.
- *
- * \sa XdgDecorationManagerV1
- */
+void HWWaylandXdgToplevel::setModal(bool newModal)
+{
+    Q_D(HWWaylandXdgToplevel);
+    if (d->m_modal == newModal)
+        return;
+    d->m_modal = newModal;
+    emit modalChanged();
+}
 
-/*!
- * \property HWWaylandXdgToplevel::decorationMode
- *
- * This property holds the current window decoration mode for this toplevel.
- *
- * \sa HWWaylandXdgDecorationManagerV1
- */
 HWWaylandXdgToplevel::DecorationMode HWWaylandXdgToplevel::decorationMode() const
 {
     Q_D(const HWWaylandXdgToplevel);
-    if(d->m_decoration)
-        return (HWWaylandXdgToplevel::DecorationMode)d->m_decoration->configuredMode();
-
-    return ClientSideDecoration;
+    return d->m_decoration ? (HWWaylandXdgToplevel::DecorationMode)d->m_decoration->configuredMode() : DecorationMode::ClientSideDecoration;
 }
 
-/*!
- * \qmlmethod size QtWaylandCompositor::XdgToplevel::sizeForResize(size size, point delta, uint edges)
- *
- * Convenience for computing the new size given the current \a size, a \a delta, and
- * the \a edges active in the drag.
- */
-
-/*!
- * Convenience for computing the new size given the current \a size, a \a delta, and
- * the \a edges active in the drag.
- */
 QSize HWWaylandXdgToplevel::sizeForResize(const QSizeF &size, const QPointF &delta, Qt::Edges edges) const
 {
     qreal width = size.width();
@@ -976,11 +600,6 @@ QSize HWWaylandXdgToplevel::sizeForResize(const QSizeF &size, const QPointF &del
     return newSize;
 }
 
-/*!
- * Sends a configure event to the client. Parameter \a size contains the pixel size
- * of the surface. A size of zero means the client is free to decide the size.
- * Known \a states are enumerated in HWWaylandXdgToplevel::State.
- */
 uint HWWaylandXdgToplevel::sendConfigure(const QSize &size, const QList<HWWaylandXdgToplevel::State> &states)
 {
     if (!size.isValid()) {
@@ -997,52 +616,20 @@ uint HWWaylandXdgToplevel::sendConfigure(const QSize &size, const QList<HWWaylan
     return serial;
 }
 
-/*!
- * \qmlmethod int QtWaylandCompositor::XdgToplevel::sendConfigure(size size, list<int> states)
- *
- * Sends a configure event to the client. \a size contains the pixel size of the surface.
- * A size of zero means the client is free to decide the size.
- * Known \a states are enumerated in XdgToplevel::State.
- */
 uint HWWaylandXdgToplevel::sendConfigure(const QSize &size, const QList<int> &states)
 {
     QList<State> s;
     for (auto state : states)
         s << State(state);
-
     return sendConfigure(size, s);
 }
 
-/*!
- * \qmlmethod void QtWaylandCompositor::XdgToplevel::sendClose()
- *
- * Sends a close event to the client. The client may choose to ignore the event.
- */
-
-/*!
- * Sends a close event to the client. The client may choose to ignore the event.
- */
 void HWWaylandXdgToplevel::sendClose()
 {
     Q_D(HWWaylandXdgToplevel);
     d->send_close();
 }
 
-/*!
- * \qmlmethod void QtWaylandCompositor::XdgToplevel::sendMaximized(size size)
- *
- * Convenience for sending a configure event with the maximized state set, and
- * fullscreen and resizing removed. The activated state is left in its current state.
- *
- * \a size is the new size of the window.
- */
-
-/*!
- * Convenience for sending a configure event with the maximized state set, and
- * fullscreen and resizing removed. The activated state is left in its current state.
- *
- * \a size is the new size of the window.
- */
 uint HWWaylandXdgToplevel::sendMaximized(const QSize &size)
 {
     Q_D(HWWaylandXdgToplevel);
@@ -1055,24 +642,6 @@ uint HWWaylandXdgToplevel::sendMaximized(const QSize &size)
 
     return sendConfigure(size, conf.states);
 }
-
-/*!
- * \qmlmethod void QtWaylandCompositor::XdgToplevel::sendUnmaximized(size size)
- *
- * Convenience for sending a configure event with the maximized, fullscreen and
- * resizing states removed, and fullscreen and resizing removed. The activated
- * state is left in its current state.
- *
- * \a size is the new size of the window. If \a size is zero, the client decides the size.
- */
-
-/*!
- * Convenience for sending a configure event with the maximized, fullscreen and
- * resizing states removed, and fullscreen and resizing removed. The activated
- * state is left in its current state.
- *
- * \a size is the new size of the window. If \a size is zero, the client decides the size.
- */
 uint HWWaylandXdgToplevel::sendUnmaximized(const QSize &size)
 {
     Q_D(HWWaylandXdgToplevel);
@@ -1086,25 +655,6 @@ uint HWWaylandXdgToplevel::sendUnmaximized(const QSize &size)
 
 }
 
-/*!
- * \qmlmethod void QtWaylandCompositor::XdgToplevel::sendFullscreen(size size)
- *
- * Convenience for sending a configure event with the fullscreen state set, and
- * maximized and resizing removed. The activated state is left in its current state.
- *
- * \sa sendUnmaximized
- *
- * \a size is the new size of the window.
- */
-
-/*!
- * Convenience for sending a configure event with the fullscreen state set, and
- * maximized and resizing removed. The activated state is left in its current state.
- *
- * \sa sendUnmaximized
- *
- * \a size is the new size of the window.
- */
 uint HWWaylandXdgToplevel::sendFullscreen(const QSize &size)
 {
     Q_D(HWWaylandXdgToplevel);
@@ -1118,21 +668,6 @@ uint HWWaylandXdgToplevel::sendFullscreen(const QSize &size)
     return sendConfigure(size, conf.states);
 }
 
-/*!
- * \qmlmethod void QtWaylandCompositor::XdgToplevel::sendResizing(size maxSize)
- *
- * Convenience for sending a configure event with the resizing state set, and
- * maximized and fullscreen removed. The activated state is left in its current state.
- *
- * \a maxSize is the new size of the window.
- */
-
-/*!
- * Convenience for sending a configure event with the resizing state set, and
- * maximized and fullscreen removed. The activated state is left in its current state.
- *
- * \a maxSize is the new size of the window.
- */
 uint HWWaylandXdgToplevel::sendResizing(const QSize &maxSize)
 {
     Q_D(HWWaylandXdgToplevel);
@@ -1142,102 +677,21 @@ uint HWWaylandXdgToplevel::sendResizing(const QSize &maxSize)
         conf.states.append(HWWaylandXdgToplevel::State::ResizingState);
     conf.states.removeOne(HWWaylandXdgToplevel::State::MaximizedState);
     conf.states.removeOne(HWWaylandXdgToplevel::State::FullscreenState);
+
     return sendConfigure(maxSize, conf.states);
 }
 
-/*!
- * Returns the surface role for the QWaylandToplevel.
- */
 QWaylandSurfaceRole *HWWaylandXdgToplevel::role()
 {
     return &HWWaylandXdgToplevelPrivate::s_role;
 }
 
-/*!
- * Returns the HWWaylandXdgToplevel corresponding to the \a resource.
- */
 HWWaylandXdgToplevel *HWWaylandXdgToplevel::fromResource(wl_resource *resource)
 {
     if (auto p = QtWayland::fromResource<HWWaylandXdgToplevelPrivate *>(resource))
         return p->q_func();
     return nullptr;
 }
-
-/*!
- * \qmlsignal QtWaylandCompositor::XdgShell::xdgSurfaceCreated(XdgSurface xdgSurface)
- *
- * This signal is emitted when the client has created a \c xdg_surface.
- * Note that \a xdgSurface is not mapped, i.e. according to the \c xdg-shell
- * protocol it should not be displayed, until it has received a role object.
- *
- * \sa toplevelCreated(), popupCreated()
- */
-
-/*!
- * \fn void HWWaylandXdgShell::xdgSurfaceCreated(HWWaylandXdgSurface *xdgSurface)
- *
- * This signal is emitted when the client has created a \c xdg_surface.
- * Note that \a xdgSurface is not mapped, i.e. according to the \c xdg-shell
- * protocol it should not be displayed, until it has received a role object.
- *
- * \sa toplevelCreated(), popupCreated()
- */
-
-/*!
- * \qmlsignal QtWaylandCompositor::XdgShell::toplevelCreated(XdgToplevel toplevel, XdgSurface xdgSurface)
- *
- * This signal is emitted when the client has created a \c xdg_toplevel.
- * A common use case is to let the handler of this signal instantiate a ShellSurfaceItem or
- * WaylandQuickItem for displaying \a toplevel in a QtQuick scene.
- *
- * \a xdgSurface is the XdgSurface \a toplevel is the role object for.
- */
-
-/*!
- * \fn void HWWaylandXdgShell::toplevelCreated(HWWaylandXdgToplevel *toplevel, HWWaylandXdgSurface *xdgSurface)
- *
- * This signal is emitted when the client has created a \c xdg_toplevel.
- * A common use case is to let the handler of this signal instantiate a QWaylandShellSurfaceItem or
- * QWaylandQuickItem for displaying \a toplevel in a QtQuick scene.
- *
- * \a xdgSurface is the XdgSurface \a toplevel is the role object for.
- */
-
-/*!
- * \qmlsignal QtWaylandCompositor::XdgShell::popupCreated(XdgPopup popup, XdgSurface xdgSurface)
- *
- * This signal is emitted when the client has created a \c xdg_popup.
- * A common use case is to let the handler of this signal instantiate a ShellSurfaceItem or
- * WaylandQuickItem for displaying \a popup in a QtQuick scene.
- *
- * \a xdgSurface is the XdgSurface \a popup is the role object for.
- */
-
-/*!
- * \fn void HWWaylandXdgShell::popupCreated(HWWaylandXdgPopup *popup, HWWaylandXdgSurface *xdgSurface)
- *
- * This signal is emitted when the client has created a \c xdg_popup.
- * A common use case is to let the handler of this signal instantiate a QWaylandShellSurfaceItem or
- * QWaylandQuickItem for displaying \a popup in a QtQuick scene.
- *
- * \a xdgSurface is the XdgSurface \a popup is the role object for.
- */
-
-/*!
- * \qmlsignal QtWaylandCompositor::XdgShell::pong(int serial)
- *
- * This signal is emitted when the client has responded to a ping event with serial, \a serial.
- *
- * \sa ping()
- */
-
-/*!
- * \fn void HWWaylandXdgShell::pong(uint serial)
- *
- * This signal is emitted when the client has responded to a ping event with serial, \a serial.
- *
- * \sa HWWaylandXdgShell::ping()
- */
 
 QList<int> HWWaylandXdgToplevel::statesAsInts() const
 {
@@ -1508,204 +962,55 @@ void HWWaylandXdgToplevelPrivate::xdg_toplevel_set_minimized(QtWaylandServer::xd
     emit q->setMinimized();
 }
 
-/*!
- * \qmltype XdgPopup
- * \instantiates HWWaylandXdgPopup
- * \inqmlmodule QtWayland.Compositor.XdgShell
- * \since 5.12
- * \brief XdgPopup represents the popup specific parts of and xdg surface.
- *
- * This type is part of the \l{XdgShell} extension and provides a way to extend
- * extend the functionality of an \l{XdgSurface} with features
- * specific to desktop-style menus for an xdg surface.
- *
- * It corresponds to the Wayland interface \c xdg_popup.
- */
-
-/*!
- * \class HWWaylandXdgPopup
- * \inmodule QtWaylandCompositor
- * \since 5.12
- * \brief The HWWaylandXdgPopup class represents the popup specific parts of an xdg surface.
- *
- * This class is part of the HWWaylandXdgShell extension and provides a way to
- * extend the functionality of a HWWaylandXdgSurface with features
- * specific to desktop-style menus for an xdg surface.
- *
- * It corresponds to the Wayland interface \c xdg_popup.
- */
-
-/*!
- * Constructs a HWWaylandXdgPopup.
- */
 HWWaylandXdgPopup::HWWaylandXdgPopup(HWWaylandXdgSurface *xdgSurface, HWWaylandXdgSurface *parentXdgSurface,
                                    QWaylandXdgPositioner *positioner, QWaylandResource &resource)
     : QObject(*new HWWaylandXdgPopupPrivate(xdgSurface, parentXdgSurface, positioner, resource))
 {
-        connect(xdgSurface->surface(), &QWaylandSurface::redraw, this, &HWWaylandXdgPopup::handleRedraw);
 }
 
-void HWWaylandXdgPopup::handleRedraw()
+HWWaylandXdgPopup* HWWaylandXdgPopup::fromResource(wl_resource *resource)
 {
-    Q_D(HWWaylandXdgPopup);
-
-    if (!d->m_layerParent) {
-        //auto *resource = HWWaylandXdgSurfacePrivate::get(d->m_xdgSurface)->resource();
-        // TODO: fix this? it breaks xdg-shell
-        //wl_resource_post_error(resource->handle, XDG_WM_BASE_ERROR_INVALID_POPUP_PARENT,
-        //                       "xdg_surface.get_popup with invalid popup parent");
-        return;
-    }
-
-    disconnect(d->m_xdgSurface->surface(), &QWaylandSurface::redraw, this, &HWWaylandXdgPopup::handleRedraw);
+    if (auto p = QtWayland::fromResource<HWWaylandXdgPopupPrivate *>(resource))
+        return p->q_func();
+    return nullptr;
 }
 
-/*!
- * \qmlproperty XdgSurface QtWaylandCompositor::XdgPopup::xdgSurface
- *
- * This property holds the XdgSurface associated with this XdgPopup.
- */
-
-/*!
- * \property HWWaylandXdgPopup::xdgSurface
- *
- * This property holds the HWWaylandXdgSurface associated with this HWWaylandXdgPopup.
- */
 HWWaylandXdgSurface *HWWaylandXdgPopup::xdgSurface() const
 {
     Q_D(const HWWaylandXdgPopup);
     return d->m_xdgSurface;
 }
 
-/*!
- * \qmlproperty XdgSurface QtWaylandCompositor::XdgPopup::parentXdgSurface
- *
- * This property holds the XdgSurface associated with the parent of this XdgPopup.
- */
-
-/*!
- * \property HWWaylandXdgPopup::parentXdgSurface
- *
- * This property holds the HWWaylandXdgSurface associated with the parent of this
- * HWWaylandXdgPopup.
- */
 HWWaylandXdgSurface *HWWaylandXdgPopup::parentXdgSurface() const
 {
     Q_D(const HWWaylandXdgPopup);
     return d->m_parentXdgSurface;
 }
 
-WlrLayerSurfaceV1 *HWWaylandXdgPopup::parentLayerSurface() const
-{
-    Q_D(const HWWaylandXdgPopup);
-    return d->m_layerParent;
-}
-
-/*!
- * \qmlproperty rect QtWaylandCompositor::XdgPopup::configuredGeometry
- *
- * The window geometry the popup received in the configure event. Relative to the
- * upper left corner of the parent surface.
- */
-
-/*!
- * \property HWWaylandXdgPopup::configuredGeometry
- *
- * The window geometry the popup received in the configure event. Relative to the
- * upper left corner of the parent surface.
- */
 QRect HWWaylandXdgPopup::configuredGeometry() const
 {
     Q_D(const HWWaylandXdgPopup);
     return d->m_geometry;
 }
 
-/*!
- * \qmlproperty rect QtWaylandCompositor::XdgPopup::anchorRect
- *
- * The anchor rectangle relative to the parent window geometry that the child
- * surface should be placed relative to.
- */
-
-/*!
- * \property HWWaylandXdgPopup::anchorRect
- *
- * Returns the anchor rectangle relative to the parent window geometry that the child
- * surface should be placed relative to.
- */
 QRect HWWaylandXdgPopup::anchorRect() const
 {
     Q_D(const HWWaylandXdgPopup);
     return d->m_positionerData.anchorRect;
 }
 
-/*!
- * \qmlproperty enumeration QtWaylandCompositor::XdgPopup::anchorEdges
- *
- * This property holds the set of edges on the anchor rect that the child surface should be placed
- * relative to. If no edges are specified in a direction, the anchor point should be
- * centered between the edges.
- *
- * The possible values are:
- * \value Qt.TopEdge The top edge of the rectangle.
- * \value Qt.LeftEdge The left edge of the rectangle.
- * \value Qt.RightEdge The right edge of the rectangle.
- * \value Qt.BottomEdge The bottom edge of the rectangle.
- */
-
-/*!
- * \property HWWaylandXdgPopup::anchorEdges
- *
- * Returns the set of edges on the anchor rect that the child surface should be placed
- * relative to. If no edges are specified in a direction, the anchor point should be
- * centered between the edges.
- */
 Qt::Edges HWWaylandXdgPopup::anchorEdges() const
 {
     Q_D(const HWWaylandXdgPopup);
     return d->m_positionerData.anchorEdges;
 }
 
-/*!
- * \qmlproperty rect QtWaylandCompositor::XdgPopup::gravityEdges
- *
- * Specifies in what direction the surface should be positioned, relative to the anchor
- * point.
- *
- * The possible values are:
- * \value Qt.TopEdge The surface should slide towards the top of the screen.
- * \value Qt.LeftEdge The surface should slide towards the left of the screen.
- * \value Qt.RightEdge The surface should slide towards the right of the screen.
- * \value Qt.BottomEdge The surface should slide towards the bottom of the screen.
- */
-
-/*!
- * \property HWWaylandXdgPopup::gravityEdges
- *
- * Specifies in what direction the surface should be positioned, relative to the anchor
- * point.
- */
 Qt::Edges HWWaylandXdgPopup::gravityEdges() const
 {
     Q_D(const HWWaylandXdgPopup);
     return d->m_positionerData.gravityEdges;
 }
 
-/*!
- * \qmlproperty enumeration QtWaylandCompositor::XdgPopup::slideConstraints
- *
- * This property holds the orientations in which the child should slide to fit within the screen.
- *
- * Possible values:
- * \value Qt.Horizontal Horizontal
- * \value Qt.Vertical Vertical
- */
-
-/*!
- * \property HWWaylandXdgPopup::slideConstraints
- *
- * This property holds the orientations in which the child should slide to fit within the screen.
- */
 Qt::Orientations HWWaylandXdgPopup::slideConstraints() const
 {
     Q_D(const HWWaylandXdgPopup);
@@ -1721,21 +1026,6 @@ Qt::Orientations HWWaylandXdgPopup::slideConstraints() const
     return constraints;
 }
 
-/*!
- * \qmlproperty enumeration QtWaylandCompositor::XdgPopup::flipConstraints
- *
- * This property holds the orientations in which the child should flip to fit within the screen.
- *
- * Possible values:
- * \value Qt.Horizontal Horizontal
- * \value Qt.Vertical Vertical
- */
-
-/*!
- * \property HWWaylandXdgPopup::flipConstraints
- *
- * This property holds the orientations in which the child should flip to fit within the screen.
- */
 Qt::Orientations HWWaylandXdgPopup::flipConstraints() const
 {
     Q_D(const HWWaylandXdgPopup);
@@ -1751,21 +1041,6 @@ Qt::Orientations HWWaylandXdgPopup::flipConstraints() const
     return constraints;
 }
 
-/*!
- * \qmlproperty enumeration QtWaylandCompositor::XdgPopup::resizeConstraints
- *
- * This property holds the orientations in which the child should resize to fit within the screen.
- *
- * Possible values:
- * \value Qt.Horizontal Horizontal
- * \value Qt.Vertical Vertical
- */
-
-/*!
- * \property HWWaylandXdgPopup::resizeConstraints
- *
- * This property holds the orientations in which the child should resize to fit within the screen.
- */
 Qt::Orientations HWWaylandXdgPopup::resizeConstraints() const
 {
     Q_D(const HWWaylandXdgPopup);
@@ -1781,116 +1056,39 @@ Qt::Orientations HWWaylandXdgPopup::resizeConstraints() const
     return constraints;
 }
 
-/*!
- * \qmlproperty point QtWaylandCompositor::XdgPopup::offset
- *
- * The position relative to the position of the anchor on the anchor rectangle and
- * the anchor on the surface.
- */
-
-/*!
- * \property HWWaylandXdgPopup::offset
- *
- * Returns the surface position relative to the position of the anchor on the anchor
- * rectangle and the anchor on the surface.
- */
 QPoint HWWaylandXdgPopup::offset() const
 {
     Q_D(const HWWaylandXdgPopup);
     return d->m_positionerData.offset;
 }
 
-/*!
- * \qmlproperty size QtWaylandCompositor::XdgPopup::positionerSize
- *
- * The size requested for the window geometry by the positioner object.
- */
-
-/*!
- * \property HWWaylandXdgPopup::positionerSize
- *
- * Returns the size requested for the window geometry by the positioner object.
- */
 QSize HWWaylandXdgPopup::positionerSize() const
 {
     Q_D(const HWWaylandXdgPopup);
     return d->m_positionerData.size;
 }
 
-/*!
- * \qmlproperty point QtWaylandCompositor::XdgPopup::unconstrainedPosition
- *
- * The position of the surface relative to the parent window geometry if the surface
- * is not constrained. I.e. when not moved to fit inside the screen or similar.
- */
-
-/*!
- * \property HWWaylandXdgPopup::unconstrainedPosition
- *
- * The position of the surface relative to the parent window geometry if the surface
- * is not constrained. I.e. when not moved to fit inside the screen or similar.
- */
 QPoint HWWaylandXdgPopup::unconstrainedPosition() const
 {
     Q_D(const HWWaylandXdgPopup);
     return d->m_positionerData.unconstrainedPosition();
 }
 
-/*!
- * \qmlmethod int QtWaylandCompositor::XdgPopup::sendConfigure(rect geometry)
- *
- * Sends a configure event to the client. \a geometry contains the window geometry
- * relative to the upper left corner of the window geometry of the parent surface.
- *
- * This implicitly sends a configure event to the corresponding XdgSurface as well.
- */
-
-/*!
- * Sends a configure event to the client. \a geometry contains the window geometry
- * relative to the upper left corner of the window geometry of the parent surface.
- *
- * This implicitly sends a configure event to the corresponding HWWaylandXdgSurface
- * as well.
- */
 uint HWWaylandXdgPopup::sendConfigure(const QRect &geometry)
 {
     Q_D(HWWaylandXdgPopup);
     return d->sendConfigure(geometry);
 }
 
-/*!
- * \qmlmethod void QtWaylandCompositor::XdgPopup::sendPopupDone()
- * \since 5.14
- *
- * Dismiss the popup. According to the \c xdg-shell protocol this should make the
- * client destroy the popup.
- */
-
-/*!
- * \since 5.14
- *
- * Dismiss the popup. According to the \c xdg-shell protocol this should make the
- * client destroy the popup.
- */
 void HWWaylandXdgPopup::sendPopupDone()
 {
     Q_D(HWWaylandXdgPopup);
     d->send_popup_done();
 }
 
-/*!
- * Returns the surface role for the QWaylandPopup.
- */
 QWaylandSurfaceRole *HWWaylandXdgPopup::role()
 {
     return &HWWaylandXdgPopupPrivate::s_role;
-}
-
-HWWaylandXdgPopup* HWWaylandXdgPopup::fromResource(wl_resource *resource)
-{
-    if (auto p = QtWayland::fromResource<HWWaylandXdgPopupPrivate *>(resource))
-        return p->q_func();
-    return nullptr;
 }
 
 HWWaylandXdgPopupPrivate::HWWaylandXdgPopupPrivate(HWWaylandXdgSurface *xdgSurface, HWWaylandXdgSurface *parentXdgSurface,
@@ -1965,5 +1163,3 @@ void HWWaylandXdgPopupPrivate::xdg_popup_grab(QtWaylandServer::xdg_popup::Resour
 
 QWaylandSurfaceRole HWWaylandXdgPopupPrivate::s_role("xdg_popup");
 
-
-QT_END_NAMESPACE

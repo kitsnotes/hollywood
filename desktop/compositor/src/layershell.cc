@@ -40,6 +40,7 @@ void WlrLayerShellV1::closeAllSurfaces()
 
 WlrLayerSurfaceV1 *WlrLayerShellV1::fromResource(wl_resource *resource)
 {
+    qDebug() << "finding wlr surface resource";
     for(auto *s : wcApp->compositor()->layerShell()->surfaces)
     {
         if(s->resource()->handle == resource)
