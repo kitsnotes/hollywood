@@ -13,6 +13,9 @@
 #include <wayland-server.h>
 #include "qwayland-server-wlr-screencopy-unstable-v1.h"
 
+#include <QLoggingCategory>
+Q_DECLARE_LOGGING_CATEGORY(hwScreenCopy)
+
 class Compositor;
 class Surface;
 class Output;

@@ -29,6 +29,7 @@
 #include "../libshell/include/desktopentry.h"
 
 QLoggingCategory lcs("surface");
+Q_LOGGING_CATEGORY(hwSurface, "compositor.surface")
 
 Surface::Surface(QWaylandSurface *surface)
     : QObject(nullptr)
@@ -37,7 +38,9 @@ Surface::Surface(QWaylandSurface *surface)
 {
     m_uuid = QUuid::createUuid();
     m_id = hwComp->nextId();
-    qDebug(lcs) << QString("Surface::Surface %1").arg(m_uuid.toString(QUuid::WithoutBraces));
+    auto uuid = m_uuid.toString(QUuid::WithoutBraces).toUtf8().data();
+    qCDebug(hwSurface, "%s: Surface()", uuid);
+
     connect(m_surface, &QWaylandSurface::surfaceDestroyed, this, &Surface::surfaceDestroyed);
     connect(m_surface, &QWaylandSurface::hasContentChanged, hwComp, &Compositor::surfaceHasContentChanged);
     connect(m_surface, &QWaylandSurface::redraw, hwComp, &Compositor::triggerRender);    
@@ -51,7 +54,8 @@ Surface::Surface(QWaylandSurface *surface)
 
 Surface::~Surface()
 {
-    qDebug(lcs) << QString("Surface::~Surface %1").arg(m_uuid.toString(QUuid::WithoutBraces));
+    auto uuid = m_uuid.toString(QUuid::WithoutBraces).toUtf8().data();
+    qCDebug(hwSurface, "%s: ~Surface()", uuid);
     if(m_loadTimer)
     {
         m_loadTimer->stop();
@@ -489,7 +493,8 @@ SurfaceView* Surface::createViewForOutput(Output *o)
 
 void Surface::setAppMenu(AppMenu *m)
 {
-    qDebug() << "setAppMenu";
+    auto uuid = m_uuid.toString(QUuid::WithoutBraces).toUtf8().data();
+    qCDebug(hwSurface, "%s: setting appmenu", uuid);
     m_appMenu = m;
     if(hwComp->raisedSurface() == this)
         QTimer::singleShot(2, [this](){hwComp->activate(this);});
@@ -588,7 +593,8 @@ void Surface::setParentSurfaceObject(Surface *parent)
 
 void Surface::createPlasmaWindowControl()
 {
-    qDebug(lcs) << QString("Surface::createPlasmaWindowControl %1").arg(m_uuid.toString(QUuid::WithoutBraces));
+    auto uuid = m_uuid.toString(QUuid::WithoutBraces).toUtf8().data();
+    qCDebug(hwSurface, "%s: create plasma window control", uuid);
     m_wndctl = hwComp->m_wndmgr->createWindowControl(this);
     m_wndctl->setCloseable(true);
     m_wndctl->setMinimizable(true);
@@ -871,8 +877,7 @@ void Surface::onSurfaceSourceGeometryChanged()
 }
 
 void Surface::onDestinationSizeChanged()
-{
-    qDebug() << "onDestinationSizeChanged" << surface()->destinationSize();
+{    
     // if we are initializing an xdg toplevel we should set a
     // better initial position
     if(!m_surfaceInit)
@@ -901,7 +906,6 @@ void Surface::onDestinationSizeChanged()
         if(m_xdgTopLevel)
         {
             QTimer::singleShot(250, [this]() {
-                qDebug() << "fixing toplevel 2";
                 hwComp->raise(this);
             });
         }
@@ -1071,14 +1075,17 @@ void Surface::removeXdgTopLevelChild(Surface *s)
 {
     if(m_xdgChildren.contains(s))
     {
-        qDebug() << "Surface::removeXdgTopLevelChild" << s->uuid().toString();
+        auto uuid = s->uuid().toString(QUuid::WithoutBraces).toUtf8().data();
+        auto myuuid = m_uuid.toString(QUuid::WithoutBraces).toUtf8().data();
+        qCDebug(hwSurface, "%s: removing as top level child from %s", uuid, myuuid);
         m_xdgChildren.removeOne(s);
     }
 }
 
 void Surface::activate()
 {
-    qDebug() << "Surface::activate" << m_uuid;
+    auto uuid = m_uuid.toString(QUuid::WithoutBraces).toUtf8().data();
+    qCDebug(hwSurface, "%s: activate", uuid);
     if(m_xdgTopLevel)
     {
         QList<HWWaylandXdgToplevel::State> states = m_xdgTopLevel->states();
@@ -1093,12 +1100,12 @@ void Surface::activate()
 
 void Surface::deactivate()
 {
-    qDebug() << "Surface::deactivate" << m_uuid;
+    auto uuid = m_uuid.toString(QUuid::WithoutBraces).toUtf8().data();
+    qCDebug(hwSurface, "%s: deactivate", uuid);
     if(m_xdgTopLevel)
     {
         QList<HWWaylandXdgToplevel::State> states = m_xdgTopLevel->states();
         states.removeOne(HWWaylandXdgToplevel::ActivatedState);
-        qDebug() << "deactivating" << states;
         m_xdgTopLevel->sendConfigure(surfaceSize(), states);
     }
 
@@ -1255,7 +1262,9 @@ void Surface::createMenuServer(OriginullMenuServer *menu)
 
 void Surface::surfaceDestroyed()
 {
-    qDebug() << "Surface::surfaceDestroyed" << m_uuid.toString();
+    auto uuid = m_uuid.toString(QUuid::WithoutBraces).toUtf8().data();
+    qCDebug(hwSurface, "%s: surfaceDestroyed", uuid);
+
     if(m_wndctl)
         m_wndctl->destroy();
     hwComp->recycleSurfaceObject(this);
@@ -1264,7 +1273,8 @@ void Surface::surfaceDestroyed()
 
 void Surface::viewSurfaceDestroyed()
 {
-    qDebug() << "Surface::viewSurfaceDestroyed" << m_uuid.toString();
+    auto uuid = m_uuid.toString(QUuid::WithoutBraces).toUtf8().data();
+    qCDebug(hwSurface, "%s: viewSurfaceDestroyed", uuid);
     bool requestRecycle = false;
     SurfaceView *view = qobject_cast<SurfaceView*>(sender());
     m_viewList.remove(m_viewList.key(view));
@@ -1463,7 +1473,9 @@ void Surface::onXdgParentTopLevelChanged()
             hwComp->findSurfaceObject(m_xdgTopLevel->parentToplevel()->xdgSurface()->surface());
     m_parentTopLevelSurface->addXdgChildSurfaceObject(this);
     //hwComp->m_zorder.removeOne(this);
-    qDebug() << "Surface::onXdgParentTopLevelChanged: new top level is" << m_parentTopLevelSurface->uuid().toString();
+    auto uuid = m_uuid.toString(QUuid::WithoutBraces).toUtf8().data();
+    auto tl = m_parentTopLevelSurface->uuid().toString(QUuid::WithoutBraces).toUtf8().data();
+    qCDebug(hwSurface, "%s: xdg parent toplevel changed: %s", uuid, tl);
 }
 
 void Surface::onXdgAppIdChanged()
@@ -1535,14 +1547,12 @@ void Surface::reconfigureLayerSurface()
 
 void Surface::onLayerChanged()
 {
-    qDebug() << "layerchanged";
     hwComp->resetLayerShellLayer(this);
     m_surfaceInit = true;
 }
 
 void Surface::onLayerShellSizeChanged()
 {
-    qDebug() << "onLayerShellSizeChanged" << m_layerSurface->size();
     if(!m_layerSurface->size().isValid())
         return;
     m_ls_size = m_layerSurface->size();
@@ -1567,7 +1577,6 @@ void Surface::onLayerShellXdgPopupParentChanged(HWWaylandXdgPopup *popup)
 
 void Surface::recalculateLayerShellAnchorPosition()
 {
-    qDebug(lcs) << "Surface::recalculateLayerShellAnchorPosition" << m_uuid.toString(QUuid::WithoutBraces) << m_ls_size;
     if(!m_ls_size.isValid())
         return;
 

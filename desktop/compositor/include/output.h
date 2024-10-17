@@ -10,6 +10,9 @@
 #include <QWaylandOutputMode>
 #include <QWaylandXdgOutputManagerV1>
 #include <QScreen>
+#include <QLoggingCategory>
+
+Q_DECLARE_LOGGING_CATEGORY(hwOutput)
 
 class Surface;
 class OutputWindow;

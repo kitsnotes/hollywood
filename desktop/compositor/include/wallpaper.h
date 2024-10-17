@@ -11,6 +11,9 @@
 #include <QOpenGLShaderProgram>
 #include <QOpenGLFramebufferObject>
 
+#include <QLoggingCategory>
+Q_DECLARE_LOGGING_CATEGORY(hwWallpaper)
+
 class OutputWindow;
 class WallpaperManager : public QObject
 {

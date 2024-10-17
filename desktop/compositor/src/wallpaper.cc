@@ -12,6 +12,8 @@
 #include <QFile>
 #include <QDir>
 
+Q_LOGGING_CATEGORY(hwWallpaper, "compositor.wallpaper")
+
 unsigned int VBOWP;
 
 static const float pos[12] = { -1.0f, -1.0f, 1.0f, -1.0f, -1.0f, 1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f, 1.0f};
@@ -52,7 +54,6 @@ void WallpaperManager::wallpaperChanged()
 
     bg.mirror(false, true);
     m_wpStartPoint = QPoint(0,0);
-    qDebug() << "wallpaper: m_parent size" << m_parent->size();
     if(bg.size() != m_parent->size())
     {
         // only if we are equal in size do we not need

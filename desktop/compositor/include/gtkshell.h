@@ -12,6 +12,9 @@
 
 #include "qwayland-server-gtk.h"
 
+#include <QLoggingCategory>
+Q_DECLARE_LOGGING_CATEGORY(hwGtkShell)
+
 class Compositor;
 class Surface;
 class GtkSurface;

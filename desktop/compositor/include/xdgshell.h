@@ -19,6 +19,9 @@
 #include <QtWaylandCompositor/private/qwaylandxdgshell_p.h>
 #include <QtCore/QRect>
 
+#include <QLoggingCategory>
+Q_DECLARE_LOGGING_CATEGORY(hwXdgShell)
+
 struct wl_resource;
 
 class QWaylandClient;

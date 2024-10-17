@@ -23,6 +23,8 @@
 #include <algorithm>
 #include <type_traits>
 
+Q_LOGGING_CATEGORY(hwXdgShell, "compositor.xdgshell")
+
 HWWaylandXdgShellPrivate::HWWaylandXdgShellPrivate()
 {
 }

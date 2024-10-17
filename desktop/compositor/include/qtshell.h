@@ -12,6 +12,9 @@
 
 #include "qwayland-server-qt-shell-unstable-v1.h"
 
+#include <QLoggingCategory>
+Q_DECLARE_LOGGING_CATEGORY(hwQtShell)
+
 class Compositor;
 class Surface;
 class QtSurface;

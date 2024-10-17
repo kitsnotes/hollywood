@@ -9,6 +9,8 @@
 
 #define XDG_ACTIVATION_VERSION 1
 
+Q_LOGGING_CATEGORY(hwXdgActivation, "compositor.xdgactivation")
+
 XdgActivation::XdgActivation(QWaylandCompositor *compositor)
     : QWaylandCompositorExtensionTemplate<XdgActivation>(compositor)
     , QtWaylandServer::xdg_activation_v1(compositor->display(), XDG_ACTIVATION_VERSION)

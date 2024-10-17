@@ -33,7 +33,7 @@
 #include <hollywood/hollywood.h>
 #include <sys/utsname.h>
 
-QLoggingCategory lc("compositor");
+Q_LOGGING_CATEGORY(hwCompositor, "compositor.core")
 
 Compositor::Compositor(bool sddm)
     : m_desktop_bg(QColor(HOLLYWOOD_DEF_DESKTOP_BG))
@@ -57,11 +57,15 @@ Compositor::Compositor(bool sddm)
     , m_shortcuts(new ShortcutManager(this))
     , m_timeout(new QTimer(this))
 {
+    qCInfo(hwCompositor, "Starting Compositor");
     auto envvar = qgetenv("HOLLYWOOD_RECOVERY_ENV");
     if(!envvar.isEmpty())
     {
         if(envvar == "1")
+        {
+            qCInfo(hwCompositor, "Using 'mini mode'");
             m_mini = true;
+        }
     }
     m_timeout->setTimerType(Qt::VeryCoarseTimer);
     loadSettings();
@@ -113,7 +117,6 @@ void Compositor::create()
     connect(m_gtk, &GtkShell::surfaceCreated, this, &Compositor::onGtkSurfaceCreated);
     connect(m_qt, &QtShell::surfaceCreated, this, &Compositor::onQtSurfaceCreated);
     connect(m_fs, &FullscreenShell::surfacePresented, this, &Compositor::onFullscreenSurfaceRequested);
-
     connect(m_activation, &XdgActivation::surfaceActivated, this, &Compositor::onXdgSurfaceActivated);
 }
 
@@ -344,14 +347,16 @@ void Compositor::onSurfaceCreated(QWaylandSurface *surface)
         outputAt = m_outputs.first();
 
     obj->createViewForOutput(outputAt);
-    qDebug(lc) << QString("Compositor::onSurfaceCreated %1").arg(obj->uuid().toString(QUuid::WithoutBraces));
+    auto uuid = obj->uuid().toString(QUuid::WithoutBraces).toUtf8().data();
+    qCDebug(hwCompositor, "%s: wl_surface created", uuid);
     m_surfaces << (obj);
     m_zorder << (obj);
 }
 
 void Compositor::recycleSurfaceObject(Surface *obj)
 {
-    qDebug(lc) << QString("Compositor::recycleSurfaceObject %1").arg(obj->uuid().toString(QUuid::WithoutBraces));
+    auto uuid = obj->uuid().toString(QUuid::WithoutBraces).toUtf8().data();
+    qCDebug(hwCompositor, "%s: recycling surface", uuid);
 
     if(obj->xdgTopLevelParent())
         obj->xdgTopLevelParent()->removeXdgTopLevelChild(obj);
@@ -420,9 +425,10 @@ void Compositor::onDesktopRequest(QWaylandSurface *surface)
     return;
 }
 
-
 void Compositor::loadSettings()
 {
+    qCInfo(hwCompositor, "reloading settings");
+
     QSettings settings(QSettings::UserScope,
        QLatin1String("originull"), QLatin1String("hollywood"));
     m_configfile = settings.fileName();
@@ -550,7 +556,7 @@ void Compositor::idleTimeout()
 
 void Compositor::raiseNextInLine()
 {
-    qDebug(lc) << "Compositor::raiseNextInLine";
+    qCDebug(hwCompositor, "raise next in line");
     m_tl_raised = nullptr;
     m_activated = nullptr;
 
@@ -602,7 +608,8 @@ void Compositor::onXdgSurfaceCreated(HWWaylandXdgSurface *xdgSurface)
 {
     auto *surface = findSurfaceObject(xdgSurface->surface());
     Q_ASSERT(surface);
-    qDebug(lc) << QString("Compositor::onXdgSurfaceCreated %1").arg(surface->uuid().toString(QUuid::WithoutBraces));
+    auto uuid = surface->uuid().toString(QUuid::WithoutBraces).toUtf8().data();
+    qCDebug(hwCompositor, "%s: xdg_surface created", uuid);
     surface->createXdgShellSurface(xdgSurface);
 }
 
@@ -611,7 +618,8 @@ void Compositor::onXdgPopupCreated(HWWaylandXdgPopup *popup, HWWaylandXdgSurface
     Surface *mySurface = findSurfaceObject(surface->surface());
     Q_ASSERT(mySurface);
     m_zorder.removeOne(mySurface);
-    qDebug(lc) << QString("Compositor::onXdgPopupCreated %1").arg(mySurface->uuid().toString(QUuid::WithoutBraces));
+    auto uuid = mySurface->uuid().toString(QUuid::WithoutBraces).toUtf8().data();
+    qCDebug(hwCompositor, "%s: xdg_popup created", uuid);
     mySurface->createXdgPopupSurface(popup);
 }
 
@@ -619,7 +627,8 @@ void Compositor::onLayerSurfaceCreated(WlrLayerSurfaceV1 *layerSurface)
 {
     auto *surface = findSurfaceObject(layerSurface->surface());
     Q_ASSERT(surface);
-    qDebug(lc) << QString("Compositor::onLayerSurfaceCreated %1").arg(surface->uuid().toString(QUuid::WithoutBraces));
+    auto uuid = surface->uuid().toString(QUuid::WithoutBraces).toUtf8().data();
+    qCDebug(hwCompositor, "%s: layer_shell surface created", uuid);
     surface->createLayerShellSurface(layerSurface);
 }
 
@@ -627,7 +636,8 @@ void Compositor::onGtkSurfaceCreated(GtkSurface *gtkSurface)
 {
     Surface *surface = findSurfaceObject(gtkSurface->surface());
     Q_ASSERT(surface);
-    qDebug(lc) << QString("Compositor::onGtkSurfaceCreated %1").arg(surface->uuid().toString(QUuid::WithoutBraces));
+    auto uuid = surface->uuid().toString(QUuid::WithoutBraces).toUtf8().data();
+    qCDebug(hwCompositor, "%s: gtk_shell surface created", uuid);
     surface->createGtkSurface(gtkSurface);
 }
 
@@ -635,7 +645,8 @@ void Compositor::onQtSurfaceCreated(QtSurface *qtSurface)
 {
     Surface *surface = findSurfaceObject(qtSurface->surface());
     Q_ASSERT(surface);
-    qDebug(lc) << QString("Compositor::onQtSurfaceCreated %1").arg(surface->uuid().toString(QUuid::WithoutBraces));
+    auto uuid = surface->uuid().toString(QUuid::WithoutBraces).toUtf8().data();
+    qCDebug(hwCompositor, "%s: qt_shell surface created", uuid);
     surface->createQtSurface(qtSurface);
 }
 
@@ -647,7 +658,6 @@ void Compositor::onFullscreenSurfaceRequested(QWaylandSurface *surface)
     ms->m_fullscreenShell = true;
     // TODO: multi-output
     ms->setPosition(QPoint(0,0));
-
     defaultSeat()->setKeyboardFocus(surface);
     // TODO: handle destruction
 }
@@ -657,7 +667,8 @@ void Compositor::onXdgTopLevelCreated(HWWaylandXdgToplevel *topLevel, HWWaylandX
     auto *mySurface = findSurfaceObject(surface->surface());
     Q_ASSERT(mySurface);
     mySurface->createXdgTopLevelSurface(topLevel);
-    qDebug(lc) << QString("Compositor::onXdgTopLevelCreated %1").arg(mySurface->uuid().toString(QUuid::WithoutBraces));
+    auto uuid = mySurface->uuid().toString(QUuid::WithoutBraces).toUtf8().data();
+    qCDebug(hwCompositor, "%s: xdg_toplevel surface created", uuid);
     // this is temporary and will be better calculated in onXdgWindowGeometryChanged
     mySurface->setPosition(QPointF(1,1));
 
@@ -735,9 +746,10 @@ void Compositor::onXdgSurfaceActivated(QWaylandSurface *surface)
         return;
 
     auto sf = findSurfaceObject(surface);
-    qDebug(lc) << QString("Compositor::onXdgSurfaceActivated %1").arg(sf->uuid().toString(QUuid::WithoutBraces));
     if(sf)
     {
+        auto uuid = sf->uuid().toString(QUuid::WithoutBraces).toUtf8().data();
+        qCDebug(hwCompositor, "%s: wl_surface activated", uuid);
         if(m_activated != sf && m_tl_raised != sf)
             raise(sf);
     }
@@ -786,12 +798,8 @@ QColor Compositor::primaryBackgroundColor() const
 
 void Compositor::updateCursor()
 {
-    /*if(!m_cursorObject)
-        qDebug() << "Compositor::updateCursor null m_cursorObject";*/
     if(m_cursorObject->primaryView())
         m_cursorObject->primaryView()->advance();
-    /*else
-        qDebug() << "Compositor::updateCursor null m_cursorObject primaryView";*/
     QImage image = m_cursorObject->primaryView()->currentBuffer().image();
     if (!image.isNull())
         primaryOutput()->window()->setCursor(QCursor(QPixmap::fromImage(image), m_cursorHotspotX, m_cursorHotspotY));
@@ -996,12 +1004,10 @@ void Compositor::handleDrag(SurfaceView *target, QMouseEvent *me)
         pos -= findSurfaceObject(surface)->renderPosition();
     }
     QWaylandDrag *currentDrag = defaultSeat()->drag();
-    qDebug() << "drag drop target surface: " << findSurfaceObject(surface)->uuid().toString();
     if(surface)
         currentDrag->dragMove(surface, pos);
     if (me->buttons() == Qt::NoButton) {
         // TODO: destroy surface??
-        qDebug() << "Compositor::handleDrag: drag drop";
         defaultSeat()->setKeyboardFocus(surface);
         // TODO: multiple monitors/views
         defaultSeat()->setMouseFocus(surface->primaryView());
@@ -1021,13 +1027,13 @@ void Compositor::raise(Surface *obj)
 {
     if(!obj)
     {
-        qDebug(lc) << "Compositor::raise: request to raise invalid surface";
+        qCDebug(hwCompositor, "request to raise invalid surface");
         return;
     }
 
     if(!m_surfaces.contains(obj))
     {
-        qDebug(lc) << "Compositor::raise: request to raise recycled surface";
+        qCDebug(hwCompositor, "request to raise recycled surface");
         return;
     }
 
@@ -1038,8 +1044,8 @@ void Compositor::raise(Surface *obj)
     if(obj->isSpecialShellObject())
         return;
 
-    qDebug(lc) << QString("Compositor::raise %1").arg(obj->uuid().toString(QUuid::WithoutBraces));
-
+    auto uuid = obj->uuid().toString(QUuid::WithoutBraces).toUtf8().data();
+    qCDebug(hwCompositor, "%s: raise", uuid);
     if(!m_zorder.contains(obj))
     {
         activate(obj);
@@ -1070,14 +1076,16 @@ void Compositor::activate(Surface *obj)
 {
     if(!obj)
     {
-        qWarning() << "request to activate invalid surface";
+        qCDebug(hwCompositor, "request to activate invalid surface");
         return;
     }
     if(!obj->surface())
         return;
 
     try {
-        qDebug(lc) << QString("Compositor::activate %1").arg(obj->uuid().toString(QUuid::WithoutBraces));
+        auto uuid = obj->uuid().toString(QUuid::WithoutBraces).toUtf8().data();
+        qCDebug(hwCompositor, "%s: activated", uuid);
+
         auto last = m_tl_raised;
 
         // Since the compositor is only tracking unparented objects
@@ -1107,7 +1115,8 @@ void Compositor::activate(Surface *obj)
     }
     catch(int e)
     {
-        qDebug(lc) << "Compositor::activate: error activating surface" << e;
+        auto uuid = obj->uuid().toString(QUuid::WithoutBraces).toUtf8().data();
+        qCDebug(hwCompositor, "%s: error %i activating surface", uuid, e);
     }
 }
 

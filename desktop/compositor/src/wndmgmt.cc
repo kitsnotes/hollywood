@@ -13,10 +13,15 @@
 #define PWM_PROTO_VERSION       15
 #define PW_PROTO_VERSION        16
 
+Q_LOGGING_CATEGORY(hwPlasmaWnd, "compositor.plasmawnd")
+
 PlasmaWindowManagement::PlasmaWindowManagement(QWaylandCompositor *compositor)
     : QWaylandCompositorExtensionTemplate(compositor)
     , QtWaylandServer::org_kde_plasma_window_management(compositor->display(), PWM_PROTO_VERSION)
-    , m_compositor(qobject_cast<Compositor*>(compositor)){}
+    , m_compositor(qobject_cast<Compositor*>(compositor))
+{
+    qCInfo(hwPlasmaWnd, "Supporting org_kde_plasma_window_management (protocol version %i)", PWM_PROTO_VERSION);
+}
 
 
 void PlasmaWindowManagement::initialize()
@@ -29,7 +34,7 @@ void PlasmaWindowManagement::initialize()
 PlasmaWindowControl* PlasmaWindowManagement::createWindowControl(Surface *parent)
 {
     if(parent == nullptr)
-        qDebug() << "PlasmaWindowManagement::createWindowControl sent null parent";
+        qCDebug(hwPlasmaWnd, "PlasmaWindowManagement::createWindowControl sent null parent");
 
     auto pm = new PlasmaWindowControl(parent, parent->uuid());
     for(auto res : resourceMap())
@@ -77,8 +82,7 @@ void PlasmaWindowManagement::org_kde_plasma_window_management_get_window(Resourc
     Q_UNUSED(resource);
     Q_UNUSED(id);
     Q_UNUSED(internal_window_id);
-    qDebug() << "org_kde_plasma_window_management_get_window called but not responsive."
-             << "Use org_kde_plasma_window_management_get_window_by_uuid instead;";
+    qCDebug(hwPlasmaWnd, "org_kde_plasma_window_management_get_window called but not responsive: Use org_kde_plasma_window_management_get_window_by_uuid instead.");
 }
 
 void PlasmaWindowManagement::org_kde_plasma_window_management_get_window_by_uuid(Resource *resource, uint32_t id, const QString & internal_window_uuid)
@@ -91,7 +95,7 @@ void PlasmaWindowManagement::org_kde_plasma_window_management_get_window_by_uuid
             return;
         }
     }
-    qDebug() << "PlasmaWindowManagement: requested UUID with no window" << internal_window_uuid;
+    qCDebug(hwPlasmaWnd, "PlasmaWindowManagement: requested UUID with no window: %s", internal_window_uuid.toUtf8().data());
     PlasmaWindowControl w(nullptr, QUuid::fromString(internal_window_uuid));
     w.add(resource->client(), resource->version());
 }
@@ -101,12 +105,15 @@ void PlasmaWindowManagement::org_kde_plasma_window_management_get_window_by_uuid
 PlasmaWindowControl::PlasmaWindowControl(Surface *obj, const QUuid &uuid)
     : QtWaylandServer::org_kde_plasma_window()
     , m_parent(obj)
-    , m_uuid(uuid) {}
+    , m_uuid(uuid)
+{
+    qCDebug(hwPlasmaWnd, "%s: allocating kde_plasma_window control", m_uuid);
+}
 
 PlasmaWindowControl::~PlasmaWindowControl()
 {
+    qCDebug(hwPlasmaWnd, "%s: deallocating kde_plasma_window control", m_uuid);
     CompositorApp::instance()->compositor()->windowManager()->removeWindow(this);
-    qDebug() << "deallocating PMWND" << m_uuid;
     unmap();
 }
 
@@ -114,7 +121,7 @@ void PlasmaWindowControl::org_kde_plasma_window_bind_resource(Resource *resource
 {
     if(!m_parent)
     {
-        qDebug() << "org_kde_plasma_window_bind_resource: invalid parent, bailing.";
+        qCDebug(hwPlasmaWnd, "org_kde_plasma_window_bind_resource: invalid parent, bailing");
         return;
     }
 
@@ -238,7 +245,7 @@ void PlasmaWindowControl::org_kde_plasma_window_set_virtual_desktop(Resource *re
 {
     Q_UNUSED(resource);
     Q_UNUSED(number);
-    qDebug() << "org_kde_plasma_window_set_virtual_desktop not currently implemented but it eventually wil be!";
+    qCDebug(hwPlasmaWnd, "org_kde_plasma_window_set_virtual_desktop not currently implemented but it eventually will be");
 }
 
 void PlasmaWindowControl::org_kde_plasma_window_get_icon(Resource *resource, int32_t fd)

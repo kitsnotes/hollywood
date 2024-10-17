@@ -7,6 +7,8 @@
 
 #define QT_SHELL_VERSION 1
 
+Q_LOGGING_CATEGORY(hwQtShell, "compositor.qtshell")
+
 QtShell::QtShell(QWaylandCompositor *compositor)
     : QWaylandCompositorExtensionTemplate<QtShell>(compositor)
     , QtWaylandServer::zqt_shell_v1(compositor->display(), QT_SHELL_VERSION)

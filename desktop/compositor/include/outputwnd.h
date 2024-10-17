@@ -15,6 +15,9 @@
 
 #include "blitter.h"
 
+#include <QLoggingCategory>
+Q_DECLARE_LOGGING_CATEGORY(hwRender)
+
 class QOpenGLTexture;
 class Compositor;
 class SurfaceView;

@@ -9,6 +9,8 @@
 
 #define SCREENCOPY_VERSION  1
 
+Q_LOGGING_CATEGORY(hwScreenCopy, "compositor.screencopy")
+
 static inline QImage::Format fromWaylandShmFormat(wl_shm_format format)
 {
     switch (format) {

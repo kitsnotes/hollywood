@@ -20,7 +20,6 @@
 #include <QKeyEvent>
 #include <QTouchEvent>
 #include <QFileSystemWatcher>
-#include <QDebug>
 #include <QOpenGLContext>
 #include <QLoggingCategory>
 
@@ -55,6 +54,8 @@ class XdgActivation;
 class WlrScreencopyManagerV1;
 class RelativePointerManagerV1;
 class PointerConstraintsV1;
+
+Q_DECLARE_LOGGING_CATEGORY(hwCompositor)
 
 class Compositor : public QWaylandCompositor
 {

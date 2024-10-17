@@ -7,14 +7,18 @@
 #include "compositor.h"
 
 #include <QWaylandSurface>
-#include <QDebug>
 
 #define MENU_PROTO_VERSION       1
+
+Q_LOGGING_CATEGORY(hwAppMenu, "compositor.appmenu")
 
 AppMenuManager::AppMenuManager(QWaylandCompositor *compositor)
     : QWaylandCompositorExtensionTemplate(compositor)
     , QtWaylandServer::org_kde_kwin_appmenu_manager(compositor->display(), MENU_PROTO_VERSION)
-    , m_compositor(qobject_cast<Compositor*>(compositor)) {}
+    , m_compositor(qobject_cast<Compositor*>(compositor))
+{
+    qCInfo(hwAppMenu, "Supporting org_kde_kwin_appmenu (protocol version %i)", MENU_PROTO_VERSION);
+}
 
 void AppMenuManager::initialize()
 {

@@ -18,6 +18,9 @@
 
 #include "xdgshell.h"
 
+#include <QLoggingCategory>
+Q_DECLARE_LOGGING_CATEGORY(hwLayerShell)
+
 class WlrLayerSurfaceV1;
 class WlrLayerShellV1
         : public QWaylandCompositorExtensionTemplate<WlrLayerShellV1>

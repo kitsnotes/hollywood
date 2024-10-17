@@ -6,6 +6,8 @@
 #include "xdgdialog.h"
 #include "qwaylandcompositor.h"
 
+Q_LOGGING_CATEGORY(hwXdgDialog, "compositor.xdgdialog")
+
 HWWaylandXdgDialogV1Global::HWWaylandXdgDialogV1Global(QWaylandCompositor *parent)
     : QWaylandCompositorExtensionTemplate<HWWaylandXdgDialogV1Global>(parent)
 {

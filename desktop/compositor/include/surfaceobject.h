@@ -19,6 +19,9 @@
 
 #include "layershell.h"
 
+#include <QLoggingCategory>
+Q_DECLARE_LOGGING_CATEGORY(hwSurface)
+
 class QWaylandWlShell;
 class QWaylandWlShellSurface;
 class HWWaylandXdgShell;

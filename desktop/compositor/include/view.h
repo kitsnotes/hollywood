@@ -13,10 +13,12 @@
 #include <QWaylandXdgShell>
 #include <QTimer>
 #include <QOpenGLTextureBlitter>
-#include <QDebug>
 #include <QOpenGLContext>
 
 #include "hwc.h"
+
+#include <QLoggingCategory>
+Q_DECLARE_LOGGING_CATEGORY(hwView)
 
 class QWaylandWlShell;
 class QWaylandWlShellSurface;

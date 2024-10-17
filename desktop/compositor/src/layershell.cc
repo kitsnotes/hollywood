@@ -11,9 +11,14 @@
 
 #define LAYERSHELL_VERSION 4
 
+Q_LOGGING_CATEGORY(hwLayerShell, "compositor.layershell")
+
 WlrLayerShellV1::WlrLayerShellV1(QWaylandCompositor *compositor)
     : QWaylandCompositorExtensionTemplate<WlrLayerShellV1>(compositor)
-    , QtWaylandServer::zwlr_layer_shell_v1() {}
+    , QtWaylandServer::zwlr_layer_shell_v1()
+{
+    qCInfo(hwLayerShell, "Supporting wlr_layer_shell_v1 (protocol version %i)", LAYERSHELL_VERSION);
+}
 
 WlrLayerShellV1::~WlrLayerShellV1()
 {
@@ -26,7 +31,8 @@ void WlrLayerShellV1::initialize()
     QWaylandCompositor *compositor = static_cast<QWaylandCompositor *>(extensionContainer());
     if(!compositor)
     {
-        qDebug() << "WlrLayerShellV1 failed to find compositor, not initializing";
+        qCDebug(hwLayerShell, "WlrLayerShellV1 failed to find compositor, not initializing");
+
         return;
     }
     init(compositor->display(), LAYERSHELL_VERSION);
@@ -40,7 +46,6 @@ void WlrLayerShellV1::closeAllSurfaces()
 
 WlrLayerSurfaceV1 *WlrLayerShellV1::fromResource(wl_resource *resource)
 {
-    qDebug() << "finding wlr surface resource";
     for(auto *s : wcApp->compositor()->layerShell()->surfaces)
     {
         if(s->resource()->handle == resource)
@@ -55,7 +60,7 @@ void WlrLayerShellV1::zwlr_layer_shell_v1_get_layer_surface(Resource *resource, 
     auto surface = QWaylandSurface::fromResource(surfaceRes);
     if(!surface)
     {
-        qDebug() << "WlrLayerShell: resource does not exist" << wl_resource_get_id(surfaceRes);
+        qCDebug(hwLayerShell, "default scale factor: %i", wl_resource_get_id(surfaceRes));
         return;
     }
 
@@ -89,9 +94,9 @@ WlrLayerSurfaceV1::WlrLayerSurfaceV1(QWaylandSurface *surface, QWaylandOutput *o
         if (closed)
             return;
 
-        if (m_surface->hasContent() && !configured) {
-            qDebug() << QString("layer_surface@%1 has not yet been configured")
-                        .arg(wl_resource_get_id(resource()->handle));
+        if (m_surface->hasContent() && !configured)
+        {
+            qCDebug(hwLayerShell(), "layer_surface@%u has not yet been configured", wl_resource_get_id(resource()->handle));
             wl_resource_post_error(resource()->handle,
                                    QtWaylandServer::zwlr_layer_shell_v1::error_already_constructed,
                                    "layer_surface@%u has never been configured",
@@ -103,13 +108,11 @@ WlrLayerSurfaceV1::WlrLayerSurfaceV1(QWaylandSurface *surface, QWaylandOutput *o
         bool hasChanged = false;
         if (current.layer != clientPending.layer) {
             current.layer = clientPending.layer;
-            qDebug() << "layerChanged:" << current.layer << clientPending.layer;
             emit layerChanged();
             hasChanged = true;
         }
         if (current.desiredSize != clientPending.desiredSize) {
             current.desiredSize = clientPending.desiredSize;
-            qDebug() << "desiredSize:" << clientPending.desiredSize << "current:" << current.desiredSize;
             emit sizeChanged();
             hasChanged = true;
         }
@@ -156,7 +159,7 @@ quint32 WlrLayerSurfaceV1::sendConfigure(const QSize &size)
 {
     if (!size.isValid())
     {
-        qDebug() << "Can't configure WaylandWlrLayerSurfaceV1 with invalid size:" << size;
+        qCDebug(hwLayerShell(), "Can't configure WaylandWlrLayerSurfaceV1 with invalid size %i x %i", size.width(), size.height());
         return 0;
     }
 
@@ -190,7 +193,6 @@ QWaylandOutput *WlrLayerSurfaceV1::output() const
 
 WlrLayerShellV1::Layer WlrLayerSurfaceV1::layer() const
 {
-    qDebug() << current.layer;
     return current.layer;
 }
 
@@ -344,7 +346,7 @@ void WlrLayerSurfaceV1::zwlr_layer_surface_v1_ack_configure(Resource *resource, 
     Q_FOREVER {
         if (pendingConfigures.isEmpty())
         {
-            qDebug() << "Received an unexpected ack_configure!";
+            qCDebug(hwLayerShell(), "Received an unexpected ack_configure");
             return;
         }
 
@@ -382,6 +384,5 @@ void WlrLayerSurfaceV1::zwlr_layer_surface_v1_set_layer(Resource *resource, uint
         return;
     }
 
-    qDebug() << layer;
     clientPending.layer = static_cast<WlrLayerShellV1::Layer>(layer);
 }

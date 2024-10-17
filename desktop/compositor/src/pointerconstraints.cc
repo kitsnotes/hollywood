@@ -6,6 +6,8 @@
 
 #define WP_POINTER_CONSTRAINT_VERSION 1
 
+Q_LOGGING_CATEGORY(hwPointerConstraints, "compositor.pointerconstraints")
+
 PointerConstraintsV1::PointerConstraintsV1(QWaylandCompositor *compositor)
     :QWaylandCompositorExtensionTemplate(compositor)
     , QtWaylandServer::zwp_pointer_constraints_v1(compositor->display(), WP_POINTER_CONSTRAINT_VERSION)

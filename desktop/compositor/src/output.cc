@@ -13,6 +13,8 @@
 #include <QSettings>
 #include <QDateTime>
 
+Q_LOGGING_CATEGORY(hwOutput, "compositor.render")
+
 Output::Output(QScreen *s, bool defaultScreen)
     : QObject(nullptr)
     , m_window(new OutputWindow(this))
@@ -22,6 +24,8 @@ Output::Output(QScreen *s, bool defaultScreen)
     wcApp->compositor()->addOutput(this);
     connect(m_wlOutput, &QWaylandOutput::currentModeChanged, this, &Output::modeChanged);
     connect(s, &QScreen::availableGeometryChanged, this, [this]() {
+        qCDebug(hwOutput, "available geom changed: %i x %i",m_screen->size().width(), m_screen->size().height());
+
         m_window->resize(m_screen->size().width(), m_screen->size().height());
         QWaylandOutputMode mode(m_screen->size(), 60);
         m_wlOutput->addMode(mode, true);
@@ -38,7 +42,7 @@ Output::Output(QScreen *s, bool defaultScreen)
         wcApp->compositor()->triggerRender();
     });
     connect(s, &QScreen::refreshRateChanged, this, [this]() {
-        qDebug() << "Output::refreshRateChanged" << m_screen->refreshRate();
+        qCDebug(hwOutput, "refresh rate changed %i", m_screen->refreshRate());
     });
     m_wlOutput->setManufacturer(s->manufacturer());
     m_wlOutput->setModel(s->model());
@@ -108,7 +112,6 @@ bool Output::removeLayerShellReservation(Surface *surface)
 
 void Output::modeChanged()
 {
-    qDebug() << "Output:: mode changed!";
     updateUsableGeometry();
 }
 
@@ -186,7 +189,6 @@ void Output::modesetFromConfig()
     chg.resolution = QSize(settings.value("Width", m_screen->geometry().width()).toInt()
                            ,settings.value("Height",m_screen->geometry().height()).toInt());
 
-    qDebug() << "Changing Mode:" << chg.resolution << chg.refreshRate;
     // TODO: test, check if valid mode
     QVector<Originull::Platform::ScreenChange> changes;
     changes << chg;
@@ -195,7 +197,7 @@ void Output::modesetFromConfig()
 
 uint Output::defaultScaleFactor()
 {
-    qDebug() << "Output::defaultScaleFactor" << m_screen->physicalDotsPerInch();
+    qCDebug(hwOutput, "default scale factor: %i", m_screen->physicalDotsPerInch());
     if(m_screen->physicalDotsPerInch() > 190)
         return 1;
 
@@ -224,7 +226,6 @@ void Output::updateUsableGeometry()
 
         // TODO: scope out multiple anchors based on height/width?
     }
-    qDebug() << "setAvailableGeom" << margins << rect.marginsRemoved(margins);
     m_wlOutput->setAvailableGeometry(rect.marginsRemoved(margins));
 }
 

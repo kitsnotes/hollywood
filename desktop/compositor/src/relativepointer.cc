@@ -2,6 +2,8 @@
 
 #define WP_RELATIVE_POINTER_VERSION 1
 
+Q_LOGGING_CATEGORY(hwRelativePointer, "compositor.relativepointer")
+
 RelativePointerManagerV1::RelativePointerManagerV1(QWaylandCompositor *compositor)
     :QWaylandCompositorExtensionTemplate(compositor)
     , QtWaylandServer::zwp_relative_pointer_manager_v1(compositor->display(), WP_RELATIVE_POINTER_VERSION)

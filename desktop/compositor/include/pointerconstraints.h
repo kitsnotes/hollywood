@@ -10,6 +10,9 @@
 
 #include "qwayland-server-pointer-constraints-unstable-v1.h"
 
+#include <QLoggingCategory>
+Q_DECLARE_LOGGING_CATEGORY(hwPointerConstraints)
+
 class Compositor;
 class Surface;
 class PointerConstraintsV1;

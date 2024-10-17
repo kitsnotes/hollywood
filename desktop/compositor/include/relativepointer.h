@@ -10,6 +10,9 @@
 
 #include "qwayland-server-relative-pointer-unstable-v1.h"
 
+#include <QLoggingCategory>
+Q_DECLARE_LOGGING_CATEGORY(hwRelativePointer)
+
 class Compositor;
 class Surface;
 class RelativePointerManagerV1;

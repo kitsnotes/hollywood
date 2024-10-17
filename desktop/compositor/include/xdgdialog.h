@@ -9,6 +9,9 @@
 #include <QtWaylandCompositor/private/qwaylandcompositorextension_p.h>
 #include <QtWaylandCompositor/private/qwayland-server-xdg-dialog-v1.h>
 
+#include <QLoggingCategory>
+Q_DECLARE_LOGGING_CATEGORY(hwXdgDialog)
+
 class HWWaylandXdgDialogV1Global
     : public QWaylandCompositorExtensionTemplate<HWWaylandXdgDialogV1Global>
     , public QtWaylandServer::xdg_wm_dialog_v1

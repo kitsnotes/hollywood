@@ -6,6 +6,9 @@
 #include <QWaylandSurface>
 
 #define GTK_SHELL_VERSION 5
+
+Q_LOGGING_CATEGORY(hwGtkShell, "compositor.gtkshell")
+
 GtkShell::GtkShell(QWaylandCompositor *compositor)
     : QWaylandCompositorExtensionTemplate<GtkShell>(compositor)
     , QtWaylandServer::gtk_shell1(compositor->display(), GTK_SHELL_VERSION) { }

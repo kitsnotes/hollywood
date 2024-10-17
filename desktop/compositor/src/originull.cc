@@ -37,7 +37,6 @@ void OriginullProtocol::org_originull_privateapi_rotate_wallpaper(Resource *reso
 
 void OriginullProtocol::org_originull_privateapi_register_desktop(Resource *resource, wl_resource *surface)
 {
-    qDebug() << "OriginullProtocol::org_originull_privateapi_register_desktop";
     Q_UNUSED(resource);
     emit desktopSurfaceMarked(QWaylandSurface::fromResource(surface));
 }

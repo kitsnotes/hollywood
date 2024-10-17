@@ -16,7 +16,6 @@
 #include <QMatrix4x4>
 #include <QPainter>
 #include <QtWaylandCompositor/qwaylandseat.h>
-#include <QDebug>
 #include <QOpenGLPaintDevice>
 #include <QGuiApplication>
 #include <QPalette>
@@ -38,6 +37,8 @@
 #include "output.h"
 #include "surfaceobject.h"
 #include "shortcuts.h"
+
+Q_LOGGING_CATEGORY(hwRender, "compositor.render")
 
 unsigned int VBO;
 
@@ -68,7 +69,6 @@ OutputWindow::OutputWindow(Output* parent)
     ,m_wpm(new WallpaperManager(this))
     ,m_rgb_vao(new QOpenGLVertexArrayObject)
 {
-
     connect(hwComp, &Compositor::startMove, this, &OutputWindow::startMove);
     connect(hwComp, &Compositor::startResize, this, &OutputWindow::startResize);
     connect(hwComp, &Compositor::dragStarted, this, &OutputWindow::startDrag);
@@ -195,7 +195,7 @@ void OutputWindow::drawTextureForObject(Surface *obj)
 
     if(!hwComp->surfaceObjects().contains(obj))
     {
-        qDebug() << "OutputWindow::drawTextureForObject: attempting to render recycled object";
+        qCDebug(hwRender, "drawTextureForObject: attempting to render recycled object");
         return;
     }
 
@@ -231,7 +231,7 @@ void OutputWindow::drawTextureForObject(Surface *obj)
                 }
                 catch(int e)
                 {
-                    qDebug() << "failed to delete m_fbo" << e;
+                    qCCritical(hwRender, "failed to delete FBO %i)", e);
                 }
             }
 
@@ -579,7 +579,7 @@ void OutputWindow::startMove()
 {
     if(m_mouseSelectedSurfaceObject == nullptr)
     {
-        qDebug() << "OutputWindow::startMove: mouseSelectedSurfaceObject is null";
+        qCDebug(hwRender, "startMove: mouseSelectedSurfaceObject is null");
         return;
     }
     m_grabState = MoveGrab;
@@ -590,7 +590,7 @@ void OutputWindow::startResize(int edge, bool anchored)
 {
     if(m_mouseSelectedSurfaceObject == nullptr)
     {
-        qDebug() << "OutputWindow::startMove: mouseSelectedSurfaceObject is null";
+        qCDebug(hwRender, "startResize: mouseSelectedSurfaceObject is null");
         return;
     }
     m_initialSize = m_mouseSelectedSurfaceObject->surfaceSize();
@@ -605,10 +605,9 @@ void OutputWindow::startDrag(Surface *dragIcon)
 {
     if(m_mouseSelectedSurfaceObject == nullptr)
     {
-        qDebug() << "OutputWindow::startMove: mouseSelectedSurfaceObject is null";
+        qCDebug(hwRender, "startDrag: mouseSelectedSurfaceObject is null");
         return;
     }
-    qDebug() << "OutputWindow::startedDrag";
     m_grabState = DragGrab;
     m_dragIconSurfaceObject = dragIcon;
     hwComp->raise(dragIcon);

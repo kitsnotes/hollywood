@@ -5,8 +5,6 @@
 #include "shortcuts.h"
 #include <QSettings>
 
-#include <QDebug>
-
 ShortcutManager::ShortcutManager(QObject *parent)
     : QObject(parent)
 {
