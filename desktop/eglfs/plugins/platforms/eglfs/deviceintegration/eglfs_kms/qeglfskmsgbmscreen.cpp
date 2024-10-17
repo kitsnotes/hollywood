@@ -264,7 +264,8 @@ void HWEglFSKmsGbmScreen::ensureModeSet(uint32_t fb)
             doModeSet = false;
 
         if (doModeSet) {
-            qCDebug(qLcEglfsKmsDebug, "Setting mode for screen %s", qPrintable(name()));
+            // TODO: something wrong?
+            //qCDebug(qLcEglfsKmsDebug, "Setting mode for screen %s", qPrintable(name()));
 
             if (device()->hasAtomicSupport()) {
 #if QT_CONFIG(drm_atomic)

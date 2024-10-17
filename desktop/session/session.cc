@@ -31,7 +31,7 @@
 #define LOGIND_PATH       "/org/freedesktop/login1"
 #define LOGIND_INTERFACE  "org.freedesktop.login1.Manager"
 
-QLoggingCategory lcSession("hollywood.session");
+QLoggingCategory lcSession("SSM");
 
 QString g_logfile;
 
@@ -567,7 +567,7 @@ void SMApplication::reloadLocaleSettings()
     // clear out our change warning in the applet
     settings.setValue("SettingsChanged", false);
 
-    m_lang = settings.value("LANG", QString::fromLocal8Bit(qgetenv("LANG"))).toString();
+    m_lang = settings.value("LANG", "C.UTF8").toString();
     if(m_lang.isEmpty())
         m_lang = "en_US.UTF-8";
     m_detailedregion = settings.value(QStringLiteral("UseDetailed"), false).toBool();

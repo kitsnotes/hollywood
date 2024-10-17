@@ -19,7 +19,7 @@
 
 #include <sys/sysmacros.h>
 
-Q_LOGGING_CATEGORY(lcLogind, "originull.logind")
+Q_LOGGING_CATEGORY(lcLogind, "compositor.logind")
 
 #define LOGIN1_SERVICE QStringLiteral("org.freedesktop.login1")
 
@@ -87,10 +87,10 @@ void LogindPrivate::_q_serviceRegistered()
         }
     }
     if (sessionPath.isEmpty()) {
-        qCWarning(lcLogind) << "Unable to find session!";
+        qCWarning(lcLogind, "Unable to find session");
         return;
     }
-    qCDebug(lcLogind) << "Session path:" << sessionPath;
+    qCDebug(lcLogind, "Session Path: %s", qPrintable(sessionPath));
 
     // We are connected now
     isConnected = true;

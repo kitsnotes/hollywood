@@ -8,18 +8,18 @@
 #include <QLoggingCategory>
 
 
-QLoggingCategory lcSessionS("hollywood.session");
+QLoggingCategory lcSessionS("SSM");
 
-QLoggingCategory lcCompositor("hollywood.compositor");
-QLoggingCategory lcStage("hollywood.stage");
-QLoggingCategory lcDesktop("hollywood.shell");
-QLoggingCategory lcElevator("hollywood.elevator");
-QLoggingCategory lcNotification("hollywood.notificationd");
-QLoggingCategory lcWireplumber("wireplumber");
-QLoggingCategory lcPipewire("pipewire");
-QLoggingCategory lcPipewirePulse("pipewire.pulse");
-QLoggingCategory lcDBus("dbus.session");
-QLoggingCategory lsOther("other.process");
+QLoggingCategory lcCompositor("WND");
+QLoggingCategory lcStage("STA");
+QLoggingCategory lcDesktop("SHL");
+QLoggingCategory lcElevator("ELE");
+QLoggingCategory lcNotification("NOT");
+QLoggingCategory lcWireplumber("WP ");
+QLoggingCategory lcPipewire("PW ");
+QLoggingCategory lcPipewirePulse("PWP");
+QLoggingCategory lcDBus("BUS");
+QLoggingCategory lsOther("OTA");
 
 ManagedProcess::ManagedProcess(Process desired, QObject *parent)
     : QProcess(parent)
@@ -332,7 +332,7 @@ void ManagedProcess::logInfo(const QString &msg)
     switch(m_process)
     {
     case DBusSession:
-        qCInfo(lcDBus) << msg;
+        qCInfo(lcDBus, msg.toUtf8().data());
 	break;
     case Pipewire:
         qCInfo(lcPipewire) << msg;
@@ -344,8 +344,8 @@ void ManagedProcess::logInfo(const QString &msg)
         qCInfo(lcPipewirePulse) << msg;
 	break;
     case Compositor:
-        qCInfo(lcCompositor) << msg;
-	break;
+        qCInfo(lcCompositor, msg.toUtf8().data());
+    break;
     case Elevator:
         qCInfo(lcElevator) << msg;
 	break;
