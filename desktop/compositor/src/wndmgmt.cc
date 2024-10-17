@@ -107,12 +107,12 @@ PlasmaWindowControl::PlasmaWindowControl(Surface *obj, const QUuid &uuid)
     , m_parent(obj)
     , m_uuid(uuid)
 {
-    qCDebug(hwPlasmaWnd, "%s: allocating kde_plasma_window control", m_uuid);
+    qCDebug(hwPlasmaWnd, "%s: allocating kde_plasma_window control", m_uuid.toString(QUuid::WithoutBraces).toUtf8().data());
 }
 
 PlasmaWindowControl::~PlasmaWindowControl()
 {
-    qCDebug(hwPlasmaWnd, "%s: deallocating kde_plasma_window control", m_uuid);
+    qCDebug(hwPlasmaWnd, "%s: deallocating kde_plasma_window control", m_uuid.toString(QUuid::WithoutBraces).toUtf8().data());
     CompositorApp::instance()->compositor()->windowManager()->removeWindow(this);
     unmap();
 }
