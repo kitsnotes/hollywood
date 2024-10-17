@@ -184,7 +184,6 @@ void HWEglFSScreen::handleCursorMove(const QPoint &pos)
 
 void HWEglFSScreen::setCursorTheme(const QString &name, int size)
 {
-    qDebug() << "HWEglFSScreen::setCursorTheme";
     auto *cursor = static_cast<QEglFSCursor *>(m_cursor);
     if (cursor)
         cursor->setCursorTheme(name, size);

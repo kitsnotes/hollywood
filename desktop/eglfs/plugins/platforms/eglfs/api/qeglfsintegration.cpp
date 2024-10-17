@@ -83,7 +83,7 @@ static void initResources()
 #endif
 }
 
-Q_LOGGING_CATEGORY(qLcDebug, "originull.qpa", QtInfoMsg)
+Q_LOGGING_CATEGORY(qLcDebug, "compositor.eglfs", QtInfoMsg)
 
 
 HWEglFSIntegration::HWEglFSIntegration()
@@ -410,7 +410,7 @@ QPlatformNativeInterface::NativeResourceForContextFunction HWEglFSIntegration::n
 
 QFunctionPointer HWEglFSIntegration::platformFunction(const QByteArray &function) const
 {
-    qDebug() << "HWEglFSIntegration::platformFunction" << function;
+    qCDebug(qLcDebug, "requested platformFunction %s", function.data());
     if (function == Originull::Platform::EglFSFunctions::setCursorThemeIdentifier())
         return QFunctionPointer(setCursorThemeStatic);
     else if (function == Originull::Platform::EglFSFunctions::getPowerStateIdentifier())

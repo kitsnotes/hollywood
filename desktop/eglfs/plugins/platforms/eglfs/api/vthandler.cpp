@@ -57,7 +57,7 @@ extern "C" {
 
 #define VT_HANDLER_LOGIND 1
 
-Q_LOGGING_CATEGORY(lcVtHandler, "originull.eglfs.vthandler", QtInfoMsg)
+Q_LOGGING_CATEGORY(lcVtHandler, "compositor.vthandler", QtInfoMsg)
 
 using namespace Originull;
 

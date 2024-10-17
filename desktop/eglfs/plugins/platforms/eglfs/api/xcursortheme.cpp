@@ -57,7 +57,7 @@ void XcursorTheme::loadTheme(const QString &name, int size)
     m_size = size;
     xcursor_load_theme(qPrintable(m_name), m_size, XcursorThemePrivate::load_callback, this);
     m_loaded = true;
-    qDebug() << "XcursorTheme::loadTheme" << name;
+    //qDebug() << "XcursorTheme::loadTheme" << name;
 }
 
 bool XcursorTheme::isLoaded() const

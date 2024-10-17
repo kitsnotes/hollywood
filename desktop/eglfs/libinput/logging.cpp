@@ -26,4 +26,4 @@
 
 #include "private/libinputlogging_p.h"
 
-Q_LOGGING_CATEGORY(lcInput, "originull.qpa.input", QtInfoMsg)
+Q_LOGGING_CATEGORY(lcInput, "compositor.input", QtInfoMsg)

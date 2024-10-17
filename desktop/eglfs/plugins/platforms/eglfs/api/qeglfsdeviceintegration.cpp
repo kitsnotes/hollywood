@@ -68,7 +68,7 @@
 
 QT_BEGIN_NAMESPACE
 
-Q_LOGGING_CATEGORY(qLcEglDevDebug, "originull.qpa.egldeviceintegration", QtInfoMsg)
+Q_LOGGING_CATEGORY(qLcEglDevDebug, "compositor.egldeviceintegration", QtInfoMsg)
 
 Q_GLOBAL_STATIC_WITH_ARGS(QFactoryLoader, loader,
                           (QEglFSDeviceIntegrationFactoryInterface_iid, QLatin1String("/hwdeviceintegrations"), Qt::CaseInsensitive))

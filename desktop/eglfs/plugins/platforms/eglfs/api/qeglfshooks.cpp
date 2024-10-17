@@ -69,7 +69,6 @@ Q_GLOBAL_STATIC(DeviceIntegration, deviceIntegration)
 DeviceIntegration::DeviceIntegration()
     : m_integration(nullptr)
 {
-    qDebug() << "finding EGL device integration";
     QStringList pluginKeys = HWEglFSDeviceIntegrationFactory::keys();
     if (!pluginKeys.isEmpty()) {
         // Some built-in logic: Prioritize KMS/DRM.
@@ -84,13 +83,11 @@ DeviceIntegration::DeviceIntegration()
         // The environment variable can override everything.
         if (qEnvironmentVariableIsSet("QT_QPA_EGLFS_INTEGRATION")) {
             requested = qgetenv("QT_QPA_EGLFS_INTEGRATION");
-            qDebug() << requested;
         } else {
             // Device-specific makespecs may define a preferred plugin.
             requested = "eglfs_kms";
         }
 
-        qDebug() << "requested EGL:" << requested;
         // Treat "none" as special. There has to be a way to indicate
         // that plugins must be ignored when the device is known to be
         // functional with the default, non-specialized integration.

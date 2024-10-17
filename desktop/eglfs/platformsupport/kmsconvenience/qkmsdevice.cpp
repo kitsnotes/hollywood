@@ -51,7 +51,7 @@
 
 #define ARRAY_LENGTH(a) (sizeof (a) / sizeof (a)[0])
 
-Q_LOGGING_CATEGORY(qLcKmsDebug, "originull.qpa.eglfs.kms")
+Q_LOGGING_CATEGORY(qLcKmsDebug, "compositor.kms")
 
 enum OutputConfiguration {
     OutputConfigOff,

@@ -50,7 +50,7 @@
 #include <xf86drm.h>
 #include <xf86drmMode.h>
 
-Q_LOGGING_CATEGORY(qLcEglfsKmsDebug, "qt.qpa.eglfs.kms")
+Q_LOGGING_CATEGORY(qLcEglfsKmsDebug, "compositor.kms")
 
 HWEglFSKmsIntegration::HWEglFSKmsIntegration()
     : m_device(nullptr)
@@ -63,7 +63,6 @@ HWEglFSKmsIntegration::~HWEglFSKmsIntegration()
 
 void HWEglFSKmsIntegration::platformInit()
 {
-    qDebug() << "HWEglFSKmsIntegration::platformInit";
     qCDebug(qLcEglfsKmsDebug, "platformInit: Load Screen Config");
     m_screenConfig = createScreenConfig();
 

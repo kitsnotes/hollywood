@@ -243,7 +243,7 @@ bool HWEglFSKmsScreen::setMode(const QSize &size, qreal refresh)
         return false;
     }
 
-    qDebug("Changing mode to %ux%u at %.2f Hz", size.width(), size.height(), refresh);
+    qCDebug(lLcEglfsKmsDebug, "changing mode to %ux%u at %.2f Hz", size.width(), size.height(), refresh);
 
     // Mode will be changed next flip
     m_output.mode = modeIndex;
