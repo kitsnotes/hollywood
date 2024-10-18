@@ -10,4 +10,4 @@ SUBDIRS += libhwlogind \
            plugins/platforms/eglfs
 
 libinput.depends = libhwudev
-plugins/platforms/eglfs.depends = libhwudev libhwlogind libinput
+eglfs.depends = libhwudev libhwlogind libinput

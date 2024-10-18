@@ -1,6 +1,6 @@
 TEMPLATE = subdirs
 SUBDIRS = \
-    eglfs \
+    driver \
     compositor
-    compositor.depends = eglfs
+    compositor.depends = driver
 
