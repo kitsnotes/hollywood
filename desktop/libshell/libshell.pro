@@ -14,7 +14,7 @@ QT += core-private \
 TEMPLATE = lib
 DEFINES += LIBSHELL_LIBRARY
 CONFIG += wayland-scanner wayland-client
-WAYLANDCLIENTSOURCES += ../compositor/protocols/originull-privateapi.xml
+WAYLANDCLIENTSOURCES += ../display/compositor/protocols/originull-privateapi.xml
 
 INCLUDEPATH += include/
 INCLUDEPATH += include/private/

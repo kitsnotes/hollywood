@@ -9,10 +9,10 @@ INCLUDEPATH += $$PWD/hollywood/private
 
 QMAKE_USE+=wayland-client
 
-WAYLANDCLIENTSOURCES += ../compositor/protocols/xdg-shell.xml
-WAYLANDCLIENTSOURCES += ../compositor/protocols/wlr-layer-shell-unstable-v1.xml
-WAYLANDCLIENTSOURCES += ../compositor/protocols/xdg-decoration-unstable-v1.xml
-WAYLANDCLIENTSOURCES += ../compositor/protocols/xdg-activation-v1.xml
+WAYLANDCLIENTSOURCES += ../display/compositor/protocols/xdg-shell.xml
+WAYLANDCLIENTSOURCES += ../display/compositor/protocols/wlr-layer-shell-unstable-v1.xml
+WAYLANDCLIENTSOURCES += ../display/compositor/protocols/xdg-decoration-unstable-v1.xml
+WAYLANDCLIENTSOURCES += ../display/compositor/protocols/xdg-activation-v1.xml
 
 SOURCES += \
     src/layershellsurface.cc \

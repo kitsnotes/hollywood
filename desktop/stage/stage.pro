@@ -14,8 +14,8 @@ INCLUDEPATH += /usr/include/dbusmenu-qt6/
 CONFIG(debug): LIBS += -ldbusmenu-qt6 -L../output -lshell-$${HOLLYWOOD_APIVERSION} -lcommdlg-$${HOLLYWOOD_APIVERSION} -lhw-layer-shell
 CONFIG(release): LIBS += -ldbusmenu-qt6 -L/usr/lib/qt6/plugins/wayland-shell-integration -lshell-$${HOLLYWOOD_APIVERSION} -lcommdlg-$${HOLLYWOOD_APIVERSION} -lhw-layer-shell
 
-WAYLANDCLIENTSOURCES += ../compositor/protocols/originull-privateapi.xml
-WAYLANDCLIENTSOURCES += ../compositor/protocols/plasma-window-management.xml
+WAYLANDCLIENTSOURCES += ../display/compositor/protocols/originull-privateapi.xml
+WAYLANDCLIENTSOURCES += ../display/compositor/protocols/plasma-window-management.xml
 
 
 CONFIG += c++11

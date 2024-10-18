@@ -16,7 +16,7 @@ versionAtLeast(QT_VERSION, 6.0.0) {
     LIBS += -L../output -lcommdlg5-$${HOLLYWOOD_APIVERSION}
 }
 
-WAYLANDCLIENTSOURCES += ../compositor/protocols/appmenu.xml
+WAYLANDCLIENTSOURCES += ../display/compositor/protocols/appmenu.xml
 
 SOURCES += \
     src/dialoghelpers.cc \

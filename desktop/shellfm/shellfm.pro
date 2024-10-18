@@ -17,7 +17,7 @@ LIBS += -L../output \
         -L/usr/lib/qt6/plugins/wayland-shell-integration \
         -lhw-layer-shell
 
-WAYLANDCLIENTSOURCES += ../compositor/protocols/originull-privateapi.xml
+WAYLANDCLIENTSOURCES += ../display/compositor/protocols/originull-privateapi.xml
 # PKGCONFIG += hwcompositor
 SOURCES += \
     clipboardwindow.cc \

@@ -34,6 +34,7 @@ SUBDIRS = \
 
     libshell.depends = libcommdlg
     shellfm.depends = libshell libcommdlg
+    display.depends = libshell
     editor.depends = libcommdlg
     calculator.depends = libcommdlg
     platformtheme.depends = libcommdlg libshell
