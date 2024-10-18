@@ -1,16 +1,16 @@
-include(../../include/global.pri)
-DESTDIR=$${OBJECTS_DIR}../../output/
-
-CONFIG += wayland-scanner
 QT += waylandcompositor waylandcompositor-private gui-private
+CONFIG += wayland-scanner
 CONFIG -= wayland_compositor_quick
 
-TARGET = compositor
+# This line is only relevant for Holywood distribution build
+# It is otherwise harmless for an out-of-tree build
+include(../../include/global.pri)
+
+TARGET = hwcomp
 INCLUDEPATH +=  include/core/ \
                 include/protocol \
-                ../libshell/include/
+                $$PWD/../driver/platformheaders
 
-INCLUDEPATH += $$PWD/../eglfs/platformheaders/
 WAYLANDSERVERSOURCES += protocols/originull-privateapi.xml
 WAYLANDSERVERSOURCES += protocols/appmenu.xml
 WAYLANDSERVERSOURCES += protocols/plasma-window-management.xml
@@ -24,6 +24,14 @@ WAYLANDSERVERSOURCES += protocols/xdg-activation-v1.xml
 WAYLANDSERVERSOURCES += protocols/pointer-constraints-unstable-v1.xml
 WAYLANDSERVERSOURCES += protocols/relative-pointer-unstable-v1.xml
 
+LIBS += -L../../output -lhweglfsplatformsupport
+
+contains(QT_CONFIG, no-pkg-config) {
+    LIBS += -lwayland-server
+} else {
+    CONFIG += link_pkgconfig
+    PKGCONFIG += wayland-server
+}
 
 HEADERS += \
     include/core/blitter.h \
@@ -75,7 +83,17 @@ SOURCES += \
 #QMAKE_SUBSTITUTES += org.originull.compositor.desktop.in
 #desktop.path = $$PREFIX/share/applications
 #desktop.files = org.originull.compositor.desktop
-target.path = $$PREFIX/libexec/hollywood/
+target.path = $$PREFIX/bin
+
+
+contains( DEFINES, BUILD_HOLLYWOOD )
+{
+    TARGET = compositor
+    DESTDIR=$${OBJECTS_DIR}../../output/
+    INCLUDEPATH+=../libshell/include/
+    LIBS+=-lshell-$${HOLLYWOOD_APIVERSION}
+    target.path = $$PREFIX/libexec/hollywood/
+}
 
 INSTALLS += target
 # desktop
@@ -98,15 +116,7 @@ DISTFILES += \
     transition.fsh \
     transition.vsh
 
-LIBS += -L../../output -lhweglfsplatformsupport \
-     -lshell-$${HOLLYWOOD_APIVERSION}
-
-contains(QT_CONFIG, no-pkg-config) {
-    LIBS += -lwayland-server
-} else {
-    CONFIG += link_pkgconfig
-    PKGCONFIG += wayland-server
-}
 
 RESOURCES += \
     resources.qrc
+

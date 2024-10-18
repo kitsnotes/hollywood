@@ -1,5 +1,4 @@
 TEMPLATE = subdirs
-DEFINES += BUILD_HOLLYWOOD
 
 include(include/global.pri)
 

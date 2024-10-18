@@ -9,5 +9,3 @@ SUBDIRS += libhwlogind \
            platformsupport/kmsconvenience \
            plugins/platforms/eglfs
 
-libinput.depends = libhwudev
-eglfs.depends = libhwudev libhwlogind libinput

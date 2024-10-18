@@ -27,7 +27,7 @@ HEADERS += \
     hollywood/libinputpointer.h \
     hollywood/libinputtouch.h \
     hollywood/private/libinputlogging_p.h \
-    hollywood/eglfsxkb.h \
+    ../eglfsxkb/hollywood/eglfsxkb.h \
     hollywood/private/outputmapping_p.h
 
 SOURCES += \
