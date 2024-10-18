@@ -48,16 +48,18 @@ Compositor::Compositor(bool sddm)
     , m_qt(new QtShell(this))
     , m_fs(new FullscreenShell(this))
     , m_activation(new XdgActivation(this))
-    , m_outputmgr(new QWaylandXdgOutputManagerV1(this))
     , m_screencopy(new WlrScreencopyManagerV1(this))
     , m_viewporter(new QWaylandViewporter(this))
     , m_relative_pointer(new RelativePointerManagerV1(this))
     , m_pointer_constraints(new PointerConstraintsV1(this))
+    , m_outputmgr(new QWaylandXdgOutputManagerV1(this))
     , m_sddm(sddm)
     , m_shortcuts(new ShortcutManager(this))
     , m_timeout(new QTimer(this))
 {
-    qCInfo(hwCompositor, "Starting Compositor");
+    qCInfo(hwCompositor, "Supporting wp_viewporter (protocol version 1)");
+    qCInfo(hwCompositor, "Supporting xdg_decoration_manager_v1 (protocol version 1)");
+
     auto envvar = qgetenv("HOLLYWOOD_RECOVERY_ENV");
     if(!envvar.isEmpty())
     {
@@ -90,8 +92,6 @@ void Compositor::create()
     //connect(defaultSeat(), &QWaylandSeat::cursorSurfaceRequest, this, &Compositor::adjustCursorSurface);
     connect(defaultSeat()->drag(), &QWaylandDrag::dragStarted, this, &Compositor::startDrag);
 
-    m_hwPrivate->setExtensionContainer(this);
-    m_hwPrivate->initialize();
     m_appMenu->initialize();
     m_wndmgr->setExtensionContainer(this);
     m_wndmgr->initialize();
@@ -321,6 +321,10 @@ ShortcutManager *Compositor::shortcuts()
 {
     return m_shortcuts;
 }
+
+QWaylandXdgOutputManagerV1 *Compositor::xdgOutputManager() { if(m_outputmgr) return m_outputmgr;  return nullptr;}
+
+RelativePointerManagerV1 *Compositor::relativePointerManager() { if(m_relative_pointer) return m_relative_pointer; return nullptr; }
 
 QList<SurfaceView*> Compositor::views() const
 {

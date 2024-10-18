@@ -1,5 +1,5 @@
 // Hollywood Wayland Compositor
-// (C) 2021, 2022 Cat Stevenson <cat@originull.org>
+// (C) 2021-2024 Originull Software
 // SPDX-License-Identifier: GPL-3.0-only
 
 #ifndef OUTPUTWND_H

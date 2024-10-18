@@ -37,6 +37,7 @@
 #include "output.h"
 #include "surfaceobject.h"
 #include "shortcuts.h"
+#include "relativepointer.h"
 
 Q_LOGGING_CATEGORY(hwRender, "compositor.render")
 
@@ -766,9 +767,24 @@ void OutputWindow::mouseReleaseEvent(QMouseEvent *e)
 
 void OutputWindow::mouseMoveEvent(QMouseEvent *e)
 {
-    QPoint adjustedPoint(m_output->wlOutput()->position().x()+e->position().x(),
-                 m_output->wlOutput()->position().y()+e->position().y());
+    QPointF adjustedPoint(m_output->wlOutput()->position().x()+e->position().x(),
+                          m_output->wlOutput()->position().y()+e->position().y());
 
+    // handle relative pointers (if bound)
+    auto rp = hwComp->relativePointerManager()->relativePointerForWaylandPointer(hwComp->defaultSeat()->pointer());
+    if(rp.count() > 1)
+    {
+        auto ts = e->timestamp();
+        auto oldpoint = hwComp->globalCursorPosition();
+        auto relx = adjustedPoint.x() - oldpoint.x();
+        auto rely = adjustedPoint.y() - oldpoint.y();
+        for(auto p : rp)
+        {
+            p->sendRelativeMotion(relx, rely, relx, rely, ts);
+        }
+    }
+
+    // handle the actual default seat pointer
     QMouseEvent e2(e->type(), adjustedPoint, e->button(), e->buttons(), e->modifiers(), e->pointingDevice());
     hwComp->m_globalCursorPos = adjustedPoint;
     switch (m_grabState) {

@@ -114,8 +114,10 @@ public:
     bool processHasTwilightMode(quint64 pid) const;
     bool isRunningLoginManager() const { return m_sddm; }
     QPointF correctedPosition(const QPointF &point);
+    QPointF globalCursorPosition() { return m_globalCursorPos; }
     ShortcutManager* shortcuts();
-    QWaylandXdgOutputManagerV1 *xdgOutputManager() { return m_outputmgr; }
+    QWaylandXdgOutputManagerV1 *xdgOutputManager();
+    RelativePointerManagerV1 *relativePointerManager();
     bool miniMode() { return m_mini; }
 protected:
     void adjustCursorSurface(QWaylandSurface *surface, int hotspotX, int hotspotY);
@@ -214,8 +216,6 @@ private:
     FullscreenShell *m_fs = nullptr;
     // XDG Activation Manager
     XdgActivation *m_activation = nullptr;
-    // XDG output manager
-    QWaylandXdgOutputManagerV1 *m_outputmgr = nullptr;
     // wlroots screencopy protocol
     WlrScreencopyManagerV1 *m_screencopy = nullptr;
     // wp-viewporter protocol
@@ -224,6 +224,9 @@ private:
     RelativePointerManagerV1 *m_relative_pointer = nullptr;
     // wp-pointer-constraints protocol
     PointerConstraintsV1 *m_pointer_constraints = nullptr;
+
+    // XDG output manager
+    QWaylandXdgOutputManagerV1 *m_outputmgr = nullptr;
     // running under user 'sddm'
     bool m_sddm = false;
 
