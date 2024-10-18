@@ -29,7 +29,6 @@ HEADERS += \
     include/blitter.h \
     include/fullscreen.h \
     include/gtkshell.h \
-    include/hwc.h \
     include/layershell.h \
     include/originull.h \
     include/output.h \
