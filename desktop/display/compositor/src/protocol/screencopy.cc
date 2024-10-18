@@ -11,7 +11,7 @@
 
 Q_LOGGING_CATEGORY(hwScreenCopy, "compositor.screencopy")
 
-static inline QImage::Format fromWaylandShmFormat(wl_shm_format format)
+/*static inline QImage::Format fromWaylandShmFormat(wl_shm_format format)
 {
     switch (format) {
     case WL_SHM_FORMAT_XRGB8888: return QImage::Format_RGB32;
@@ -30,7 +30,7 @@ static inline QImage::Format fromWaylandShmFormat(wl_shm_format format)
     case WL_SHM_FORMAT_C8: return QImage::Format_Alpha8;
     default: return QImage::Format_Invalid;
     }
-}
+}*/
 
 WlrScreencopyManagerV1::WlrScreencopyManagerV1(QWaylandCompositor *compositor)
     : QWaylandCompositorExtensionTemplate<WlrScreencopyManagerV1>(compositor)
@@ -134,6 +134,7 @@ void WlrScreencopyFrameV1::zwlr_screencopy_frame_v1_copy_with_damage(Resource *r
 
 void WlrScreencopyFrameV1::initCopy(Resource *resource, wl_resource *buffer, bool handleDamage)
 {
+    Q_UNUSED(handleDamage)
     auto *shm = wl_shm_buffer_get(buffer);
     if(!shm)
     {
@@ -147,7 +148,7 @@ void WlrScreencopyFrameV1::initCopy(Resource *resource, wl_resource *buffer, boo
     int32_t stride = wl_shm_buffer_get_stride(shm);
 
     if (format != m_requestedBufferFormat || width != m_region.width() ||
-        height != m_region.height() || stride != stride) {
+        height != m_region.height() || stride != m_stride) {
         qWarning("WlrScreencopyFrameV1: Invalid buffer attributes");
         wl_resource_post_error(resource->handle, error_invalid_buffer,
                                "invalid buffer attributes");

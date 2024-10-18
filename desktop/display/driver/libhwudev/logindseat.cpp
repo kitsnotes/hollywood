@@ -119,7 +119,7 @@ bool LogindSeat::findActiveSession(DBusUserSession &userSession) const
         // Graphical login managers usually don't spawn a second session, but activate an already
         // existing session for the user.
         DBusUserSessionVector sessions = qdbus_cast<DBusUserSessionVector>(reply.value().value<QDBusArgument>());
-        for (const auto &curSession : qAsConst(sessions)) {
+        for (const auto &curSession : std::as_const(sessions)) {
             const QString type = getSessionType(curSession.id, curSession.objectPath.path());
             const QString state = getSessionState(curSession.id, curSession.objectPath.path());
 

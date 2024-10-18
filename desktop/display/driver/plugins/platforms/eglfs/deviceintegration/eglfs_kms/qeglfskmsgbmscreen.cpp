@@ -459,7 +459,7 @@ void HWEglFSKmsGbmScreen::updateFlipStatus()
     if (m_flipPending)
         return;
 
-    for (const CloneDestination &d : qAsConst(m_cloneDests)) {
+    for (const CloneDestination &d : std::as_const(m_cloneDests)) {
         if (d.cloneFlipPending)
             return;
     }

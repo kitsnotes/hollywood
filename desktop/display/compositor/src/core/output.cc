@@ -43,7 +43,7 @@ Output::Output(QScreen *s, bool defaultScreen)
         wcApp->compositor()->triggerRender();
     });
     connect(s, &QScreen::refreshRateChanged, this, [this]() {
-        qCDebug(hwOutput, "refresh rate changed %i", m_screen->refreshRate());
+        qCDebug(hwOutput, "refresh rate changed %f", m_screen->refreshRate());
     });
     m_wlOutput->setManufacturer(s->manufacturer());
     m_wlOutput->setModel(s->model());
@@ -198,7 +198,7 @@ void Output::modesetFromConfig()
 
 uint Output::defaultScaleFactor()
 {
-    qCDebug(hwOutput, "default scale factor: %i", m_screen->physicalDotsPerInch());
+    qCDebug(hwOutput, "default scale factor: %f", m_screen->physicalDotsPerInch());
     if(m_screen->physicalDotsPerInch() > 190)
         return 1;
 

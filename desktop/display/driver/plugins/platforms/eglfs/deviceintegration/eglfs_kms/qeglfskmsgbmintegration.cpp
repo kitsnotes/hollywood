@@ -162,7 +162,7 @@ HWKmsDevice *HWEglFSKmsGbmIntegration::createDevice()
         QtUdev::UdevEnumerate enumerate(QtUdev::UdevDevice::PrimaryVideoDevice | QtUdev::UdevDevice::GenericVideoDevice, m_udev);
         QList<QtUdev::UdevDevice *> devices = enumerate.scan();
         qCDebug(qLcEglfsKmsDebug) << "Found the following video devices:";
-        for (auto device : qAsConst(devices))
+        for (auto device : std::as_const(devices))
             qCDebug(qLcEglfsKmsDebug) << '\t' << device->deviceNode().toLocal8Bit().constData();
 
         if (Q_UNLIKELY(devices.isEmpty()))
@@ -182,7 +182,7 @@ HWEglFSWindow *HWEglFSKmsGbmIntegration::createWindow(QWindow *window) const
 
 bool HWEglFSKmsGbmIntegration::applyScreenChangesStatic(const QVector<Originull::Platform::ScreenChange> &changes)
 {
-    for (auto &change : qAsConst(changes)) {
+    for (auto &change : std::as_const(changes)) {
         if (!change.screen || !change.enabled)
             continue;
 
