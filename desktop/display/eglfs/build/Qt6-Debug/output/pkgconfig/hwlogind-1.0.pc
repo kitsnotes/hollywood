@@ -1,0 +1,12 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include/hollywood
+
+
+Name: hwlogind-1.0
+Description: Hollywood elogind interface library
+Version: 1.0.0
+Libs: -lhwlogind-1.0 
+Cflags: -I${includedir}
+

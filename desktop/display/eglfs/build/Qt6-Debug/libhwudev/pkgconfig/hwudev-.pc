@@ -1,0 +1,12 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=/lib
+includedir=/include/hollywood
+
+
+Name: hwudev-
+Description: Hollywood eudev interface library
+Version: ..
+Libs: -lhwudev- 
+Cflags: -I${includedir}
+

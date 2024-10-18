@@ -1,0 +1,5 @@
+QMAKE_PRL_BUILD_DIR = /nethome/cat/hollywood/desktop/eglfs/build/Qt6-Debug/libhwudev
+QMAKE_PRO_INPUT = libhwudev.pro
+QMAKE_PRL_TARGET = libhwudev-.so.1.0.0
+QMAKE_PRL_CONFIG = lex yacc debug exceptions depend_includepath testcase_targets import_plugins import_qpa_plugin file_copies qmake_use qt warn_on link_prl incremental clang_pch_style shared plugin_manifest glibc_fortify_source trivial_auto_var_init_pattern stack_protector libcpp_hardening relro_now_linker linux unix posix gcc clang llvm debug qml_debug link_pkgconfig compile_libtool create_libtool create_pc create_prl no_install_prl have_target dll debug_info thread dbusadaptors dbusinterfaces moc resources
+QMAKE_PRL_VERSION = 1.0.0

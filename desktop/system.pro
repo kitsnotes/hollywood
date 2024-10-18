@@ -12,13 +12,12 @@ SUBDIRS = \
     libpavu \
     platformtheme \
     editor \
-    eglfs \
+    display \
     elevator \
     help \
     style \
     session \
     shellfm \
-    compositor \
     libshell \
     settings \
     shellintegration \
@@ -34,7 +33,6 @@ SUBDIRS = \
     quickweb
 
     libshell.depends = libcommdlg
-    compositor.depends = libshell eglfs
     shellfm.depends = libshell libcommdlg
     editor.depends = libcommdlg
     calculator.depends = libcommdlg
