@@ -36,6 +36,7 @@ SUBDIRS = \
     display.depends = libshell
     editor.depends = libcommdlg
     calculator.depends = libcommdlg
+    help.depends = libcommdlg
     platformtheme.depends = libcommdlg libshell
     settings.depends = libshell libcommdlg libpavu
     menuserver.depends = libshell

@@ -1,6 +1,6 @@
 INCLUDEPATH += $$PWD/../../../../platformheaders/
 INCLUDEPATH += $$PWD/../../../../libinput/
-INCLUDEPATH += $$PWD/../../../../../libhwlogind/
+INCLUDEPATH += $$PWD/../../../../libhwlogind/
 INCLUDEPATH += $$PWD/hollywood/ $$PWD/hollywood/private/
 
 SOURCES +=  $$PWD/qeglfswindow.cpp \

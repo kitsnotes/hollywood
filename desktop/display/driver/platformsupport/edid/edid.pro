@@ -1,4 +1,3 @@
-include(../../include/global.pri)
 TARGET = HWEdidSupport
 TEMPLATE = lib
 QT = core-private

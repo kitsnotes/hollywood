@@ -622,7 +622,7 @@ void OutputWindow::mousePressEvent(QMouseEvent *e)
     QPoint adjustedPoint(m_output->wlOutput()->position().x()+e->position().x(),
                  m_output->wlOutput()->position().y()+e->position().y());
 
-    QMouseEvent e2(e->type(), adjustedPoint, e->button(), e->buttons(),
+    QMouseEvent e2(e->type(), adjustedPoint, adjustedPoint, e->button(), e->buttons(),
                    e->modifiers(), e->pointingDevice());
 
     if (m_mouseSelectedSurfaceObject.isNull())
@@ -740,7 +740,7 @@ void OutputWindow::mouseReleaseEvent(QMouseEvent *e)
     QPoint adjustedPoint(m_output->wlOutput()->position().x()+e->position().x(),
                  m_output->wlOutput()->position().y()+e->position().y());
 
-    QMouseEvent *e2 = new QMouseEvent(e->type(), adjustedPoint, e->button(), e->buttons(), e->modifiers(), e->pointingDevice());
+    QMouseEvent *e2 = new QMouseEvent(e->type(), adjustedPoint, adjustedPoint, e->button(), e->buttons(), e->modifiers(), e->pointingDevice());
     if (!mouseGrab())
     {
         if(m_mouseSelectedSurfaceObject)
@@ -785,7 +785,7 @@ void OutputWindow::mouseMoveEvent(QMouseEvent *e)
     }
 
     // handle the actual default seat pointer
-    QMouseEvent e2(e->type(), adjustedPoint, e->button(), e->buttons(), e->modifiers(), e->pointingDevice());
+    QMouseEvent e2(e->type(), adjustedPoint, adjustedPoint, e->button(), e->buttons(), e->modifiers(), e->pointingDevice());
     hwComp->m_globalCursorPos = adjustedPoint;
     switch (m_grabState) {
     case NoGrab: {
