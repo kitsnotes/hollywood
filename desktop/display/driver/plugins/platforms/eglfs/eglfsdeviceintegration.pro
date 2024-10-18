@@ -35,7 +35,7 @@ HEADERS += $$PWD/../../../platformheaders/hollywood/eglfsfunctions.h
 SOURCES += $$PWD/../../../platformheaders/eglfsfunctions.cpp
 
 LIBS += -L$$OUT_PWD \
-     -L$${OBJECTS_DIR}../../../../output/ \
+     -L$${OBJECTS_DIR}../../../../../output/ \
      -lhwudev -lhwlogind \
      -lHWKmsSupport -lHWInputSupport -lHWEdidSupport
 target.path = /usr/lib

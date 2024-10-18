@@ -26,4 +26,4 @@ DISTFILES += hollywood-eglfs.json
 target.path = $$[QT_INSTALL_PLUGINS]/platforms
 INSTALLS += target
 
-LIBS += -L../../../../output/ -lhwudev -lhwlogind -lHWEglFSDeviceIntegration -lHWInputSupport -L$$OUT_PWD
+LIBS += -L../../../../../output/ -lhwudev -lhwlogind -lHWEglFSDeviceIntegration -lHWInputSupport -L$$OUT_PWD
