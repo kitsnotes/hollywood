@@ -1,5 +1,0 @@
-QMAKE_PRL_BUILD_DIR = /nethome/cat/hollywood/desktop/eglfs/build/Qt6-Debug/libhwlogind
-QMAKE_PRO_INPUT = libhwlogind.pro
-QMAKE_PRL_TARGET = libhwlogind-1.0.so.1.0.0
-QMAKE_PRL_CONFIG = lex yacc debug exceptions depend_includepath testcase_targets import_plugins import_qpa_plugin file_copies qmake_use qt warn_on link_prl incremental clang_pch_style shared plugin_manifest glibc_fortify_source trivial_auto_var_init_pattern stack_protector libcpp_hardening relro_now_linker linux unix posix gcc clang llvm debug qml_debug c++11 pkg_config link_pkgconfig compile_libtool create_libtool create_pc create_prl no_install_prl have_target dll debug_info thread uic opengl dbusadaptors dbusinterfaces moc resources
-QMAKE_PRL_VERSION = 1.0
