@@ -255,7 +255,7 @@ void ManagedProcess::setEnvironmentForProcess()
         // special eglfs handling for the compositor
         if(!env.contains("DISPLAY"))
         {
-            env.insert("QT_WAYLAND_CLIENT_BUFFER_INTEGRATION", "linux-dmabuf-unstable-v1");
+            //env.insert("QT_WAYLAND_CLIENT_BUFFER_INTEGRATION", "linux-dmabuf-unstable-v1");
             env.remove("QT_QPA_PLATFORM");
             if(smApp->useQtBuiltinEglfs())
                 env.insert("QT_QPA_PLATFORM", "eglfs");
