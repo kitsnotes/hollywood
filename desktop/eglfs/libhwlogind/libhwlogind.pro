@@ -1,4 +1,4 @@
-include(../include/global.pri)
+include(../../include/global.pri)
 
 QT += core dbus
 QT -= gui
@@ -8,7 +8,7 @@ TARGET = hwlogind-$${HOLLYWOOD_APIVERSION}
 CONFIG += link_pkgconfig compile_libtool create_libtool create_pc create_prl no_install_prl
 
 PKGCONFIG += libsystemd
-INCLUDEPATH += hollywood/
+INCLUDEPATH += $$PWD/hollywood
 
 SOURCES += \
     logind.cpp \
@@ -43,4 +43,4 @@ QMAKE_PKGCONFIG_DESTDIR = pkgconfig
 QMAKE_PKGCONFIG_PREFIX = $${PREFIX}
 QMAKE_PKGCONFIG_VERSION = $${SEMVER_VERSION}
 
-INSTALLS += target headers pheaders
+INSTALLS += target

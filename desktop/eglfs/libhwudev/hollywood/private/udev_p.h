@@ -20,7 +20,7 @@
 
 #include <QLoggingCategory>
 
-#include <hollywood/qtudevglobal.h>
+#include "qtudevglobal.h"
 
 extern "C" {
 #include <libudev.h>

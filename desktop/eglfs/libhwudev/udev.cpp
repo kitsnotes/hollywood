@@ -27,7 +27,7 @@
 #include "private/udev_p.h"
 #include "udevdevice.h"
 
-Q_LOGGING_CATEGORY(lcUdev, "qtudev")
+Q_LOGGING_CATEGORY(lcUdev, "compositor.udev")
 
 namespace QtUdev {
 

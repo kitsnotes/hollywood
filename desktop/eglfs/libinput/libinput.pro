@@ -11,8 +11,8 @@ LIBS += -L../../output -lhwudev-$${HOLLYWOOD_APIVERSION} -linput
 DEFINES += QT_NO_CAST_FROM_ASCII
 
 INCLUDEPATH += hollywood/
-INCLUDEPATH += ../../libhwlogind
-INCLUDEPATH += ../../libhwudev
+INCLUDEPATH += ../libhwlogind
+INCLUDEPATH += ../libhwudev ../libhwudev/hollywood
 
 INCLUDEPATH += ../eglfsxkb
 INCLUDEPATH += ../eglfsxkb/hollywood

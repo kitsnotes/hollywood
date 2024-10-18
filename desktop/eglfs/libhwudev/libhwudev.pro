@@ -1,4 +1,4 @@
-include(../include/global.pri)
+include(../../include/global.pri)
 TEMPLATE=lib
 QT -= gui widgets
 QT += dbus
@@ -48,4 +48,4 @@ QMAKE_PKGCONFIG_DESTDIR = pkgconfig
 QMAKE_PKGCONFIG_PREFIX = $${PREFIX}
 QMAKE_PKGCONFIG_VERSION = $${SEMVER_VERSION}
 
-INSTALLS += target headers pheaders
+INSTALLS += target

@@ -1,6 +1,8 @@
 TEMPLATE = subdirs
 
-SUBDIRS += eglfsxkb \
+SUBDIRS += libhwlogind \
+           libhwudev \
+           eglfsxkb \
            libinput \
            platformheaders \
            platformsupport/edid \

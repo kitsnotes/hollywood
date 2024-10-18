@@ -9,8 +9,6 @@ SUBDIRS = \
     apkd \
     libcmctl \
     libcommdlg \
-    libhwlogind \
-    libhwudev \
     libpavu \
     platformtheme \
     editor \
@@ -36,7 +34,6 @@ SUBDIRS = \
     quickweb
 
     libshell.depends = libcommdlg
-    eglfs.depends = libhwudev libhwlogind
     compositor.depends = libshell eglfs
     shellfm.depends = libshell libcommdlg
     editor.depends = libcommdlg

@@ -15,8 +15,8 @@ INCLUDEPATH += $$PWD/../../api/hollywood
 INCLUDEPATH += $$PWD/../../../../../platformsupport/edid
 INCLUDEPATH += $$PWD/../../../../../platformheaders/
 INCLUDEPATH += $$PWD/../../../../../platformsupport/kmsconvenience
-INCLUDEPATH += $$PWD/../../../../../../libhwlogind
-INCLUDEPATH += $$PWD/../../../../../../libhwudev
+INCLUDEPATH += $$PWD/../../../../../libhwlogind
+INCLUDEPATH += $$PWD/../../../../../libhwudev
 INCLUDEPATH += /usr/include/libdrm
 # Avoid X11 header collision, use generic EGL native types
 DEFINES += QT_EGL_NO_X11
