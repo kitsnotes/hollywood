@@ -15,6 +15,7 @@
 #include <QtWaylandCompositor/qwaylanddrag.h>
 #include <QWaylandXdgOutputManagerV1>
 #include <QWaylandViewporter>
+#include <QWaylandIdleInhibitManagerV1>
 #include <QOpenGLTextureBlitter>
 #include <QTimer>
 #include <QMouseEvent>
@@ -234,7 +235,8 @@ private:
     RelativePointerManagerV1 *m_relative_pointer = nullptr;
     // wp-pointer-constraints protocol
     PointerConstraintsV1 *m_pointer_constraints = nullptr;
-
+    // wp_idle_inhibit_v1 protocol
+    QWaylandIdleInhibitManagerV1 *m_idle_inhibit_protocol = nullptr;
     // XDG output manager
     QWaylandXdgOutputManagerV1 *m_outputmgr = nullptr;
     // running under user 'sddm'
