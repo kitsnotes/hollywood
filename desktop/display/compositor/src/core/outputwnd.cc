@@ -629,7 +629,7 @@ void OutputWindow::mousePressEvent(QMouseEvent *e)
     {
         m_mouseSelectedSurfaceObject = surfaceAt(e->position());
         if (!m_mouseSelectedSurfaceObject) {
-            hwComp->m_wlShell->closeAllPopups();
+            // TODO: close xdg_popups
             return;
         }
 

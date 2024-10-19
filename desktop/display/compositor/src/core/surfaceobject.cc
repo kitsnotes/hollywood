@@ -1135,19 +1135,6 @@ void Surface::setAnimatedSurfaceSize(QSize size)
     m_resize_animation_size = size;
 }
 
-void Surface::createWlShellSurface(QWaylandWlShellSurface *surface)
-{
-    m_wlShellSurface = surface;
-    m_surfaceType = TopLevel;
-    // TODO: fix this?
-    //m_wndctl = m_compositor->m_wndmgr->createWindowControl(this);
-    connect(surface, &QWaylandWlShellSurface::startMove, hwComp, &Compositor::onStartMove);
-    connect(surface, &QWaylandWlShellSurface::startResize, hwComp, &Compositor::onWlStartResize);
-    connect(surface, &QWaylandWlShellSurface::setTransient, hwComp, &Compositor::onSetTransient);
-    connect(surface, &QWaylandWlShellSurface::setPopup, hwComp, &Compositor::onSetPopup);
-    hwComp->triggerRender();
-}
-
 void Surface::createXdgShellSurface(HWWaylandXdgSurface *surface)
 {
     m_xdgSurface = surface;

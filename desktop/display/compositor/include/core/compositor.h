@@ -146,13 +146,11 @@ public slots:
 protected slots:
     void surfaceHasContentChanged();
     void onStartMove(QWaylandSeat *seat);
-    void onWlStartResize(QWaylandSeat *seat, QWaylandWlShellSurface::ResizeEdge edges);
     void onXdgStartResize(QWaylandSeat *seat, Qt::Edges edges);
     void startDrag();
 
     void onSurfaceCreated(QWaylandSurface *surface);
     void onMenuServerRequest(OriginullMenuServer *menu);
-    void onWlShellSurfaceCreated(QWaylandWlShellSurface *wlShellSurface);
     void onXdgSurfaceCreated(HWWaylandXdgSurface *xdgSurface);
     void onXdgTopLevelCreated(HWWaylandXdgToplevel *toplevel, HWWaylandXdgSurface *surface);
     void onXdgPopupCreated(HWWaylandXdgPopup *popup, HWWaylandXdgSurface *surface);
@@ -205,8 +203,6 @@ private:
     // Top level surfaces to worry about z-order
     QList<Surface*> m_zorder;
 
-    // Our wl_shell protocol support
-    QWaylandWlShell *m_wlShell = nullptr;
     // Our xdg_shell protocol support
     HWWaylandXdgShell *m_xdgShell = nullptr;
     // Our decoration protocol support

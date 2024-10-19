@@ -43,7 +43,6 @@ Q_LOGGING_CATEGORY(hwCompositor, "compositor.core")
 
 Compositor::Compositor(bool sddm)
     : m_desktop_bg(QColor(HOLLYWOOD_DEF_DESKTOP_BG))
-    , m_wlShell(new QWaylandWlShell(this))
     , m_xdgShell(new HWWaylandXdgShell(this))
     , m_xdgDecoration(new QWaylandXdgDecorationManagerV1())
     , m_hwPrivate(new OriginullProtocol(this))
@@ -115,7 +114,6 @@ void Compositor::create()
     connect(m_appMenu, &AppMenuManager::appMenuCreated, this, &Compositor::appMenuCreated);
     connect(m_hwPrivate, &OriginullProtocol::menuServerSet, this, &Compositor::onMenuServerRequest);
     connect(m_hwPrivate, &OriginullProtocol::wallpaperRotationRequested, this, &Compositor::onRotateWallpaper);
-    connect(m_wlShell, &QWaylandWlShell::wlShellSurfaceCreated, this, &Compositor::onWlShellSurfaceCreated);
     connect(m_xdgShell, &HWWaylandXdgShell::xdgSurfaceCreated, this, &Compositor::onXdgSurfaceCreated);
     connect(m_xdgShell, &HWWaylandXdgShell::toplevelCreated, this, &Compositor::onXdgTopLevelCreated);
     connect(m_xdgShell, &HWWaylandXdgShell::popupCreated, this, &Compositor::onXdgPopupCreated);
@@ -601,13 +599,6 @@ void Compositor::raiseNextInLine()
         activate(m_layer_bg.last());
 }
 
-void Compositor::onWlShellSurfaceCreated(QWaylandWlShellSurface *wlShellSurface)
-{
-    auto *surface = findSurfaceObject(wlShellSurface->surface());
-    Q_ASSERT(surface);
-    surface->createWlShellSurface(wlShellSurface);
-}
-
 void Compositor::onXdgSurfaceCreated(HWWaylandXdgSurface *xdgSurface)
 {
     auto *surface = findSurfaceObject(xdgSurface->surface());
@@ -682,14 +673,8 @@ void Compositor::onXdgTopLevelCreated(HWWaylandXdgToplevel *topLevel, HWWaylandX
 void Compositor::onStartMove(QWaylandSeat *seat)
 {
     Q_UNUSED(seat);
-    m_wlShell->closeAllPopups();
+    // TODO: close xdg_popups
     emit startMove();
-}
-
-void Compositor::onWlStartResize(QWaylandSeat *, QWaylandWlShellSurface::ResizeEdge edges)
-{
-    m_wlShell->closeAllPopups();
-    emit startResize(int(edges), false);
 }
 
 void Compositor::onXdgStartResize(QWaylandSeat *seat,
@@ -903,7 +888,7 @@ void Compositor::handleMouseEvent(QWaylandView *target, QMouseEvent *me)
     auto popClient = popupClient();
     if (target && me->type() == QEvent::MouseButtonPress
             && popClient && popClient != target->surface()->client()) {
-        m_wlShell->closeAllPopups();
+        // TODO: close xdg_popups
     }
 
     QWaylandSeat *seat = defaultSeat();
@@ -1023,8 +1008,7 @@ void Compositor::handleDrag(SurfaceView *target, QMouseEvent *me)
 
 QWaylandClient *Compositor::popupClient() const
 {
-    auto client = m_wlShell->popupClient();
-    return client ;//? client : m_xdgShell->popupClient();
+    return nullptr;
 }
 
 void Compositor::raise(Surface *obj)

@@ -159,7 +159,6 @@ protected:
     // only callable by Compostior
     void setAnimatedSurfaceSize(QSize size);
     void setParentSurfaceObject(Surface *parent);
-    void createWlShellSurface(QWaylandWlShellSurface *surface);
     void createXdgShellSurface(HWWaylandXdgSurface *surface);
     void createXdgTopLevelSurface(HWWaylandXdgToplevel *topLevel);
     void createXdgPopupSurface(HWWaylandXdgPopup *popup);
