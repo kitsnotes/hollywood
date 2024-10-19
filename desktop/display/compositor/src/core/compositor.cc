@@ -98,19 +98,12 @@ void Compositor::create()
     //connect(defaultSeat(), &QWaylandSeat::cursorSurfaceRequest, this, &Compositor::adjustCursorSurface);
     connect(defaultSeat()->drag(), &QWaylandDrag::dragStarted, this, &Compositor::startDrag);
 
-    m_appMenu->initialize();
-    m_wndmgr->setExtensionContainer(this);
-    m_wndmgr->initialize();
     m_xdgDecoration->setExtensionContainer(this);
     m_xdgDecoration->initialize();
     m_xdgDecoration->setPreferredMode(QWaylandXdgToplevel::ServerSideDecoration);
     m_outputmgr->setExtensionContainer(this);
     m_outputmgr->initialize();
-    m_screencopy->setExtensionContainer(this);
-    m_screencopy->initialize();
     m_viewporter->initialize();
-    m_pointer_constraints->initialize();
-    m_relative_pointer->initialize();
     connect(m_appMenu, &AppMenuManager::appMenuCreated, this, &Compositor::appMenuCreated);
     connect(m_hwPrivate, &OriginullProtocol::menuServerSet, this, &Compositor::onMenuServerRequest);
     connect(m_hwPrivate, &OriginullProtocol::wallpaperRotationRequested, this, &Compositor::onRotateWallpaper);

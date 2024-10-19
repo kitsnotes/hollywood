@@ -5,9 +5,12 @@
 #include "shortcuts.h"
 #include <QSettings>
 
+Q_LOGGING_CATEGORY(hwShortcut, "compositor.globalkey")
+
 ShortcutManager::ShortcutManager(QObject *parent)
     : QObject(parent)
 {
+    // create keys for media keyboards
     m_mon_brightness_up_media.combo = QKeyCombination(Qt::Key_MonBrightnessUp);
     m_mon_brightness_up_media.signal = [this] { emit monitorBrightnessUp(); };
 
@@ -44,6 +47,8 @@ bool ShortcutManager::checkAndHandleCombo(const QKeyCombination &combo)
         return false;
 
     auto val = m_tracked.value(combo);
+    qCDebug(hwShortcut, "global hotkey shortcut triggered: %i", combo.toCombined());
+
     val.signal();
     return true;
 }

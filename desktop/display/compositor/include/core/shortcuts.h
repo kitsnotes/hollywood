@@ -2,14 +2,18 @@
 // (C) 2023 Cat Stevenson <cat@originull.org>
 // SPDX-License-Identifier: GPL-3.0-only
 
-#ifndef SHORTCUTMANAGER_H
-#define SHORTCUTMANAGER_H
+#pragma once
 
 #include <QObject>
 #include <QShortcut>
 #include <QKeySequence>
 #include <QHash>
+#include <QLoggingCategory>
 #include <utility>
+
+#include "compositor.h"
+
+Q_DECLARE_LOGGING_CATEGORY(hwShortcut)
 
 class KeyCombination {
 public:
@@ -67,5 +71,3 @@ private:
     // master list of global tracked combos
     QHash<QKeyCombination, KeyCombination> m_tracked;
 };
-
-#endif // SHORTCUTMANAGER_H
