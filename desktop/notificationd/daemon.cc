@@ -233,7 +233,7 @@ void NotificationDaemon::animateCloseNotification(Notification *n)
 
 int main(int argc, char *argv[])
 {
-    qputenv("QT_WAYLAND_SHELL_INTEGRATION", "qt-shell");
+    qputenv("QT_WAYLAND_SHELL_INTEGRATION", "hw-layer-shell");
     NotificationDaemon a(argc, argv);
     return a.exec();
 }

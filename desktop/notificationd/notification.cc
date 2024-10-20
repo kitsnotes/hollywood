@@ -12,6 +12,7 @@
 #include <QPropertyAnimation>
 #include <QParallelAnimationGroup>
 #include <hollywood/hollywood.h>
+#include "hollywood/layershellwindow.h"
 
 Notification::Notification(const uint id, const QString &app_name, const QString &app_icon, const QString &summary, const QString &body, const QStringList &actions, const QVariantMap &hints, int expire_timeout, bool noSave, QObject *parent)
     : QObject(parent)
@@ -70,8 +71,17 @@ void Notification::show()
     auto screen = QApplication::primaryScreen();
     m_wnd->setScreen(screen);
     m_wnd->show();
+    auto ls = LayerShellQt::Window::get(m_wnd->windowHandle());
+    if(ls)
+    {
+        ls->setLayer(LayerShellQt::Window::LayerOverlay);
+        ls->setMargins(QMargins(5,5,5,5));
+        ls->setKeyboardInteractivity(LayerShellQt::Window::KeyboardInteractivityNone);
+        ls->setAnchors(QFlags<LayerShellQt::Window::Anchor>(LayerShellQt::Window::AnchorTop
+                                                            |LayerShellQt::Window::AnchorRight));
+    }
     int margin = 10;
-    if(NotificationDaemon::instance()->southernMode())
+    /*if(NotificationDaemon::instance()->southernMode())
     {
         int x = screen->size().width() - m_wnd->width() - margin;
         int y = 40;
@@ -98,7 +108,7 @@ void Notification::show()
         m_wnd->move(x,y);
     }
     m_size = m_wnd->size();
-    m_position = m_wnd->pos();
+    m_position = m_wnd->pos();*/
     m_wnd->setVisible(false);
     animateOpen();
 }
@@ -116,38 +126,46 @@ void Notification::actionSelected(QVariant action)
 
 void Notification::animateOpen()
 {
-    auto minwidth = m_wnd->minimumWidth();
-    m_wnd->setMinimumWidth(1);
+    auto minwidth = m_wnd->minimumSizeHint().width();
+    m_wnd->setMinimumWidth(qMax(300, minwidth));
     auto group = new QParallelAnimationGroup;
     auto size_animation = new QPropertyAnimation(m_wnd, "size");
-    auto pos_animation = new QPropertyAnimation(m_wnd, "pos");
-    QSize startSize = m_size;
+    auto ls = LayerShellQt::Window::get(m_wnd->windowHandle());
+    auto ls_anim = new QPropertyAnimation(ls, "size");
+    //auto pos_animation = new QPropertyAnimation(m_wnd, "pos");
+    QSize startSize = QSize(150,0);
     startSize.setWidth(1);
     m_wnd->resize(startSize);
     m_wnd->setVisible(true);
-    QSize endSize = m_size;
+    QSize endSize(150,50);
+    endSize.setHeight(m_wnd->minimumSizeHint().height());
     QPoint startPoint = m_position;
     startPoint.setX(startPoint.x()+m_size.width());
     m_wnd->move(startPoint);
-    QPoint endPoint = m_position;
+    //QPoint endPoint = m_position;
     size_animation->setStartValue(startSize);
     size_animation->setEndValue(endSize);
     size_animation->setDuration(190);
     size_animation->setEasingCurve(QEasingCurve::InOutQuad);
+    ls_anim->setStartValue(startSize);
+    ls_anim->setEndValue(endSize);
+    ls_anim->setDuration(190);
+    ls_anim->setEasingCurve(QEasingCurve::InOutQuad);
 
-    pos_animation->setStartValue(startPoint);
+    /*pos_animation->setStartValue(startPoint);
     pos_animation->setEndValue(endPoint);
     pos_animation->setDuration(190);
-    pos_animation->setEasingCurve(QEasingCurve::InOutQuad);
+    pos_animation->setEasingCurve(QEasingCurve::InOutQuad);*/
 
-    group->addAnimation(pos_animation);
+    //group->addAnimation(pos_animation);
     group->addAnimation(size_animation);
+    group->addAnimation(ls_anim);
 
     group->start(QAbstractAnimation::DeleteWhenStopped);
-    connect(group, &QParallelAnimationGroup::finished,[this, group, pos_animation, size_animation, minwidth](){
+    connect(group, &QParallelAnimationGroup::finished,[this, group, size_animation, minwidth](){
         m_wnd->setMinimumWidth(minwidth);
         size_animation->deleteLater();
-        pos_animation->deleteLater();
+        //pos_animation->deleteLater();
         group->deleteLater();
     });
 }

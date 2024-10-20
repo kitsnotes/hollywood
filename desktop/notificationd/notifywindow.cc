@@ -9,6 +9,7 @@
 #include <QPainter>
 #include <QPaintEvent>
 #include <QApplication>
+#include "hollywood/layershellwindow.h"
 
 NotificationWindow::NotificationWindow(Notification *parent)
     : QWidget(0)
@@ -67,7 +68,7 @@ NotificationWindow::NotificationWindow(Notification *parent)
     {
         QIcon ico = QIcon::fromTheme(m_parent->m_app_icon);
         if(!ico.isNull())
-            m_icon->setPixmap(ico.pixmap(64,64));
+            m_icon->setPixmap(ico.pixmap(48,48));
     }
     m_details->setTextFormat(Qt::RichText);
 }
