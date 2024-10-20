@@ -171,8 +171,6 @@ protected:
     void addChildSurfaceObject(Surface* child);
     void addXdgChildSurfaceObject(Surface* child);
     void recycleChildSurfaceObject(Surface* child);
-    void adjustPostionX(float x);
-    void adjustPostionY(float y);
     void renderDecoration();
     void updatePlasmaStateFlags() const;
     void setLayerShellParent(Surface *surface);

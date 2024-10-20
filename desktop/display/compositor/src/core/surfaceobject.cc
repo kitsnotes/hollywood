@@ -676,16 +676,6 @@ void Surface::recycleChildSurfaceObject(Surface *child)
     m_children.removeOne(child);
 }
 
-void Surface::adjustPostionX(float x)
-{
-    m_surfacePosition.setX(x);
-}
-
-void Surface::adjustPostionY(float y)
-{
-    m_surfacePosition.setY(y);
-}
-
 void Surface::renderDecoration()
 {
     if(m_ssdimg != nullptr)
@@ -1605,8 +1595,8 @@ void Surface::recalculateLayerShellAnchorPosition()
     if(anchors == WlrLayerSurfaceV1::LeftAnchor)
     {
         // center on the left (OK)
-        auto pos = primaryView()->output()->geometry().topLeft();
-        auto y = floor((primaryView()->output()->geometry().height()
+        auto pos = primaryView()->output()->availableGeometry().topLeft();
+        auto y = floor((primaryView()->output()->availableGeometry().height()
                         - m_ls_size.height())/2);
         pos.setY(y);
         m_surfacePosition = pos;
@@ -1614,8 +1604,8 @@ void Surface::recalculateLayerShellAnchorPosition()
     if(anchors == WlrLayerSurfaceV1::RightAnchor)
     {
         // center on the right (OK)
-        auto pos = primaryView()->output()->geometry().topRight();
-        auto y = floor((primaryView()->output()->geometry().height()
+        auto pos = primaryView()->output()->availableGeometry().topRight();
+        auto y = floor((primaryView()->output()->availableGeometry().height()
                         - m_ls_size.height())/2);
         pos.setY(y);
         pos.setX(pos.x() - m_ls_size.width());
@@ -1624,8 +1614,8 @@ void Surface::recalculateLayerShellAnchorPosition()
     if(anchors == WlrLayerSurfaceV1::BottomAnchor)
     {
         // center on the bottom (OK)
-        auto pos = primaryView()->output()->geometry().bottomLeft();
-        auto x = floor((primaryView()->output()->geometry().width() - m_ls_size.width())/2);
+        auto pos = primaryView()->output()->availableGeometry().bottomLeft();
+        auto x = floor((primaryView()->output()->availableGeometry().width() - m_ls_size.width())/2);
         pos.setX(x);
         pos.setY(pos.y() - m_ls_size.height());
         m_surfacePosition = pos;
@@ -1634,14 +1624,14 @@ void Surface::recalculateLayerShellAnchorPosition()
     if(anchors == WlrLayerSurfaceV1::TopAnchor+WlrLayerSurfaceV1::LeftAnchor+WlrLayerSurfaceV1::RightAnchor)
     {
         // spread out on the top (OK)
-        m_ls_size.setWidth(view->output()->geometry().width());
-        m_surfacePosition = primaryView()->output()->geometry().topLeft();
+        m_ls_size.setWidth(view->output()->availableGeometry().width());
+        m_surfacePosition = primaryView()->output()->availableGeometry().topLeft();
     }
     if(anchors == WlrLayerSurfaceV1::BottomAnchor+WlrLayerSurfaceV1::LeftAnchor+WlrLayerSurfaceV1::RightAnchor)
     {
         // spread out on the bottom
-        m_ls_size.setWidth(view->output()->geometry().width());
-        auto pos = primaryView()->output()->geometry().bottomLeft();
+        m_ls_size.setWidth(view->output()->availableGeometry().width());
+        auto pos = primaryView()->output()->availableGeometry().bottomLeft();
         pos.setY(pos.y() - m_ls_size.height());
         m_surfacePosition = pos;
     }
@@ -1649,42 +1639,49 @@ void Surface::recalculateLayerShellAnchorPosition()
     if(anchors == WlrLayerSurfaceV1::LeftAnchor+WlrLayerSurfaceV1::TopAnchor+WlrLayerSurfaceV1::BottomAnchor)
     {
         // spread out on the left
-        m_ls_size.setHeight(view->output()->geometry().height());
-        m_surfacePosition = primaryView()->output()->geometry().topLeft();
+        m_ls_size.setHeight(view->output()->availableGeometry().height());
+        m_surfacePosition = primaryView()->output()->availableGeometry().topLeft();
     }
     if(anchors == WlrLayerSurfaceV1::RightAnchor+WlrLayerSurfaceV1::TopAnchor+WlrLayerSurfaceV1::BottomAnchor)
     {
         // spread out on the right
-        auto pos = primaryView()->output()->geometry().topRight();
+        auto pos = primaryView()->output()->availableGeometry().topRight();
         pos.setX(pos.x()-m_ls_size.width());
         m_surfacePosition = pos;
-        m_ls_size.setHeight(view->output()->geometry().height());
+        m_ls_size.setHeight(view->output()->availableGeometry().height());
+        return;
     }
 
     if(anchors == WlrLayerSurfaceV1::TopAnchor+WlrLayerSurfaceV1::LeftAnchor)
     {
-        // corner top-left
-        m_surfacePosition = primaryView()->output()->geometry().topLeft();
+        // corner top-left (OK)
+        auto pos = primaryView()->output()->availableGeometry().topLeft();
+        pos.setX(pos.x()+m_layerSurface->leftMargin());
+        pos.setY(pos.y()+m_layerSurface->topMargin());
+        m_surfacePosition = pos;
+        return;
     }
     if(anchors == WlrLayerSurfaceV1::TopAnchor+WlrLayerSurfaceV1::RightAnchor)
     {
         // corner top-right
-        auto pos = primaryView()->output()->geometry().topRight();
-        pos.setX(pos.x()-m_ls_size.width());
+        auto pos = primaryView()->output()->availableGeometry().topRight();
+        pos.setX(pos.x()-m_layerSurface->size().width()-m_layerSurface->rightMargin());
+        pos.setY(pos.y()+m_layerSurface->topMargin());
         m_surfacePosition = pos;
+        qDebug() << "top right" << m_surfacePosition << m_layerSurface->size();
     }
 
-    if(anchors == WlrLayerSurfaceV1::TopAnchor+WlrLayerSurfaceV1::LeftAnchor)
+    if(anchors == WlrLayerSurfaceV1::BottomAnchor+WlrLayerSurfaceV1::LeftAnchor)
     {
         // corner bottom-left
-        auto pos = primaryView()->output()->geometry().bottomLeft();
-        pos.setY(pos.y()-m_ls_size.height());
+        auto pos = primaryView()->output()->availableGeometry().bottomLeft();
+        pos.setY(pos.y()-m_layerSurface->size().height()-m_layerSurface->bottomMargin());
         m_surfacePosition = pos;
     }
-    if(anchors == WlrLayerSurfaceV1::TopAnchor+WlrLayerSurfaceV1::RightAnchor)
+    if(anchors == WlrLayerSurfaceV1::BottomAnchor+WlrLayerSurfaceV1::RightAnchor)
     {
         // corner bottom-right
-        auto pos = primaryView()->output()->geometry().bottomRight();
+        auto pos = primaryView()->output()->availableGeometry().bottomRight();
         pos.setX(pos.x()-m_ls_size.width());
         pos.setY(pos.y()-m_ls_size.height());
         m_surfacePosition = pos;
