@@ -1,5 +1,5 @@
 // Hollywood Wayland Compositor
-// (C) 2021, 2022 Cat Stevenson <cat@originull.org>
+// SPDX-FileCopyrightText: 2021-2024 Originull Software
 // SPDX-License-Identifier: GPL-3.0-only
 
 #include "outputwnd.h"
@@ -38,6 +38,7 @@
 #include "surfaceobject.h"
 #include "shortcuts.h"
 #include "relativepointer.h"
+#include "screencopy.h"
 
 Q_LOGGING_CATEGORY(hwRender, "compositor.render")
 
@@ -83,6 +84,12 @@ int OutputWindow::width()
 int OutputWindow::height()
 {
     return size().height();
+}
+
+void OutputWindow::setupScreenCopyFrame(WlrScreencopyFrameV1 *frame)
+{
+    m_copy_frame = frame;
+    connect(frame, &WlrScreencopyFrameV1::ready, this, &OutputWindow::readyForScreenCopy);
 }
 
 void OutputWindow::initializeGL()
@@ -152,6 +159,17 @@ void OutputWindow::paintGL()
     for(Surface *obj : hwComp->overlayLayerSurfaces())
         recursiveDrawTextureForObject(obj);
 
+    // if we need to take a screenshot do that here
+    if(m_do_copy_frame)
+    {
+        if(m_copy_frame != nullptr)
+        {
+            m_do_copy_frame = false;
+            m_copy_frame->copy();
+            disconnect(m_copy_frame, &WlrScreencopyFrameV1::ready, this, &OutputWindow::readyForScreenCopy);
+            m_copy_frame = nullptr;
+        }
+    }
     hwComp->endRender();
 }
 
@@ -612,6 +630,12 @@ void OutputWindow::startDrag(Surface *dragIcon)
     m_grabState = DragGrab;
     m_dragIconSurfaceObject = dragIcon;
     hwComp->raise(dragIcon);
+}
+
+void OutputWindow::readyForScreenCopy()
+{
+    m_do_copy_frame = true;
+    hwComp->triggerRender();
 }
 
 void OutputWindow::mousePressEvent(QMouseEvent *e)

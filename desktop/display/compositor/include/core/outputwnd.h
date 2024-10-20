@@ -24,6 +24,8 @@ class SurfaceView;
 class Surface;
 class Output;
 class WallpaperManager;
+class WlrScreencopyFrameV1;
+
 class OutputWindow : public QOpenGLWindow
 {
 public:
@@ -31,6 +33,8 @@ public:
     int width();
     int height();
     WallpaperManager* wallpaperManager() { return m_wpm; }
+
+    void setupScreenCopyFrame(WlrScreencopyFrameV1 *frame);
 protected:
     void initializeGL() override;
     void paintGL() override;
@@ -49,7 +53,7 @@ private slots:
     void startMove();
     void startResize(int edge, bool anchored);
     void startDrag(Surface *dragIcon);
-
+    void readyForScreenCopy();
 private:
     enum GrabState { NoGrab, MoveGrab, ResizeGrab, DragGrab };
     SurfaceView *viewAt(const QPointF &point);
@@ -89,6 +93,8 @@ private:
     QOpenGLBuffer m_textureBuffer;
     QOpenGLBuffer m_vertexBuffer;
 
+    WlrScreencopyFrameV1 *m_copy_frame = nullptr;
+    bool m_do_copy_frame = false;
 };
 
 #endif // OUTPUTWND_H

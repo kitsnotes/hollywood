@@ -1,36 +1,19 @@
 // Hollywood Wayland Compositor
-// (C) 2022 Cat Stevenson <cat@originull.org>
-// SPDX-License-Identifier: GPL-3.0-only
+// Based on the lirios/aurora-compositor implementation
+// SPDX-FileCopyrightText: 2024 Originull Software
+// SPDX-FileCopyrightText: 2019-2022 Pier Luigi Fiorini <pierluigi.fiorini@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "compositor.h"
 #include "screencopy.h"
 #include "output.h"
+#include "outputwnd.h"
+
 #include <wayland-server.h>
 
 #define SCREENCOPY_VERSION  1
 
 Q_LOGGING_CATEGORY(hwScreenCopy, "compositor.screencopy")
-
-/*static inline QImage::Format fromWaylandShmFormat(wl_shm_format format)
-{
-    switch (format) {
-    case WL_SHM_FORMAT_XRGB8888: return QImage::Format_RGB32;
-    case WL_SHM_FORMAT_ARGB8888: return QImage::Format_ARGB32_Premultiplied;
-    case WL_SHM_FORMAT_RGB565: return QImage::Format_RGB16;
-    case WL_SHM_FORMAT_XRGB1555: return QImage::Format_RGB555;
-    case WL_SHM_FORMAT_RGB888: return QImage::Format_RGB888;
-    case WL_SHM_FORMAT_XRGB4444: return QImage::Format_RGB444;
-    case WL_SHM_FORMAT_ARGB4444: return QImage::Format_ARGB4444_Premultiplied;
-    case WL_SHM_FORMAT_XBGR8888: return QImage::Format_RGBX8888;
-    case WL_SHM_FORMAT_ABGR8888: return QImage::Format_RGBA8888_Premultiplied;
-    case WL_SHM_FORMAT_XBGR2101010: return QImage::Format_BGR30;
-    case WL_SHM_FORMAT_ABGR2101010: return QImage::Format_A2BGR30_Premultiplied;
-    case WL_SHM_FORMAT_XRGB2101010: return QImage::Format_RGB30;
-    case WL_SHM_FORMAT_ARGB2101010: return QImage::Format_A2RGB30_Premultiplied;
-    case WL_SHM_FORMAT_C8: return QImage::Format_Alpha8;
-    default: return QImage::Format_Invalid;
-    }
-}*/
 
 WlrScreencopyManagerV1::WlrScreencopyManagerV1(QWaylandCompositor *compositor)
     : QWaylandCompositorExtensionTemplate<WlrScreencopyManagerV1>(compositor)
@@ -59,7 +42,7 @@ void WlrScreencopyManagerV1::zwlr_screencopy_manager_v1_capture_output(Resource 
     if(!qwl)
     {
         auto id = wl_resource_get_id(output);
-        qWarning() << QString("Resource wl_output@%1 doesn't exist").arg(id);
+        qCWarning(hwScreenCopy, "Resource wl_output@%d doesn't exist", id);
         wl_resource_post_error(resource->handle, WL_DISPLAY_ERROR_INVALID_OBJECT,
                                "resource wl_output@%d doesn't exist", id);
         return;
@@ -68,7 +51,10 @@ void WlrScreencopyManagerV1::zwlr_screencopy_manager_v1_capture_output(Resource 
     WlrScreencopyFrameV1 *nf = new WlrScreencopyFrameV1(this, frame, overlay_cursor, hwl);
     nf->init(resource->client(), frame, resource->version());
     m_frames.append(nf);
+    hwl->window()->setupScreenCopyFrame(nf);
+
     emit frameCaptureRequest(nf);
+    nf->setup();
 }
 
 void WlrScreencopyManagerV1::zwlr_screencopy_manager_v1_capture_output_region(Resource *resource, uint32_t frame,
@@ -79,17 +65,19 @@ void WlrScreencopyManagerV1::zwlr_screencopy_manager_v1_capture_output_region(Re
     if(!qwl)
     {
         auto id = wl_resource_get_id(output);
-        qWarning() << QString("Resource wl_output@%1 doesn't exist").arg(id);
+        qCWarning(hwScreenCopy, "Resource wl_output@%d doesn't exist", id);
         wl_resource_post_error(resource->handle, WL_DISPLAY_ERROR_INVALID_OBJECT,
                                "resource wl_output@%d doesn't exist", id);
         return;
     }
-    WlrScreencopyFrameV1 *nf = new WlrScreencopyFrameV1(this, frame, overlay_cursor, hwl);
+    WlrScreencopyFrameV1 *nf = new WlrScreencopyFrameV1(this, frame, overlay_cursor, x, y, width, height, hwl);
     nf->init(resource->client(), frame, resource->version());
     m_frames.append(nf);
-    emit frameCaptureRequest(nf);
-}
+    hwl->window()->setupScreenCopyFrame(nf);
 
+    emit frameCaptureRequest(nf);
+    nf->setup();
+}
 
 WlrScreencopyFrameV1::WlrScreencopyFrameV1(WlrScreencopyManagerV1 *parent, uint32_t frame, int32_t overlay_cursor,
                                            Output *output)
@@ -99,8 +87,10 @@ WlrScreencopyFrameV1::WlrScreencopyFrameV1(WlrScreencopyManagerV1 *parent, uint3
     , m_frame(frame)
     , m_overlayCursor(overlay_cursor)
 {
+    qCInfo(hwScreenCopy, "Setup new WlrScreencopyFrameV1 for full output");
     m_region = output->wlOutput()->geometry();
     m_capRegion = false;
+    m_stride = 4 * m_output->wlOutput()->geometry().width();
 }
 
 WlrScreencopyFrameV1::WlrScreencopyFrameV1(WlrScreencopyManagerV1 *parent, uint32_t frame, int32_t overlay_cursor,
@@ -111,9 +101,10 @@ WlrScreencopyFrameV1::WlrScreencopyFrameV1(WlrScreencopyManagerV1 *parent, uint3
     , m_frame(frame)
     , m_overlayCursor(overlay_cursor)
 {
+    qCInfo(hwScreenCopy, "Setup new WlrScreencopyFrameV1 for region");
     m_region = QRect(x,y,width,height);
     m_capRegion = true;
-    send_buffer(m_requestedBufferFormat, m_region.width(), m_region.width(),m_stride);
+    m_stride = 4 * m_output->wlOutput()->geometry().width();
 }
 
 void WlrScreencopyFrameV1::zwlr_screencopy_frame_v1_copy(Resource *resource, wl_resource *buffer)
@@ -132,12 +123,22 @@ void WlrScreencopyFrameV1::zwlr_screencopy_frame_v1_copy_with_damage(Resource *r
     initCopy(resource, buffer, true);
 }
 
+void WlrScreencopyFrameV1::setup()
+{
+    send_buffer(m_requestedBufferFormat, m_region.width(), m_region.height(), m_stride);
+    QDateTime dateTime(QDateTime::currentDateTimeUtc());
+    qint64 secs = dateTime.toSecsSinceEpoch();
+    m_tv_sec_hi = secs >> 32;
+    m_tv_sec_lo = secs & 0xffffffff;
+}
+
 void WlrScreencopyFrameV1::initCopy(Resource *resource, wl_resource *buffer, bool handleDamage)
 {
     Q_UNUSED(handleDamage)
     auto *shm = wl_shm_buffer_get(buffer);
     if(!shm)
     {
+        qCWarning(hwScreenCopy, "initCopy: invalid buffer type specified by client");
         //wl_resource_post_error(resource, error_invalid_buffer, "invalid buffer type specified by client");
         return;
     }
@@ -148,8 +149,9 @@ void WlrScreencopyFrameV1::initCopy(Resource *resource, wl_resource *buffer, boo
     int32_t stride = wl_shm_buffer_get_stride(shm);
 
     if (format != m_requestedBufferFormat || width != m_region.width() ||
-        height != m_region.height() || stride != m_stride) {
-        qWarning("WlrScreencopyFrameV1: Invalid buffer attributes");
+        height != m_region.height() || (uint32_t)stride != m_stride) {
+        qCWarning(hwScreenCopy, "initCopy: Invalid buffer attributes format:%i width:%i height:%i stride:%i expecting %i %i %i %i",
+                                format, width, height, stride, m_requestedBufferFormat, m_region.width(), m_region.height(), m_stride);
         wl_resource_post_error(resource->handle, error_invalid_buffer,
                                "invalid buffer attributes");
         return;
@@ -166,6 +168,7 @@ void WlrScreencopyFrameV1::initCopy(Resource *resource, wl_resource *buffer, boo
 
 void WlrScreencopyFrameV1::copy()
 {
+    // needs to be called in the GL pipeline
     if(m_ready)
     {
         wl_shm_buffer_begin_access(m_buffer);
@@ -173,11 +176,16 @@ void WlrScreencopyFrameV1::copy()
 
         QRect rect = m_region.translated(m_output->wlOutput()->position());
 
-        glPixelStorei(GL_PACK_ALIGNMENT, 1);
-        glReadPixels(rect.x(), rect.y(), rect.width(), rect.height(), GL_RGBA, GL_UNSIGNED_BYTE, data);
+        qCDebug(hwScreenCopy, "reading data from compositor start (%ix%i) w/h (%ix%i)",
+                rect.x(), rect.y(), rect.width(), rect.height());
 
+        glPixelStorei(GL_PACK_ALIGNMENT, 1);
+        QImage img(rect.size(), QImage::Format_RGBA8888_Premultiplied);
+        glReadPixels(rect.x(), rect.y(), rect.width(), rect.height(), GL_RGBA, GL_UNSIGNED_BYTE, img.bits());
+        img.convertTo(QImage::Format_ARGB32_Premultiplied);
+        memcpy(data, img.bits(), img.sizeInBytes());
         wl_shm_buffer_end_access(m_buffer);
-        //send_flags(static_cast<uint32_t>(m_flags));
+        send_flags(static_cast<uint32_t>(1));
         send_ready(m_tv_sec_hi, m_tv_sec_lo, 0);
     }
 }

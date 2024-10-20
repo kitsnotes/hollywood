@@ -1,13 +1,13 @@
 // Hollywood Wayland Compositor
-// (C) 2021, 2022 Cat Stevenson <cat@originull.org>
-// SPDX-License-Identifier: GPL-3.0-only
+// Based on the lirios/aurora-compositor implementation
+// SPDX-FileCopyrightText: 2024 Originull Software
+// SPDX-FileCopyrightText: 2019-2022 Pier Luigi Fiorini <pierluigi.fiorini@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
 
-#ifndef SCREENCOPY_H
-#define SCREENCOPY_H
+#pragma once
 
 #include <QObject>
 #include <QWaylandCompositorExtensionTemplate>
-//#include <QWaylandQuickExtension>
 #include <QWaylandCompositor>
 #include <QWaylandResource>
 #include <wayland-server.h>
@@ -42,7 +42,18 @@ class WlrScreencopyFrameV1 : public QWaylandCompositorExtensionTemplate<WlrScree
         , public QtWaylandServer::zwlr_screencopy_frame_v1
 {
     Q_OBJECT
-public slots:
+public:
+    enum Flag {
+        YInvert = 1
+    };
+    Q_ENUM(Flag)
+    //Q_DECLARE_FLAGS(Flags, flag)
+
+    Output* output() { return m_output; }
+    QRect region() const { return m_region; }
+    /*Flags flags() const;
+    void setFlags(Flags flags);*/
+
     void copy();
 protected:
     friend class WlrScreencopyManagerV1;
@@ -51,6 +62,7 @@ protected:
     void zwlr_screencopy_frame_v1_copy(Resource *resource, struct ::wl_resource *buffer) override;
     void zwlr_screencopy_frame_v1_destroy(Resource *resource) override;
     void zwlr_screencopy_frame_v1_copy_with_damage(Resource *resource, struct ::wl_resource *buffer) override;
+    void setup();
 signals:
     void ready();
 private:
@@ -64,7 +76,7 @@ private:
     QRect m_region;
     bool m_ready = false;
 
-    uint32_t m_stride;
+    uint32_t m_stride = 0;
     bool m_withDamage = false;
     QRect m_damageRect;
     wl_shm_format m_requestedBufferFormat = WL_SHM_FORMAT_ARGB8888;
@@ -73,5 +85,3 @@ private:
 
     struct ::wl_shm_buffer *m_buffer = nullptr;
 };
-
-#endif // WLRSCREENCOPYV1_H
