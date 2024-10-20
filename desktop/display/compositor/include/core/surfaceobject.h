@@ -90,6 +90,8 @@ public:
     QSize surfaceSize() const;
     QSize decoratedSize() const;
     QSize renderSize() const;
+    QSize maximumSize() const;
+    QSize minimumSize() const;
 
     QRectF windowRect() const;
     QRectF decoratedRect() const;
@@ -226,10 +228,8 @@ private:
     bool m_cursor = false;
 
     bool m_active = false;
-
     bool m_subsurface = false;
 
-    bool m_canMaximize = true;
     bool m_canMinimize = true;
 
     bool m_showMinMaxBtn = true;
@@ -258,7 +258,6 @@ private:
 
     QSize m_ls_size;
     QSize m_qt_size;
-
     QSize m_animation_minmax_target_size;
 
     Qt::WindowFlags m_qt_wndflags;

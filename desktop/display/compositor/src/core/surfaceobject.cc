@@ -97,7 +97,25 @@ bool Surface::isMaximized() const
 
 bool Surface::isFullscreen() const { return m_fullscreen; }
 
-bool Surface::canMaximize() const { return m_canMaximize; }
+bool Surface::canMaximize() const
+{
+    if(m_xdgTopLevel)
+    {
+        if(m_xdgTopLevel->maxSize() == QSize(-1,-1))
+            return true;
+
+        if(m_xdgTopLevel->maxSize().height() < primaryView()->output()->availableGeometry().height() &&
+            m_xdgTopLevel->maxSize().width() < primaryView()->output()->availableGeometry().width())
+            return false;
+
+        return true;
+    }
+
+    if(m_gtk)
+        return true;
+
+    return false;
+}
 
 bool Surface::canMinimize() const
 {
@@ -399,6 +417,14 @@ QSize Surface::renderSize() const
         size.setWidth(size.width()+shadow*2);
     }
     return size;
+}
+
+QSize Surface::maximumSize() const
+{
+    if(m_xdgTopLevel)
+        return m_xdgTopLevel->maxSize();
+
+    return QSize();
 }
 
 QRectF Surface::windowRect() const
@@ -793,7 +819,7 @@ void Surface::renderDecoration()
     // Maximize button
     // maximize/restore
     int max_left = close_left - btnsp - btnsz;
-    if(m_showMinMaxBtn)
+    if(canMaximize())
     {
         p.save();
         if(isMaximized())
