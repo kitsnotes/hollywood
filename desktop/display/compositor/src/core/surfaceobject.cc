@@ -1,5 +1,5 @@
 // Hollywood Wayland Compositor
-// (C) 2021, 2022 Cat Stevenson <cat@originull.org>
+// SPDX-FileCopyrightText: 2021-2024 Originull Software
 // SPDX-License-Identifier: GPL-3.0-only
 
 #include "surfaceobject.h"
@@ -541,10 +541,8 @@ QPointF Surface::mapToSurface(const QPointF &pos) const
     if(!surface() || surface()->destinationSize().isEmpty())
         return pos / surface()->bufferScale();
 
-    qreal xScale = windowRect().width() / surface()->bufferSize().width();
-    qreal yScale = windowRect().height() / surface()->bufferSize().height();
-
-    return QPointF(pos.x() / xScale, pos.y() / yScale);
+    auto newpos = QPointF(pos.x() / surface()->bufferScale(), pos.y() / surface()->bufferScale());
+    return newpos;
 }
 
 QList<Surface *> Surface::childSurfaceObjects() const { return m_children; }
