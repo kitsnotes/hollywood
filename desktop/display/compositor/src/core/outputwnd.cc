@@ -138,8 +138,8 @@ void OutputWindow::paintGL()
     for(Surface *obj : hwComp->bottomLayerSurfaces())
         drawTextureForObject(obj);
 
-    if(!hwComp->isRunningLoginManager() && !hwComp->miniMode())
-        drawDesktopInfoString();
+    /*if(!hwComp->isRunningLoginManager() && !hwComp->miniMode())
+        drawDesktopInfoString(); */
 
     // draw standard surfaces
     for(Surface *obj : hwComp->surfaceByZOrder())
@@ -236,7 +236,9 @@ void OutputWindow::drawTextureForObject(Surface *obj)
 
     if ((obj->surface() && obj->surface()->hasContent()) || obj->viewForOutput(m_output)->isBufferLocked())
     {
+        // this comes in surface device independent pixels (ie: 1x)
         QSize s = obj->surfaceSize();
+        s = s*obj->surface()->bufferScale();
         if (!s.isEmpty())
         {
             QOpenGLFunctions *functions = context()->functions();
@@ -309,7 +311,7 @@ void OutputWindow::drawTextureForObject(Surface *obj)
             functions->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
             // render the actual surface content
-            QRect source = QRect(obj->surfacePosition().toPoint(), obj->surface()->destinationSize());
+            QRect source = QRect(obj->surfacePosition().toPoint(), obj->surface()->destinationSize()*obj->surface()->bufferScale());
 
             QMatrix4x4 tt_surface = QOpenGLTextureBlitter::targetTransform(source,
                                       QRect(m_output->wlOutput()->position(), size()));
@@ -323,7 +325,7 @@ void OutputWindow::drawTextureForObject(Surface *obj)
             }
 
             QMatrix3x3 src_transform = QOpenGLTextureBlitter::sourceTransform(sourceGeom,
-                                                                              obj->surface()->bufferSize(),
+                                                                              obj->surface()->bufferSize()/obj->surface()->bufferScale(),
                                                                               surfaceOrigin);
             m_textureBlitter.bind(currentTarget);
             m_textureBlitter.blit(texture->textureId(), tt_surface, src_transform, texture->format());

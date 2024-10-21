@@ -93,7 +93,6 @@ public:
     QSize maximumSize() const;
     QSize minimumSize() const;
 
-    QRectF windowRect() const;
     QRectF decoratedRect() const;
     QRectF closeButtonRect() const;
     QRectF maximizeButtonRect() const;

@@ -372,29 +372,12 @@ QSize Surface::surfaceSize() const
         return m_resize_animation_size;
     }
 
-    if(m_fullscreenShell)
-        return surface()->destinationSize();
-
-    if(m_layerSurface)
-        return surface()->destinationSize();
-
-    if(m_qt)
-    {
-        if(m_qt_size.isEmpty())
-            return surface()->destinationSize();
-        else
-            return m_qt_size;
-    }
-
-    if(m_xdgSurface)
-        return surface()->destinationSize();
-
     return surface()->destinationSize();
 }
 
 QSize Surface::decoratedSize() const
 {
-    auto size = surfaceSize();
+    auto size = surfaceSize()*surface()->bufferScale();
     if(m_ssd)
     {
         auto bs = hwComp->borderSize();
@@ -427,18 +410,13 @@ QSize Surface::maximumSize() const
     return QSize();
 }
 
-QRectF Surface::windowRect() const
-{
-    return QRectF(surfacePosition(), QSizeF(surfaceSize()*surface()->bufferScale()));
-}
-
 QRectF Surface::decoratedRect() const
 {
     auto pos = surfacePosition();
     if(m_ssd)
     {
-        pos.setX(pos.x()-hwComp->borderSize()*surface()->bufferScale());
-        pos.setY(pos.y()-hwComp->decorationSize()*surface()->bufferScale());
+        pos.setX(pos.x()-hwComp->borderSize());
+        pos.setY(pos.y()-hwComp->decorationSize());
     }
     return QRectF(pos, decoratedSize());
 }
@@ -448,7 +426,7 @@ QRectF Surface::closeButtonRect() const
     if(!serverDecorated())
         return QRectF();
 
-    auto ds = hwComp->decorationSize()*surface()->bufferScale();
+    auto ds = hwComp->decorationSize();
     const int windowRight = decoratedRect().right() + 1;
     int bw = BUTTON_WIDTH*surface()->bufferScale();
     int bs = BUTTON_SPACING*surface()->bufferScale();
@@ -476,7 +454,7 @@ QRectF Surface::minimizeButtonRect() const
     if(!serverDecorated())
         return QRectF();
 
-    auto ds = hwComp->decorationSize()*surface()->bufferScale();
+    auto ds = hwComp->decorationSize();
     const int windowRight = decoratedRect().right() + 1;
     int bw = BUTTON_WIDTH*surface()->bufferScale();
     int bs = BUTTON_SPACING*surface()->bufferScale();
@@ -724,7 +702,8 @@ void Surface::renderDecoration()
 
     p.setCompositionMode(QPainter::CompositionMode_SourceOver);
     QRect wg = QRect(QPoint(0,0),
-             QPoint(surfaceSize().width()+bs+bs, surfaceSize().height()+bs+ds));
+             QPoint((surfaceSize().width()*surface()->bufferScale())+bs+bs,
+                    (surfaceSize().height()*surface()->bufferScale())+bs+ds));
 
     QRect clips[] =
     {
@@ -795,7 +774,7 @@ void Surface::renderDecoration()
     // close button
     auto icopath = do_dark ? ":/Icons/Dark/window-close"
                            : ":/Icons/Light/window-close";
-    int close_left = surfaceSize().width()-bs-btnsz;
+    int close_left = (surfaceSize().width()*surface()->bufferScale())-bs-btnsz;
     QIcon wcico = QIcon(icopath);
     if (!wcico.isNull())
     {
@@ -902,7 +881,8 @@ void Surface::onDestinationSizeChanged()
                 m_surfaceInit = true;
                 return;
             }
-            auto rect = windowRect().toRect();
+            auto size = surfaceSize()*surface()->bufferScale();
+            auto rect = QRect(surfacePosition().toPoint(), size);
             // TODO: dual monitor support - grab output of cursor
             auto outputRect = hwComp->defaultOutput()->availableGeometry();
             int x = 50;
