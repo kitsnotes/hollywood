@@ -1,9 +1,7 @@
 // Hollywood Wayland Compositor
 // SPDX-FileCopyrightText: 2021-2024 Originull Software
 // SPDX-License-Identifier: GPL-3.0-only
-
-#ifndef SURFACEOBJECT_H
-#define SURFACEOBJECT_H
+#pragma once
 
 #include <QObject>
 #include <QWaylandCompositor>
@@ -306,5 +304,3 @@ private:
 
     QTimer* m_loadTimer = nullptr;
 };
-
-#endif // SURFACEOBJECT_H

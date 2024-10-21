@@ -1,9 +1,7 @@
 // Hollywood Wayland Compositor
-// (C) 2021, 2022 Cat Stevenson <cat@originull.org>
+// SPDX-FileCopyrightText: 2021-2024 Originull Software
 // SPDX-License-Identifier: GPL-3.0-only
-
-#ifndef OUTPUT_H
-#define OUTPUT_H
+#pragma once
 
 #include <QObject>
 #include <QWaylandOutput>
@@ -53,5 +51,3 @@ private:
 
     QWaylandXdgOutputV1 *m_xdgOutput = nullptr;
 };
-
-#endif // OUTPUT_H

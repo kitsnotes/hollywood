@@ -1,9 +1,7 @@
 // Hollywood Wayland Compositor
-// (C) 2022 Cat Stevenson <cat@originull.org>
+// SPDX-FileCopyrightText: 2021-2024 Originull Software
 // SPDX-License-Identifier: GPL-3.0-only
-
-#ifndef WALLPAPER_H
-#define WALLPAPER_H
+#pragma once
 
 #include <QObject>
 #include <QTimer>
@@ -66,5 +64,3 @@ private:
 
     bool m_intrans = false;
 };
-
-#endif // WALLPAPER_H

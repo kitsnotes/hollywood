@@ -1,9 +1,7 @@
 // Hollywood Wayland Compositor
-// (C) 2021-2024 Originull Software
+// SPDX-FileCopyrightText: 2021-2024 Originull Software
 // SPDX-License-Identifier: GPL-3.0-only
-
-#ifndef OUTPUTWND_H
-#define OUTPUTWND_H
+#pragma once
 
 #include <QOpenGLWindow>
 #include <QPointer>
@@ -96,5 +94,3 @@ private:
     WlrScreencopyFrameV1 *m_copy_frame = nullptr;
     bool m_do_copy_frame = false;
 };
-
-#endif // OUTPUTWND_H

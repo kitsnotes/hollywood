@@ -1,5 +1,5 @@
 // Hollywood Wayland Compositor
-// (C) 2021, 2022 Cat Stevenson <cat@originull.org>
+// SPDX-FileCopyrightText: 2021-2024 Originull Software
 // SPDX-License-Identifier: GPL-3.0-only
 
 #include "compositor.h"
@@ -520,7 +520,12 @@ void Compositor::idleTimeout()
 {
     // idle inhibited by client, don't do anything
     if(m_idle_inhibit)
+    {
+        qCDebug(hwCompositor, "idle would happen, but currently inhibited");
         return;
+    }
+
+    qCDebug(hwCompositor, "idle timeout");
 
     // timeout to handle a display sleep
     if(!m_display_sleeping && m_timeout_display > 0)
