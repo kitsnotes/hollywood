@@ -22,47 +22,47 @@ void PointerConstraintsV1::initialize()
     init(compositor->display(), WP_POINTER_CONSTRAINT_VERSION);
 }
 
-void PointerConstraintsV1::zwp_pointer_constraints_v1_lock_pointer(Resource *resource, uint32_t id, wl_resource *surface, wl_resource *pointer, wl_resource *region, uint32_t lifetime)
+void PointerConstraintsV1::zwp_pointer_constraints_v1_lock_pointer(Resource *, uint32_t , wl_resource *, wl_resource *, wl_resource *, uint32_t )
 {
 
 }
 
-void PointerConstraintsV1::zwp_pointer_constraints_v1_confine_pointer(Resource *resource, uint32_t id, wl_resource *surface, wl_resource *pointer, wl_resource *region, uint32_t lifetime)
+void PointerConstraintsV1::zwp_pointer_constraints_v1_confine_pointer(Resource *, uint32_t , wl_resource *, wl_resource *, wl_resource *, uint32_t )
 {
 
 }
 
-LockedPointerV1::LockedPointerV1(QWaylandSurface *surface, PointerConstraintsV1 *parent)
+LockedPointerV1::LockedPointerV1(QWaylandSurface *, PointerConstraintsV1 *)
 {
 
 }
 
-void LockedPointerV1::zwp_locked_pointer_v1_destroy(Resource *resource)
+void LockedPointerV1::zwp_locked_pointer_v1_destroy(Resource *)
 {
 
 }
 
-void LockedPointerV1::zwp_locked_pointer_v1_set_cursor_position_hint(Resource *resource, wl_fixed_t surface_x, wl_fixed_t surface_y)
+void LockedPointerV1::zwp_locked_pointer_v1_set_cursor_position_hint(Resource *, wl_fixed_t , wl_fixed_t )
 {
 
 }
 
-void LockedPointerV1::zwp_locked_pointer_v1_set_region(Resource *resource, wl_resource *region)
+void LockedPointerV1::zwp_locked_pointer_v1_set_region(Resource *, wl_resource *)
 {
 
 }
 
-ConfiedPointerV1::ConfiedPointerV1(QWaylandSurface *surface, PointerConstraintsV1 *parent)
+ConfiedPointerV1::ConfiedPointerV1(QWaylandSurface *, PointerConstraintsV1 *)
 {
 
 }
 
-void ConfiedPointerV1::zwp_confined_pointer_v1_destroy(Resource *resource)
+void ConfiedPointerV1::zwp_confined_pointer_v1_destroy(Resource *)
 {
 
 }
 
-void ConfiedPointerV1::zwp_confined_pointer_v1_set_region(Resource *resource, wl_resource *region)
+void ConfiedPointerV1::zwp_confined_pointer_v1_set_region(Resource *, wl_resource *)
 {
 
 }
