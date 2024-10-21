@@ -88,9 +88,6 @@ public:
     void setSurface(gbm_surface *surface);
 
     virtual uint32_t gbmFlags() { return GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING; }
-
-    //bool setNewMode(const QSize size, const int refresh);
-
 protected:
     void flipFinished();
     void ensureModeSet(uint32_t fb);

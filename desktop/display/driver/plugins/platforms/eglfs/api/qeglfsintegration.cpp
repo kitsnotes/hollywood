@@ -410,7 +410,7 @@ QPlatformNativeInterface::NativeResourceForContextFunction HWEglFSIntegration::n
 
 QFunctionPointer HWEglFSIntegration::platformFunction(const QByteArray &function) const
 {
-    qCDebug(qLcDebug, "requested platformFunction %s", function.data());
+    qCDebug(qLcDebug, "HWEglFSIntegration::requested platformFunction %s", function.data());
     if (function == Originull::Platform::EglFSFunctions::setCursorThemeIdentifier())
         return QFunctionPointer(setCursorThemeStatic);
     else if (function == Originull::Platform::EglFSFunctions::getPowerStateIdentifier())

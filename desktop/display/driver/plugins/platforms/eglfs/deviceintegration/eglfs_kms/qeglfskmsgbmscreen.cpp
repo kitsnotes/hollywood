@@ -93,7 +93,7 @@ HWEglFSKmsGbmScreen::FrameBuffer *HWEglFSKmsGbmScreen::framebufferForBufferObjec
     uint32_t offsets[4] = { 0 };
     uint32_t pixelFormat = gbmFormatToDrmFormat(gbm_bo_get_format(bo));
 
-    QScopedPointer<FrameBuffer> fb(new FrameBuffer);
+    std::unique_ptr<FrameBuffer> fb(new FrameBuffer);
     qCDebug(qLcEglfsKmsDebug, "Adding FB, size %ux%u, DRM format 0x%x, stride %u, handle %u",
             width, height, pixelFormat, strides[0], handles[0]);
 
@@ -101,12 +101,12 @@ HWEglFSKmsGbmScreen::FrameBuffer *HWEglFSKmsGbmScreen::framebufferForBufferObjec
                             handles, strides, offsets, &fb->fb, 0);
 
     if (ret) {
-        qWarning("Failed to create KMS FB!");
+        qCWarning(qLcEglfsKmsDebug, "Could not create KMS frame buffer");
         return nullptr;
     }
 
-    gbm_bo_set_user_data(bo, fb.data(), bufferDestroyedHandler);
-    return fb.take();
+    gbm_bo_set_user_data(bo, fb.get(), bufferDestroyedHandler);
+    return fb.release();
 }
 
 HWEglFSKmsGbmScreen::HWEglFSKmsGbmScreen(HWEglFSKmsDevice *device, const HWKmsOutput &output, bool headless)

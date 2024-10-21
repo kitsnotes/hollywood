@@ -131,6 +131,7 @@ public:
     QWaylandXdgOutputManagerV1 *xdgOutputManager();
     RelativePointerManagerV1 *relativePointerManager();
     bool miniMode() { return m_mini; }
+    bool sleeping() { return m_display_sleeping; }
 protected:
     void adjustCursorSurface(QWaylandSurface *surface, int hotspotX, int hotspotY);
     void recycleSurfaceObject(Surface *obj);
@@ -143,6 +144,7 @@ signals:
 public slots:
     void triggerRender();
     void lockSession();
+    void wake();
 protected slots:
     void surfaceHasContentChanged();
     void onStartMove(QWaylandSeat *seat);

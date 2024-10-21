@@ -28,6 +28,8 @@ public:
     bool reserveLayerShellRegion(Surface *surface);
     bool removeLayerShellReservation(Surface *surface);
     void modesetFromConfig();
+    void sleepDisplay();
+    void wakeDisplay();
 signals:
     void reservedRegionsChanged();
     void availableGeometryChanged(const QRect &geometry);

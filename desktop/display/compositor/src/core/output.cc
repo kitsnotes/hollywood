@@ -196,6 +196,18 @@ void Output::modesetFromConfig()
     Originull::Platform::EglFSFunctions::applyScreenChanges(changes);
 }
 
+void Output::sleepDisplay()
+{
+    Originull::Platform::EglFSFunctions::setPowerState(m_screen,
+                            Originull::Platform::EglFSFunctions::PowerStateSuspend);
+}
+
+void Output::wakeDisplay()
+{
+    Originull::Platform::EglFSFunctions::setPowerState(m_screen,
+                       Originull::Platform::EglFSFunctions::PowerStateOn);
+}
+
 uint Output::defaultScaleFactor()
 {
     qCDebug(hwOutput, "default scale factor: %f", m_screen->physicalDotsPerInch());

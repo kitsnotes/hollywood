@@ -308,6 +308,7 @@ void HWEglFSKmsScreen::pageFlipped(unsigned int sequence, unsigned int tv_sec, u
     Q_UNUSED(sequence);
     Q_UNUSED(tv_sec);
     Q_UNUSED(tv_usec);
+    // TODO: expose this in EglfsFunctions
 }
 
 QT_END_NAMESPACE

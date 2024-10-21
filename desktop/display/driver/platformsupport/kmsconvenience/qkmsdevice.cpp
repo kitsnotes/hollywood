@@ -1167,8 +1167,12 @@ QPlatformScreen::SubpixelAntialiasingType HWKmsOutput::subpixelAntialiasingTypeH
 void HWKmsOutput::setPowerState(HWKmsDevice *device, QPlatformScreen::PowerState state)
 {
     if (dpms_prop)
-        drmModeConnectorSetProperty(device->fd(), connector_id,
+    {
+        int result = drmModeConnectorSetProperty(device->fd(), connector_id,
                                     dpms_prop->prop_id, (int) state);
+        if(result > 0)
+            qCDebug(qLcKmsDebug, "Failed to set DPMS on connector %i state %i", connector_id, state);
+    }
 }
 
 bool HWKmsOutput::setMode(HWKmsDevice *device, const QSize resolution, const uint32_t refreshRate)

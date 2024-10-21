@@ -323,6 +323,15 @@ QWaylandXdgOutputManagerV1 *Compositor::xdgOutputManager() { if(m_outputmgr) ret
 
 RelativePointerManagerV1 *Compositor::relativePointerManager() { if(m_relative_pointer) return m_relative_pointer; return nullptr; }
 
+void Compositor::wake()
+{
+    qCInfo(hwCompositor, "wake event");
+    m_display_sleeping = false;
+    //TODO: multiple displays
+    primaryOutput()->wakeDisplay();
+    setupIdleTimer();
+}
+
 QList<SurfaceView*> Compositor::views() const
 {
     QList<SurfaceView*> returnList;
@@ -486,10 +495,10 @@ void Compositor::loadSettings()
     settings.beginGroup(QLatin1String("Energy"));
 
     // TODO: put these defaults into hollywood.h
-    m_timeout_display = settings.value("DisplayTimeout", 60).toUInt();
-    m_timeout_sleep = settings.value("SleepTimeout", 300).toUInt();
+    m_timeout_display = settings.value("DisplayTimeout", 120).toUInt();
+    m_timeout_sleep = settings.value("SleepTimeout", 420).toUInt();
 
-    // monitors should not sleep before the system does
+    // monitors should not sleep after the system does
     if(m_timeout_display >= m_timeout_sleep)
         m_timeout_display = 0;
 
@@ -509,11 +518,17 @@ void Compositor::loadSettings()
 
 void Compositor::setupIdleTimer()
 {
+    m_timeout->setSingleShot(true);
     // setup the timer
     if(!m_display_sleeping && m_timeout_display > 0)
         m_timeout->start(m_timeout_display*1000);
     else if(m_display_sleeping || (m_timeout_display == 0 && m_timeout_sleep > 0))
-        m_timeout->start(m_timeout_sleep*1000);
+    {
+        if(m_timeout_display == 0)
+            m_timeout->start(m_timeout_sleep*1000);
+        else
+            m_timeout->start((m_timeout_sleep-m_timeout_display)*1000);
+    }
 }
 
 void Compositor::idleTimeout()
@@ -538,9 +553,15 @@ void Compositor::idleTimeout()
         else
             QTimer::singleShot(m_lock_after_sleep, this, &Compositor::lockSession);
 
-        m_display_sleeping = false;
+        qCDebug(hwCompositor, "placing displays to sleep");
+        // TODO: multiple displays
+        primaryOutput()->sleepDisplay();
+        m_display_sleeping = true;
+
         if(m_timeout_sleep > 0)
             setupIdleTimer();
+
+        return;
     }
 
     // timeout to handle a system sleep
@@ -548,6 +569,8 @@ void Compositor::idleTimeout()
        (m_timeout_display == 0 &&
         m_timeout_sleep > 0))
     {
+        qCDebug(hwCompositor, "turning off displays, placing system to sleep");
+
         // we don't have display sleep but we do have system sleep
         lockSession();
         // TODO: tell session to put system to sleep
@@ -1131,8 +1154,7 @@ void Compositor::resetIdle()
 {
     if(m_timeout)
         m_timeout->stop();
-    if(!m_idle_inhibit)
-        setupIdleTimer();
+    m_timeout->start();
 }
 
 void Compositor::removeOutput(Output *output)

@@ -642,6 +642,9 @@ void OutputWindow::readyForScreenCopy()
 
 void OutputWindow::mousePressEvent(QMouseEvent *e)
 {
+    if(hwComp->sleeping())
+        hwComp->wake();
+
     if (mouseGrab())
         return;
 
@@ -793,6 +796,9 @@ void OutputWindow::mouseReleaseEvent(QMouseEvent *e)
 
 void OutputWindow::mouseMoveEvent(QMouseEvent *e)
 {
+    if(hwComp->sleeping())
+        hwComp->wake();
+
     QPointF adjustedPoint(m_output->wlOutput()->position().x()+e->position().x(),
                           m_output->wlOutput()->position().y()+e->position().y());
 
@@ -878,7 +884,6 @@ void OutputWindow::mouseMoveEvent(QMouseEvent *e)
 
 void OutputWindow::sendMouseEvent(QMouseEvent *e, SurfaceView *target)
 {
-    hwComp->resetIdle();
     QPoint adjustedPoint(m_output->wlOutput()->position().x()+e->position().x(),
                  m_output->wlOutput()->position().y()+e->position().y());
 
@@ -893,6 +898,9 @@ void OutputWindow::sendMouseEvent(QMouseEvent *e, SurfaceView *target)
 
 void OutputWindow::keyPressEvent(QKeyEvent *e)
 {
+    if(hwComp->sleeping())
+        hwComp->wake();
+
     hwComp->resetIdle();
     if(!hwComp->shortcuts()->checkAndHandleCombo(e->keyCombination()))
         hwComp->defaultSeat()->sendKeyPressEvent(e->nativeScanCode());
@@ -906,6 +914,9 @@ void OutputWindow::keyReleaseEvent(QKeyEvent *e)
 
 void OutputWindow::wheelEvent(QWheelEvent *e)
 {
+    if(hwComp->sleeping())
+        hwComp->wake();
+
     // all wheels send an angle delta
     bool vert = false;
     int delta = e->angleDelta().x();
@@ -932,6 +943,9 @@ void OutputWindow::wheelEvent(QWheelEvent *e)
 
 void OutputWindow::touchEvent(QTouchEvent *e)
 {
+    if(hwComp->sleeping())
+        hwComp->wake();
+
     QPoint adjustedPoint(m_output->wlOutput()->position().x()+e->points().first().position().x(),
                  m_output->wlOutput()->position().y()+e->points().first().position().y());
     SurfaceView *view = m_mouseSelectedSurfaceObject ?
