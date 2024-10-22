@@ -30,7 +30,7 @@ public:
         AnchorLeft = 4, ///< The left edge of the anchor rectangle
         AnchorRight = 8, ///< The right edge of the anchor rectangle
     };
-    Q_ENUM(Anchor);
+    Q_ENUM(Anchor)
     Q_DECLARE_FLAGS(Anchors, Anchor)
 
     /**

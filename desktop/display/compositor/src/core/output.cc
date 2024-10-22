@@ -212,7 +212,7 @@ uint Output::defaultScaleFactor()
 {
     qCDebug(hwOutput, "default scale factor: %f", m_screen->physicalDotsPerInch());
     if(m_screen->physicalDotsPerInch() > 190)
-        return 1;
+        return 2;
 
     return 1;
 }

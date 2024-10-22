@@ -1562,12 +1562,15 @@ void Surface::recalculateLayerShellAnchorPosition()
     auto anchors = m_layerSurface->anchors();
     auto view = primaryView();
 
+    qDebug() << "anchors" << anchors;
     if(anchors == WlrLayerSurfaceV1::TopAnchor)
     {
         // center on the top (OK)
         auto pos = primaryView()->output()->availableGeometry().topLeft();
-        auto x = floor((primaryView()->output()->availableGeometry().width() - m_ls_size.width())/2);
+        auto x = floor((primaryView()->output()->availableGeometry().width() -
+                        m_ls_size.width()*surface()->bufferScale())/2);
         pos.setX(x);
+        qDebug() << pos;
         m_surfacePosition = pos;
     }
     if(anchors == WlrLayerSurfaceV1::LeftAnchor)
@@ -1575,7 +1578,7 @@ void Surface::recalculateLayerShellAnchorPosition()
         // center on the left (OK)
         auto pos = primaryView()->output()->availableGeometry().topLeft();
         auto y = floor((primaryView()->output()->availableGeometry().height()
-                        - m_ls_size.height())/2);
+                        - m_ls_size.height()*surface()->bufferScale())/2);
         pos.setY(y);
         m_surfacePosition = pos;
     }
@@ -1584,9 +1587,9 @@ void Surface::recalculateLayerShellAnchorPosition()
         // center on the right (OK)
         auto pos = primaryView()->output()->availableGeometry().topRight();
         auto y = floor((primaryView()->output()->availableGeometry().height()
-                        - m_ls_size.height())/2);
+                        - m_ls_size.height()*surface()->bufferScale())/2);
         pos.setY(y);
-        pos.setX(pos.x() - m_ls_size.width());
+        pos.setX(pos.x() - m_ls_size.width()*surface()->bufferScale());
         m_surfacePosition = pos;
     }
     if(anchors == WlrLayerSurfaceV1::BottomAnchor)
@@ -1595,7 +1598,7 @@ void Surface::recalculateLayerShellAnchorPosition()
         auto pos = primaryView()->output()->availableGeometry().bottomLeft();
         auto x = floor((primaryView()->output()->availableGeometry().width() - m_ls_size.width())/2);
         pos.setX(x);
-        pos.setY(pos.y() - m_ls_size.height());
+        pos.setY(pos.y() - m_ls_size.height()*surface()->bufferScale());
         m_surfacePosition = pos;
     }
 
@@ -1604,6 +1607,7 @@ void Surface::recalculateLayerShellAnchorPosition()
         // spread out on the top (OK)
         m_ls_size.setWidth(view->output()->availableGeometry().width());
         m_surfacePosition = primaryView()->output()->availableGeometry().topLeft();
+        qDebug() << "top" << m_surfacePosition << view->output()->availableGeometry().width();
     }
     if(anchors == WlrLayerSurfaceV1::BottomAnchor+WlrLayerSurfaceV1::LeftAnchor+WlrLayerSurfaceV1::RightAnchor)
     {
@@ -1624,7 +1628,7 @@ void Surface::recalculateLayerShellAnchorPosition()
     {
         // spread out on the right
         auto pos = primaryView()->output()->availableGeometry().topRight();
-        pos.setX(pos.x()-m_ls_size.width());
+        pos.setX(pos.x()-m_ls_size.width()*surface()->bufferScale());
         m_surfacePosition = pos;
         m_ls_size.setHeight(view->output()->availableGeometry().height());
         return;
@@ -1646,7 +1650,6 @@ void Surface::recalculateLayerShellAnchorPosition()
         pos.setX(pos.x()-m_layerSurface->size().width()-m_layerSurface->rightMargin());
         pos.setY(pos.y()+m_layerSurface->topMargin());
         m_surfacePosition = pos;
-        qDebug() << "top right" << m_surfacePosition << m_layerSurface->size();
     }
 
     if(anchors == WlrLayerSurfaceV1::BottomAnchor+WlrLayerSurfaceV1::LeftAnchor)
@@ -1660,8 +1663,8 @@ void Surface::recalculateLayerShellAnchorPosition()
     {
         // corner bottom-right
         auto pos = primaryView()->output()->availableGeometry().bottomRight();
-        pos.setX(pos.x()-m_ls_size.width());
-        pos.setY(pos.y()-m_ls_size.height());
+        pos.setX(pos.x()-m_ls_size.width()*surface()->bufferScale());
+        pos.setY(pos.y()-m_ls_size.height()*surface()->bufferScale());
         m_surfacePosition = pos;
     }
 }

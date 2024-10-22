@@ -36,11 +36,10 @@ MenuServer::MenuServer(StageClock *clock, BatteryMonitor *battery, QScreen *scre
     setMinimumHeight(1);
     setMaximumHeight(30);
     auto w = StageApplication::primaryScreen()->geometry().width();
-    w *= window()->devicePixelRatio();
+    w /= window()->devicePixelRatio();
     setMinimumWidth(w);
     QFont font = m_menuBar->font();
     auto size = font.pointSize()+1;
-    size *= window()->devicePixelRatio();
     font.setPointSize(size);
     QFontMetrics m(font);
     auto minheight = m.height()+8;
@@ -117,11 +116,11 @@ void MenuServer::show()
     StageApplication::instance()->privateProtocolReady();
 
     m_lswnd = Window::get(windowHandle());
-    m_lswnd->setAnchors((Window::Anchors)Window::AnchorTop);
+    m_lswnd->setAnchors((Window::Anchors)Window::AnchorTop|Window::AnchorLeft|Window::AnchorRight);
     m_lswnd->setExclusiveZone(size().height());
-    m_lswnd->setSize(QSize(size().width(), size().height()));
+    m_lswnd->setSize(QSize(size().width()*window()->devicePixelRatio(), size().height()));
     m_ready = true;
-    m_menuBar->setFixedHeight(this->size().height());
+    //m_menuBar->setFixedHeight(this->size().height());
     m_menuBar->setMinimumHeight(size().height());
 }
 

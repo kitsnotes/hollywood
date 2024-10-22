@@ -29,7 +29,7 @@ StageHost::StageHost(QScreen *screen, QWidget *parent)
     m_menu->setIcon(QIcon::fromTheme("hollywood-logo"));
     m_menu->setAutoRaise(true);
     m_menu->setPopupMode(QToolButton::InstantPopup);
-    //m_menu->setToolTip(tr("Launch applications and control your system."));
+    m_menu->setToolTip(tr("Launch applications and control your system."));
     m_menu->setStyleSheet("QToolButton::menu-indicator { image: none; }");
     m_menu->setMenu(app->systemMenu());
     m_menu->setArrowType(Qt::NoArrow);
@@ -76,9 +76,9 @@ void StageHost::setAlignment(Qt::Orientation align)
         }
 
         setMaximumWidth(160);
-        setMaximumHeight(m_screen->availableSize().height());
-        setMinimumHeight(m_screen->availableSize().height());
-        resize(650, m_screen->availableSize().height());
+        setMaximumHeight(m_screen->availableSize().height()/window()->devicePixelRatio());
+        setMinimumHeight(m_screen->availableSize().height()/window()->devicePixelRatio());
+        //resize(650, m_screen->availableSize().height());
         if(StageApplication::instance()->dockEdge() == Qt::LeftEdge)
             m_lswnd->setAnchors(LayerShellQt::Window::AnchorLeft);
         else
@@ -98,7 +98,7 @@ void StageHost::setAlignment(Qt::Orientation align)
         if(StageApplication::instance()->dockEdge() == Qt::TopEdge)
             m_lswnd->setAnchors(LayerShellQt::Window::AnchorTop);
         else
-            m_lswnd->setAnchors(LayerShellQt::Window::AnchorBottom);
+            m_lswnd->setAnchors((LayerShellQt::Window::Anchors)LayerShellQt::Window::AnchorBottom|LayerShellQt::Window::AnchorLeft|LayerShellQt::Window::AnchorRight);
         if(m_windowList)
             m_windowList->setVertical(false);
 
@@ -121,12 +121,12 @@ void StageHost::setAlignment(Qt::Orientation align)
         }
         setLayout(m_hbox);
         auto minheight = 30;
-        minheight *= window()->devicePixelRatio();
         setMinimumHeight(minheight);
-        setMaximumWidth(99999);
-        setMinimumWidth(650);
+        setMaximumWidth(m_screen->availableSize().width());
+        setMinimumWidth(260);
         break;
     }
+    m_lswnd->setKeyboardInteractivity(LayerShellQt::Window::KeyboardInteractivityOnDemand);
 }
 
 void StageHost::setClock(StageClock *clock)
@@ -190,7 +190,7 @@ void StageHost::show()
     {
         m_lswnd->setAnchors(LayerShellQt::Window::AnchorBottom);
         m_lswnd->setExclusiveZone(size().height());
-        m_lswnd->setSize(QSize(size().width(), size().height()));
+        m_lswnd->setSize(QSize(size().width()*window()->devicePixelRatio(), size().height()));
     }
     else
     {
