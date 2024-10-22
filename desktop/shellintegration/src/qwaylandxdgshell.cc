@@ -427,7 +427,11 @@ void QWaylandXdgSurface::setPopup(QWaylandWindow *parent)
         | QtWayland::xdg_positioner::constraint_adjustment_flip_y);
 
     if(parentLayerSurface)
+    {
+        positioner->set_anchor_rect(transientPos.x()*window()->devicePixelRatio(),
+                                    transientPos.y()*window()->devicePixelRatio(), 1, 1);
         m_popup = new Popup(this, parentLayerSurface, positioner);
+    }
     else
         m_popup = new Popup(this, parentXdgSurface, positioner);
     positioner->destroy();

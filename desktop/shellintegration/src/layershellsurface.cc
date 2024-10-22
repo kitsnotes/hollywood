@@ -16,8 +16,8 @@ using namespace QtWaylandClient;
 
 void Shell::useLayerShell()
 {
-    const bool ret = qputenv("QT_WAYLAND_SHELL_INTEGRATION", "layer-shell");
+    const bool ret = qputenv("QT_WAYLAND_SHELL_INTEGRATION", "hw-layer-shell");
     if (!ret) {
-        qCDebug(LAYERSHELLQT) << "Unable to set QT_WAYLAND_SHELL_INTEGRATION=layer-shell";
+        qCDebug(LAYERSHELLQT) << "Unable to set QT_WAYLAND_SHELL_INTEGRATION=hw-layer-shell";
     }
 }

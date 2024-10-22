@@ -36,13 +36,11 @@ QWaylandLayerSurface::QWaylandLayerSurface(QWaylandLayerShell *shell, QtWaylandC
     }
     init(shell->get_layer_surface(window->waylandSurface()->object(), output, interface->layer(), interface->scope()));
     connect(interface, &Window::layerChanged, this, [this, interface]() {
-        qDebug() << "SIGNAL LayerSurface::setLayer" << interface->layer();
         setLayer(interface->layer());
     });
 
     set_anchor(interface->anchors());
     connect(interface, &Window::anchorsChanged, this, [this, interface]() {
-        qDebug() << "SIGNAL anchorsChanged()" << interface->anchors();
         set_anchor(interface->anchors());
     });
     setExclusiveZone(interface->exclusionZone());
@@ -57,7 +55,6 @@ QWaylandLayerSurface::QWaylandLayerSurface(QWaylandLayerShell *shell, QtWaylandC
 
     setSize(interface->size());
     connect(interface, &Window::sizeChanged, this, [this, interface]() {
-        qDebug() << "SIGNAL LayerSurface::setSize" << interface->size();
         setSize(interface->size());
     });
 
@@ -139,7 +136,6 @@ void QWaylandLayerSurface::setLayer(uint32_t layer)
 
 void QWaylandLayerSurface::setSize(const QSize &size)
 {
-    qDebug() << "setting size:" << size;
     set_size(size.width(), size.height());
 }
 

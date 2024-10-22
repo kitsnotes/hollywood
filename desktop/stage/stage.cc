@@ -567,6 +567,7 @@ void StageApplication::statusButtonRemoved(StatusNotifierButton *btn)
 
 int main(int argc, char *argv[])
 {
+    qputenv("QT_WAYLAND_SHELL_INTEGRATION", "hw-layer-shell");
     QCoreApplication::setAttribute(Qt::AA_DontShowShortcutsInContextMenus, false);
     QCoreApplication::setAttribute(Qt::AA_DontUseNativeMenuBar, true);
 
@@ -578,5 +579,6 @@ int main(int argc, char *argv[])
             mini = true;
     }
     StageApplication a(argc, argv, mini);
+    qputenv("QT_WAYLAND_SHELL_INTEGRATION", "xdg-shell");
     return a.exec();
 }
