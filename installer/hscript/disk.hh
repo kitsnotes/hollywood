@@ -115,6 +115,26 @@ public:
     bool execute() const override;
 };
 
+class PartLabel : public Key {
+private:
+    const std::string _block;
+    const std::string _label;
+
+    PartLabel(const Script *_s, const ScriptLocation &_p, const std::string &_b,
+              const std::string &_l) :
+        Key(_s, _p), _block(_b), _label(_l) {}
+public:
+    /*! Retrieve the block device that this key identifies. */
+    const std::string device() const { return this->_block; }
+    /*! Retrieve the type of disklabel for the block device. */
+    const std::string label() const { return this->_label; }
+
+    static Key *parseFromData(const std::string &, const ScriptLocation &,
+                              int*, int*, const Script *);
+    bool validate() const override;
+    bool execute() const override;
+};
+
 class Encrypt : public Key {
 private:
     const std::string _block;

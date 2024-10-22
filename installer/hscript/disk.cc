@@ -665,7 +665,6 @@ bool Filesystem::execute() const {
     return true;  /* LCOV_EXCL_LINE */
 }
 
-
 const std::string Mount::blkid() const
 {
     std::string uuid_return;
@@ -857,5 +856,117 @@ bool Mount::execute() const {
     }
 #endif /* HAS_INSTALL_ENV */
 
+    return true;
+}
+
+Key *PartLabel::parseFromData(const std::string &data, const ScriptLocation &pos,
+                              int *errors, int *, const Script *script)
+{
+    std::string block, label;
+    std::string::size_type block_end = data.find_first_of(' ');
+    if(block_end == std::string::npos) {
+        if(errors) *errors += 1;
+        output_error(pos, "partlabel: expected an identification string",
+                     "valid format for partlabel is: [block] [label]");
+        return nullptr;
+    }
+
+    block = data.substr(0, block_end);
+    label = data.substr(block_end + 1);
+
+    return new PartLabel(script, pos, block, label);
+}
+
+bool PartLabel::validate() const
+{
+#ifdef HAS_INSTALL_ENV
+    if(script->options().test(InstallEnvironment)) {
+        /* REQ: Runner.Validate.partition.Block */
+        return is_block_device("partlabel", where(), this->device());
+    }
+#endif /* HAS_INSTALL_ENV */
+    return true;
+}
+
+bool PartLabel::execute() const
+{
+    output_info(pos, "partlabel: setting partition label \"" +
+                         _label + "\" on " + _block);
+
+    if(script->options().test(Simulate)) {
+        output_error(pos, "partlabel: Not supported in Simulation mode");
+        return true;
+    }
+
+#ifdef HAS_INSTALL_ENV
+    std::string block;
+    std::string partition;
+
+    if(device().find_first_of(std::string("/dev/nvme")) != -1)
+    {
+        auto lastp = device().find_last_of('p');
+        block = device().substr(0, lastp);
+        partition = device().substr(lastp+1);
+    }
+    else
+    {
+        size_t end = device().length();
+        while (end > 0 && std::isdigit(device()[end-1]))
+            --end;
+
+        if(end < device().length())
+        {
+            size_t start = end;
+
+            while(start > 0  && std::isdigit(device()[start-1]))
+                --start;
+
+            if(start<end)
+            {
+                block = device().substr(0, start-1);
+                partition = device().substr(start, end-start);
+            }
+        }
+    }
+
+    std::cout << block << partition;
+
+    PedDevice *dev = ped_device_get(block.c_str());
+    if(dev == nullptr) {
+        output_error(pos, "partlabel: error opening device " + block);
+        return false;
+    }
+
+    PedDisk *disk = ped_disk_new(dev);
+    if(disk == nullptr) {
+        output_error(pos, "partlabel: error reading device " + block);
+        return false;
+    }
+
+    int partnum = std::stoi(partition);
+
+    PedPartition *part;
+    part = ped_disk_get_partition(disk, partnum);
+    if(part == nullptr) {
+        output_error(pos, "partlabel: error opening partition " +
+                              this->device());
+        ped_disk_destroy(disk);
+        ped_device_destroy(dev);
+        return false;
+    }
+
+    auto success = ped_partition_set_name(part, label().data());
+    if(!success)
+    {
+        output_error(pos, "partlabel: error setting name on " +
+                              device() + " to " + label());
+        ped_disk_destroy(disk);
+        ped_device_destroy(dev);
+        return false;
+    }
+    ped_disk_commit(disk);
+    ped_disk_destroy(disk);
+    ped_device_destroy(dev);
+#endif
     return true;
 }

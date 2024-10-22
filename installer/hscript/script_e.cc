@@ -123,6 +123,11 @@ bool Script::execute() const {
             EXECUTE_OR_FAIL("partition", part)
         }
 
+        /* REQ: Runner.Execute.partlabel */
+        for(auto &pl : internal->partlabels) {
+            EXECUTE_OR_FAIL("partlabel", pl)
+        }
+
         /* encrypt PVs */
 
         /* REQ: Runner.Execute.lvm_pv */

@@ -71,6 +71,7 @@ const std::map<std::string, key_parse_fn> valid_keys = {
     {"diskid", &DiskId::parseFromData},
     {"disklabel", &DiskLabel::parseFromData},
     {"partition", &Partition::parseFromData},
+    {"partlabel", &PartLabel::parseFromData},
     {"lvm_pv", &LVMPhysical::parseFromData},
     {"lvm_vg", &LVMGroup::parseFromData},
     {"lvm_lv", &LVMVolume::parseFromData},
@@ -158,6 +159,10 @@ bool Script::ScriptPrivate::store_key(const std::string &key_name, Key *obj,
     } else if(key_name == "partition") {
         std::unique_ptr<Partition> p(dynamic_cast<Partition *>(obj));
         this->partitions.push_back(std::move(p));
+        return true;
+    } else if(key_name == "partlabel") {
+        std::unique_ptr<PartLabel> label(dynamic_cast<PartLabel *>(obj));
+        this->partlabels.push_back(std::move(label));
         return true;
     } else if(key_name == "lvm_pv") {
         std::unique_ptr<LVMPhysical> pv(dynamic_cast<LVMPhysical *>(obj));
@@ -446,7 +451,9 @@ const std::vector<Keys::Key *> Script::getValues(std::string name) const {
         for(auto &label : this->internal->disklabels) values.push_back(label.get());
     } else if(name == "partition") {
         for(auto &part : this->internal->partitions) values.push_back(part.get());
-    } else if(name == "lvm_pv") {
+    } else if(name == "partlabel") {
+        for(auto &part : this->internal->partlabels) values.push_back(part.get());
+    }    else if(name == "lvm_pv") {
         for(auto &pv : this->internal->lvm_pvs) values.push_back(pv.get());
     } else if(name == "lvm_vg") {
         for(auto &vg : this->internal->lvm_vgs) values.push_back(vg.get());

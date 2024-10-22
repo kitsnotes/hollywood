@@ -96,6 +96,8 @@ struct Script::ScriptPrivate {
     std::vector< std::unique_ptr<DiskLabel> > disklabels;
     /*! Partition creation keys */
     std::vector< std::unique_ptr<Partition> > partitions;
+    /*! Partition label keys */
+    std::vector< std::unique_ptr<PartLabel> > partlabels;
     /*! LVM physical volume keys */
     std::vector< std::unique_ptr<LVMPhysical> > lvm_pvs;
     /*! LVM volume group keys */
