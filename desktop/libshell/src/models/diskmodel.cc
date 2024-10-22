@@ -223,6 +223,9 @@ void LSDiskModel::initialPopulation()
         if(dev2->name().toUpper() == "HWRECOVERY")
             continue;
 
+        if(dev2->name().toUpper() == "HWBOOT")
+            continue;
+
         // is this an optical drive? we always track them
         if(dev2->isOptical())
         {

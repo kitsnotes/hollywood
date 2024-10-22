@@ -178,6 +178,7 @@ void LSUDiskDevice::updateDeviceProperties()
     QDBusObjectPath drive = driveObj.value<QDBusObjectPath>();
     m_drive = drive.path();
     m_name = queryBlockProperty("IdLabel").toString();
+    if (m_name.isEmpty()) { m_name = queryPartitionProperty("Name").toString(); }
 
     if (m_name.isEmpty()) { m_name = getDeviceName(); }
     if (m_name.isEmpty()) { m_name = QObject::tr("Storage"); }
