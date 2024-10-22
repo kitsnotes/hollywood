@@ -902,7 +902,13 @@ bool PartLabel::execute() const
     std::string block;
     std::string partition;
 
-    if(device().find_first_of(std::string("/dev/nvme")) != -1)
+    if(!std::isdigit(device().back()))
+    {
+        output_error(pos, "partlabel: device " + device() + " has no partition number");
+        return false;
+    }
+
+    if(device().compare(0, 9, std::string("/dev/nvme")) == 0)
     {
         auto lastp = device().find_last_of('p');
         block = device().substr(0, lastp);
@@ -910,26 +916,16 @@ bool PartLabel::execute() const
     }
     else
     {
-        size_t end = device().length();
-        while (end > 0 && std::isdigit(device()[end-1]))
-            --end;
+        size_t length = device().length();
+        size_t end = length;
 
-        if(end < device().length())
-        {
-            size_t start = end;
+        size_t start = end;
+        while(start > 0 && std::isdigit(device()[start-1]))
+            --start;
 
-            while(start > 0  && std::isdigit(device()[start-1]))
-                --start;
-
-            if(start<end)
-            {
-                block = device().substr(0, start-1);
-                partition = device().substr(start, end-start);
-            }
-        }
+        partition = device().substr(start, end-start);
+        block = device().substr(0, start);
     }
-
-    std::cout << block << partition;
 
     PedDevice *dev = ped_device_get(block.c_str());
     if(dev == nullptr) {

@@ -330,40 +330,28 @@ QStringList eraseDiskForArch(const std::string &raw_disk,
                              HorizonWizard::Arch arch,
                              HorizonWizard::Subarch subarch) {
     QString disk = QString::fromStdString(raw_disk);
+    return {QString{"disklabel %1 gpt"}.arg(disk)};
 
-    switch(arch) {
-    case HorizonWizard::aarch64:/* 64-bit ARM mostly uses GPT */
-    case HorizonWizard::x86_64: /* 64-bit Intel uses GPT */
-        return {QString{"disklabel %1 gpt"}.arg(disk)};
-    case HorizonWizard::UnknownCPU: /* safe enough as a fallback */
-    default:
-        return {QString{"disklabel %1 gpt"}.arg(disk)};
-    }
 }
 
 
 /*! Determine the correct boot disk layout based on the target platform. */
-QStringList bootForArch(const std::string &raw_disk, HorizonWizard::Arch arch,
-                        HorizonWizard::Subarch subarch, int *start) {
+QStringList bootForArch(const std::string &raw_disk, HorizonWizard::Arch ,
+                        HorizonWizard::Subarch , int *start) {
     QString disk = QString::fromStdString(raw_disk);
 
-    switch(arch) {
-    case HorizonWizard::x86_64: /* 64-bit Intel: support only UEFI  */
-    case HorizonWizard::aarch64:/* 64-bit ARM: assume UEFI */
-    case HorizonWizard::UnknownCPU: /* safe enough as a fallback */
-    default:
-        return {
-            QString{"partition %1 %2 512M esp"}.arg(disk).arg(*start),
-            QString{"fs %1 vfat"}.arg(nameForPartitionOnDisk(raw_disk, *start)),
-            QString{"mount %1 /boot/efi"}.arg(nameForPartitionOnDisk(raw_disk, (*start)++)),
-            QString{"partition %1 %2 512M"}.arg(disk).arg(*start),
-            QString{"fs %1 ext4"}.arg(nameForPartitionOnDisk(raw_disk, *start)),
-            QString{"mount %1 /boot"}.arg(nameForPartitionOnDisk(raw_disk, (*start)++)),
-            QString{"partition %1 %2 2048M"}.arg(disk).arg(*start),
-            QString{"fs %1 ext4"}.arg(nameForPartitionOnDisk(raw_disk, *start)),
-            QString{"mount %1 /boot/recovery"}.arg(nameForPartitionOnDisk(raw_disk, (*start)++))
-        };
-    }
+    return {QString{"partition %1 %2 512M esp"}.arg(disk).arg(*start),
+        QString{"fs %1 vfat"}.arg(nameForPartitionOnDisk(raw_disk, *start)),
+        QString{"partlabel %1 EFI"}.arg(nameForPartitionOnDisk(raw_disk, *start)),
+        QString{"mount %1 /boot/efi"}.arg(nameForPartitionOnDisk(raw_disk, (*start)++)),
+        QString{"partition %1 %2 512M"}.arg(disk).arg(*start),
+        QString{"fs %1 ext4"}.arg(nameForPartitionOnDisk(raw_disk, *start)),
+        QString{"partlabel %1 HWBOOT"}.arg(nameForPartitionOnDisk(raw_disk, *start)),
+        QString{"mount %1 /boot"}.arg(nameForPartitionOnDisk(raw_disk, (*start)++)),
+        QString{"partition %1 %2 2048M"}.arg(disk).arg(*start),
+        QString{"fs %1 ext4"}.arg(nameForPartitionOnDisk(raw_disk, *start)),
+        QString{"partlabel %1 HWRECOVERY"}.arg(nameForPartitionOnDisk(raw_disk, *start)),
+        QString{"mount %1 /boot/recovery"}.arg(nameForPartitionOnDisk(raw_disk, (*start)++))};
 }
 
 QString HorizonWizard::toHScript() {
@@ -466,6 +454,7 @@ QString HorizonWizard::toHScript() {
                  .arg(QString::fromStdString(chosen_disk)).arg(start);
         QString root_part = nameForPartitionOnDisk(chosen_disk, start);
         lines << QString{"fs %1 btrfs"}.arg(root_part);
+        lines << QString{"partlabel %1 Hollywood"}.arg(root_part);
         lines << QString{"mount %1 /"}.arg(root_part);
     }
 
