@@ -26,7 +26,11 @@ QOpenGLTexture *SurfaceView::getTexture()
         m_texture = nullptr;
     if (newContent) {
         if(buf.isSharedMemory())
+        {
+            if(m_texture)
+                delete m_texture;
             m_texture = new QOpenGLTexture(buf.image());
+        }
         else
             m_texture = buf.toOpenGLTexture();
         if (surface()) {

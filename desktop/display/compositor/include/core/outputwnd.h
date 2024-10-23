@@ -93,4 +93,5 @@ private:
 
     WlrScreencopyFrameV1 *m_copy_frame = nullptr;
     bool m_do_copy_frame = false;
+    bool m_blackout = false;
 };

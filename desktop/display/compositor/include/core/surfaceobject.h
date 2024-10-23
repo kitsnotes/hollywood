@@ -196,7 +196,7 @@ private slots:
     void onLayerShellXdgPopupParentChanged(HWWaylandXdgPopup *popup);
     void onAnchorsChanged();
     void onExclusiveZoneChanged();
-
+    void inhibitsIdleChanged();
     void decorationModeChanged();
     void onQtWindowTitleChanged(const QString&);
     void onQtShellActivationRequest();

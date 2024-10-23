@@ -132,6 +132,9 @@ public:
     RelativePointerManagerV1 *relativePointerManager();
     bool miniMode() { return m_mini; }
     bool sleeping() { return m_display_sleeping; }
+    void addIdleInhibit(Surface* surface);
+    void removeIdleInhibit(Surface* surface);
+    bool isInhibitingIdle();
 protected:
     void adjustCursorSurface(QWaylandSurface *surface, int hotspotX, int hotspotY);
     void recycleSurfaceObject(Surface *obj);
@@ -278,9 +281,9 @@ private:
     uint m_lock_after_sleep;
     QTimer *m_timeout = nullptr;
     bool m_display_sleeping = false;
-    bool m_idle_inhibit = false;
 
     bool m_mini = false;
+    QList<Surface*> m_inhibit_surfaces;
 };
 
 class CompositorApp : public QGuiApplication

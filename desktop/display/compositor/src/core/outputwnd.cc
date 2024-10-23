@@ -123,6 +123,14 @@ void OutputWindow::initializeGL()
 
 void OutputWindow::paintGL()
 {
+    // see if we just fell asleep, if so, black out and stop
+    if(hwComp->sleeping())
+    {
+        glClearColor(0.0f,0.0f,0.0f,1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        return;
+    }
+
     hwComp->startRender();
     // render our background & wallpaper
     m_wpm->clearBackgroundColor();

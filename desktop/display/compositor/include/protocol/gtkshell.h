@@ -18,6 +18,7 @@ Q_DECLARE_LOGGING_CATEGORY(hwGtkShell)
 class Compositor;
 class Surface;
 class GtkSurface;
+class QWaylandSurfaceRole;
 class GtkShell : public QWaylandCompositorExtensionTemplate<GtkShell>
                , public QtWaylandServer::gtk_shell1
 {
@@ -58,6 +59,8 @@ public:
     QString uniqueBusName() const;
 
     static GtkSurface *fromResource(wl_resource *res);
+    static QWaylandSurfaceRole *role();
+
 protected:
     void gtk_surface1_destroy_resource(Resource *res) override;
 
@@ -87,7 +90,7 @@ signals:
 private:
     GtkShell *m_shell;
     QWaylandSurface *m_surface;
-
+    static QWaylandSurfaceRole s_role;
     QString m_appId;
     QString m_appMenuPath;
     QString m_menuBarPath;

@@ -48,6 +48,8 @@ Surface::Surface(QWaylandSurface *surface)
     connect(m_surface, &QWaylandSurface::destinationSizeChanged, this, &Surface::onDestinationSizeChanged);
     connect(m_surface, &QWaylandSurface::bufferScaleChanged, this, &Surface::onBufferScaleChanged);
     connect(m_surface, &QWaylandSurface::childAdded, this, &Surface::onChildAdded);
+    connect(m_surface, &QWaylandSurface::inhibitsIdleChanged, this, &Surface::inhibitsIdleChanged);
+
     // TODO: multi-monitor suppot
 }
 
@@ -55,6 +57,7 @@ Surface::~Surface()
 {
     auto uuid = m_uuid.toString(QUuid::WithoutBraces).toUtf8().data();
     qCDebug(hwSurface, "%s: ~Surface()", uuid);
+    hwComp->removeIdleInhibit(this);
     if(m_loadTimer)
     {
         m_loadTimer->stop();
@@ -68,6 +71,7 @@ Surface::~Surface()
 
     delete m_wndctl;
     //delete m_view;
+
 }
 
 QWaylandSurface *Surface::surface() const
@@ -364,6 +368,11 @@ uint Surface::shadowSize() const
     return 0;
 }
 
+bool Surface::inhibitsIdle() const
+{
+    return surface()->inhibitsIdle();
+}
+
 QSize Surface::surfaceSize() const
 {
     if(m_resize_animation)
@@ -483,6 +492,7 @@ SurfaceView* Surface::createViewForOutput(Output *o)
     SurfaceView *view = new SurfaceView(this);
     if(view)
     {
+        view->setAllowDiscardFrontBuffer(true);
         connect(view, &QWaylandView::surfaceDestroyed, this, &Surface::viewSurfaceDestroyed);
         view->setOutput(o->wlOutput());
         view->setSurface(m_surface);
@@ -1086,7 +1096,10 @@ void Surface::activate()
         if(m_wndctl)
             m_wndctl->setActive(true);
 
+
     }
+    hwComp->defaultSeat()->setKeyboardFocus(surface());
+    hwComp->defaultSeat()->setMouseFocus(surface()->primaryView());
     renderDecoration();
 }
 
@@ -1515,6 +1528,21 @@ void Surface::onExclusiveZoneChanged()
         auto output = hwComp->outputFor(primaryView()->output());
         output->removeLayerShellReservation(this);
         m_ls_output = nullptr;
+    }
+}
+
+void Surface::inhibitsIdleChanged()
+{
+    auto uuid = m_uuid.toString(QUuid::WithoutBraces).toUtf8().data();
+    if(inhibitsIdle())
+    {
+        hwComp->addIdleInhibit(this);
+        qCDebug(hwSurface, "%s: is inhibiting idle", uuid);
+    }
+    else
+    {
+        hwComp->removeIdleInhibit(this);
+        qCDebug(hwSurface, "%s: idle inhibitor removed", uuid);
     }
 }
 

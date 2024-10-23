@@ -101,6 +101,12 @@ GtkSurface *GtkSurface::fromResource(wl_resource *wlres)
     return nullptr;
 }
 
+
+QWaylandSurfaceRole *GtkSurface::role()
+{
+    return &s_role;
+}
+
 void GtkSurface::gtk_surface1_destroy_resource(Resource *res)
 {
     Q_UNUSED(res);
@@ -135,3 +141,5 @@ void GtkSurface::gtk_surface1_unset_modal(Resource *res)
     Q_UNUSED(res);
     emit unsetModal();
 }
+
+QWaylandSurfaceRole GtkSurface::s_role("gtk_surface1");

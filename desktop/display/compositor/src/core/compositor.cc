@@ -343,6 +343,33 @@ QWaylandXdgOutputManagerV1 *Compositor::xdgOutputManager() { if(m_outputmgr) ret
 
 RelativePointerManagerV1 *Compositor::relativePointerManager() { if(m_relative_pointer) return m_relative_pointer; return nullptr; }
 
+void Compositor::addIdleInhibit(Surface *surface)
+{
+    if(!m_inhibit_surfaces.contains(surface))
+        m_inhibit_surfaces.append(surface);
+
+    if(m_timeout->isActive())
+    {
+        qCDebug(hwCompositor, "idle inhibitor stopping idle timer");
+        m_timeout->stop();
+    }
+}
+
+void Compositor::removeIdleInhibit(Surface *surface)
+{
+    m_inhibit_surfaces.removeOne(surface);
+    if(m_inhibit_surfaces.count() == 0)
+    {
+        qCDebug(hwCompositor, "no more idle inhibitors, restarting idle timer");
+        setupIdleTimer();
+    }
+}
+
+bool Compositor::isInhibitingIdle()
+{
+    return m_inhibit_surfaces.count() == 0 ? false : true;
+}
+
 void Compositor::wake()
 {
     qCInfo(hwCompositor, "wake event");
@@ -350,6 +377,7 @@ void Compositor::wake()
     //TODO: multiple displays
     primaryOutput()->wakeDisplay();
     setupIdleTimer();
+    triggerRender();
 }
 
 QList<SurfaceView*> Compositor::views() const
@@ -414,13 +442,13 @@ void Compositor::surfaceHasContentChanged()
         // TODO: if we support more compositor protocols we need to add roles here
         if (surface->role() == QWaylandWlShellSurface::role()
                 || surface->role() == HWWaylandXdgToplevel::role()
+                || surface->role() == GtkSurface::role()
                 || surface->role() == QtSurface::role()) {
             defaultSeat()->setKeyboardFocus(surface);
             defaultSeat()->setMouseFocus(surface->primaryView());
         }
     }
     // TODO: avoid this if surface is minimized?
-
     triggerRender();
 }
 
@@ -515,7 +543,7 @@ void Compositor::loadSettings()
     settings.beginGroup(QLatin1String("Energy"));
 
     // TODO: put these defaults into hollywood.h
-    m_timeout_display = settings.value("DisplayTimeout", 120).toUInt();
+    m_timeout_display = settings.value("DisplayTimeout", 20).toUInt();
     m_timeout_sleep = settings.value("SleepTimeout", 420).toUInt();
 
     // monitors should not sleep after the system does
@@ -538,6 +566,9 @@ void Compositor::loadSettings()
 
 void Compositor::setupIdleTimer()
 {
+    if(isInhibitingIdle())
+        return;
+
     m_timeout->setSingleShot(true);
     // setup the timer
     if(!m_display_sleeping && m_timeout_display > 0)
@@ -554,7 +585,7 @@ void Compositor::setupIdleTimer()
 void Compositor::idleTimeout()
 {
     // idle inhibited by client, don't do anything
-    if(m_idle_inhibit)
+    if(isInhibitingIdle())
     {
         qCDebug(hwCompositor, "idle would happen, but currently inhibited");
         return;
@@ -575,8 +606,9 @@ void Compositor::idleTimeout()
 
         qCDebug(hwCompositor, "placing displays to sleep");
         // TODO: multiple displays
-        primaryOutput()->sleepDisplay();
         m_display_sleeping = true;
+        triggerRender();
+        primaryOutput()->sleepDisplay();
 
         if(m_timeout_sleep > 0)
             setupIdleTimer();
@@ -943,9 +975,10 @@ void Compositor::handleMouseEvent(QWaylandView *target, QMouseEvent *me)
             if (surface != seat->keyboardFocus()) {
                 // TODO: if we add more protocols we need to add kbd focus
                 // things here
-                if (surface == nullptr
+                if (surface != nullptr
                         || surface->role() == QWaylandWlShellSurface::role()
                         || surface->role() == HWWaylandXdgToplevel::role()
+                        || surface->role() == GtkSurface::role()
                         || surface->role() == QtSurface::role()
                         || findSurfaceObject(surface)->isFullscreenShell()) {
                     seat->setKeyboardFocus(surface);
@@ -1040,7 +1073,7 @@ void Compositor::handleDrag(SurfaceView *target, QMouseEvent *me)
         // TODO: destroy surface??
         defaultSeat()->setKeyboardFocus(surface);
         // TODO: multiple monitors/views
-        defaultSeat()->setMouseFocus(surface->primaryView());
+        defaultSeat()->setMouseFocus(nullptr);
         surface->updateSelection();
         currentDrag->drop();
         m_surfaces.removeOne(findSurfaceObject(currentDrag->icon()));
@@ -1131,12 +1164,6 @@ void Compositor::activate(Surface *obj)
             m_tl_raised = obj;
             if(last && last != obj)
                last->deactivate();
-        }
-
-        if(obj->surface() && !obj->surface()->isDestroyed())
-        {
-           defaultSeat()->setKeyboardFocus(obj->surface());
-           defaultSeat()->setMouseFocus(obj->surface()->primaryView());
         }
 
         obj->activate();
