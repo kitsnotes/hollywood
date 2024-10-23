@@ -543,7 +543,7 @@ void Compositor::loadSettings()
     settings.beginGroup(QLatin1String("Energy"));
 
     // TODO: put these defaults into hollywood.h
-    m_timeout_display = settings.value("DisplayTimeout", 20).toUInt();
+    m_timeout_display = settings.value("DisplayTimeout", 120).toUInt();
     m_timeout_sleep = settings.value("SleepTimeout", 420).toUInt();
 
     // monitors should not sleep after the system does
