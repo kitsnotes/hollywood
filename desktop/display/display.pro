@@ -1,6 +1,7 @@
 TEMPLATE = subdirs
 SUBDIRS = \
     driver \
-    compositor
+    compositor \
+    proxy
     compositor.depends = driver
 

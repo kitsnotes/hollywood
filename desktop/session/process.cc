@@ -173,7 +173,7 @@ QString ManagedProcess::processExecutablePath()
     case Wireplumber:
         return QString("/usr/bin/wireplumber");
     case Compositor:
-        return QString("/usr/libexec/hollywood/compositor");
+        return QString("/usr/libexec/hollywood/wlproxy");
     case Elevator:
         return QString("/usr/libexec/hollywood/elevator");
     case Stage:
@@ -205,8 +205,7 @@ void ManagedProcess::setEnvironmentForProcess()
     env.insert("XDG_CURRENT_DESKTOP", "Hollywood");
     env.insert("XDG_SESSION_TYPE", "wayland");
     env.insert("XDG_MENU_PREFIX", "hollywood-");
-    if(smApp->surviveWaylandCrash())
-        env.insert("QT_WAYLAND_RECONNECT", "1");
+    env.insert("QT_WAYLAND_RECONNECT", "1");
 
     // handle our locale env
     if(env.contains("LANG"))
@@ -256,12 +255,6 @@ void ManagedProcess::setEnvironmentForProcess()
         if(!env.contains("DISPLAY"))
         {
             //env.insert("QT_WAYLAND_CLIENT_BUFFER_INTEGRATION", "linux-dmabuf-unstable-v1");
-            env.remove("QT_QPA_PLATFORM");
-            if(smApp->useQtBuiltinEglfs())
-                env.insert("QT_QPA_PLATFORM", "eglfs");
-            else
-                env.insert("QT_QPA_PLATFORM", "hwc-eglfs");
-
             // Apple GPU doesn't support hardware cursors
             if(smApp->isAsahiKernel())
                 env.insert("QT_QPA_EGLFS_SWCURSOR", "1");
@@ -285,15 +278,10 @@ void ManagedProcess::setEnvironmentForProcess()
         env.insert("DBUS_SESSION_BUS_ADDRESS", QLatin1String(smApp->dbusSocket()));
     }
 
-    // setup specific processes with qt-shell
-    /*if(m_process == Elevator ||
-       m_process == Shell ||
-       m_process == NetworkAgent)
-        env.insert("QT_WAYLAND_SHELL_INTEGRATION", "qt-shell"); */
-
     // setup stage with layer-shell and twilight
     if(m_process == Stage)
     {
+        env.remove("QT_WAYLAND_RECONNECT");
         env.insert("QT_WAYLAND_SHELL_INTEGRATION", "hw-layer-shell");
         env.insert("HW_TWILIGHT_SHELL", "1");
 #ifdef QT_DEBUG
@@ -307,7 +295,10 @@ void ManagedProcess::setEnvironmentForProcess()
         env.insert("HW_TWILIGHT_SHELL", "1");
 
     if(m_process == Shell)
+    {
+        env.remove("QT_WAYLAND_RECONNECT");
         env.insert("QT_WAYLAND_SHELL_INTEGRATION", "hw-layer-shell");
+    }
 
     setProcessEnvironment(env);
 }

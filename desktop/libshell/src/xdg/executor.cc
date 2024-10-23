@@ -53,6 +53,8 @@ bool ExecutorPrivate::createProcess(QString &exec, QStringList args)
     proc->setArguments(args);
     auto env = QProcessEnvironment::systemEnvironment();
     env.remove("HW_TWILIGHT_SHELL");
+    env.remove("QT_WAYLAND_RECONNECT");
+    env.insert("QT_WAYLAND_RECONNECT", "1");
     proc->setProcessEnvironment(env);
 
     bool start = proc->startDetached();

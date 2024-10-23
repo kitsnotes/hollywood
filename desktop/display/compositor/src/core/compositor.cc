@@ -62,9 +62,29 @@ Compositor::Compositor(bool sddm)
     , m_sddm(sddm)
     , m_shortcuts(new ShortcutManager(this))
     , m_timeout(new QTimer(this))
-{
+{    
     qCInfo(hwCompositor, "Supporting wp_viewporter (protocol version 1)");
     qCInfo(hwCompositor, "Supporting xdg_decoration_manager_v1 (protocol version 1)");
+
+
+    auto fd = qgetenv("WAYLAND_SOCKET_FD");
+    bool ok = false;
+    fd.toInt(&ok);
+
+    if(!fd.isEmpty() && ok)
+    {
+        addSocketDescriptor(fd.toInt());
+        setSocketName("");
+        qCInfo(hwCompositor, "Using wlproxy socket handoff");
+        qunsetenv("WAYLAND_SOCKET_FD");
+    }
+
+    /*auto sockname = qgetenv("WAYLAND_SOCKET_NAME");
+    if(!sockname.isEmpty())
+    {
+        setSocketName(sockname);
+        qunsetenv("WAYLAND_SOCKET_NAME");
+    }*/
 
     auto envvar = qgetenv("HOLLYWOOD_RECOVERY_ENV");
     if(!envvar.isEmpty())
