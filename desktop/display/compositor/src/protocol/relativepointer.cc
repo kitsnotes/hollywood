@@ -5,7 +5,6 @@
 #include "relativepointer.h"
 #include "compositor.h"
 #include "surfaceobject.h"
-
 #include <QWaylandPointer>
 #include <chrono>
 
@@ -50,7 +49,7 @@ void RelativePointerManagerV1::zwp_relative_pointer_manager_v1_get_relative_poin
 {
     // TODO: handle multiple seats/transient pointers
     Q_UNUSED(pointer);
-    auto qpointer = m_compositor->defaultSeat()->pointer();
+    auto qpointer = hwComp->defaultSeat()->pointer();
 
     wl_resource *pointer_resource = wl_resource_create(resource->client(),
                         &zwp_relative_pointer_v1_interface, resource->version(), id);

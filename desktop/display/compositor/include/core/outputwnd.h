@@ -10,8 +10,7 @@
 #include <QOpenGLPaintDevice>
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
-
-#include "blitter.h"
+#include <QOpenGLTextureBlitter>
 
 #include <QLoggingCategory>
 Q_DECLARE_LOGGING_CATEGORY(hwRender)
@@ -69,7 +68,7 @@ private:
 private:
     friend class WallpaperManager;
     Output *m_output;
-    Blitter m_textureBlitter;
+    QOpenGLTextureBlitter m_textureBlitter;
     QOpenGLShaderProgram *m_shadowShader;
     QOpenGLShaderProgram *m_rgbShader;
     QOpenGLShaderProgram *m_rgbaShader;

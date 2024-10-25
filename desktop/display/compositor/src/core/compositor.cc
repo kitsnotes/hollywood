@@ -9,6 +9,7 @@
 #include "output.h"
 #include "outputwnd.h"
 #include "wallpaper.h"
+#include "surfaceobject.h"
 
 // Wayland Extensions
 #include "appmenu.h"
@@ -22,9 +23,11 @@
 #include "screencopy.h"
 #include "relativepointer.h"
 #include "pointerconstraints.h"
-
-#include "surfaceobject.h"
 #include "shortcuts.h"
+
+#include "xwayland.h"
+#include "xwaylandserver.h"
+#include "xwaylandshellsurface.h"
 
 #include <QSettings>
 #include <QPainter>
@@ -102,7 +105,6 @@ Compositor::Compositor(bool sddm)
     connect(m_cfgwatch, &QFileSystemWatcher::fileChanged,
             this, &Compositor::configChanged);
 
-    generateDesktopInfoLabelImage();
     connect(m_timeout, &QTimer::timeout, this, &Compositor::idleTimeout);
 }
 
@@ -135,6 +137,28 @@ void Compositor::create()
     connect(m_qt, &QtShell::surfaceCreated, this, &Compositor::onQtSurfaceCreated);
     connect(m_fs, &FullscreenShell::surfacePresented, this, &Compositor::onFullscreenSurfaceRequested);
     connect(m_activation, &XdgActivation::surfaceActivated, this, &Compositor::onXdgSurfaceActivated);
+
+    setupX11();
+}
+
+void Compositor::setupX11()
+{
+    if(m_x11)
+        return;
+
+    qCInfo(hwCompositor, "Supporting Xwayland");
+    m_xserver = new XWaylandServer(this);
+    m_x11 = new XWaylandManager;
+    m_x11->setCompositor(this);
+    connect(m_x11, &XWaylandManager::shellSurfaceCreated, this, &Compositor::onXWaylandShellSurfaceCreated);
+    connect(m_x11, &XWaylandManager::shellSurfaceRequested, this, &Compositor::onXWaylandShellSurfaceRequested);
+    m_x11->setServer(m_xserver);
+    connect(m_xserver, &XWaylandServer::started, this, [this](const QString &displayName) {
+        m_x_display = displayName;
+        m_x11->start(m_xserver->wmFd());
+    });
+    m_xserver->start();
+
 }
 
 bool Compositor::hasMenuServer()
@@ -232,6 +256,7 @@ QString Compositor::surfaceZOrderByUUID() const
 
 void Compositor::generateDesktopInfoLabelImage()
 {
+    return;
     QStringList lines;
     auto kernel = QString();
     struct utsname unb;
@@ -316,22 +341,22 @@ bool Compositor::processHasTwilightMode(quint64 pid) const
 
 QPointF Compositor::correctedPosition(const QPointF &point)
 {
-    QPointF returnPoint = point;
-    for(auto *obj : m_layer_top)
+    for(auto *out : m_outputs)
     {
-        // TODO: reserved right/left
-        if(obj->layerSurface()->anchors() & WlrLayerSurfaceV1::anchor_top
-                && obj->layerSurface()->exclusiveZone() > 0)
+        if(out->wlOutput()->geometry().contains(point.toPoint()))
         {
-            QPoint screenTop = obj->primaryView()->output()->position();
-            int reserved = screenTop.y()+obj->layerSurface()->exclusiveZone();
-            // see if our point y conflicts
-            if(point.y() >= screenTop.y() && point.y() <= reserved)
-                returnPoint.setY(reserved+1);
+            if(!out->wlOutput()->availableGeometry().contains(point.toPoint()))
+            {
+                // TODO: multiple monitor - is there an ajacent monitor boundry?
+                auto rect = out->wlOutput()->availableGeometry();
+                int closestX = qMax(rect.left(), qMin(point.toPoint().x(), rect.right()));
+                int closestY = qMax(rect.top(), qMin(point.toPoint().y(), rect.bottom()));
+                return QPointF(closestX, closestY);
+            }
         }
     }
 
-    return returnPoint;
+    return point;
 }
 
 ShortcutManager *Compositor::shortcuts()
@@ -407,6 +432,27 @@ void Compositor::onSurfaceCreated(QWaylandSurface *surface)
     obj->createViewForOutput(outputAt);
     auto uuid = obj->uuid().toString(QUuid::WithoutBraces).toUtf8().data();
     qCDebug(hwCompositor, "%s: wl_surface created", uuid);
+
+    // handle xwayland
+    if(surface->client())
+    {
+        if(surface->client()->client() == m_xserver->client())
+        {
+            for(auto shl : m_x11->m_unpairedWindows)
+            {
+                quint32 id = wl_resource_get_id(surface->resource());
+                if(shl->surfaceId() == id)
+                {
+                    qCDebug(hwCompositor, "%s: wl_surface is X11", uuid);
+                    shl->setSurfaceId(0);
+                    shl->setSurface(surface);
+                    m_x11->m_unpairedWindows.removeOne(shl);
+                    obj->setXWaylandShell(shl);
+                    break;
+                }
+            }
+        }
+    }
     m_surfaces << (obj);
     m_zorder << (obj);
 }
@@ -627,6 +673,21 @@ void Compositor::idleTimeout()
         lockSession();
         // TODO: tell session to put system to sleep
     }
+}
+
+void Compositor::onXWaylandShellSurfaceRequested(quint32 window, const QRect &geometry, bool overrideRedirect, XWaylandShellSurface *parentShellSurface)
+{
+    auto qclient = QWaylandClient::fromWlClient(this, m_xserver->client());
+    if(qclient)
+    {
+        auto xwlshell = new XWaylandShellSurface(this);
+        xwlshell->initialize(m_x11, window, geometry, overrideRedirect, parentShellSurface);
+    }
+}
+
+void Compositor::onXWaylandShellSurfaceCreated(XWaylandShellSurface *shellSurface)
+{
+
 }
 
 void Compositor::raiseNextInLine()
@@ -1002,19 +1063,34 @@ void Compositor::handleMouseEvent(QWaylandView *target, QMouseEvent *me)
 
 void Compositor::handleResize(SurfaceView *target, const QSize &initialSize, const QPoint &delta, int edge)
 {
+    auto qedge = static_cast<Qt::Edges>(edge);
+
     // This function is handled on compositor level as it is triggered
     // From the QWindow of individual screens
+    XWaylandShellSurface *xwlShellSurface = target->surfaceObject()->getXWaylandShellSurface();
+    if (xwlShellSurface)
+    {
+        XWaylandShellSurface::ResizeEdge edges = XWaylandShellSurface::ResizeEdge(edge);
+        QSize newSize = xwlShellSurface->sizeForResize(initialSize, delta, edges);
+
+        if(qedge&Qt::TopEdge)
+            target->m_surface->m_surfacePosition.setY(m_globalCursorPos.y());
+
+        if(qedge&Qt::LeftEdge)
+            target->m_surface->m_surfacePosition.setX(m_globalCursorPos.x());
+        xwlShellSurface->sendResize(newSize);
+    }
+
     QWaylandWlShellSurface *wlShellSurface = target->surfaceObject()->wlShellSurface();
     if (wlShellSurface)
     {
         QWaylandWlShellSurface::ResizeEdge edges = QWaylandWlShellSurface::ResizeEdge(edge);
         QSize newSize = wlShellSurface->sizeForResize(initialSize, delta, edges);
-        auto qedge = static_cast<Qt::Edge>(edge);
 
-        if(qedge == Qt::TopEdge)
+        if(qedge|Qt::TopEdge)
             target->m_surface->m_surfacePosition.setY(m_globalCursorPos.y());
 
-        if(qedge == Qt::LeftEdge)
+        if(qedge&Qt::LeftEdge)
             target->m_surface->m_surfacePosition.setX(m_globalCursorPos.x());
         wlShellSurface->sendConfigure(newSize, edges);
     }
@@ -1027,21 +1103,19 @@ void Compositor::handleResize(SurfaceView *target, const QSize &initialSize, con
         HWWaylandXdgToplevel *topLevel = target->surfaceObject()->xdgTopLevel();
         if(topLevel && !topLevel->maximized())
         {
-            auto qedge = static_cast<Qt::Edge>(edge);
-
             QSize newSize = topLevel->sizeForResize(initialSize, delta, qedge);
-            if(qedge == Qt::TopEdge && newSize.height() != m_resizeOldVal)
+            if(qedge & Qt::TopEdge && newSize.height() != m_resizeOldVal)
                     target->m_surface->m_surfacePosition.setY(m_globalCursorPos.y());
 
-            if(qedge == Qt::LeftEdge && newSize.width() != m_resizeOldVal)
+            if(qedge & Qt::LeftEdge && newSize.width() != m_resizeOldVal)
                 target->m_surface->m_surfacePosition.setX(m_globalCursorPos.x());
 
             topLevel->sendResizing(newSize);
 
-            if(qedge == Qt::TopEdge)
+            if(qedge & Qt::TopEdge)
                 m_resizeOldVal = newSize.height();
 
-            if(qedge == Qt::LeftEdge)
+            if(qedge & Qt::LeftEdge)
                 m_resizeOldVal = newSize.width();
 
         }
@@ -1127,6 +1201,7 @@ void Compositor::raise(Surface *obj)
     }
     if(!obj->isXdgPopup())
         m_tl_raised = obj;
+
     // if we have a subchild, then activate further
     if(obj->childXdgSurfaceObjects().count() > 0)
     {
@@ -1155,6 +1230,7 @@ void Compositor::activate(Surface *obj)
         if((obj->m_xdgTopLevel ||
              obj->m_gtk ||
              obj->m_qt ||
+             obj->getXWaylandShellSurface() != nullptr ||
              (obj->m_layerSurface && obj->m_layerSurface->layer() == WlrLayerShellV1::BackgroundLayer))
              && !obj->isSpecialShellObject())
         {

@@ -13,6 +13,7 @@
 #include <QOpenGLTexture>
 #include <QOpenGLFunctions>
 #include <QOpenGLFramebufferObject>
+#include <QOpenGLTextureBlitter>
 #include <QOpenGLBuffer>
 #include <QMatrix4x4>
 #include <QPainter>
@@ -29,8 +30,6 @@
 
 #include <QRectF>
 #include <hollywood/hollywood.h>
-
-#include "blitter.h"
 
 #include "view.h"
 #include "wallpaper.h"
@@ -146,9 +145,6 @@ void OutputWindow::paintGL()
     for(Surface *obj : hwComp->bottomLayerSurfaces())
         drawTextureForObject(obj);
 
-    /*if(!hwComp->isRunningLoginManager() && !hwComp->miniMode())
-        drawDesktopInfoString(); */
-
     // draw standard surfaces
     for(Surface *obj : hwComp->surfaceByZOrder())
         recursiveDrawTextureForObject(obj);
@@ -244,6 +240,7 @@ void OutputWindow::drawTextureForObject(Surface *obj)
 
     if ((obj->surface() && obj->surface()->hasContent()) || obj->viewForOutput(m_output)->isBufferLocked())
     {
+
         // this comes in surface device independent pixels (ie: 1x)
         QSize s = obj->surfaceSize();
         s = s*obj->surface()->bufferScale();
@@ -270,6 +267,9 @@ void OutputWindow::drawTextureForObject(Surface *obj)
 
             if(obj->isSubsurface())
                 use_fbo = false;
+
+            if(obj->getXWaylandShellSurface())
+                use_fbo = true;
 
             if(use_fbo)
             {
@@ -309,8 +309,7 @@ void OutputWindow::drawTextureForObject(Surface *obj)
                                                         QRect(m_output->wlOutput()->position(), size()));
 
                 m_textureBlitter.blit(m_fbo->texture(), tt_fbo,
-                                      QOpenGLTextureBlitter::OriginBottomLeft,
-                                      QOpenGLTexture::RGBAFormat);
+                                      QOpenGLTextureBlitter::OriginBottomLeft);
                 m_textureBlitter.release();
                 functions->glDisable(GL_BLEND);
             }
@@ -319,7 +318,8 @@ void OutputWindow::drawTextureForObject(Surface *obj)
             functions->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
             // render the actual surface content
-            QRect source = QRect(obj->surfacePosition().toPoint(), obj->surface()->destinationSize()*obj->surface()->bufferScale());
+            QRect source = QRect(obj->surfacePosition().toPoint(),
+                                 obj->surface()->destinationSize()*obj->surface()->bufferScale());
 
             QMatrix4x4 tt_surface = QOpenGLTextureBlitter::targetTransform(source,
                                       QRect(m_output->wlOutput()->position(), size()));
@@ -332,11 +332,14 @@ void OutputWindow::drawTextureForObject(Surface *obj)
                 sourceGeom.moveTop(offset);
             }
 
+            if(obj->getXWaylandShellSurface() != nullptr)
+                qDebug() << "rendering X11 2" << obj->uuid().toString() << sourceGeom << source;
+
             QMatrix3x3 src_transform = QOpenGLTextureBlitter::sourceTransform(sourceGeom,
                                                                               obj->surface()->bufferSize()/obj->surface()->bufferScale(),
                                                                               surfaceOrigin);
             m_textureBlitter.bind(currentTarget);
-            m_textureBlitter.blit(texture->textureId(), tt_surface, src_transform, texture->format());
+            m_textureBlitter.blit(texture->textureId(), tt_surface, src_transform);
             m_textureBlitter.release();
 
             functions->glDisable(GL_BLEND);
@@ -438,7 +441,7 @@ void OutputWindow::drawDesktopInfoString()
 
     QMatrix4x4 tf = QOpenGLTextureBlitter::targetTransform(QRect(startPoint, img->size()),
                                                  QRect(QPoint(0,0), size()));
-    m_textureBlitter.blit(texture.textureId(), tf, QOpenGLTextureBlitter::OriginTopLeft, texture.format());
+    m_textureBlitter.blit(texture.textureId(), tf, QOpenGLTextureBlitter::OriginTopLeft);
     texture.release();
     texture.destroy();
     m_textureBlitter.release();
@@ -449,7 +452,7 @@ void OutputWindow::drawServerSideDecoration(Surface *obj)
     if(obj->isSpecialShellObject())
         return;
 
-    if(obj->xdgTopLevel() == nullptr && obj->qtSurface() == nullptr)
+    if(obj->xdgTopLevel() == nullptr && obj->qtSurface() == nullptr && obj->getXWaylandShellSurface() == nullptr)
         return;
 
     if(obj->decorationImage() == nullptr)
@@ -468,7 +471,7 @@ void OutputWindow::drawServerSideDecoration(Surface *obj)
     auto ss = obj->shadowSize();
     QMatrix4x4 targetTransform = QOpenGLTextureBlitter::targetTransform(QRect(ss,ss,obj->decoratedSize().width(), obj->decoratedSize().height()),
                               QRect(0,0,fbo_sz.width(),fbo_sz.height()));
-    m_textureBlitter.blit(texture.textureId(), targetTransform, QOpenGLTextureBlitter::OriginTopLeft, texture.format());
+    m_textureBlitter.blit(texture.textureId(), targetTransform, QOpenGLTextureBlitter::OriginTopLeft);
     texture.release();
     texture.destroy();
     m_textureBlitter.release();
@@ -567,11 +570,14 @@ Surface* OutputWindow::surfaceAt(const QPointF &point)
                 continue;
             if(!surface->surface())
                 continue;
-            if (surface->decoratedRect().contains(point))
+
+            auto dr = surface->decoratedRect();
+            dr.adjust(-5,-5,5,5);
+            if (dr.contains(point))
                 ret = surface;
             for(auto s : surface->childSurfaceObjects())
             {
-                if (s->decoratedRect().contains(adjustedPoint))
+                if (dr.contains(adjustedPoint))
                     ret = s;
             }
         }
@@ -856,6 +862,10 @@ void OutputWindow::mouseMoveEvent(QMouseEvent *e)
                     m_resizeCursor = true;
                     if(mouseedge == 0x01 || mouseedge == 0x08)
                         setCursor(Qt::SizeVerCursor);
+                    else if(mouseedge == 0x03 || mouseedge == 0x12)
+                        setCursor(Qt::SizeFDiagCursor);
+                    else if(mouseedge == 0x05 || mouseedge == 0x10)
+                        setCursor(Qt::SizeBDiagCursor);
                     else
                         setCursor(Qt::SizeHorCursor);
                 }

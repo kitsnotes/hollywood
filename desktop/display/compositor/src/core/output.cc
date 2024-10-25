@@ -228,17 +228,31 @@ void Output::updateUsableGeometry()
 
         auto reserved = r->layerSurface()->exclusiveZone();
         auto anchors = r->anchors();
-        if(anchors == WlrLayerSurfaceV1::TopAnchor)
+        if(anchors == WlrLayerSurfaceV1::TopAnchor ||
+            anchors == WlrLayerSurfaceV1::TopAnchor+WlrLayerSurfaceV1::LeftAnchor ||
+            anchors == WlrLayerSurfaceV1::TopAnchor+WlrLayerSurfaceV1::LeftAnchor+WlrLayerSurfaceV1::RightAnchor ||
+            anchors == WlrLayerSurfaceV1::TopAnchor+WlrLayerSurfaceV1::RightAnchor)
             margins.setTop(margins.top()+reserved);
-        if(anchors == WlrLayerSurfaceV1::LeftAnchor)
-            margins.setLeft(margins.left()+reserved);
-        if(anchors == WlrLayerSurfaceV1::RightAnchor)
-            margins.setRight(margins.right()+reserved);
-        if(anchors == WlrLayerSurfaceV1::BottomAnchor)
-            margins.setBottom(margins.bottom()+reserved);
 
-        // TODO: scope out multiple anchors based on height/width?
+        /*if(anchors == WlrLayerSurfaceV1::LeftAnchor ||
+            anchors == WlrLayerSurfaceV1::LeftAnchor+WlrLayerSurfaceV1::TopAnchor ||
+            anchors == WlrLayerSurfaceV1::LeftAnchor+WlrLayerSurfaceV1::TopAnchor+WlrLayerSurfaceV1::BottomAnchor ||
+            anchors == WlrLayerSurfaceV1::LeftAnchor+WlrLayerSurfaceV1::BottomAnchor)
+            margins.setLeft(margins.left()+reserved);
+
+        if(anchors == WlrLayerSurfaceV1::RightAnchor ||
+            anchors == WlrLayerSurfaceV1::RightAnchor+WlrLayerSurfaceV1::TopAnchor ||
+            anchors == WlrLayerSurfaceV1::RightAnchor+WlrLayerSurfaceV1::TopAnchor+WlrLayerSurfaceV1::BottomAnchor ||
+            anchors == WlrLayerSurfaceV1::RightAnchor+WlrLayerSurfaceV1::BottomAnchor)
+            margins.setRight(margins.right()+reserved);
+
+        if(anchors == WlrLayerSurfaceV1::BottomAnchor ||
+            anchors == WlrLayerSurfaceV1::BottomAnchor+WlrLayerSurfaceV1::LeftAnchor ||
+            anchors == WlrLayerSurfaceV1::BottomAnchor+WlrLayerSurfaceV1::LeftAnchor+WlrLayerSurfaceV1::RightAnchor ||
+            anchors == WlrLayerSurfaceV1::BottomAnchor+WlrLayerSurfaceV1::RightAnchor)
+            margins.setBottom(margins.bottom()+reserved);*/
     }
+    qDebug() << "setAvailableGeom" << rect.marginsRemoved(margins);
     m_wlOutput->setAvailableGeometry(rect.marginsRemoved(margins));
 }
 

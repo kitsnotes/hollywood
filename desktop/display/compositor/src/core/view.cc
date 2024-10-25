@@ -24,6 +24,7 @@ QOpenGLTexture *SurfaceView::getTexture()
     QWaylandBufferRef buf = currentBuffer();
     if (!buf.hasContent())
         m_texture = nullptr;
+
     if (newContent) {
         if(buf.isSharedMemory())
         {
@@ -33,6 +34,7 @@ QOpenGLTexture *SurfaceView::getTexture()
         }
         else
             m_texture = buf.toOpenGLTexture();
+
         if (surface()) {
             m_size = surface()->destinationSize();
             m_origin = buf.origin() == QWaylandSurface::OriginTopLeft
@@ -57,8 +59,7 @@ bool SurfaceView::isSharedMem()
 
 int SurfaceView::nearEdge(QPointF point) const
 {
-    // TODO: a margin > 0 breaks things
-    auto pm = 0; // the margin (in px) on each side of the handle
+    auto pm = 5; // the margin (in px) on each side of the handle
     int NoEdge = 0x0;
     if(!m_surface)
         return NoEdge;
@@ -73,11 +74,35 @@ int SurfaceView::nearEdge(QPointF point) const
     int bottom = top + m_surface->decoratedRect().height();
     int right = left + m_surface->decoratedRect().width();
 
-    if(point.y() >= top-pm &&
+    if(point.y() >= top-pm*2 &&
+        point.y() <= top+pm &&
+        point.x() >= left-pm*2 &&
+        point.x() <= left+pm)
+        return 0x03;
+
+    if(point.y() >= top-pm*2 &&
+        point.y() <= top+pm &&
+        point.x() >= right-pm &&
+        point.x() <= right+pm)
+        return 0x05;
+
+    if(point.y() >= bottom-pm &&
+        point.y() <= bottom+pm &&
+        point.x() >= left-pm*2 &&
+        point.x() <= left+pm)
+        return 0x10;
+
+    if(point.y() >= bottom-pm &&
+        point.y() <= bottom+pm &&
+        point.x() >= right-pm &&
+        point.x() <= right+pm)
+        return 0x12;
+
+    if(point.y() >= top-pm*2 &&
        point.y() <= top+pm)
         return 0x01;
 
-    if(point.x() >= left-pm &&
+    if(point.x() >= left-pm*2 &&
        point.x() <= left+pm)
         return 0x02;
 

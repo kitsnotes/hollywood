@@ -16,7 +16,7 @@
 #include <QImage>
 
 #include "layershell.h"
-
+#include "xwaylandshellsurface.h"
 #include <QLoggingCategory>
 Q_DECLARE_LOGGING_CATEGORY(hwSurface)
 
@@ -144,6 +144,8 @@ public:
     bool isFullscreenShell() const { return m_fullscreenShell; }
     void setTwilight(bool twilight) { m_twilight = twilight; }
     bool isShellDesktop() const { return m_isShellDesktop; }
+    void setXWaylandShell(XWaylandShellSurface *surface);
+    XWaylandShellSurface* getXWaylandShellSurface() { return m_xwl_shell; }
 public slots:
     void activate();
     void deactivate();
@@ -303,4 +305,5 @@ private:
     bool m_twilight = false;
 
     QTimer* m_loadTimer = nullptr;
+    XWaylandShellSurface *m_xwl_shell = nullptr;
 };

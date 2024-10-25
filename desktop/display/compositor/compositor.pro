@@ -9,6 +9,7 @@ include(../../include/global.pri)
 TARGET = hwcomp
 INCLUDEPATH +=  include/core/ \
                 include/protocol \
+                include/xwayland \
                 $$PWD/../driver/platformheaders
 
 WAYLANDSERVERSOURCES += protocols/originull-privateapi.xml
@@ -25,6 +26,8 @@ WAYLANDSERVERSOURCES += protocols/pointer-constraints-unstable-v1.xml
 WAYLANDSERVERSOURCES += protocols/relative-pointer-unstable-v1.xml
 
 LIBS += -L../../output -lhweglfsplatformsupport
+# LIBS for Xwayland support
+LIBS += -lXcursor -lxcb-xfixes -lxcb-render -lxcb -lxcb-composite
 
 contains(QT_CONFIG, no-pkg-config) {
     LIBS += -lwayland-server
@@ -34,7 +37,6 @@ contains(QT_CONFIG, no-pkg-config) {
 }
 
 HEADERS += \
-    include/core/blitter.h \
     include/core/compositor.h \
     include/core/output.h \
     include/core/shortcuts.h \
@@ -55,12 +57,21 @@ HEADERS += \
     include/protocol/wndmgmt.h \
     include/protocol/xdgdialog.h \
     include/protocol/xdgshell.h \
-    include/protocol/xdgshell_p.h
+    include/protocol/xdgshell_p.h \
+    include/xwayland/xcbatom.h \
+    include/xwayland/xcbatoms.h \
+    include/xwayland/xcbcursors.h \
+    include/xwayland/xcbproperties.h \
+    include/xwayland/xcbresources.h \
+    include/xwayland/xcbwindow.h \
+    include/xwayland/xcbwrapper.h \
+    include/xwayland/xwayland.h \
+    include/xwayland/xwaylandserver.h \
+    include/xwayland/xwaylandshellsurface.h
 
 SOURCES += \
     src/protocol/activation.cc \
     src/protocol/appmenu.cc \
-    src/core/blitter.cc \
     src/protocol/fullscreen.cc \
     src/protocol/gtkshell.cc \
     src/protocol/layershell.cc \
@@ -78,7 +89,17 @@ SOURCES += \
     src/protocol/wndmgmt.cc \
     src/core/wallpaper.cc \
     src/protocol/xdgdialog.cc \
-    src/protocol/xdgshell.cc
+    src/protocol/xdgshell.cc \
+    src/xwayland/xcbatom.cc \
+    src/xwayland/xcbatoms.cc \
+    src/xwayland/xcbcursors.cc \
+    src/xwayland/xcbproperties.cc \
+    src/xwayland/xcbresources.cc \
+    src/xwayland/xcbwindow.cc \
+    src/xwayland/xcbwrapper.cc \
+    src/xwayland/xwayland.cc \
+    src/xwayland/xwaylandserver.cc \
+    src/xwayland/xwaylandshellsurface.cc
 
 #QMAKE_SUBSTITUTES += org.originull.compositor.desktop.in
 #desktop.path = $$PREFIX/share/applications

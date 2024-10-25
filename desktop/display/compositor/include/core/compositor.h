@@ -45,6 +45,9 @@ class FullscreenShell;
 class QWaylandWlShell;
 class QWaylandWlShellSurface;
 class QWaylandXdgShell;
+class XWaylandManager;
+class XWaylandServer;
+class XWaylandShellSurface;
 class OriginullMenuServer;
 class QOpenGLTexture;
 class SurfaceView;
@@ -66,7 +69,6 @@ class XdgActivation;
 class WlrScreencopyManagerV1;
 class RelativePointerManagerV1;
 class PointerConstraintsV1;
-
 Q_DECLARE_LOGGING_CATEGORY(hwCompositor)
 
 class Compositor : public QWaylandCompositor
@@ -76,6 +78,7 @@ public:
     Compositor(bool is_sddm);
     ~Compositor() override;
     void create() override;
+    void setupX11();
 
     void startRender();
     void endRender();
@@ -178,6 +181,9 @@ private slots:
     void loadSettings();
     void setupIdleTimer();
     void idleTimeout();
+    void onXWaylandShellSurfaceRequested(quint32 window, const QRect &geometry,
+                               bool overrideRedirect, XWaylandShellSurface *parentShellSurface);
+    void onXWaylandShellSurfaceCreated(XWaylandShellSurface *shellSurface);
 private:
     void sendWindowUUID(QUuid &uuid);
     void raiseNextInLine();
@@ -207,6 +213,12 @@ private:
 
     // Top level surfaces to worry about z-order
     QList<Surface*> m_zorder;
+
+    // X11 support
+    XWaylandManager *m_x11 = nullptr;
+    XWaylandServer *m_xserver = nullptr;
+    QString m_x_display = QString();
+
 
     // Our xdg_shell protocol support
     HWWaylandXdgShell *m_xdgShell = nullptr;
