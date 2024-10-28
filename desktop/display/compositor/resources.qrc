@@ -1,12 +1,11 @@
 <RCC>
     <qresource prefix="/Shaders">
-        <file>shadow.fsh</file>
-        <file>shadow.vsh</file>
-        <file>transition.fsh</file>
-        <file>transition.vsh</file>
-        <file>rgbconv.fsh</file>
-        <file>rgbconv.vsh</file>
-        <file>rgba.fsh</file>
+        <file alias="shadow.fsh">shaders/shadow.fsh</file>
+        <file alias="shadow.vsh">shaders/shadow.vsh</file>
+        <file alias="transition.fsh">shaders/transition.fsh</file>
+        <file alias="transition.vsh">shaders/transition.vsh</file>
+        <file alias="surface.fsh">shaders/surface.fsh</file>
+        <file alias="surface.vsh">shaders/surface.vsh</file>
     </qresource>
     <qresource prefix="/Icons/Light">
         <file alias="window-close">icons/light/window-close.svg</file>
@@ -20,4 +19,5 @@
         <file alias="window-minimize">icons/dark/window-minimize.svg</file>
         <file alias="window-restore">icons/dark/window-restore.svg</file>
     </qresource>
+    <qresource prefix="/"/>
 </RCC>

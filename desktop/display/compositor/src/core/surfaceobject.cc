@@ -23,6 +23,7 @@
 #include <QPropertyAnimation>
 #include <QParallelAnimationGroup>
 #include <QTimer>
+#include "decoration.h"
 
 #include <hollywood/hollywood.h>
 
@@ -33,8 +34,9 @@ Q_LOGGING_CATEGORY(hwSurface, "compositor.surface")
 
 Surface::Surface(QWaylandSurface *surface)
     : QObject(nullptr)
-    ,  m_surfaceType(Unknown)
-    ,  m_surface(surface)
+    , m_surfaceType(Unknown)
+    , m_surface(surface)
+    , m_ssdMgr(new ServerSideDecoration(this))
 {
     m_uuid = QUuid::createUuid();
     m_id = hwComp->nextId();
@@ -51,7 +53,7 @@ Surface::Surface(QWaylandSurface *surface)
     connect(m_surface, &QWaylandSurface::childAdded, this, &Surface::onChildAdded);
     connect(m_surface, &QWaylandSurface::inhibitsIdleChanged, this, &Surface::inhibitsIdleChanged);
 
-    // TODO: multi-monitor suppot
+    // TODO: multi-monitor support
 }
 
 Surface::~Surface()
@@ -72,7 +74,7 @@ Surface::~Surface()
 
     delete m_wndctl;
     //delete m_view;
-
+    delete m_ssdMgr;
 }
 
 QWaylandSurface *Surface::surface() const
@@ -656,185 +658,6 @@ void Surface::recycleChildSurfaceObject(Surface *child)
     m_children.removeOne(child);
 }
 
-void Surface::renderDecoration()
-{
-    if(m_ssdimg != nullptr)
-        delete m_ssdimg;
-
-    if(!m_ssd)
-        return;
-
-    m_ssdimg = new QImage(decoratedRect().size().toSize(),
-                          QImage::Format_RGBA8888);
-    QPainter p(m_ssdimg);
-
-    bool do_dark = false;
-    if(hwComp->viewMode() == 1)
-        do_dark = true;
-
-    if(hwComp->viewMode() == 2 && m_twilight)
-        do_dark = true;
-
-    auto fg = QColor(HOLLYWOOD_TEXTCLR_LIGHT);
-    auto bg = QColor(HOLLYWOOD_WNDCLR_LIGHT);
-    bg.setAlpha(255);
-    auto stroke = QColor(HOLLYWOOD_WNDCLR_DARK);
-
-    if(do_dark)
-    {
-        fg = QColor(HOLLYWOOD_TEXTCLR_DARK);
-        bg = QColor(HOLLYWOOD_WNDCLR_DARK);
-        stroke = QColor(HOLLYWOOD_WNDCLR_LIGHT);
-    }
-
-    bool active = activated();
-
-    if(!active)
-    {
-        bg = bg.lighter(50);
-        fg = fg.lighter();
-    }
-
-    auto bs = hwComp->borderSize()*surface()->bufferScale();
-    auto ds = hwComp->decorationSize()*surface()->bufferScale();
-
-    auto btnsp = 3*surface()->bufferScale(); // TODO: metrics
-    int btnsz = 22*surface()->bufferScale();
-
-    p.setCompositionMode(QPainter::CompositionMode_Clear);
-    p.fillRect(decoratedRect(), QColor(255,255,255,0));
-
-    p.setCompositionMode(QPainter::CompositionMode_SourceOver);
-    QRect wg = QRect(QPoint(0,0),
-             QPoint((surfaceSize().width()*surface()->bufferScale())+bs+bs,
-                    (surfaceSize().height()*surface()->bufferScale())+bs+ds));
-
-    QRect clips[] =
-    {
-        // left top width height
-        QRect(wg.left(), wg.top(), wg.width(), ds), // title bar
-        QRect(wg.left(), wg.bottom() - bs, wg.width(), bs), // bottom line
-        QRect(wg.left(), ds, bs+bs, wg.height() + ds + bs+bs), // left line
-        QRect((wg.right() - bs), wg.top() + ds, bs+bs+bs, wg.height() - bs) // right line
-    };
-
-    p.setRenderHint(QPainter::Antialiasing);
-
-    // Title bar
-    QPainterPath roundedRect;
-    roundedRect.addRoundedRect(wg, 3, 3);
-    for (int i = 0; i < 4; ++i) {
-        p.save();
-        p.setClipRect(clips[i]);
-        p.fillPath(roundedRect, bg);
-        p.restore();
-    }
-    p.save();
-    wg.adjust(1,1,2,-1);
-    p.restore();
-
-    // Window icon
-    QIcon icon = QIcon::fromTheme("wayland");
-    if(!m_icon.isNull())
-        icon = m_icon;
-    QRectF iconRect(wg.left(), wg.top(), btnsz, btnsz);
-    iconRect.adjust(bs + btnsp, 4,
-                    bs + btnsp, 4);
-
-    if (!icon.isNull())
-        icon.paint(&p, iconRect.toRect());
-
-    // Window title
-    QString windowTitleText = windowTitle();
-    if (!windowTitleText.isEmpty())
-    {
-        QStaticText m_windowTitle;
-        if (m_windowTitle.text() != windowTitleText) {
-            m_windowTitle.setText(windowTitleText);
-            m_windowTitle.prepare();
-        }
-
-        QFont font = p.font();
-        auto psz = 12*surface()->bufferScale();
-        font.setPixelSize(psz);
-        p.setFont(font);
-        QFontMetrics m(p.font());
-        QPoint start(iconRect.topLeft().toPoint());
-        if(!icon.isNull())
-            start.setX(iconRect.x()+iconRect.width()+btnsp);
-        start.setY(start.y()+m.height());
-        p.save();
-        p.setPen(fg);
-        p.drawText(start, windowTitleText);
-        p.restore();
-    }
-
-    // Default pen
-    QPen pen(fg);
-    p.setPen(pen);
-
-    // Close button
-    p.save();
-    // close button
-    auto icopath = do_dark ? ":/Icons/Dark/window-close"
-                           : ":/Icons/Light/window-close";
-    int close_left = (surfaceSize().width()*surface()->bufferScale())-bs-btnsz;
-    QIcon wcico = QIcon(icopath);
-    if (!wcico.isNull())
-    {
-        QRect iconRect(close_left, wg.top()+4, btnsz, btnsz);
-        wcico.paint(&p, iconRect);
-    }
-    p.restore();
-
-    // Maximize button
-    // maximize/restore
-    int max_left = close_left - btnsp - btnsz;
-    if(canMaximize())
-    {
-        p.save();
-        if(isMaximized())
-        {
-            auto icopath = do_dark ? ":/Icons/Dark/window-restore"
-                                   : ":/Icons/Light/window-restore";
-            QIcon ico = QIcon(icopath);
-            if (!ico.isNull())
-            {
-                QRect iconRect(max_left, wg.top()+4, btnsz, btnsz);
-                ico.paint(&p, iconRect);
-            }
-        }
-        else
-        {
-            auto icopath = do_dark ? ":/Icons/Dark/window-maximize"
-                                   : ":/Icons/Light/window-maximize";
-            QIcon ico = QIcon(icopath);
-            if (!ico.isNull())
-            {
-                QRect iconRect(max_left, wg.top()+4, btnsz, btnsz);
-                ico.paint(&p, iconRect);
-            }
-        }
-        p.restore();
-
-        p.save();
-        int min_left = max_left - btnsp - btnsz;
-        if(canMinimize())
-        {
-            auto icopath = do_dark ? ":/Icons/Dark/window-minimize"
-                                   : ":/Icons/Light/window-minimize";
-            QIcon ico = QIcon(icopath);
-            if (!ico.isNull())
-            {
-                QRect iconRect(min_left, wg.top()+4, btnsz, btnsz);
-                ico.paint(&p, iconRect);
-            }
-        }
-        p.restore();
-    }
-    hwComp->triggerRender();
-}
-
 void Surface::setLayerShellParent(Surface *surface)
 {
     m_parentSurface = surface;
@@ -909,20 +732,17 @@ void Surface::onDestinationSizeChanged()
         m_surfaceInit = true;
     }
 
-    renderDecoration();
     hwComp->triggerRender();
 }
 
 void Surface::onBufferScaleChanged()
 {
-    renderDecoration();
     hwComp->triggerRender();
 }
 
 void Surface::onXdgStartResize(QWaylandSeat *seat, Qt::Edges edges)
 {
     hwComp->onXdgStartResize(seat, edges);
-    renderDecoration();
 }
 
 void Surface::startMove()
@@ -947,8 +767,7 @@ void Surface::endResize()
     if(m_qt != nullptr)
         m_qt->send_configure(m_qt_sizeserial);
     m_qt_sizeserial = 0;
-    if(m_ssd)
-        renderDecoration();
+
 }
 
 void Surface::endMove()
@@ -962,10 +781,7 @@ void Surface::endMove()
 void Surface::decorationModeChanged()
 {
     if(m_xdgTopLevel->decorationMode() == HWWaylandXdgToplevel::ServerSideDecoration)
-    {
         m_ssd = true;
-        renderDecoration();
-    }
     else
         m_ssd = false;
     hwComp->triggerRender();
@@ -976,8 +792,7 @@ void Surface::onQtWindowTitleChanged(const QString &title)
     m_windowTitle = title;
     if(m_wndctl)
         m_wndctl->setTitle(m_windowTitle);
-    if(m_ssd)
-        renderDecoration();
+
     hwComp->triggerRender();
 }
 
@@ -990,16 +805,12 @@ void Surface::onQtShellActivationRequest()
 void Surface::onQtShellReposition(const QPoint &pos)
 {
     m_surfacePosition = pos;
-    if(m_ssd)
-        renderDecoration();
     hwComp->triggerRender();
 }
 
 void Surface::onQtShellSetSize(const QSize &size)
 {
     m_qt_size = size;
-    if(m_ssd)
-        renderDecoration();
     emit geometryChanged();
     hwComp->triggerRender();
 }
@@ -1013,7 +824,6 @@ void Surface::onQtWindowFlagsChanged(const Qt::WindowFlags &f)
         m_ssd = true;
         createPlasmaWindowControl();
         m_wndctl->setTitle(m_windowTitle);
-        renderDecoration();
         auto bs = hwComp->borderSize();
         auto ds = hwComp->decorationSize();
         m_qt->send_set_frame_margins(bs,bs,ds,bs);
@@ -1023,7 +833,6 @@ void Surface::onQtWindowFlagsChanged(const Qt::WindowFlags &f)
     if(f.testFlag(Qt::Dialog) && !f.testFlag(Qt::Popup))
     {
         m_ssd = true;
-        renderDecoration();
         auto bs = hwComp->borderSize();
         auto ds = hwComp->decorationSize();
         m_qt->send_set_frame_margins(bs,bs,ds,bs);
@@ -1033,7 +842,6 @@ void Surface::onQtWindowFlagsChanged(const Qt::WindowFlags &f)
     if(f.testFlag(Qt::Tool))
     {
         m_ssd = true;
-        renderDecoration();
         auto bs = hwComp->borderSize();
         auto ds = hwComp->decorationSize();
         m_qt->send_set_frame_margins(bs,bs,ds,bs);
@@ -1060,11 +868,6 @@ void Surface::onQtWindowFlagsChanged(const Qt::WindowFlags &f)
 
     m_surfaceInit = true;
     hwComp->triggerRender();
-}
-
-QImage* Surface::decorationImage()
-{
-    return m_ssdimg;
 }
 
 void Surface::removeXdgTopLevelChild(Surface *s)
@@ -1096,7 +899,6 @@ void Surface::setXWaylandShell(XWaylandShellSurface *surface)
     //m_xwl_shell->sendConfigure(QRect(15,15,350,350));
     hwComp->activate(this);
     hwComp->raise(this);
-    renderDecoration();
 }
 
 void Surface::activate()
@@ -1113,7 +915,6 @@ void Surface::activate()
     }
     hwComp->defaultSeat()->setKeyboardFocus(surface());
     hwComp->defaultSeat()->setMouseFocus(surface()->primaryView());
-    renderDecoration();
 }
 
 void Surface::deactivate()
@@ -1129,7 +930,6 @@ void Surface::deactivate()
 
     if(m_wndctl)
         m_wndctl->setActive(false);
-    renderDecoration();
 }
 
 void Surface::toggleMinimize()
@@ -1340,7 +1140,6 @@ void Surface::completeXdgConfigure()
     if(m_resize_animation)
         return;
 
-    renderDecoration();
     if(m_maximized)
     {
         auto pos = primaryView()->output()->availableGeometry().topLeft();
@@ -1367,7 +1166,6 @@ void Surface::completeXdgConfigure()
                 sizeAnimation->setEasingCurve(QEasingCurve::InOutQuad);
 
                 connect(posAnimation, &QPropertyAnimation::valueChanged, [this](){
-                    renderDecoration();
                     m_xdgTopLevel->sendResizing(m_resize_animation_size);
                     hwComp->triggerRender();
                 });
@@ -1382,7 +1180,6 @@ void Surface::completeXdgConfigure()
                     QList<int> states;
                     states << HWWaylandXdgToplevel::State::MaximizedState;
                     m_xdgTopLevel->sendConfigure(m_animation_minmax_target_size, states);
-                    renderDecoration();
                     hwComp->triggerRender();
                 });
             }
@@ -1418,7 +1215,6 @@ void Surface::completeXdgConfigure()
                 sizeAnimation->setDuration(190);
                 sizeAnimation->setEasingCurve(QEasingCurve::InOutQuad);
                 connect(posAnimation, &QPropertyAnimation::valueChanged, [this](){
-                    //renderDecoration();
                     m_xdgTopLevel->sendConfigure(m_resize_animation_size, m_xdgTopLevel->states());
                     hwComp->triggerRender();
                 });
@@ -1428,7 +1224,6 @@ void Surface::completeXdgConfigure()
                 group->start(QPropertyAnimation::DeleteWhenStopped);
                 connect(group, &QParallelAnimationGroup::finished, [this]() {
                     m_resize_animation = false;
-                    renderDecoration();
                     hwComp->triggerRender();
                 });
             }
@@ -1467,7 +1262,6 @@ void Surface::onXdgTitleChanged()
     m_windowTitle = m_xdgTopLevel->title();
     if(m_wndctl)
         m_wndctl->setTitle(m_windowTitle);
-    renderDecoration();
 }
 
 void Surface::onXdgParentTopLevelChanged()
@@ -1503,7 +1297,6 @@ void Surface::onXdgAppIdChanged()
 
 void Surface::onXdgWindowGeometryChanged()
 {
-    renderDecoration();
 }
 
 // Layer Shell Functions

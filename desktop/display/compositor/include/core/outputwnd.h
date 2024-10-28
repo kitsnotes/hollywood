@@ -33,6 +33,7 @@ public:
 
     void setupScreenCopyFrame(WlrScreencopyFrameV1 *frame);
 protected:
+    friend class ServerSideDecoration;
     void initializeGL() override;
     void paintGL() override;
 
@@ -45,7 +46,7 @@ protected:
     void wheelEvent(QWheelEvent *) override;
 
     void touchEvent(QTouchEvent *) override;
-
+    //void paintEvent(QPaintEvent *paintEvent) override;
 private slots:
     void startMove();
     void startResize(int edge, bool anchored);
@@ -70,7 +71,6 @@ private:
     Output *m_output;
     QOpenGLTextureBlitter m_textureBlitter;
     QOpenGLShaderProgram *m_shadowShader;
-    QOpenGLShaderProgram *m_rgbShader;
     QOpenGLShaderProgram *m_rgbaShader;
     QOpenGLFramebufferObject *m_fbo = nullptr;
 
@@ -86,7 +86,6 @@ private:
     Surface *m_dragIconSurfaceObject = nullptr;
     WallpaperManager *m_wpm = nullptr;
 
-    QScopedPointer<QOpenGLVertexArrayObject> m_rgb_vao;
     QOpenGLBuffer m_textureBuffer;
     QOpenGLBuffer m_vertexBuffer;
 

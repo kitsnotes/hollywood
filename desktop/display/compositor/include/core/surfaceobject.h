@@ -31,6 +31,7 @@ class OriginullMenuServer;
 class GtkSurface;
 class QtSurface;
 class Output;
+class ServerSideDecoration;
 /* This class represents a holder for a Wayland Surface object
  * and all of the items that a surface may contain, including,
  * protocols like xdg_shell, wl_shell, the GTK flavors of the month,
@@ -136,7 +137,6 @@ public:
     void startResize();
     void endResize();
     void endMove();
-    QImage* decorationImage();
     Surface *topLevelSurface() const { return m_parentTopLevelSurface; }
     Surface *xdgTopLevelParent() const { return m_parentTopLevelSurface; }
     void removeXdgTopLevelChild(Surface *s);
@@ -146,6 +146,10 @@ public:
     bool isShellDesktop() const { return m_isShellDesktop; }
     void setXWaylandShell(XWaylandShellSurface *surface);
     XWaylandShellSurface* getXWaylandShellSurface() { return m_xwl_shell; }
+    ServerSideDecoration* decoration() const { return m_ssdMgr; }
+signals:
+    void iconChanged();
+    void titleChanged();
 public slots:
     void activate();
     void deactivate();
@@ -170,7 +174,6 @@ protected:
     void addChildSurfaceObject(Surface* child);
     void addXdgChildSurfaceObject(Surface* child);
     void recycleChildSurfaceObject(Surface* child);
-    void renderDecoration();
     void updatePlasmaStateFlags() const;
     void setLayerShellParent(Surface *surface);
     void handleLayerShellPopupPositioning();
@@ -306,4 +309,6 @@ private:
 
     QTimer* m_loadTimer = nullptr;
     XWaylandShellSurface *m_xwl_shell = nullptr;
+
+    ServerSideDecoration *m_ssdMgr = nullptr;
 };

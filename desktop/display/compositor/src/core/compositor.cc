@@ -597,21 +597,17 @@ void Compositor::loadSettings()
         m_timeout_display = 0;
 
     settings.endGroup();
-    if(m_apperance != old_app)
-    {
-        // dark/light mode changed - redraw SSD's
-        for(auto s : m_surfaces)
-            s->renderDecoration();
-    }
 
-    if(m_timeout->isActive())
-        m_timeout->stop();
+    /*if(m_timeout->isActive())
+        m_timeout->stop();*/
     setupIdleTimer();
     emit settingsChanged();
 }
 
 void Compositor::setupIdleTimer()
 {
+    return;
+
     if(isInhibitingIdle())
         return;
 
@@ -1275,6 +1271,7 @@ bool Compositor::useAnimations() const
 
 void Compositor::resetIdle()
 {
+    return;
     if(m_timeout)
         m_timeout->stop();
     m_timeout->start();
@@ -1362,6 +1359,8 @@ int main(int argc, char *argv[])
         qputenv("XDG_RUNTIME_DIR", xdg.toUtf8().data());
     }
 
+    QSurfaceFormat format;
+    format.setProfile(QSurfaceFormat::CompatibilityProfile);
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts, true);
     CompositorApp app(is_sddm, argc, argv);
     app.doInit();

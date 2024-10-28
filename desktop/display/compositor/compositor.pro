@@ -38,6 +38,7 @@ contains(QT_CONFIG, no-pkg-config) {
 
 HEADERS += \
     include/core/compositor.h \
+    include/core/decoration.h \
     include/core/output.h \
     include/core/shortcuts.h \
     include/core/surfaceobject.h \
@@ -70,6 +71,7 @@ HEADERS += \
     include/xwayland/xwaylandshellsurface.h
 
 SOURCES += \
+    src/core/decoration.cc \
     src/protocol/activation.cc \
     src/protocol/appmenu.cc \
     src/protocol/fullscreen.cc \
@@ -128,14 +130,12 @@ DISTFILES += \
     protocols/wlr-layer-shell-unstable-v1.xml \
     protocols/qt-shell-unstable-v1.xml \
     protocols/xdg-shell.xml \
-    rgba.fsh \
-    rgbconv.fsh \
-    rgbconv.vsh \
-    shadow.fsh \
-    shadow.vsh \
-    surface.vsh \
-    transition.fsh \
-    transition.vsh
+    shaders/surface.fsh \
+    shaders/shadow.fsh \
+    shaders/shadow.vsh \
+    shaders/surface.vsh \
+    shaders/transition.fsh \
+    shaders/transition.vsh
 
 
 RESOURCES += \

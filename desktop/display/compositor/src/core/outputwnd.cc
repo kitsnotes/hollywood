@@ -4,10 +4,10 @@
 
 #include "outputwnd.h"
 #include "compositor.h"
+#include "decoration.h"
 
 // include gles for x64
 #include <GLES3/gl3.h>
-
 #include <QMouseEvent>
 #include <QOpenGLWindow>
 #include <QOpenGLTexture>
@@ -63,12 +63,11 @@ static const GLfloat texture_buffer_data[] {
 
 
 OutputWindow::OutputWindow(Output* parent)
-    :m_output(parent)
-    ,m_shadowShader(new QOpenGLShaderProgram(this))
-    ,m_rgbShader(new QOpenGLShaderProgram(this))
-    ,m_rgbaShader(new QOpenGLShaderProgram(this))
-    ,m_wpm(new WallpaperManager(this))
-    ,m_rgb_vao(new QOpenGLVertexArrayObject)
+    : QOpenGLWindow(QOpenGLWindow::NoPartialUpdate)
+    , m_output(parent)
+    , m_shadowShader(new QOpenGLShaderProgram(this))
+    , m_rgbaShader(new QOpenGLShaderProgram(this))
+    , m_wpm(new WallpaperManager(this))
 {
     connect(hwComp, &Compositor::startMove, this, &OutputWindow::startMove);
     connect(hwComp, &Compositor::startResize, this, &OutputWindow::startResize);
@@ -93,10 +92,7 @@ void OutputWindow::setupScreenCopyFrame(WlrScreencopyFrameV1 *frame)
 
 void OutputWindow::initializeGL()
 {
-    m_rgbShader->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/rgbconv.vsh");
-    m_rgbShader->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/Shaders/rgbconv.fsh");
-    m_rgbShader->link();
-    m_rgbaShader->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/rgbconv.vsh");
+    /*m_rgbaShader->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/rgbconv.vsh");
     m_rgbaShader->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/Shaders/rgba.fsh");
     m_rgbaShader->link();
     m_rgbaShader->bind();
@@ -111,7 +107,7 @@ void OutputWindow::initializeGL()
     m_textureBuffer.bind();
     m_textureBuffer.allocate(texture_buffer_data, sizeof(texture_buffer_data));
     m_textureBuffer.release();
-    m_rgbaShader->release();
+    m_rgbaShader->release();*/
 
     m_textureBlitter.create();
     m_wpm->setup();
@@ -240,7 +236,6 @@ void OutputWindow::drawTextureForObject(Surface *obj)
 
     if ((obj->surface() && obj->surface()->hasContent()) || obj->viewForOutput(m_output)->isBufferLocked())
     {
-
         // this comes in surface device independent pixels (ie: 1x)
         QSize s = obj->surfaceSize();
         s = s*obj->surface()->bufferScale();
@@ -290,7 +285,7 @@ void OutputWindow::drawTextureForObject(Surface *obj)
                     drawShadowForObject(obj->shadowSize(), obj);
 
                 if(obj->serverDecorated())
-                    drawServerSideDecoration(obj);
+                    obj->decoration()->paintGL(this, m_fbo);
 
                 functions->glEnable(GL_BLEND);
                 functions->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -331,9 +326,6 @@ void OutputWindow::drawTextureForObject(Surface *obj)
                 auto offset = obj->surface()->bufferSize().height() - sourceGeom.height();
                 sourceGeom.moveTop(offset);
             }
-
-            if(obj->getXWaylandShellSurface() != nullptr)
-                qDebug() << "rendering X11 2" << obj->uuid().toString() << sourceGeom << source;
 
             QMatrix3x3 src_transform = QOpenGLTextureBlitter::sourceTransform(sourceGeom,
                                                                               obj->surface()->bufferSize()/obj->surface()->bufferScale(),
@@ -410,6 +402,8 @@ void OutputWindow::drawShadowForObject(uint shadowOffset, Surface *obj)
     m_shadowShader->setUniformValue("corner", corner);
     m_shadowShader->setUniformValue("window", m_fbo->height(), m_fbo->width());
     functions->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glDeleteBuffers(1,&VBO);
+
     m_shadowShader->release();
 
     auto rect = QRect(sm+bs,sm+bs,obj->surfaceSize().width(),obj->surfaceSize().height());
@@ -449,32 +443,16 @@ void OutputWindow::drawDesktopInfoString()
 
 void OutputWindow::drawServerSideDecoration(Surface *obj)
 {
+    return;
     if(obj->isSpecialShellObject())
         return;
 
-    if(obj->xdgTopLevel() == nullptr && obj->qtSurface() == nullptr && obj->getXWaylandShellSurface() == nullptr)
+    if(obj->xdgTopLevel() == nullptr
+        && obj->qtSurface() == nullptr
+        && obj->getXWaylandShellSurface() == nullptr)
         return;
 
-    if(obj->decorationImage() == nullptr)
-        obj->renderDecoration();
 
-    QImage* img = obj->decorationImage();
-
-    QOpenGLFunctions *functions = context()->functions();
-    m_textureBlitter.bind();
-    functions->glEnable(GL_BLEND);
-    functions->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    QOpenGLTexture texture(*img);
-    texture.bind();
-    auto fbo_sz = obj->renderSize();
-    auto ss = obj->shadowSize();
-    QMatrix4x4 targetTransform = QOpenGLTextureBlitter::targetTransform(QRect(ss,ss,obj->decoratedSize().width(), obj->decoratedSize().height()),
-                              QRect(0,0,fbo_sz.width(),fbo_sz.height()));
-    m_textureBlitter.blit(texture.textureId(), targetTransform, QOpenGLTextureBlitter::OriginTopLeft);
-    texture.release();
-    texture.destroy();
-    m_textureBlitter.release();
 }
 
 SurfaceView *OutputWindow::viewAt(const QPointF &point)
