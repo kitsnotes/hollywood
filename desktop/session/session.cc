@@ -489,6 +489,7 @@ void SMApplication::loadSettings()
     QSettings settings("originull", "hollywood");
     settings.beginGroup("Compositor");
     m_qt_builtin_eglfs = settings.value("EglfsUseQtBuiltin", false).toBool();
+    m_use_dmabuf = settings.value("UseDMABuf", false).toBool();
     settings.endGroup();
     settings.beginGroup("Session");
     m_wayland_reconnect = settings.value("WaylandSurviveCrash", true).toBool();

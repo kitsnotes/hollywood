@@ -254,7 +254,8 @@ void ManagedProcess::setEnvironmentForProcess()
         // special eglfs handling for the compositor
         if(!env.contains("DISPLAY"))
         {
-            //env.insert("QT_WAYLAND_CLIENT_BUFFER_INTEGRATION", "linux-dmabuf-unstable-v1");
+            if(smApp->useDmabuf())
+                env.insert("QT_WAYLAND_CLIENT_BUFFER_INTEGRATION", "linux-dmabuf-unstable-v1");
             // Apple GPU doesn't support hardware cursors
             if(smApp->isAsahiKernel())
                 env.insert("QT_QPA_EGLFS_SWCURSOR", "1");

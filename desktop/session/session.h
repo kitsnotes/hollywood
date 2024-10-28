@@ -64,6 +64,7 @@ public:
     bool useQtBuiltinEglfs() const { return m_qt_builtin_eglfs; }
     bool isAsahiKernel() const;
     bool surviveWaylandCrash() const { return m_wayland_reconnect; }
+    bool useDmabuf() const { return m_use_dmabuf; }
 private:
     void startDBusReliantServices();
     bool verifyXdgRuntime();
@@ -121,6 +122,7 @@ private:
     QProcess* m_mini_utils = nullptr;
     bool m_qt_builtin_eglfs = false;
     bool m_wayland_reconnect = true;
+    bool m_use_dmabuf = false;
 };
 
 #endif // SMAPPLICATION_H
