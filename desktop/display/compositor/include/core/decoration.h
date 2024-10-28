@@ -32,13 +32,12 @@ public:
     bool hasCloseIcon() const;
 private slots:
     void iconChanged();
-    void titleChanged();
 private:
     QPoint decorationRenderStartPoint();
     void renderDecoration(OutputWindow *window);
     void renderGems(OutputWindow *window);
     void renderIcon(OutputWindow *window);
-    void renderTitle(OutputWindow *window, QOpenGLFramebufferObject *fbo);
+    void renderTitle(QOpenGLFramebufferObject *fbo);
     void scissorContentArea(OutputWindow *window);
     void createWindowGemTextures();
     void renderGem(QOpenGLFunctions *functions,
@@ -46,6 +45,8 @@ private:
     void createWindowIconTexture();
     uint paddingSize() const;
     uint iconSize() const;
+    uint fontSize() const;
+
 private:
     Surface *m_parent;
     bool m_dark_mode = false;

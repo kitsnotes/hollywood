@@ -897,6 +897,7 @@ void Surface::setXWaylandShell(XWaylandShellSurface *surface)
     setPosition(QPoint(45,45));
     m_xwl_shell->sendPosition(QPointF(45,45));
     //m_xwl_shell->sendConfigure(QRect(15,15,350,350));
+    emit iconChanged();
     hwComp->activate(this);
     hwComp->raise(this);
 }
@@ -934,15 +935,24 @@ void Surface::deactivate()
 
 void Surface::toggleMinimize()
 {
-    if(m_minimized)
-        unsetMinimized();
-    else
-        setMinimized();
+    if(canMinimize())
+    {
+        if(m_minimized)
+            unsetMinimized();
+        else
+            setMinimized();
+    }
 }
 
 void Surface::toggleMaximize()
 {
-
+    if(canMaximize())
+    {
+        if(m_maximized)
+            unsetMaximized();
+        else
+            setMaximized();
+    }
 }
 
 void Surface::toggleActive()
@@ -1291,6 +1301,7 @@ void Surface::onXdgAppIdChanged()
                 if(!m_icontheme.isEmpty())
                     m_wndctl->setThemedIcon(m_icontheme);
             }
+            emit iconChanged();
         }
     }
 }
@@ -1369,11 +1380,6 @@ void Surface::onLayerShellSizeChanged()
     m_ls_size = m_layerSurface->size();
     recalculateLayerShellAnchorPosition();
     reconfigureLayerSurface();
-}
-
-void Surface::invalidateCachedDecoration()
-{
-
 }
 
 void Surface::onLayerShellXdgPopupParentChanged(HWWaylandXdgPopup *popup)

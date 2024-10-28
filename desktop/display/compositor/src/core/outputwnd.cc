@@ -92,23 +92,6 @@ void OutputWindow::setupScreenCopyFrame(WlrScreencopyFrameV1 *frame)
 
 void OutputWindow::initializeGL()
 {
-    /*m_rgbaShader->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/rgbconv.vsh");
-    m_rgbaShader->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/Shaders/rgba.fsh");
-    m_rgbaShader->link();
-    m_rgbaShader->bind();
-    QOpenGLVertexArrayObject::Binder vaoBinder(m_rgb_vao.data());
-
-    m_vertexBuffer.create();
-    m_vertexBuffer.bind();
-    m_vertexBuffer.allocate(vertex_buffer_data, sizeof(vertex_buffer_data));
-    m_vertexBuffer.release();
-
-    m_textureBuffer.create();
-    m_textureBuffer.bind();
-    m_textureBuffer.allocate(texture_buffer_data, sizeof(texture_buffer_data));
-    m_textureBuffer.release();
-    m_rgbaShader->release();*/
-
     m_textureBlitter.create();
     m_wpm->setup();
     m_shadowShader->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/shadow.vsh");
@@ -421,24 +404,7 @@ void OutputWindow::drawShadowForObject(uint shadowOffset, Surface *obj)
 
 void OutputWindow::drawDesktopInfoString()
 {
-    QImage* img = hwComp->desktopLabelImage();
 
-    QOpenGLFunctions *functions = context()->functions();
-    m_textureBlitter.bind();
-    functions->glEnable(GL_BLEND);
-    functions->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    QOpenGLTexture texture(*img);
-    texture.bind();
-    QPoint startPoint(m_output->wlOutput()->availableGeometry().right()-img->width()
-                      ,m_output->wlOutput()->availableGeometry().bottom()-img->height());
-
-    QMatrix4x4 tf = QOpenGLTextureBlitter::targetTransform(QRect(startPoint, img->size()),
-                                                 QRect(QPoint(0,0), size()));
-    m_textureBlitter.blit(texture.textureId(), tf, QOpenGLTextureBlitter::OriginTopLeft);
-    texture.release();
-    texture.destroy();
-    m_textureBlitter.release();
 }
 
 void OutputWindow::drawServerSideDecoration(Surface *obj)
@@ -949,4 +915,24 @@ void OutputWindow::touchEvent(QTouchEvent *e)
 
     hwComp->defaultSeat()->sendFullTouchEvent(view->surface(), e);
     hwComp->resetIdle();
+}
+
+void OutputWindow::mouseDoubleClickEvent(QMouseEvent *e)
+{
+    qDebug() << "mouseDoubleClickEvent";
+    QPoint adjustedPoint(m_output->wlOutput()->position().x()+e->position().x(),
+                         m_output->wlOutput()->position().y()+e->position().y());
+
+    if(!m_mouseSelectedSurfaceObject.isNull())
+    {
+        qDebug() << "have m_mouseSelectedSurfaceObject";
+
+        if(m_mouseSelectedSurfaceObject->serverDecorated() &&
+            m_mouseSelectedSurfaceObject->titleBarRect().contains(adjustedPoint))
+        {
+            qDebug() << "have m_mouseSelectedSurfaceObjec 2t";
+
+            m_mouseSelectedSurfaceObject->toggleMaximize();
+        }
+    }
 }

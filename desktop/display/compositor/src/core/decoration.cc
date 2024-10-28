@@ -36,7 +36,7 @@ ServerSideDecoration::ServerSideDecoration(Surface *parent)
     if(hwComp->viewMode() == 1)
         m_dark_mode = true;
 
-    /*if(hwComp->viewMode() == 2 /*&& m_twilight*)
+    /*if(hwComp->viewMode() == 2 && m_twilight)
         m_dark_mode = true;*/
 
     m_fg_color = QColor(HOLLYWOOD_TEXTCLR_LIGHT);
@@ -56,7 +56,6 @@ ServerSideDecoration::ServerSideDecoration(Surface *parent)
     createWindowIconTexture();
 
     connect(m_parent, &Surface::iconChanged, this, &ServerSideDecoration::iconChanged);
-    connect(m_parent, &Surface::titleChanged, this, &ServerSideDecoration::titleChanged);
 }
 
 ServerSideDecoration::~ServerSideDecoration()
@@ -73,8 +72,8 @@ void ServerSideDecoration::paintGL(OutputWindow *window, QOpenGLFramebufferObjec
     renderDecoration(window);
     scissorContentArea(window);
     renderIcon(window);
-    //renderTitle(window, fbo);
     renderGems(window);
+    renderTitle(fbo);
 }
 
 bool ServerSideDecoration::hasWindowIcon() const
@@ -99,12 +98,7 @@ bool ServerSideDecoration::hasCloseIcon() const
 
 void ServerSideDecoration::iconChanged()
 {
-
-}
-
-void ServerSideDecoration::titleChanged()
-{
-
+    createWindowIconTexture();
 }
 
 QPoint ServerSideDecoration::decorationRenderStartPoint()
@@ -153,7 +147,7 @@ void ServerSideDecoration::renderDecoration(OutputWindow *window)
         color = QColor(HOLLYWOOD_WNDCLR_DARK);
 
     if(hwComp->activatedSurface() != m_parent)
-        color = color.lighter(30);
+        color = color.darker(120);
 
     g_shader->setUniformValue("fragColor", color.blueF(), color.greenF(), color.redF(), color.alphaF());
     //g_shader->setUniformValue("fragColor", 0.9, 0.5, 0.1, 1.0f);
@@ -232,7 +226,7 @@ void ServerSideDecoration::renderIcon(OutputWindow *window)
     renderGem(functions, start, QSize(is,is), m_window_icon);
 }
 
-void ServerSideDecoration::renderTitle(OutputWindow *window, QOpenGLFramebufferObject *fbo)
+void ServerSideDecoration::renderTitle(QOpenGLFramebufferObject *fbo)
 {
     QString windowTitleText = m_parent->windowTitle();
     if (!windowTitleText.isEmpty())
@@ -243,22 +237,27 @@ void ServerSideDecoration::renderTitle(OutputWindow *window, QOpenGLFramebufferO
             m_windowTitle.prepare();
         }
 
-        QOpenGLPaintDevice pd;
+        QOpenGLPaintDevice pd(fbo->size());
         QPainter p(&pd);
         QFont font = p.font();
-        auto psz = 12*m_parent->surface()->bufferScale();
-        font.setPixelSize(psz);
+        font.setPixelSize(fontSize());
         p.setFont(font);
         QFontMetrics m(p.font());
-        QPointF start = QPoint(0,0);//decorationRenderStartPoint();
-        /*start.setY(start.y()+m.height()+2);
+        auto start = decorationRenderStartPoint();
+        auto decoheight = hwComp->decorationSize();
+        auto is = iconSize();
+        auto start_y = (decoheight-is)/2;
+        start.setY(start.y()+start_y+15);
+        //start.setY(start.y()+((hwComp->decorationSize()-m.height())/2));
+        //qDebug() << m.height() << start.y();
+        start.setX(start.x()+paddingSize());
         if(hasWindowIcon())
-            start.setX(start.x()+32+5);
-        else
-            start.setX(start.x()+5);*/
+            start.setX(start.x()+paddingSize()+iconSize());
 
-        p.setPen(m_fg_color);
+
+        p.setPen(QColor(Qt::black));
         p.drawText(start, windowTitleText);
+        p.end();
     }
 }
 
@@ -361,7 +360,10 @@ void ServerSideDecoration::createWindowIconTexture()
     }
 
     if(m_window_icon)
+    {
+        m_window_icon->destroy();
         delete m_window_icon;
+    }
 
     QImage r = icon.pixmap(QSize(iconSize(),iconSize()), 1.0).toImage();
     m_window_icon = new QOpenGLTexture(QOpenGLTexture::Target2D);
@@ -381,5 +383,10 @@ uint ServerSideDecoration::paddingSize() const
 
 uint ServerSideDecoration::iconSize() const
 {
-    return 22;
+    return 22*m_parent->surface()->bufferScale();
+}
+
+uint ServerSideDecoration::fontSize() const
+{
+    return 12*m_parent->surface()->bufferScale();
 }

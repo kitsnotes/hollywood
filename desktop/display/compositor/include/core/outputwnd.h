@@ -46,7 +46,7 @@ protected:
     void wheelEvent(QWheelEvent *) override;
 
     void touchEvent(QTouchEvent *) override;
-    //void paintEvent(QPaintEvent *paintEvent) override;
+    void mouseDoubleClickEvent(QMouseEvent *) override;
 private slots:
     void startMove();
     void startResize(int edge, bool anchored);
