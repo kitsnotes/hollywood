@@ -18,6 +18,7 @@ WAYLANDSERVERSOURCES += protocols/plasma-window-management.xml
 WAYLANDSERVERSOURCES += protocols/fullscreen-shell-unstable-v1.xml
 WAYLANDSERVERSOURCES += protocols/wlr-layer-shell-unstable-v1.xml
 WAYLANDSERVERSOURCES += protocols/wlr-screencopy-unstable-v1.xml
+WAYLANDSERVERSOURCES += protocols/wlr-output-management-unstable-v1.xml
 WAYLANDSERVERSOURCES += protocols/gtk.xml
 WAYLANDSERVERSOURCES += protocols/qt-shell-unstable-v1.xml
 WAYLANDSERVERSOURCES += protocols/xdg-shell.xml
@@ -40,6 +41,7 @@ HEADERS += \
     include/core/compositor.h \
     include/core/decoration.h \
     include/core/output.h \
+    include/core/outputmanager.h \
     include/core/shortcuts.h \
     include/core/surfaceobject.h \
     include/core/outputwnd.h \
@@ -51,6 +53,7 @@ HEADERS += \
     include/protocol/gtkshell.h \
     include/protocol/layershell.h \
     include/protocol/originull.h \
+    include/protocol/outputmanagement.h \
     include/protocol/qtshell.h \
     include/protocol/relativepointer.h \
     include/protocol/pointerconstraints.h \
@@ -72,6 +75,7 @@ HEADERS += \
 
 SOURCES += \
     src/core/decoration.cc \
+    src/core/outputmanager.cc \
     src/protocol/activation.cc \
     src/protocol/appmenu.cc \
     src/protocol/fullscreen.cc \
@@ -79,6 +83,7 @@ SOURCES += \
     src/protocol/layershell.cc \
     src/protocol/originull.cc \
     src/core/output.cc \
+    src/protocol/outputmanagement.cc \
     src/protocol/pointerconstraints.cc \
     src/protocol/qtshell.cc \
     src/protocol/relativepointer.cc \

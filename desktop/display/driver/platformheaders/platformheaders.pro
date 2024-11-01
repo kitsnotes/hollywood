@@ -3,7 +3,7 @@ TEMPLATE=lib
 CONFIG+=staticlib
 DESTDIR=$${OBJECTS_DIR}../../../output/
 
-QT = core-private gui core5compat
+QT = core-private gui gui-private fb_support-private core5compat
 CONFIG += lib
 INCLUDEPATH += hollywood/
 

@@ -421,6 +421,10 @@ QFunctionPointer HWEglFSIntegration::platformFunction(const QByteArray &function
         return QFunctionPointer(enableScreenCastStatic);
     else if (function == Originull::Platform::EglFSFunctions::disableScreenCastIdentifier())
         return QFunctionPointer(disableScreenCastStatic);
+    else if (function == Originull::Platform::EglFSFunctions::modesForScreenIdentifier())
+        return QFunctionPointer(modesForScreenStatic);
+    else if (function == Originull::Platform::EglFSFunctions::preferredModeForScreenIdentifier())
+        return QFunctionPointer(preferredModeForScreenStatic);
     /*else if (function == Originull::Platform::EglFSFunctions::applyScreenChangesIdentifier())
         return QFunctionPointer(c);*/
 
@@ -492,6 +496,18 @@ bool HWEglFSIntegration::testScreenChangesStatic(const QVector<Originull::Platfo
     }
     return success;
 }*/
+
+QList<QPlatformScreen::Mode> HWEglFSIntegration::modesForScreenStatic(QScreen *screen)
+{
+    HWEglFSScreen *platformScreen = static_cast<HWEglFSScreen *>(screen->handle());
+    return platformScreen->modes();
+}
+
+QPlatformScreen::Mode HWEglFSIntegration::preferredModeForScreenStatic(QScreen *screen)
+{
+    HWEglFSScreen *platformScreen = static_cast<HWEglFSScreen *>(screen->handle());
+    return platformScreen->modes().at(platformScreen->preferredMode());
+}
 
 void HWEglFSIntegration::enableScreenCastStatic(QScreen *screen)
 {

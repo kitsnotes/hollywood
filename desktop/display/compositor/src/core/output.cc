@@ -14,25 +14,34 @@
 
 Q_LOGGING_CATEGORY(hwOutput, "compositor.output")
 
-Output::Output(QScreen *s, bool defaultScreen)
-    : QObject(nullptr)
-    , m_window(new OutputWindow(this))
+Output::Output(QScreen *s, QWindow *output, bool defaultScreen)
+    : QWaylandOutput(wcApp->waylandCompositor(), output)
+    , m_primary(defaultScreen)
     , m_screen(s)
 {
-    qCInfo(hwOutput, "Supporting xdg_output (protocol version 3)");
+    setManufacturer(s->manufacturer());
+    setModel(s->model());
+    setPhysicalSize(s->physicalSize().toSize());
+    m_available_modes = Originull::Platform::EglFSFunctions::modesForScreen(s);
+    QWaylandOutputMode mode(m_screen->size(), m_screen->refreshRate());
+    setCurrentMode(mode);
 
-    m_wlOutput = new QWaylandOutput(wcApp->waylandCompositor(), m_window);
-    wcApp->compositor()->addOutput(this);
-    connect(m_wlOutput, &QWaylandOutput::currentModeChanged, this, &Output::modeChanged);
+    qCInfo(hwOutput, "Supporting xdg_output (protocol version 3)");
+    m_xdg_output = new QWaylandXdgOutputV1(this, wcApp->compositor()->xdgOutputManager());
+    m_xdg_output->setName(s->name());
+    m_xdg_output->setLogicalPosition(QPoint(0,0));
+    m_xdg_output->setLogicalSize(s->size());
+    m_xdg_output->setDescription(QString("%1 %2").arg(s->manufacturer(), s->model()));
+
+    //connect(m_wlOutput, &QWaylandOutput::currentModeChanged, this, &Output::modeChanged);
     connect(s, &QScreen::availableGeometryChanged, this, [this]() {
         qCDebug(hwOutput, "available geom changed: %i x %i",m_screen->size().width(), m_screen->size().height());
-
-        m_window->resize(m_screen->size().width(), m_screen->size().height());
-        QWaylandOutputMode mode(m_screen->size(), 60);
-        m_wlOutput->addMode(mode, true);
-        m_wlOutput->setCurrentMode(mode);
-        m_xdgOutput->setLogicalSize(mode.size());
-        m_window->wallpaperManager()->wallpaperChanged();
+        window()->resize(m_screen->size().width(), m_screen->size().height());
+        QWaylandOutputMode mode(m_screen->size(), m_screen->refreshRate());
+        setCurrentMode(mode);
+        m_xdg_output->setLogicalSize(mode.size());
+        if(hwWindow() != nullptr)
+            hwWindow()->wallpaperManager()->wallpaperChanged();
         updateUsableGeometry();
         emit availableGeometryChanged(QRect(QPoint(0,0), m_screen->size()));
         for(auto lswnd : m_reserved)
@@ -45,39 +54,23 @@ Output::Output(QScreen *s, bool defaultScreen)
     connect(s, &QScreen::refreshRateChanged, this, [this]() {
         qCDebug(hwOutput, "refresh rate changed %f", m_screen->refreshRate());
     });
-    m_wlOutput->setManufacturer(s->manufacturer());
-    m_wlOutput->setModel(s->model());
 
-    // set our preferred mode
-    QWaylandOutputMode mode(s->size(), s->refreshRate());
-    m_wlOutput->addMode(mode, true);
-    /*m_wlOutput->addMode(QWaylandOutputMode(QSize(1920,1080), 75), true);
-    m_wlOutput->addMode(QWaylandOutputMode(QSize(1920,1080), 60));*/
+    window()->resize(s->size());
+}
 
-    m_wlOutput->setCurrentMode(mode);
+Output::~Output()
+{
 
-    if(defaultScreen)
-        wcApp->waylandCompositor()->setDefaultOutput(m_wlOutput);
+}
 
-    if(defaultScreen)
-        m_wlOutput->setPosition(QPoint(0,0));
-
-    reloadConfiguration();
-    touchConfiguration();
-
-    m_window->resize(s->size());
-    m_window->show();
-
-    m_xdgOutput = new QWaylandXdgOutputV1(m_wlOutput, wcApp->compositor()->xdgOutputManager());
-    m_xdgOutput->setName(s->name());
-    m_xdgOutput->setLogicalPosition(QPoint(0,0));
-    m_xdgOutput->setLogicalSize(s->size());
-    m_xdgOutput->setDescription(QString("%1 %2").arg(s->manufacturer(), s->model()));
+OutputWindow *Output::hwWindow()
+{
+    return qobject_cast<OutputWindow*>(this);
 }
 
 QSize Output::size() const
 {
-    return m_window->size();
+    return window()->size();
 }
 
 bool Output::reserveLayerShellRegion(Surface *surface)
@@ -142,58 +135,9 @@ QString Output::persistentSettingName() const
     return m_screen->name();
 }
 
-void Output::touchConfiguration()
-{
-    QSettings settings(QSettings::UserScope,
-       QLatin1String("originull"), QLatin1String("hollywood"));
-
-    settings.beginGroup(QLatin1String("Displays"));
-
-    settings.beginGroup(persistentSettingName());
-    settings.setValue("LastSeen", QDateTime::currentDateTimeUtc().toSecsSinceEpoch());
-}
-
-void Output::reloadConfiguration()
-{
-    QSettings settings(QSettings::UserScope,
-       QLatin1String("originull"), QLatin1String("hollywood"));
-
-    settings.beginGroup(QLatin1String("Displays"));
-    settings.beginGroup(persistentSettingName());
-
-    // TODO: set a resolution set if we have one set
-
-    // set our scale factor
-    auto scale = settings.value("ScaleFactor", defaultScaleFactor()).toInt();
-    if(scale > 4)
-        scale = 4;
-
-    if(m_wlOutput->scaleFactor() != scale)
-        m_wlOutput->setScaleFactor(scale);
-}
-
 void Output::modesetFromConfig()
 {
-    QSettings settings(QSettings::UserScope,
-                       QLatin1String("originull"), QLatin1String("hollywood"));
 
-    settings.beginGroup(QLatin1String("Displays"));
-    settings.beginGroup(persistentSettingName());
-
-    Originull::Platform::ScreenChange chg;
-    chg.screen = m_screen;
-    // TODO: fix for multiple monitors
-    chg.position = QPoint(0,0);
-    chg.enabled = true;
-    chg.refreshRate = settings.value("Refresh", 60000).toInt();
-    chg.scale = 1.0;
-    chg.resolution = QSize(settings.value("Width", m_screen->geometry().width()).toInt()
-                           ,settings.value("Height",m_screen->geometry().height()).toInt());
-
-    // TODO: test, check if valid mode
-    QVector<Originull::Platform::ScreenChange> changes;
-    changes << chg;
-    Originull::Platform::EglFSFunctions::applyScreenChanges(changes);
 }
 
 void Output::sleepDisplay()
@@ -208,13 +152,44 @@ void Output::wakeDisplay()
                        Originull::Platform::EglFSFunctions::PowerStateOn);
 }
 
+void Output::setConfigPosition(const QPoint &point)
+{
+    m_config_position = point;
+}
+
+QPoint Output::configPosition() const
+{
+    return m_config_position;
+}
+
+void Output::modeset(const QSize &size, const unsigned int refresh)
+{
+    qCInfo(hwOutput, "Changing mode to %ix%i at %i Hz", size.width(),size.height(),refresh);
+    Originull::Platform::ScreenChange chg;
+    chg.screen = m_screen;
+    chg.position = position();
+    chg.enabled = true;
+    chg.scale = 1.0;
+    chg.refreshRate = refresh*1000;
+    chg.resolution = size;
+
+    // TODO: test, check if valid mode
+    QVector<Originull::Platform::ScreenChange> changes;
+    changes << chg;
+    Originull::Platform::EglFSFunctions::applyScreenChanges(changes);
+}
+
 uint Output::defaultScaleFactor()
 {
-    qCDebug(hwOutput, "default scale factor: %f", m_screen->physicalDotsPerInch());
     if(m_screen->physicalDotsPerInch() > 190)
         return 2;
 
     return 1;
+}
+
+QList<QPlatformScreen::Mode> Output::availableModes()
+{
+    return m_available_modes;
 }
 
 void Output::updateUsableGeometry()
@@ -252,7 +227,6 @@ void Output::updateUsableGeometry()
             anchors == WlrLayerSurfaceV1::BottomAnchor+WlrLayerSurfaceV1::RightAnchor)
             margins.setBottom(margins.bottom()+reserved);*/
     }
-    qDebug() << "setAvailableGeom" << rect.marginsRemoved(margins);
-    m_wlOutput->setAvailableGeometry(rect.marginsRemoved(margins));
+    setAvailableGeometry(rect.marginsRemoved(margins));
 }
 

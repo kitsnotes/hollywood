@@ -758,8 +758,8 @@ void XWaylandManager::handleSurfaceId(XWaylandShellSurface *shellSurface, xcb_cl
     quint32 id = event->data.data32[0];
     shellSurface->setSurfaceId(id);
 
-    qDebug() << "creating xwayland window";
-    wl_resource *resource = wl_client_get_object(m_server->client(), id);
+    //qDebug() << "creating xwayland window";
+    //wl_resource *resource = wl_client_get_object(m_server->client(), id);
     /*QWaylandSurface *surface = resource ? QWaylandSurface::fromResource(resource) : nullptr;
     if (surface)
         shellSurface->setSurface(surface);*/

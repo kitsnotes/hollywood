@@ -69,6 +69,7 @@ class XdgActivation;
 class WlrScreencopyManagerV1;
 class RelativePointerManagerV1;
 class PointerConstraintsV1;
+class OutputManager;
 Q_DECLARE_LOGGING_CATEGORY(hwCompositor)
 
 class Compositor : public QWaylandCompositor
@@ -90,6 +91,7 @@ public:
 
     void resetIdle();
 
+    OutputManager* outputManager() { return m_console_output; }
     QList<Surface*> surfaceObjects() const { return m_surfaces; }
     QVector<Surface*> surfaceByZOrder() { return m_zorder; }
     QList<SurfaceView*> views() const;
@@ -123,8 +125,6 @@ public:
     Surface* activatedSurface() { return m_activated; }
     Surface* raisedSurface() { return m_tl_raised; }
     QString surfaceZOrderByUUID() const;
-    void generateDesktopInfoLabelImage();
-    QImage *desktopLabelImage();
     bool hasFullscreenSurface() const { return m_hasFullscreenSurface; }
     bool processHasTwilightMode(quint64 pid) const;
     bool isRunningLoginManager() const { return m_sddm; }
@@ -194,8 +194,6 @@ private:
     friend class Output;
     friend class OriginullProtocol;
 
-    void addOutput(Output* output);
-    void removeOutput(Output* output);
     SurfaceView* findView(const QWaylandSurface *s) const;
     Surface* findSurfaceObject(const QWaylandSurface *s) const;
 private:
@@ -205,8 +203,8 @@ private:
     uint m_apperance = 0;
     QColor m_accent;
     QColor m_desktop_bg;
+    OutputManager *m_console_output = nullptr;
 
-    QList<Output*> m_outputs;
     uint m_id = 0;
     // Our list of surfaces
     QList<Surface*> m_surfaces;
@@ -278,8 +276,6 @@ private:
     int m_resizeOldVal = 0;
 
     bool m_legacyExperience = false;
-
-    QImage *m_dtlabel = nullptr;
 
     bool m_hasFullscreenSurface = false;
     Surface *m_fullscreenSurface = nullptr;

@@ -51,7 +51,7 @@ void WlrScreencopyManagerV1::zwlr_screencopy_manager_v1_capture_output(Resource 
     WlrScreencopyFrameV1 *nf = new WlrScreencopyFrameV1(this, frame, overlay_cursor, hwl);
     nf->init(resource->client(), frame, resource->version());
     m_frames.append(nf);
-    hwl->window()->setupScreenCopyFrame(nf);
+    hwl->hwWindow()->setupScreenCopyFrame(nf);
 
     emit frameCaptureRequest(nf);
     nf->setup();
@@ -73,7 +73,7 @@ void WlrScreencopyManagerV1::zwlr_screencopy_manager_v1_capture_output_region(Re
     WlrScreencopyFrameV1 *nf = new WlrScreencopyFrameV1(this, frame, overlay_cursor, x, y, width, height, hwl);
     nf->init(resource->client(), frame, resource->version());
     m_frames.append(nf);
-    hwl->window()->setupScreenCopyFrame(nf);
+    hwl->hwWindow()->setupScreenCopyFrame(nf);
 
     emit frameCaptureRequest(nf);
     nf->setup();
@@ -88,9 +88,9 @@ WlrScreencopyFrameV1::WlrScreencopyFrameV1(WlrScreencopyManagerV1 *parent, uint3
     , m_overlayCursor(overlay_cursor)
 {
     qCInfo(hwScreenCopy, "Setup new WlrScreencopyFrameV1 for full output");
-    m_region = output->wlOutput()->geometry();
+    m_region = output->geometry();
     m_capRegion = false;
-    m_stride = 4 * m_output->wlOutput()->geometry().width();
+    m_stride = 4 * m_output->geometry().width();
 }
 
 WlrScreencopyFrameV1::WlrScreencopyFrameV1(WlrScreencopyManagerV1 *parent, uint32_t frame, int32_t overlay_cursor,
@@ -104,7 +104,7 @@ WlrScreencopyFrameV1::WlrScreencopyFrameV1(WlrScreencopyManagerV1 *parent, uint3
     qCInfo(hwScreenCopy, "Setup new WlrScreencopyFrameV1 for region");
     m_region = QRect(x,y,width,height);
     m_capRegion = true;
-    m_stride = 4 * m_output->wlOutput()->geometry().width();
+    m_stride = 4 * m_output->geometry().width();
 }
 
 void WlrScreencopyFrameV1::zwlr_screencopy_frame_v1_copy(Resource *resource, wl_resource *buffer)
@@ -174,7 +174,7 @@ void WlrScreencopyFrameV1::copy()
         wl_shm_buffer_begin_access(m_buffer);
         void *data = wl_shm_buffer_get_data(m_buffer);
 
-        QRect rect = m_region.translated(m_output->wlOutput()->position());
+        QRect rect = m_region.translated(m_output->position());
 
         qCDebug(hwScreenCopy, "reading data from compositor start (%ix%i) w/h (%ix%i)",
                 rect.x(), rect.y(), rect.width(), rect.height());

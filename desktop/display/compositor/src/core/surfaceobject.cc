@@ -213,7 +213,7 @@ SurfaceView *Surface::primaryView() const
     for (i = m_viewList.begin(); i != m_viewList.end(); ++i)
     {
         QRectF deco = decoratedRect();
-        QRect r = deco.intersected(i.key()->wlOutput()->geometry()).toRect();
+        QRect r = deco.intersected(i.key()->geometry()).toRect();
         uint pixels = r.width() * r.height();
         if(pixels > content)
         {
@@ -486,7 +486,7 @@ SurfaceView* Surface::createViewForOutput(Output *o)
     {
         view->setAllowDiscardFrontBuffer(true);
         connect(view, &QWaylandView::surfaceDestroyed, this, &Surface::viewSurfaceDestroyed);
-        view->setOutput(o->wlOutput());
+        view->setOutput(o);
         view->setSurface(m_surface);
         m_viewList.insert(o, view);
 

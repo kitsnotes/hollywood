@@ -31,7 +31,7 @@ namespace Platform {
 
 QByteArray EglFSFunctions::setCursorThemeIdentifier()
 {
-    return QByteArrayLiteral("HollywoodEglFSSetCursorTheme");
+    return QByteArrayLiteral("HWEglFSSetCursorTheme");
 }
 
 void EglFSFunctions::setCursorTheme(const QString &name, int size)
@@ -43,7 +43,7 @@ void EglFSFunctions::setCursorTheme(const QString &name, int size)
 
 QByteArray EglFSFunctions::getPowerStateIdentifier()
 {
-    return QByteArrayLiteral("HollywoodEglFSGetPowerState");
+    return QByteArrayLiteral("HWEglFSGetPowerState");
 }
 
 EglFSFunctions::PowerState EglFSFunctions::getPowerState(QScreen *screen)
@@ -56,7 +56,7 @@ EglFSFunctions::PowerState EglFSFunctions::getPowerState(QScreen *screen)
 
 QByteArray EglFSFunctions::setPowerStateIdentifier()
 {
-    return QByteArrayLiteral("HollywoodEglFSSetPowerState");
+    return QByteArrayLiteral("HWEglFSSetPowerState");
 }
 
 void EglFSFunctions::setPowerState(QScreen *screen, PowerState state)
@@ -68,7 +68,7 @@ void EglFSFunctions::setPowerState(QScreen *screen, PowerState state)
 
 QByteArray EglFSFunctions::testScreenChangesIdentifier()
 {
-    return QByteArrayLiteral("HollywoodEglFSTestScreenChanges");
+    return QByteArrayLiteral("HWEglFSTestScreenChanges");
 }
 
 bool EglFSFunctions::testScreenChanges(const QVector<ScreenChange> &changes)
@@ -81,7 +81,7 @@ bool EglFSFunctions::testScreenChanges(const QVector<ScreenChange> &changes)
 
 QByteArray EglFSFunctions::applyScreenChangesIdentifier()
 {
-    return QByteArrayLiteral("HollywoodEglFSApplyScreenChanges");
+    return QByteArrayLiteral("HWEglFSApplyScreenChanges");
 }
 
 bool EglFSFunctions::applyScreenChanges(const QVector<ScreenChange> &changes)
@@ -92,9 +92,39 @@ bool EglFSFunctions::applyScreenChanges(const QVector<ScreenChange> &changes)
     return false;
 }
 
+QByteArray EglFSFunctions::modesForScreenIdentifier()
+{
+    return QByteArrayLiteral("HWEglFSModesForScreen");
+}
+
+QList<QPlatformScreen::Mode> EglFSFunctions::modesForScreen(QScreen *screen)
+{
+    ModesForScreenType func = reinterpret_cast<ModesForScreenType>(QGuiApplication::platformFunction(modesForScreenIdentifier()));
+    if (func)
+        return func(screen);
+    return QList<QPlatformScreen::Mode>();
+}
+
+QByteArray EglFSFunctions::preferredModeForScreenIdentifier()
+{
+    return QByteArrayLiteral("HWEglFSPreferredModeForScreen");
+}
+
+QPlatformScreen::Mode EglFSFunctions::preferredModesForScreen(QScreen *screen)
+{
+    PreferredModeForScreenType func = reinterpret_cast<PreferredModeForScreenType>(QGuiApplication::platformFunction(preferredModeForScreenIdentifier()));
+    if (func)
+        return func(screen);
+
+    QPlatformScreen::Mode m;
+    m.size = QSize(0,0);
+    m.refreshRate = 0;
+    return m;
+}
+
 QByteArray EglFSFunctions::enableScreenCastIdentifier()
 {
-    return QByteArrayLiteral("LiriEglFSEnableScreenCast");
+    return QByteArrayLiteral("HWEglFSEnableScreenCast");
 }
 
 void EglFSFunctions::enableScreenCast(QScreen *screen)
@@ -106,7 +136,7 @@ void EglFSFunctions::enableScreenCast(QScreen *screen)
 
 QByteArray EglFSFunctions::disableScreenCastIdentifier()
 {
-    return QByteArrayLiteral("LiriEglFSDisableStreaming");
+    return QByteArrayLiteral("HWEglFSDisableStreaming");
 }
 
 void EglFSFunctions::disableScreenCast(QScreen *screen)

@@ -9,7 +9,7 @@
 Q_LOGGING_CATEGORY(hwPointerConstraints, "compositor.pointerconstraints")
 
 PointerConstraintsV1::PointerConstraintsV1(QWaylandCompositor *compositor)
-    :QWaylandCompositorExtensionTemplate(compositor)
+    : QWaylandCompositorExtensionTemplate(compositor)
     , QtWaylandServer::zwp_pointer_constraints_v1(compositor->display(), WP_POINTER_CONSTRAINT_VERSION)
 {
     qCInfo(hwPointerConstraints, "Supporting wp_pointer_constraints_v1 (protocol version %i)", WP_POINTER_CONSTRAINT_VERSION);

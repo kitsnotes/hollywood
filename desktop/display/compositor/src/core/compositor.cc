@@ -10,6 +10,7 @@
 #include "outputwnd.h"
 #include "wallpaper.h"
 #include "surfaceobject.h"
+#include "outputmanager.h"
 
 // Wayland Extensions
 #include "appmenu.h"
@@ -69,7 +70,6 @@ Compositor::Compositor(bool sddm)
     qCInfo(hwCompositor, "Supporting wp_viewporter (protocol version 1)");
     qCInfo(hwCompositor, "Supporting xdg_decoration_manager_v1 (protocol version 1)");
 
-
     auto fd = qgetenv("WAYLAND_SOCKET_FD");
     bool ok = false;
     fd.toInt(&ok);
@@ -98,6 +98,16 @@ Compositor::Compositor(bool sddm)
             m_mini = true;
         }
     }
+}
+
+Compositor::~Compositor() {}
+
+void Compositor::create()
+{
+    QWaylandCompositor::create();
+
+    m_console_output = new OutputManager(this);
+    m_console_output->wlrOutputManager()->setup();
     m_timeout->setTimerType(Qt::VeryCoarseTimer);
     loadSettings();
     m_cfgwatch = new QFileSystemWatcher();
@@ -106,13 +116,6 @@ Compositor::Compositor(bool sddm)
             this, &Compositor::configChanged);
 
     connect(m_timeout, &QTimer::timeout, this, &Compositor::idleTimeout);
-}
-
-Compositor::~Compositor() {}
-
-void Compositor::create()
-{
-    QWaylandCompositor::create();
 
     connect(this, &QWaylandCompositor::surfaceCreated, this, &Compositor::onSurfaceCreated);
     connect(this, &QWaylandCompositor::subsurfaceChanged, this, &Compositor::onSubsurfaceChanged);
@@ -176,24 +179,12 @@ uint Compositor::decorationSize() const { return m_decorationSize; }
 
 Output *Compositor::outputAtPosition(const QPoint &pos)
 {
-    for(auto out : m_outputs)
-    {
-        if(out->wlOutput()->geometry().contains(pos))
-            return out;
-    }
-
-    return nullptr;
+    return m_console_output->outputAtPosition(pos);
 }
 
 Output *Compositor::outputFor(QWaylandOutput *wloutput)
 {
-    for(auto out : m_outputs)
-    {
-        if(out->wlOutput() == wloutput)
-            return out;
-    }
-
-    return nullptr;
+    return qobject_cast<Output*>(wloutput);
 }
 
 void Compositor::resetLayerShellLayer(Surface *s)
@@ -254,74 +245,6 @@ QString Compositor::surfaceZOrderByUUID() const
     return uuids.join(" ");
 }
 
-void Compositor::generateDesktopInfoLabelImage()
-{
-    return;
-    QStringList lines;
-    auto kernel = QString();
-    struct utsname unb;
-    if(uname(&unb) != 0)
-        kernel = QLatin1String("Unknown");
-    else
-        kernel = QLatin1String(unb.release);
-
-    lines << QString("Hollywood %1 (API %2, Kernel %3)")
-        .arg(QLatin1String("Edge"))
-        .arg(QLatin1String(QT_VERSION_STR))
-        .arg(kernel);
-
-    QFont font(HOLLYWOOD_DEF_STDFONT, 9);
-    QFontMetrics m = QFontMetrics(font);
-    int textHeight = m.height();
-    QTextOption to;
-
-    auto env = qgetenv("HOLLYWOOD_GENUINE");
-    if(!env.isEmpty())
-        lines << QLatin1String("This copy of Linux is not genuine.");
-    to.setAlignment(Qt::AlignRight);
-
-    int max_height = lines.count()*textHeight;
-    int max_width = 0;
-    for(int i = 0; i < lines.count(); i++)
-    {
-        auto text = lines.at(i);
-        auto rect = m.boundingRect(text, to);
-        if(rect.width() > max_width)
-            max_width = rect.width();
-    }
-    max_width = max_width+5;
-
-    QRect bounds(QPoint(0,0),QSize(max_width,max_height));
-    m_dtlabel = new QImage(bounds.size(),
-                          QImage::Format_RGBA8888);
-    QPainter px(m_dtlabel);
-    px.setCompositionMode(QPainter::CompositionMode_Clear);
-    px.fillRect(QRect(QPoint(0,0), bounds.size()), QColor(255,255,255,0));
-
-    px.setCompositionMode(QPainter::CompositionMode_SourceOver);
-    px.setRenderHint(QPainter::TextAntialiasing);
-    px.setPen(Qt::white);
-    px.setFont(font);
-
-    for(int i = 0; i < lines.count(); i++)
-    {
-        auto text = lines.at(i);
-        auto rect = m.boundingRect(text, to);
-        int y = bounds.size().height() - (textHeight * lines.count()) +
-                (textHeight * (i+1)) - 5;
-        int x = bounds.size().width() - rect.width() - 5;
-        px.drawText(QPoint(x,y), text);
-    }
-    px.end();
-}
-
-QImage *Compositor::desktopLabelImage()
-{
-    if(m_dtlabel == nullptr)
-        generateDesktopInfoLabelImage();
-    return m_dtlabel;
-}
-
 bool Compositor::processHasTwilightMode(quint64 pid) const
 {
     QFile file(QString("/proc/%1/environ").arg(QString::number(pid)));
@@ -341,20 +264,20 @@ bool Compositor::processHasTwilightMode(quint64 pid) const
 
 QPointF Compositor::correctedPosition(const QPointF &point)
 {
-    for(auto *out : m_outputs)
+    /*for(auto *out : m_outputs)
     {
-        if(out->wlOutput()->geometry().contains(point.toPoint()))
+        if(out->geometry().contains(point.toPoint()))
         {
-            if(!out->wlOutput()->availableGeometry().contains(point.toPoint()))
+            if(!out->availableGeometry().contains(point.toPoint()))
             {
                 // TODO: multiple monitor - is there an ajacent monitor boundry?
-                auto rect = out->wlOutput()->availableGeometry();
+                auto rect = out->availableGeometry();
                 int closestX = qMax(rect.left(), qMin(point.toPoint().x(), rect.right()));
                 int closestY = qMax(rect.top(), qMin(point.toPoint().y(), rect.bottom()));
                 return QPointF(closestX, closestY);
             }
         }
-    }
+    }*/
 
     return point;
 }
@@ -427,7 +350,7 @@ void Compositor::onSurfaceCreated(QWaylandSurface *surface)
     obj->setTwilight(twilight);
     auto outputAt = outputAtPosition(obj->surfacePosition().toPoint());
     if(outputAt == nullptr)
-        outputAt = m_outputs.first();
+        outputAt = m_console_output->primaryOutput();
 
     obj->createViewForOutput(outputAt);
     auto uuid = obj->uuid().toString(QUuid::WithoutBraces).toUtf8().data();
@@ -538,7 +461,7 @@ void Compositor::loadSettings()
         ac = QColor(QLatin1String(HOLLYWOOD_ACCENT_BLUE));
     m_accent = ac;
 
-    uint old_app = m_apperance;
+    //uint old_app = m_apperance;
     uint _app = settings.value(QLatin1String("ApperanceMode")).toUInt();
     if(_app > 2)
         _app = 0;   // default to light mode on invalid settings
@@ -681,7 +604,7 @@ void Compositor::onXWaylandShellSurfaceRequested(quint32 window, const QRect &ge
     }
 }
 
-void Compositor::onXWaylandShellSurfaceCreated(XWaylandShellSurface *shellSurface)
+void Compositor::onXWaylandShellSurfaceCreated(XWaylandShellSurface *)
 {
 
 }
@@ -876,10 +799,8 @@ void Compositor::onXdgSurfaceActivated(QWaylandSurface *surface)
 
 void Compositor::triggerRender()
 {
-    for(auto out : m_outputs)
-    {
-        out->window()->requestUpdate();
-    }
+    if(m_console_output)
+        m_console_output->triggerRender();
 }
 
 void Compositor::lockSession()
@@ -889,20 +810,14 @@ void Compositor::lockSession()
 
 void Compositor::startRender()
 {
-    for(auto out : m_outputs)
-    {
-        if(out)
-            out->wlOutput()->frameStarted();
-    }
+    if(m_console_output)
+        m_console_output->startRender();
 }
 
 void Compositor::endRender()
 {
-    for(auto out : m_outputs)
-    {
-        if(out)
-            out->wlOutput()->sendFrameCallbacks();
-    }
+    if(m_console_output)
+        m_console_output->endRender();
 }
 
 QColor Compositor::accentColor() const
@@ -927,7 +842,7 @@ void Compositor::updateCursor()
 void Compositor::onRotateWallpaper()
 {
     // TODO: multiple screens
-    primaryOutput()->window()->wallpaperManager()->rotateNow();
+    primaryOutput()->hwWindow()->wallpaperManager()->rotateNow();
 }
 
 void Compositor::appMenuCreated(AppMenu *m)
@@ -992,7 +907,7 @@ void Compositor::adjustCursorSurface(QWaylandSurface *surface, int hotspotX, int
         m_cursorObject = new Surface(surface);
         auto outputAt = outputAtPosition(m_cursorObject->surfacePosition().toPoint());
         if(outputAt == nullptr)
-            outputAt = m_outputs.first();
+            outputAt = m_console_output->primaryOutput();
 
         m_cursorObject->createViewForOutput(outputAt);
         m_surfaces.append(m_cursorObject);
@@ -1248,15 +1163,9 @@ void Compositor::activate(Surface *obj)
     }
 }
 
-void Compositor::addOutput(Output *output)
-{
-    //connect(output, &Output::availableGeometryChanged, this, )
-    m_outputs.append(output);
-}
-
 Output* Compositor::primaryOutput() const
 {
-    return m_outputs.first();
+    return m_console_output->primaryOutput();
 }
 
 bool Compositor::legacyRender() const
@@ -1275,11 +1184,6 @@ void Compositor::resetIdle()
     if(m_timeout)
         m_timeout->stop();
     m_timeout->start();
-}
-
-void Compositor::removeOutput(Output *output)
-{
-    Q_UNUSED(output);
 }
 
 void handleShutDownSignal(int /* signalId */)
@@ -1326,10 +1230,10 @@ void CompositorApp::doInit()
 
 void CompositorApp::createForDisplays()
 {
-    auto ps = primaryScreen();
+    /*auto ps = primaryScreen();
     auto output = new Output(ps, true);
     output->window()->show();
-    output->modesetFromConfig();
+    output->modesetFromConfig();*/
 }
 
 int main(int argc, char *argv[])

@@ -188,7 +188,7 @@ Qt::ScreenOrientation HWEglFSKmsScreen::orientation() const
 
 QString HWEglFSKmsScreen::name() const
 {
-    return !m_headless ? m_output.name : QStringLiteral("qt_Headless");
+    return !m_headless ? m_output.name : QStringLiteral("vD1");
 }
 
 QString HWEglFSKmsScreen::manufacturer() const

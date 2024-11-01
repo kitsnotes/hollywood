@@ -126,6 +126,8 @@ private:
     static void setPowerStateStatic(QScreen *screen, Originull::Platform::EglFSFunctions::PowerState powerState);
     static bool testScreenChangesStatic(const QVector<Originull::Platform::ScreenChange> &changes);
     //static bool applyScreenChangesStatic(const QVector<Originull::Platform::ScreenChange> &changes);
+    static QList<QPlatformScreen::Mode> modesForScreenStatic(QScreen *screen);
+    static QPlatformScreen::Mode preferredModeForScreenStatic(QScreen *screen);
 
     static void enableScreenCastStatic(QScreen *screen);
     static void disableScreenCastStatic(QScreen *screen);

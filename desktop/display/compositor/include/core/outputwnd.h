@@ -22,17 +22,19 @@ class Surface;
 class Output;
 class WallpaperManager;
 class WlrScreencopyFrameV1;
-
+class OutputManager;
 class OutputWindow : public QOpenGLWindow
 {
+    Q_OBJECT
 public:
-    OutputWindow(Output *parent = nullptr);
+    OutputWindow();
     int width();
     int height();
-    WallpaperManager* wallpaperManager() { return m_wpm; }
-
+    WallpaperManager* wallpaperManager();
     void setupScreenCopyFrame(WlrScreencopyFrameV1 *frame);
+    void setOutput(Output *output);
 protected:
+    friend class OutputManager;
     friend class ServerSideDecoration;
     void initializeGL() override;
     void paintGL() override;

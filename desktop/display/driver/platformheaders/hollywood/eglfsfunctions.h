@@ -26,6 +26,7 @@
 
 #include <QEvent>
 #include <QGuiApplication>
+#include <QtGui/qpa/qplatformscreen.h>
 
 #include <hollywood/hollywood-eglfs.h>
 
@@ -75,6 +76,14 @@ public:
     typedef bool (*ApplyScreenChangesType)(const QVector<ScreenChange> &changes);
     static QByteArray applyScreenChangesIdentifier();
     static bool applyScreenChanges(const QVector<ScreenChange> &changes);
+
+    typedef QList<QPlatformScreen::Mode> (*ModesForScreenType)(QScreen *screen);
+    static QByteArray modesForScreenIdentifier();
+    static QList<QPlatformScreen::Mode> modesForScreen(QScreen *screen);
+
+    typedef QPlatformScreen::Mode (*PreferredModeForScreenType)(QScreen *screen);
+    static QByteArray preferredModeForScreenIdentifier();
+    static QPlatformScreen::Mode preferredModesForScreen(QScreen *screen);
 
     typedef void (*EnableScreenCastType)(QScreen *screen);
     static QByteArray enableScreenCastIdentifier();
