@@ -874,12 +874,12 @@ void Compositor::adjustCursorSurface(QWaylandSurface *surface, int hotspotX, int
     {
         if(m_cursorObject->surface() != surface)
         {
-            //qDebug() << "Compositor::adjustCursorSurface: changing surface";
+            qDebug() << "Compositor::adjustCursorSurface: changing surface";
             if (m_cursorObject->surface())
             {
                 try
                 {
-                    //qDebug() << "Compositor::adjustCursorSurface: disconnecting updateCursor";
+                    qDebug() << "Compositor::adjustCursorSurface: disconnecting updateCursor";
                     disconnect(this, SLOT(updateCursor()));
                 }
                 catch(int e)
@@ -889,7 +889,7 @@ void Compositor::adjustCursorSurface(QWaylandSurface *surface, int hotspotX, int
             }
             if(m_surfaces.contains(m_cursorObject))
             {
-            //qDebug() << "Compositor::adjustCursorSurface: removing old cursor from surface list";
+            qDebug() << "Compositor::adjustCursorSurface: removing old cursor from surface list";
             m_surfaces.removeOne(m_cursorObject);
             }
 
@@ -923,7 +923,7 @@ void Compositor::adjustCursorSurface(QWaylandSurface *surface, int hotspotX, int
 
     if (surface && surface->hasContent())
     {
-        //qDebug() << "Compositor::adjustCursorSurface: updating new cursor";
+        qDebug() << "Compositor::adjustCursorSurface: updating new cursor";
         updateCursor();
     }
 }
@@ -1263,8 +1263,6 @@ int main(int argc, char *argv[])
         qputenv("XDG_RUNTIME_DIR", xdg.toUtf8().data());
     }
 
-    QSurfaceFormat format;
-    format.setProfile(QSurfaceFormat::CompatibilityProfile);
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts, true);
     CompositorApp app(is_sddm, argc, argv);
     app.doInit();

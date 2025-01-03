@@ -5,6 +5,8 @@
 #include "gtkshell.h"
 #include <QWaylandSurface>
 
+#include <QDebug>
+
 #define GTK_SHELL_VERSION 5
 
 Q_LOGGING_CATEGORY(hwGtkShell, "compositor.gtkshell")
@@ -18,7 +20,7 @@ GtkShell::GtkShell(QWaylandCompositor *compositor)
 
 void GtkShell::gtk_shell1_bind_resource(Resource *res)
 {
-    send_capabilities(res->handle, 0);
+    send_capabilities(res->handle, 6);
 }
 
 void GtkShell::gtk_shell1_get_gtk_surface(Resource *res, uint32_t id, wl_resource *sr)
@@ -115,13 +117,15 @@ void GtkSurface::gtk_surface1_destroy_resource(Resource *res)
 void GtkSurface::gtk_surface1_set_dbus_properties(Resource *res, const QString &application_id, const QString &app_menu_path, const QString &menubar_path, const QString &window_object_path, const QString &application_object_path, const QString &unique_bus_name)
 {
     Q_UNUSED(res);
-    Q_UNUSED(menubar_path);
+    //Q_UNUSED(menubar_path);
     m_appId = application_id;
     m_appMenuPath = app_menu_path;
     m_windowObjectPath = window_object_path;
     m_appObjectPath = application_object_path;
     m_uniqueBusName = unique_bus_name;
 
+    qDebug() << menubar_path;
+    qDebug() << application_id << app_menu_path << window_object_path << application_object_path << unique_bus_name;
     emit appIdChanged(m_appId);
     emit appMenuPathChanged(m_appMenuPath);
     emit menuBarPathChanged(m_menuBarPath);

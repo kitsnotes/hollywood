@@ -65,7 +65,7 @@ Output::~Output()
 
 OutputWindow *Output::hwWindow()
 {
-    return qobject_cast<OutputWindow*>(this);
+    return qobject_cast<OutputWindow*>(window());
 }
 
 QSize Output::size() const

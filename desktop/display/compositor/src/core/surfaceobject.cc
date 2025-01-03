@@ -371,12 +371,20 @@ QSize Surface::surfaceSize() const
         return m_resize_animation_size;
     }
 
+    if(xdgSurface())
+        return xdgSurface()->windowGeometry().size();
     return surface()->destinationSize();
 }
 
 QSize Surface::decoratedSize() const
 {
-    auto size = surfaceSize()*surface()->bufferScale();
+    // The size of our decorated window
+    QSize size;
+    if(xdgSurface())
+        size = xdgSurface()->windowGeometry().size()*surface()->bufferScale();
+    else
+        size = surface()->destinationSize()*surface()->bufferScale();
+
     if(m_ssd)
     {
         auto bs = hwComp->borderSize();
@@ -391,6 +399,7 @@ QSize Surface::decoratedSize() const
 
 QSize Surface::renderSize() const
 {
+    // What we will be rendering: visible region + decorations + shadows
     auto size = decoratedSize();
     uint shadow = shadowSize();
     if(shadow > 1)
@@ -708,8 +717,15 @@ void Surface::onDestinationSizeChanged()
                 m_surfaceInit = true;
                 return;
             }
-            auto size = surfaceSize()*surface()->bufferScale();
-            auto rect = QRect(surfacePosition().toPoint(), size);
+            auto xdg = xdgSurface()->windowGeometry();
+            auto size = xdg.size()*surface()->bufferScale();
+            auto point = surfacePosition().toPoint();
+            /*if(xdg.topLeft() != QPoint(0,0))
+            {
+                point.setX(point.x()+xdg.left());
+                point.setY(point.y()+xdg.top());
+            }*/
+            auto rect = QRect(point, size);
             // TODO: dual monitor support - grab output of cursor
             auto outputRect = hwComp->defaultOutput()->availableGeometry();
             int x = 50;

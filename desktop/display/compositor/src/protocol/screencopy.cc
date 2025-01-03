@@ -88,9 +88,9 @@ WlrScreencopyFrameV1::WlrScreencopyFrameV1(WlrScreencopyManagerV1 *parent, uint3
     , m_overlayCursor(overlay_cursor)
 {
     qCInfo(hwScreenCopy, "Setup new WlrScreencopyFrameV1 for full output");
-    m_region = output->geometry();
+    m_region = m_output->window()->geometry();
     m_capRegion = false;
-    m_stride = 4 * m_output->geometry().width();
+    m_stride = 4 * m_output->window()->geometry().width();
 }
 
 WlrScreencopyFrameV1::WlrScreencopyFrameV1(WlrScreencopyManagerV1 *parent, uint32_t frame, int32_t overlay_cursor,
@@ -104,7 +104,7 @@ WlrScreencopyFrameV1::WlrScreencopyFrameV1(WlrScreencopyManagerV1 *parent, uint3
     qCInfo(hwScreenCopy, "Setup new WlrScreencopyFrameV1 for region");
     m_region = QRect(x,y,width,height);
     m_capRegion = true;
-    m_stride = 4 * m_output->geometry().width();
+    m_stride = 4 * m_output->window()->geometry().width();
 }
 
 void WlrScreencopyFrameV1::zwlr_screencopy_frame_v1_copy(Resource *resource, wl_resource *buffer)
@@ -181,7 +181,8 @@ void WlrScreencopyFrameV1::copy()
 
         glPixelStorei(GL_PACK_ALIGNMENT, 1);
         QImage img(rect.size(), QImage::Format_RGBA8888_Premultiplied);
-        glReadPixels(rect.x(), rect.y(), rect.width(), rect.height(), GL_RGBA, GL_UNSIGNED_BYTE, img.bits());
+        glReadPixels(rect.x(), rect.y(), rect.width(), rect.height(),
+                     GL_RGBA, GL_UNSIGNED_BYTE, img.bits());
         img.convertTo(QImage::Format_ARGB32_Premultiplied);
         memcpy(data, img.bits(), img.sizeInBytes());
         wl_shm_buffer_end_access(m_buffer);

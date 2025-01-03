@@ -64,9 +64,14 @@ static const GLfloat texture_buffer_data[] {
 OutputWindow::OutputWindow()
     : QOpenGLWindow(QOpenGLWindow::NoPartialUpdate)
     , m_shadowShader(new QOpenGLShaderProgram(this))
-    , m_rgbaShader(new QOpenGLShaderProgram(this))
     , m_wpm(new WallpaperManager(this))
 {
+    QSurfaceFormat format;
+    format.setProfile(QSurfaceFormat::CoreProfile);
+    format.setSwapInterval(0);
+    format.setSwapBehavior(QSurfaceFormat::SingleBuffer);
+    setFormat(format);
+
     connect(hwComp, &Compositor::startMove, this, &OutputWindow::startMove);
     connect(hwComp, &Compositor::startResize, this, &OutputWindow::startResize);
     connect(hwComp, &Compositor::dragStarted, this, &OutputWindow::startDrag);
@@ -152,6 +157,7 @@ void OutputWindow::paintGL()
     {
         if(m_copy_frame != nullptr)
         {
+            qCDebug(hwRender, "paintGL: Copying frame for screenshot");
             m_do_copy_frame = false;
             m_copy_frame->copy();
             disconnect(m_copy_frame, &WlrScreencopyFrameV1::ready, this, &OutputWindow::readyForScreenCopy);

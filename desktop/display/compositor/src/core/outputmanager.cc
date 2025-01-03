@@ -51,7 +51,6 @@ void OutputManager::createForConsole()
         auto settingsGroup = QString("Display-%1").arg(screen->name());
 
         settings.beginGroup(settingsGroup);
-        settings.setValue("Test", "test1");
         auto scale = settings.value("ScaleFactor",
                                     output->defaultScaleFactor()).toInt();
         if(output->scaleFactor() != scale)
