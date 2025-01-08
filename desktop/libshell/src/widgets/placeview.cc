@@ -11,6 +11,9 @@ LSPlaceView::LSPlaceView(QWidget *parent)
     setSelectionMode(QAbstractItemView::SingleSelection);
     setUniformItemSizes(true);
     setIconSize(QSize(24, 24));
+    setDragEnabled(true);
+    setDropIndicatorShown(true);
+    setAcceptDrops(true);
 
     setFrameShape(QFrame::NoFrame);
     setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);

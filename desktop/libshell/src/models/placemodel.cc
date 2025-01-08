@@ -13,6 +13,8 @@ LSPlaceModel::LSPlaceModel(QObject *parent)
     {
         QStandardItem *item = new QStandardItem(pi.displayIcon, pi.displayName);
         item->setData(pi.location);
+        item->setDropEnabled(true);
+        item->setDragEnabled(true);
         appendRow(item);
         m_favoriteItems.append(item);
     }

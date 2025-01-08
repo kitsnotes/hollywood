@@ -27,6 +27,7 @@ public:
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+    Qt::ItemFlags flags(const QModelIndex &index) const override;
     QIcon icon(const QModelIndex &index) const;
     QString name(const QModelIndex &index) const;
     QString description(const QModelIndex &index) const;
@@ -39,6 +40,9 @@ public:
     bool isDevice(const QModelIndex &index) const;
     LSDesktopEntry* desktopFileForIndex(const QModelIndex &index);
     LSUDiskDevice*  deviceForIndex(const QModelIndex &index);
+    QMimeData *mimeData(const QModelIndexList &indexes) const override;
+    bool dropMimeData(const QMimeData *data, Qt::DropAction action,
+                      int row, int column, const QModelIndex &parent) override;
 private slots:
     void refreshDesktopFolder();
     void mediaChanged(QString path, bool media);

@@ -123,6 +123,7 @@ bool LSExecutor::launch()
 
     auto exec = p->m_dt->value("Exec").toString();
 
+    qDebug() << "exec:" << exec;
     // deprecated params according to freedesktop
     exec.replace("%d", "");
     exec.replace("%D", "");
@@ -300,6 +301,8 @@ bool LSExecutor::launch()
                 if(ret)
                     one_launched = ret;
             }
+            qDebug() << "exec:" << exec;
+
             return one_launched;
         }
     }
@@ -313,6 +316,8 @@ bool LSExecutor::launch()
         // loop for launching processes
         if(p->m_files.count() > 0)
         {
+            qDebug() << "exec:" << exec;
+
             bool one_launched = false;
             for(auto fn : p->m_files)
             {
@@ -329,6 +334,8 @@ bool LSExecutor::launch()
         }
         else
         {
+            qDebug() << "exec:" << exec;
+
             exec = exec.trimmed();
             // launch our process
             if(exec.contains(' '))
@@ -341,6 +348,8 @@ bool LSExecutor::launch()
                 return p->createProcess(exec, QStringList());
         }
     }
+
+    qDebug() << "exec:" << exec;
 
     return false;
 }

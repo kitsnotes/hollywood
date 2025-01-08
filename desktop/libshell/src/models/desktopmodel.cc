@@ -117,7 +117,6 @@ void LSDesktopModel::mediaChanged(QString path, bool media)
 
 void LSDesktopModel::mountpointChanged(QString path, QString mountpoint)
 {
-    qDebug() << "mountpointChanged path" << path;
     auto dev = p->deviceForPath(path);
     if(dev)
     {
@@ -162,7 +161,6 @@ LSUDiskDevice *LSDesktopModelPrivate::deviceForPath(const QString &path)
 
 void LSDesktopModel::foundNewDevice(QString path)
 {
-    qDebug() << "foundNewDevice path" << path;
     // see if it's a device we already track
     auto dev = p->deviceForPath(path);
     if(dev != nullptr)
@@ -259,6 +257,12 @@ QVariant LSDesktopModel::data(const QModelIndex &index, int role) const
     }
 
     return QVariant();
+}
+
+Qt::ItemFlags LSDesktopModel::flags(const QModelIndex &index) const
+{
+    Q_UNUSED(index)
+    return Qt::ItemIsEnabled|Qt::ItemIsSelectable|Qt::ItemIsDragEnabled|Qt::ItemIsDropEnabled;
 }
 
 QIcon LSDesktopModel::icon(const QModelIndex &index) const
@@ -431,6 +435,66 @@ LSUDiskDevice *LSDesktopModel::deviceForIndex(const QModelIndex &index)
         return dev;
 
     return nullptr;
+}
+
+QMimeData *LSDesktopModel::mimeData(const QModelIndexList &indexes) const
+{
+    QList<QUrl> urls;
+    QList<QModelIndex>::const_iterator it = indexes.begin();
+    /*for (; it != indexes.end(); ++it)
+        if ((*it).column() == 0)
+            urls << QUrl::fromLocalFile(filePath(*it));*/
+    QMimeData *data = new QMimeData();
+    data->setUrls(urls);
+    return data;
+}
+
+
+bool LSDesktopModel::dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent)
+{
+    Q_UNUSED(parent)
+    // see if data is something we can handle
+    // right now we only handle urls of certain schemes
+    if(!data->hasUrls())
+        return false;
+
+    bool has_file = false;
+    bool has_app = false;
+    bool has_virt = false;
+    bool has_net = false;
+    bool has_trash = false;
+
+    data->urls();
+    if(!has_file && !has_app && !has_virt && !has_net && !has_trash)
+        return false; // no types we handle
+
+    // find the item that we are targeting
+    auto target_item = index(row, column);
+    if(target_item.isValid())
+    {
+        if(isTrash(target_item))
+        {
+            // see if we can trash items in the selection
+
+            return true;
+        }
+        else if(isDesktop(target_item))
+        {
+            // see if we can execute the selection with the specified desktop
+            return false;
+        }
+        else if(isDevice(target_item))
+        {
+            // user dropped on a device - see if it's writable and proceed
+            return false;
+        }
+    }
+    else
+    {
+        // this should be 'empty desktop' space - so paste into ~/Desktop
+        if(action == Qt::CopyAction)
+        return true;
+    }
 }
 
 void LSDesktopModel::refreshDesktopFolder()

@@ -52,6 +52,7 @@ DesktopWindow::DesktopWindow(QWidget *parent)
     m_view->setItemAlignment(Qt::AlignHCenter);
     m_view->setFrameShape(QFrame::NoFrame);
     m_view->setItemDelegate(m_delegate);
+
     m_delegate->setShadowHidden(false);
 
     QPalette p = m_view->palette();

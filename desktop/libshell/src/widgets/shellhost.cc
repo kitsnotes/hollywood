@@ -1429,7 +1429,8 @@ void LSEmbeddedShellHost::
 
 }
 
-void LSEmbeddedShellHost::swapToModel(ShellModel model)
+void LSEmbeddedShellHost::
+    swapToModel(ShellModel model)
 {
     if(p->m_curSelModel)
         disconnect(p->m_curSelModel, &QItemSelectionModel::selectionChanged,
@@ -1447,6 +1448,7 @@ void LSEmbeddedShellHost::swapToModel(ShellModel model)
         p->m_filesTable->setEditTriggers(QTableView::NoEditTriggers);
         disableActionsForNoSelection();
         adjustColumnHeaders();
+        p->m_filesList->setDragEnabled(true);
         break;
     case Trash:
         p->m_filesColumn->setModel(p->m_trash);

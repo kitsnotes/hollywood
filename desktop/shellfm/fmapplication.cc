@@ -96,10 +96,9 @@ void FMApplication::createDesktop()
     if(ls)
     {
         qDebug() << "setting layershell LayerBackground";
-        ls->setLayer(LayerShellQt::Window::LayerBackground);
+        ls->setLayer(LayerShellQt::Window::LayerBottom);
     }
     w->show();
-    //m_protocol->registerDesktopSurface(w->windowHandle());
     m_desktop = w;
 }
 
@@ -413,5 +412,6 @@ int main(int argc, char *argv[])
 //#endif
     // required so sub-processes do not get qt-shell
     qputenv("QT_WAYLAND_SHELL_INTEGRATION", "xdg-shell");
+
     return a.exec();
 }
