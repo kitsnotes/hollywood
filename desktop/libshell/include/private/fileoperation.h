@@ -56,6 +56,7 @@ public:
         CannotReadSourceFile,
         CannotWriteDestinationFile,
         CannotRemoveSource,
+        CannotTrash,
         Canceled
     };
 
@@ -68,7 +69,7 @@ public:
                 CopyFlags flags = (CopyFlags)0);
     QList<int> copyDirectory(const QUrl &sourceDir, const QUrl &destinationDir,
                 CopyFlags flags = (CopyFlags)0);
-
+    QList<int> trash(const QList<QUrl> &sourceFiles);
     int move(const QUrl &sourceFile, const QUrl &destinationPath,
                 CopyFlags flags = (CopyFlags)0);
     QList<int> moveFiles(const QList<QUrl> &sourceFiles, const QUrl &destinationDir,
@@ -142,6 +143,7 @@ struct CopyRequest {
     bool move;
     bool dir;
     FileOperation::CopyFlags copyFlags;
+    bool trash = false;
 };
 
 class OperationThread : public QThread

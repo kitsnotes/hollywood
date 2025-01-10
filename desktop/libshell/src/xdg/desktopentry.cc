@@ -3,6 +3,8 @@
 #include "desktopentry.h"
 #include "directories.h"
 
+#include <QProcess>
+
 static const QLatin1String onlyShowInKey("OnlyShowIn");
 static const QLatin1String notShowInKey("NotShowIn");
 static const QLatin1String categoriesKey("Categories");
@@ -41,6 +43,7 @@ public:
     bool startLinkDetached(const LSDesktopEntry *q) const;
     bool startByDBus(const QString &action, const QStringList& urls) const;
     QStringList getListValue(const LSDesktopEntry *q, const QString &key, bool tryExtendPrefix) const;
+    bool checkForApk() const;
 public:
     QString m_fileName;
     bool m_valid = false;
@@ -49,6 +52,8 @@ public:
     QMap<QString, QVariant> m_items;
 
     LSDesktopEntry::Type m_type;
+    bool m_apk_check = false;
+    QString m_apk_package = QString();
 };
 
 LSDesktopEntryPrivate::LSDesktopEntryPrivate():
@@ -96,6 +101,7 @@ bool LSDesktopEntryPrivate::read(const QString &prefix)
     }
 
     m_valid = (prefix.isEmpty()) || prefixExists;
+
     return m_valid;
 }
 
@@ -115,6 +121,11 @@ LSDesktopEntry::Type LSDesktopEntryPrivate::detectType(LSDesktopEntry *q) const
         return LSDesktopEntry::TYPE_APP;
 
     return LSDesktopEntry::TYPE_UNKNOWN;
+}
+
+bool LSDesktopEntryPrivate::checkForApk() const
+{
+
 }
 
 LSDesktopEntry::LSDesktopEntry()
@@ -226,6 +237,50 @@ QIcon LSDesktopEntry::icon() const
     }
 
     return QIcon();
+}
+
+bool LSDesktopEntry::checkForApk()
+{
+#ifndef USE_APK
+    return false;
+#else
+    if(d->m_apk_check)
+        return !d->m_apk_package.isEmpty();
+
+    if(d->m_valid && d->m_fileName.startsWith("/usr/share/applications"))
+    {
+        QProcess proc;
+        QStringList args;
+        args << "info" << "--who-owns" << d->m_fileName;
+
+        proc.start("/usr/sbin/apk", args);
+        proc.waitForFinished();
+        if(proc.exitCode() != 0)
+        {
+            proc.close();
+            d->m_apk_check = true;
+            return false;
+        }
+        auto data = proc.readAllStandardOutput();
+        proc.close();
+        QString package = QString(data.split(' ').last().trimmed());
+        package.remove('"');
+        auto parts = package.split('-');
+        parts.removeLast(); // package rel
+        parts.removeLast(); //version
+        package = parts.join('-');
+        d->m_apk_package = QString(package);
+        d->m_apk_check = true;
+        return true;
+    }
+
+    return false;
+#endif
+}
+
+QString LSDesktopEntry::apkPackageName() const
+{
+    return d->m_apk_package;
 }
 
 QString LSDesktopEntry::id(const QString &fileName, bool checkFileExists)

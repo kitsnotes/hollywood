@@ -23,6 +23,10 @@
 #include <pwd.h>
 #include <grp.h>
 
+#ifdef USE_APK
+#include <ApkQt/QtApk>
+#endif
+
 LSGeneralInfoWidget::LSGeneralInfoWidget(LSGetInfoDialogPrivate *parent)
     : QWidget(parent->d)
     , m_pixmap(new QLabel(this))
@@ -449,4 +453,81 @@ void LSDesktopEntryInfoWidget::reloadInfo()
 void LSDesktopEntryInfoWidget::setReadOnly()
 {
     setEnabled(false);
+}
+
+LSApplicationInfoWidget::LSApplicationInfoWidget(LSGetInfoDialogPrivate *parent)
+    : QWidget(parent->d)
+    , m_icon(new QLabel(this))
+    , m_name(new QLabel(this))
+    , m_uninstall(new QPushButton(this))
+    , p(parent)
+{
+    m_icon->setAlignment(Qt::AlignVCenter|Qt::AlignHCenter);
+    m_icon->setMinimumSize(48,48);
+    m_icon->setMaximumSize(48,48);
+
+    bool apk = false;
+    bool flatpak = false;
+
+    if(p->m_desktop_entry)
+    {
+        if(p->m_desktop_entry->checkForApk())
+            apk = true;
+
+        m_name->setText(p->m_desktop_entry->value("Name").toString());
+        m_icon->setPixmap(p->m_desktop_entry->icon().pixmap(QSize(48,48)));
+    }
+
+    m_uninstall->setText(tr("Uninstall"));
+    auto mainLayout = new QVBoxLayout(this);
+    auto form = new QFormLayout;
+    form->setLabelAlignment(Qt::AlignRight);
+    setLayout(mainLayout);
+
+    auto toplayout = new QHBoxLayout;
+    toplayout->addWidget(m_icon);
+    toplayout->addWidget(m_name);
+
+    form->addRow(p->makeLine(this));
+    if(apk)
+    {
+        auto apki = new QtApk::Database();
+        apki->open();
+        auto pkgs = apki->getInstalledPackages();
+        for(auto pkg : pkgs)
+        {
+            if(pkg.name == p->m_desktop_entry->apkPackageName())
+            {
+                form->addRow(new QLabel(tr("Application Type:"), this),
+                             new QLabel(tr("Distribution (APK)"), this));
+                form->addRow(new QLabel(tr("Package Name:"), this),
+                             new QLabel(pkg.name, this));
+                form->addRow(new QLabel(tr("Version:"), this),
+                             new QLabel(pkg.version, this));
+                form->addRow(new QLabel(tr("License:"), this),
+                             new QLabel(pkg.license, this));
+                QLocale l;
+                form->addRow(new QLabel(tr("Installed Size:"), this),
+                             new QLabel(l.formattedDataSize(pkg.installedSize), this));
+
+                if(pkg.name == "hollywood-desktop" || pkg.origin == "hollywood")
+                    m_uninstall->setVisible(false);
+                break;
+            }
+        }
+        apki->close();
+    }
+
+    mainLayout->addLayout(toplayout);
+    mainLayout->addLayout(form);
+
+    auto buttons = new QHBoxLayout;
+    buttons->addSpacerItem(new QSpacerItem(1,1, QSizePolicy::MinimumExpanding,QSizePolicy::MinimumExpanding));
+    buttons->addWidget(m_uninstall);
+    buttons->addSpacerItem(new QSpacerItem(1,1, QSizePolicy::MinimumExpanding,QSizePolicy::MinimumExpanding));
+    mainLayout->addLayout(buttons);
+
+    clearFocus();
+    /* QDialogButtonBox* buttonBar = new QDialogButtonBox(QDialogButtonBox::Apply | QDialogButtonBox::SaveAs, this);
+    mainLayout->addWidget(buttonBar, 6, 0, 1, 2); */
 }

@@ -19,6 +19,8 @@
 #include <QtCore/QMetaType>
 #include <QDebug>
 
+#include "trashmodel.h"
+
 OperationThread::OperationThread(FileOperation *fileCopier)
     : QThread(QCoreApplication::instance()),
       copier(fileCopier),
@@ -30,7 +32,7 @@ OperationThread::OperationThread(FileOperation *fileCopier)
       currentId(-1),
       autoReset(true)
 {
-    qRegisterMetaType<FileOperation::Error>("QtFileCopier::Error");
+    qRegisterMetaType<FileOperation::Error>("FileCopier::Error");
     connect(this, SIGNAL(error(int, QtFileCopier::Error, bool)),
                 copier, SLOT(copyError(int, QtFileCopier::Error, bool)));
     connect(this, SIGNAL(started(int)),
@@ -739,13 +741,14 @@ public:
         const QUrl &destinationDir, FileOperation::CopyFlags flags, bool move);
     QMap<int, CopyRequest> copyDirectoryContents(const QUrl &sourceDir,
             const QUrl &destinationDir, FileOperation::CopyFlags flags, bool move);
+    QList<int> trash(const QList<QUrl> &sourceFiles);
 
     void progressRequest();
 
     void removeChildren(int id);
     CopyRequest prepareRequest(bool checkPath, const QUrl &sourceFile,
             const QUrl &destinationPath, FileOperation::CopyFlags flags,
-            bool move, bool dir) const;
+            bool move, bool dir, bool trash) const;
     void startThread();
 
     OperationThread *copyThread;
@@ -843,7 +846,7 @@ void FileOperationPrivate::copyCanceled()
 }
 
 CopyRequest FileOperationPrivate::prepareRequest(bool checkPath, const QUrl &sourceFile,
-        const QUrl &destinationPath, FileOperation::CopyFlags flags, bool move, bool dir) const
+        const QUrl &destinationPath, FileOperation::CopyFlags flags, bool move, bool dir, bool trash = false) const
 {
     QFileInfo fis(sourceFile.toLocalFile());
     QFileInfo fid(destinationPath.toLocalFile());
@@ -858,7 +861,7 @@ CopyRequest FileOperationPrivate::prepareRequest(bool checkPath, const QUrl &sou
     r.copyFlags = flags;
     r.move = move;
     r.dir = dir;
-
+    r.trash = trash;
     return r;
 }
 
@@ -1014,6 +1017,26 @@ QMap<int, CopyRequest> FileOperationPrivate::copyDirectoryContents(const QUrl &s
     return resultList;
 }
 
+QList<int> FileOperationPrivate::trash(const QList<QUrl> &sourceFiles)
+{
+    auto trashDir = QUrl::fromLocalFile(LSTrashModel::xdgTrashDir());
+    QMap<int, CopyRequest> resultList;
+    for(auto k : sourceFiles)
+    {
+        QFileInfo fis(k.toLocalFile());
+        CopyRequest r = prepareRequest(true, fis.filePath(), trashDir,
+                                       FileOperation::CopyFlags(0), true, fis.isDir(), true);
+        requests[idCounter] = r;
+        resultList[idCounter] = r;
+        idCounter++;
+    }
+    if (resultList.isEmpty())
+        return QList<int>();
+    copyThread->copy(resultList);
+    startThread();
+    return resultList.keys();
+}
+
 void FileOperationPrivate::progressRequest()
 {
     if (state == FileOperation::Busy)
@@ -1045,7 +1068,15 @@ int FileOperation::copy(const QUrl &sourceFile, const QUrl &destinationPath,
     QFileInfo fis(sourceFile.toLocalFile());
     if (fis.isDir())
         return -1; // Omitting Dir
-    return d_ptr->copy(sourceFile, destinationPath, flags, false);
+
+  return d_ptr->copy(sourceFile, destinationPath, flags, false);
+}
+
+QList<int> FileOperation::trash(const QList<QUrl> &sourceFiles)
+{
+    if (state() != FileOperation::Idle)
+        return QList<int>();
+    return d_ptr->trash(sourceFiles);
 }
 
 QList<int> FileOperation::copyFiles(const QList<QUrl> &sourceFiles,

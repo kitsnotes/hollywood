@@ -383,6 +383,7 @@ void FMApplication::checkForSessionStartup()
 
 int main(int argc, char *argv[])
 {
+    qputenv("QT_WAYLAND_SHELL_INTEGRATION", "hw-layer-shell");
     FMApplication a(argc, argv);
     QCommandLineParser p;
     p.setApplicationDescription(QString("Hollywood File Manager"));

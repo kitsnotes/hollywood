@@ -50,7 +50,7 @@ LSEmbeddedShellHostPrivate::LSEmbeddedShellHostPrivate(LSEmbeddedShellHost *pare
     , m_sidebarModel(new LSFSModel(parent))
     , m_viewOptions(new LSViewOptionsDialog(parent))
     , m_delegate(new LSFSItemDelegate(parent))
-    , m_mimeapps(new LSMimeApplications(parent))
+    , m_mimeapps(LSCommonFunctions::instance()->mimeApps())
 {
     m_model->setReadOnly(false);
 }
@@ -59,9 +59,9 @@ LSEmbeddedShellHost::LSEmbeddedShellHost(QWidget *parent)
     : QWidget(parent)
     , p(new LSEmbeddedShellHostPrivate(this))
 {
+    /*p->m_mimeapps->processGlobalMimeCache();
+    p->m_mimeapps->cacheAllDesktops();*/
 
-    p->m_mimeapps->processGlobalMimeCache();
-    p->m_mimeapps->cacheAllDesktops();
     setContentsMargins(0,0,0,0);
     QSettings settings("originull", "hollywood");
     p->m_model->setRootPath("/");
@@ -310,27 +310,40 @@ void LSEmbeddedShellHost::resizeEvent(QResizeEvent *event)
 
 void LSEmbeddedShellHost::getInformationRequested()
 {
+    QItemSelectionModel *model = nullptr;
+    switch(p->m_viewMode)
+    {
+    case HWShell::VIEW_ICONS:
+        model = p->m_filesList->selectionModel();
+        break;
+    case HWShell::VIEW_LIST:
+        model = p->m_filesTable->selectionModel();
+        break;
+    case HWShell::VIEW_COLUMN:
+        model = p->m_filesColumn->selectionModel();
+    }
+
     if(p->m_currentModel == Filesystem)
     {
-        QItemSelectionModel *model = nullptr;
-        switch(p->m_viewMode)
-        {
-        case HWShell::VIEW_ICONS:
-            model = p->m_filesList->selectionModel();
-            break;
-        case HWShell::VIEW_LIST:
-            model = p->m_filesTable->selectionModel();
-            break;
-        case HWShell::VIEW_COLUMN:
-            model = p->m_filesColumn->selectionModel();
-        }
-
         if(model)
         {
             if(model->selectedIndexes().count() == 1)
             {
                 // show a dialog for our one file
                 auto url = QUrl(p->m_model->filePath(model->selectedIndexes().first()));
+                LSCommonFunctions::instance()->showGetInfoDialog(url, this);
+            }
+        }
+    }
+
+    if(p->m_currentModel == Applications)
+    {
+        if(model)
+        {
+            if(model->selectedIndexes().count() == 1)
+            {
+                // show a dialog for our one file
+                auto url = QUrl(p->m_apps->data(model->selectedIndexes().first(), Qt::UserRole+1).toUrl());
                 LSCommonFunctions::instance()->showGetInfoDialog(url, this);
             }
         }
@@ -773,7 +786,6 @@ void LSEmbeddedShellHost::createNewTab()
 
 void LSEmbeddedShellHost::viewContextMenuRequested(const QPoint &pos)
 {
-    qDebug() << "viewContextMenuRequested" << pos;
     auto menu = new QMenu(this);
     connect(menu, &QMenu::aboutToHide, menu, &QMenu::deleteLater);
 
@@ -834,7 +846,6 @@ void LSEmbeddedShellHost::viewContextMenuRequested(const QPoint &pos)
         menu->addAction(p->m_actions->shellAction(HWShell::ACT_FILE_GET_INFO));
     }
 
-    qDebug() << pos << "mapToParent" << mapToParent(pos);
     menu->popup(mapToParent(pos));
 }
 

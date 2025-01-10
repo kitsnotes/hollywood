@@ -10,6 +10,7 @@ class QUndoStack;
 class OperationManager;
 class LSUDisks;
 class LSCommonFunctions;
+class LSMimeApplications;
 class LSCommonFunctionsPrivate : public QObject
 {
     Q_OBJECT
@@ -25,4 +26,5 @@ private:
     QUndoStack *m_undo = nullptr;
     OperationManager *m_opmgr = nullptr;
     LSUDisks *m_udisks = nullptr;
+    LSMimeApplications *m_mimeApps = nullptr;
 };

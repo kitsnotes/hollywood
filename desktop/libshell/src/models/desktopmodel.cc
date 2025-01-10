@@ -8,6 +8,8 @@
 #include "fileinfo.h"
 #include "disks.h"
 #include "commonfunctions.h"
+#include "opmanager.h"
+#include "mimeapps.h"
 
 #include <QFileSystemWatcher>
 
@@ -437,22 +439,40 @@ LSUDiskDevice *LSDesktopModel::deviceForIndex(const QModelIndex &index)
     return nullptr;
 }
 
+Qt::DropActions LSDesktopModel::supportedDropActions() const
+{
+    return Qt::CopyAction|Qt::MoveAction|Qt::LinkAction|Qt::TargetMoveAction;
+}
+
+bool LSDesktopModel::canDropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent) const
+{
+    Q_UNUSED(column)
+    Q_UNUSED(row)
+    Q_UNUSED(parent)
+    if(data->hasUrls())
+        return true;
+
+    return false;
+}
+
 QMimeData *LSDesktopModel::mimeData(const QModelIndexList &indexes) const
 {
     QList<QUrl> urls;
     QList<QModelIndex>::const_iterator it = indexes.begin();
-    /*for (; it != indexes.end(); ++it)
+    for (; it != indexes.end(); ++it)
         if ((*it).column() == 0)
-            urls << QUrl::fromLocalFile(filePath(*it));*/
+        {
+            urls << url(*it);
+        }
     QMimeData *data = new QMimeData();
     data->setUrls(urls);
     return data;
 }
 
-
 bool LSDesktopModel::dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent)
 {
-    Q_UNUSED(parent)
+    Q_UNUSED(row)
+    Q_UNUSED(column)
     // see if data is something we can handle
     // right now we only handle urls of certain schemes
     if(!data->hasUrls())
@@ -464,26 +484,54 @@ bool LSDesktopModel::dropMimeData(const QMimeData *data, Qt::DropAction action, 
     bool has_net = false;
     bool has_trash = false;
 
-    data->urls();
+    for(auto url : data->urls())
+    {
+        if(url.scheme() == "file")
+        {
+            has_file = true;
+            continue;
+        }
+        if(url.scheme() == "applications")
+        {
+            has_app = true;
+            continue;
+        }
+        if(url.scheme() == "trash")
+        {
+            has_trash = true;
+            continue;
+        }
+        if(url.scheme() == "network")
+        {
+            has_net = true;
+            continue;
+        }
+        if(url.scheme() == "virt")
+        {
+            has_virt = true;
+            continue;
+        }
+    }
+
     if(!has_file && !has_app && !has_virt && !has_net && !has_trash)
         return false; // no types we handle
 
     // find the item that we are targeting
-    auto target_item = index(row, column);
-    if(target_item.isValid())
+    if(parent.isValid())
     {
-        if(isTrash(target_item))
+        if(isTrash(parent))
         {
-            // see if we can trash items in the selection
+            qDebug() << "dropMimeData: trashing" <<  data->urls();
+            LSCommonFunctions::instance()->operationManager()->trashFiles(data->urls());
 
             return true;
         }
-        else if(isDesktop(target_item))
+        else if(isDesktop(parent))
         {
             // see if we can execute the selection with the specified desktop
             return false;
         }
-        else if(isDevice(target_item))
+        else if(isDevice(parent))
         {
             // user dropped on a device - see if it's writable and proceed
             return false;
@@ -491,6 +539,7 @@ bool LSDesktopModel::dropMimeData(const QMimeData *data, Qt::DropAction action, 
     }
     else
     {
+        qDebug() << "drop on empty desktop";
         // this should be 'empty desktop' space - so paste into ~/Desktop
         if(action == Qt::CopyAction)
         return true;
@@ -530,7 +579,6 @@ void LSDesktopModel::refreshDesktopFolder()
         if(!p->m_files.contains(mp))
         {
             int row = p->rowForFile(mp->fileName);
-            qDebug() << "removing row" << row;
             beginRemoveRows(QModelIndex(), row, row);
             delete mp;
             endRemoveRows();

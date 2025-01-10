@@ -29,6 +29,13 @@ versionAtLeast(QT_VERSION, 6.0.0) {
     QMAKE_PKGCONFIG_DESCRIPTION = Hollywood Shell Library (Qt5)
 }
 
+LIBS += -lQt6GSettings
+
+packagesExist(apk-qt) {
+    DEFINES+=USE_APK
+    LIBS += -lapk-qt
+}
+
 SOURCES += \
     src/core/actionmanager.cc \
     src/core/commonfunctions.cc \

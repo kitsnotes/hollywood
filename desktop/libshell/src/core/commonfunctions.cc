@@ -16,6 +16,8 @@
 #include "opmanager.h"
 #include "shellundo_p.h"
 #include "disks.h"
+#include "mimeapps.h"
+#include "desktopentry.h"
 
 LSCommonFunctions *g_common_func = nullptr;
 
@@ -25,9 +27,18 @@ LSCommonFunctionsPrivate::LSCommonFunctionsPrivate(LSCommonFunctions *parent)
     , m_undo(new QUndoStack)
     , m_opmgr(new OperationManager)
     , m_udisks(new LSUDisks)
+    , m_mimeApps(new LSMimeApplications(this))
 {
     connect(QApplication::clipboard(), &QClipboard::dataChanged,
             this, &LSCommonFunctionsPrivate::clipboardDataChanged);
+
+    m_mimeApps->cacheAllDesktops();
+    // TODO: thread/optimize
+    for(auto app : m_mimeApps->allApps())
+    {
+        if(app)
+            app->checkForApk();
+    }
 }
 
 QString LSCommonFunctionsPrivate::nextNewFolderName(const QUrl &path) const
@@ -230,6 +241,11 @@ LSUDisks *LSCommonFunctions::udiskManager()
     return p->m_udisks;
 }
 
+LSMimeApplications *LSCommonFunctions::mimeApps()
+{
+    return p->m_mimeApps;
+}
+
 void LSCommonFunctions::showErrorDialog(const QString &heading, const QString &msg, QWidget *parent, const QMessageBox::Icon icon)
 {
     auto *dialog = new QMessageBox(parent);
@@ -242,4 +258,52 @@ void LSCommonFunctions::showErrorDialog(const QString &heading, const QString &m
     dialog->exec();
 
     delete dialog;
+}
+
+void LSCommonFunctions::questionAndStartUninstall(const QList<QUrl> desktopFiles)
+{
+#ifdef USE_APK
+    if(desktopFiles.count() == 0)
+        return;
+
+    // TODO: set parent
+    auto *dialog = new QMessageBox(0);
+    if(desktopFiles.count() == 1)
+    {
+        auto file = desktopFiles.first().toLocalFile();
+        QFileInfo fi(desktopFiles.first().toLocalFile());
+        if(fi.isSymbolicLink())
+            file = fi.symLinkTarget();
+
+        auto desktop = mimeApps()->findDesktopForFile(file);
+        if(desktop)
+        {
+            dialog->setWindowTitle(tr("Uninstall %1?").arg(desktop->value("Name").toString()));
+            dialog->setText(tr("Do you want to uninstall %1?").arg(desktop->value("Name").toString()));
+            dialog->setIcon(QMessageBox::Question);
+            //dialog->setIconPixmap(desktop->icon().pixmap(QSize(48,48)));
+            dialog->setInformativeText("This will remove program files, but your settings and documents will be preserved.");
+        }
+        else
+        {
+            dialog->deleteLater();
+            return;
+        }
+    }
+    else
+    {
+        dialog->setWindowTitle(tr("Uninstall %1 applications?").arg(QString::number(desktopFiles.count())));
+        dialog->setText(tr("Do you want to uninstall the following applications?"));
+        //dialog->setIconPixmap(QIcon::fromTheme("folder-trash").pixmap(QSize(64,64)));
+        //dialog->setInformativeText(msg);
+    }
+    dialog->setModal(true);
+    dialog->setStandardButtons(QMessageBox::Yes|QMessageBox::No);
+    int result = dialog->exec();
+    delete dialog;
+    if(result == QMessageBox::Yes)
+    {
+
+    }
+#endif
 }

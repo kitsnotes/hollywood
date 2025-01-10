@@ -36,7 +36,8 @@ public:
     Type type() const;
 
     QIcon icon() const;
-
+    bool checkForApk();
+    QString apkPackageName() const;
     static QString id(const QString &fileName, bool checkFileExists = true);
 
     // static helper functions

@@ -22,6 +22,8 @@ class LSGetInfoDialog;
 class LSGeneralInfoWidget;
 class LSPermissionsAclWidget;
 class LSDesktopEntryInfoWidget;
+class LSApplicationInfoWidget;
+class LSDesktopEntry;
 
 class LSGetInfoDialogPrivate
 {
@@ -29,6 +31,7 @@ class LSGetInfoDialogPrivate
     friend class LSGeneralInfoWidget;
     friend class LSPermissionsAclWidget;
     friend class LSDesktopEntryInfoWidget;
+    friend class LSApplicationInfoWidget;
 
     LSGetInfoDialogPrivate(const QUrl &target, LSGetInfoDialog *parent);
     ~LSGetInfoDialogPrivate() = default;
@@ -43,7 +46,10 @@ class LSGetInfoDialogPrivate
     bool m_init = true;
     ino_t m_inode;
 
-    LSDesktopEntryInfoWidget *m_desktop = nullptr;
+    LSApplicationInfoWidget *m_app = nullptr;
+    LSDesktopEntryInfoWidget *m_desktop_widget = nullptr;
     LSGeneralInfoWidget *m_info = nullptr;
     LSPermissionsAclWidget *m_perms = nullptr;
+
+    LSDesktopEntry *m_desktop_entry = nullptr;
 };

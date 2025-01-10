@@ -13,6 +13,7 @@
 #include <QFormLayout>
 #include <QToolButton>
 #include <QListWidget>
+#include <QPushButton>
 
 class LSUDiskDevice;
 class LSSectionWidget;
@@ -96,6 +97,22 @@ private:
     QCheckBox* m_gpu = nullptr;
     LSSectionWidget* m_sectionMimeTypes = nullptr;
     QListWidget* m_mimeTypes = nullptr;
+    //QDialogButtonBox* buttonBar = nullptr;
+
+    LSGetInfoDialogPrivate *p;
+};
+
+class LSApplicationInfoWidget : public QWidget
+{
+    Q_OBJECT
+public:
+    explicit LSApplicationInfoWidget(LSGetInfoDialogPrivate *parent);
+    void reloadInfo();
+private:
+    QLabel *m_icon = nullptr;
+    QLabel* m_name = nullptr;
+    QPushButton* m_uninstall = nullptr;
+
     //QDialogButtonBox* buttonBar = nullptr;
 
     LSGetInfoDialogPrivate *p;

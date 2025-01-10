@@ -11,6 +11,7 @@
 class OperationManager;
 class LSUDisks;
 class LSCommonFunctionsPrivate;
+class LSMimeApplications;
 class LSCommonFunctions : public QObject
 {
     Q_OBJECT
@@ -22,11 +23,12 @@ public:
     void showErrorDialog(const QString &heading, const QString &msg,
                          QWidget *parent = nullptr,
                          const QMessageBox::Icon icon = QMessageBox::Critical);
-
     QUrl newFolder(const QUrl &target, QWidget *parent = nullptr);
+    void questionAndStartUninstall(const QList<QUrl> desktopFiles);
     OperationManager* operationManager();
     QUndoStack* undoStack();
     LSUDisks* udiskManager();
+    LSMimeApplications* mimeApps();
 signals:
     void pasteAvailable(bool enable, uint count);
 private:

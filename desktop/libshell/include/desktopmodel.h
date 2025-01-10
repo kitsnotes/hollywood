@@ -40,6 +40,8 @@ public:
     bool isDevice(const QModelIndex &index) const;
     LSDesktopEntry* desktopFileForIndex(const QModelIndex &index);
     LSUDiskDevice*  deviceForIndex(const QModelIndex &index);
+    Qt::DropActions supportedDropActions() const override;
+    bool canDropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent) const override;
     QMimeData *mimeData(const QModelIndexList &indexes) const override;
     bool dropMimeData(const QMimeData *data, Qt::DropAction action,
                       int row, int column, const QModelIndex &parent) override;

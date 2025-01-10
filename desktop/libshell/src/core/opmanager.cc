@@ -7,6 +7,9 @@
 #include "fileoperation.h"
 #include "hwfileiconprovider.h"
 #include "progresswidget.h"
+#include "commonfunctions.h"
+#include "mimeapps.h"
+#include "desktopentry.h"
 
 #include <QListView>
 #include <QListWidget>
@@ -95,6 +98,7 @@ QUuid OperationManager::moveFiles(const QList<QUrl> &sources, const QUrl &destin
             op->deleteLater();
         }
     });
+
     p->m_dialog->addWidget(widget);
     p->m_dialog->show();
     p->m_dialog->activateWindow();
@@ -164,7 +168,80 @@ QUuid OperationManager::symlinkFiles(const QList<QUrl> &sources, const QUrl &des
 
 QUuid OperationManager::trashFiles(const QList<QUrl> &sources)
 {
-    Q_UNUSED(sources)
+    // this function handles more than 'trash'
+    // if an application is sent over, it should be prompted and uninstalled
+    // if a device is sent over, it should be unmounted/ejected
+
+    QList<QUrl> filteredSources;
+    QList<QUrl> applications;
+    //QList<QUrl> mounts;
+    for(auto u : sources)
+    {
+        bool removed = false;
+        if(u.fileName().endsWith("desktop"))
+        {
+            // check to see if this is a managed application
+            auto fileName = u.toLocalFile();
+            QFileInfo fi(u.toLocalFile());
+            if(fi.isSymbolicLink())
+                fileName = fi.readSymLink();
+
+            auto desktop = LSCommonFunctions::instance()->mimeApps()->findDesktopForFile(fileName);
+            if(desktop && desktop->isValid())
+            {
+                if(desktop->checkForApk())
+                {
+                    applications.append(u);
+                    removed = true;
+                }
+            }
+        }
+
+        if(!removed)
+            filteredSources.append(u);
+    }
+
+    if(filteredSources.count() > 0)
+    {
+        auto op = new FileOperation(this);
+        auto widget = new LSOpProgressWidget(op, p->m_dialog);
+        auto fi = QFileInfo(sources.first().toLocalFile());
+        HWFileIconProvider pr;
+        widget->setIcon(pr.icon(fi));
+        QString target;
+        if(sources.count() > 1)
+            target = tr("Trashing %1 files").arg(QString::number(filteredSources.count()));
+        else
+        {
+            auto srcpath = sources.first().toLocalFile().split('/').last();
+            target = tr("Trashing \"%1\"").arg(srcpath);
+        }
+        widget->setOperationTitle(target);
+        connect(op, &FileOperation::done, [this,op,widget](bool error){
+            if(error)
+            {
+                //widget->setError(op->error(op->););
+                op->deleteLater();
+            }
+            else
+            {
+                // operation success - lets clean up
+                p->m_dialog->removeWidget(widget);
+                widget->deleteLater();
+                op->deleteLater();
+                // make an undo stack entry
+            }
+        });
+        p->m_dialog->addWidget(widget);
+        p->m_dialog->show();
+        p->m_dialog->activateWindow();
+        op->trash(filteredSources);
+    }
+
+    // process any unmount requests
+
+    // Process our uninstallations
+    LSCommonFunctions::instance()->questionAndStartUninstall(applications);
     return QUuid();
 }
 

@@ -16,6 +16,7 @@
 #include "mimeapps.h"
 #include "desktopentry.h"
 #include "hwfileiconprovider.h"
+#include "commonfunctions.h"
 
 #include <pwd.h>
 #include <grp.h>
@@ -24,13 +25,11 @@
 LSGetInfoDialogPrivate::LSGetInfoDialogPrivate(const QUrl &target, LSGetInfoDialog *parent)
     : d(parent)
     , m_target(target.path())
-    , m_mime(new LSMimeApplications)
+    , m_mime(LSCommonFunctions::instance()->mimeApps())
     , m_icons(new HWFileIconProvider)
     , m_info(new LSGeneralInfoWidget(this))
     , m_perms(new LSPermissionsAclWidget(this))
-{
-    //m_mime->cacheAllDesktops();
-}
+{}
 
 bool LSGetInfoDialogPrivate::isDesktop() const
 {
@@ -95,19 +94,37 @@ LSGetInfoDialog::LSGetInfoDialog(const QUrl &file, QWidget *parent)
     setMaximumWidth(425);
     setMinimumWidth(425);
     setWindowTitle(QApplication::tr("Information - %1").arg(file.fileName()));
+    auto infostr = QString(tr("Stats"));
     // do a quick inspection for a .desktop file
     // we always show this information page *first*
     if(p->isDesktop())
     {
-        p->m_desktop = new LSDesktopEntryInfoWidget(p);
-        addPage(p->m_desktop, QIcon::fromTheme("kt-info-widget"), tr("Application"));
+        auto checkfn = file.path();
+        QFileInfo file(checkfn);
+        if(file.isSymbolicLink())
+            checkfn = file.readSymLink();
+
+        p->m_desktop_entry = LSCommonFunctions::instance()->mimeApps()->findDesktopForFile(checkfn);
+        if(p->m_desktop_entry)
+        {
+            auto name = p->m_desktop_entry->value("Name").toString();
+            setWindowTitle(QApplication::tr("%1").arg(name));
+            if(p->m_desktop_entry->checkForApk())
+            {
+                p->m_app = new LSApplicationInfoWidget(p);
+                addPage(p->m_app, QIcon::fromTheme("folder-activities"), tr("Application"));
+            }
+        }
+        p->m_desktop_widget = new LSDesktopEntryInfoWidget(p);
+        addPage(p->m_desktop_widget, QIcon::fromTheme("system-run"), tr("Launcher"));
         p->m_info->disableOpenWith();
-        p->m_desktop->reloadInfo();
+        p->m_desktop_widget->reloadInfo();
         if(!canWrite)
-            p->m_desktop->setReadOnly();
+            p->m_desktop_widget->setReadOnly();
+
     }
 
-    addPage(p->m_info, QIcon::fromTheme("kt-info-widget"), tr("Information"));
+    addPage(p->m_info, QIcon::fromTheme("kt-info-widget"), infostr);
     addPage(p->m_perms, QIcon::fromTheme("lock"), tr("Permissions"));
     setCurrentIndex(0);
 
