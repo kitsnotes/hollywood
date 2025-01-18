@@ -7,9 +7,12 @@
 #include <QByteArray>
 #include <QFont>
 #include <QColor>
+#include <Qt6GSettings/QGSettings>
 #include <QFileSystemWatcher>
 #include <qpa/qplatformtheme.h>
 #include <qpa/qplatformthemeplugin.h>
+#include <qnamespace.h>
+
 #if QT_VERSION >= 0x060000
 #include <private/qgenericunixthemes_p.h>
 #endif
@@ -36,7 +39,7 @@ class HollywoodPlatformTheme : public QObject, public QGenericUnixTheme
 public:
     explicit HollywoodPlatformTheme();
     // Reflect enums in generalapplet.h
-    enum SettingApperance {
+    enum SettingAppearance {
         SetLight,
         SetDark,
         SetTwilight,
@@ -56,7 +59,10 @@ public:
     void globalMenuBarExistsNow();
     void globalMenuBarNoLongerExists();
     void windowCreated(QWindow *window);
-
+//#if QT_VERSION >= 0x060500
+    Qt::ColorScheme colorScheme() const override;
+    void requestColorScheme(Qt::ColorScheme scheme) override;
+//#endif
 #if QT_VERSION > 0x060000 && QT_VERSION < 0x060500
     Appearance appearance() const override;
 #endif
@@ -68,30 +74,39 @@ public:
 public slots:
     void secondInit();
 private:
-    void loadSettings();
-    void settingsChanged();
     QPalette *preferredPalette() const;
     QString preferredStyle() const;
     void createPalettes();
     QString preferredIcons() const;
     void setMenuBarForWindow(QWindow* window, const QString& serviceName, const QString& objectPath) const;
+    void loadAppearanceSettings();
+    void loadInputSettings();
+    void loadDesktopFileSettings();
+    QStringList dataDirs();
+    QString findDesktopFile();
+private slots:
+    void appearanceSettingChanged(const QString &key);
+    void inputSettingChanged(const QString &key);    
 private:
     QFileSystemWatcher *m_configwatch = nullptr;
     QString m_configfile;
 
-    SettingApperance m_apperance = SetLight;
+    QScopedPointer<QtGSettings::QGSettings> m_appearanceSettings;
+    SettingAppearance m_appearance = SetLight;
     bool m_paletteChanged = false;
     QPalette *m_palette_light = nullptr;
     QPalette *m_palette_dark = nullptr;
-
     FontSize m_fontSize;
     QString m_def_font, m_fixed_sys;
-
     QString m_iconTheme;
+    bool m_customAccent = false;
     QColor m_accentColor;
-    bool m_singleClickActivate = false;
+    QColor m_customAccentColor;
     bool m_iconColorize = true;
 
+    bool m_singleClickActivate = false;
+
+    QScopedPointer<QtGSettings::QGSettings> m_inputSettings;
     uint m_doubleClickInt;
     uint m_wheelScroll = 3;
     uint m_cursorFlash = 1000;
@@ -99,6 +114,8 @@ private:
     QScopedPointer<WaylandIntegration> m_wayland;
 
     bool m_twilightShell = false;
+    bool m_customAppearanceMode = false;
+    Qt::ColorScheme m_customAppearanceRequest;
 };
 
 #endif // PLATFORMTHEME_H

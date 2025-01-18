@@ -15,6 +15,7 @@ versionAtLeast(QT_VERSION, 6.0.0) {
 } else {
     LIBS += -L../output -lcommdlg5-$${HOLLYWOOD_APIVERSION}
 }
+LIBS+= -lQt6GSettings
 
 WAYLANDCLIENTSOURCES += ../display/compositor/protocols/appmenu.xml
 
