@@ -19,6 +19,8 @@
 #include <QtWidgets/QFontComboBox>
 #include <QtWidgets/QPushButton>
 
+#include <Qt6GSettings/QGSettings>
+
 #define HW_APP_HELP_TOPIC "settings/01-general"
 
 class HWGeneralApplet : public QObject, SettingsAppletInterface
@@ -60,6 +62,7 @@ private slots:
     void widgetUpdate();
     void fontSliderValueChanged();
     void fontSizeApplyClicked();
+    void fontComboChanged(const QFont &f);
 private:
     void setupWidget();
 
@@ -91,6 +94,8 @@ private:
     QButtonGroup *bg_apperance;
 
     uint m_currentFontSize;
+
+    QtGSettings::QGSettings *m_settings;
 };
 
 #endif // MOUSEAPPLET_H

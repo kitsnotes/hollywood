@@ -1,225 +1,18 @@
 #include "generalapplet.h"
-#include <QSettings>
 #include <hollywood/hollywood.h>
+
+using namespace QtGSettings;
 
 HWGeneralApplet::HWGeneralApplet(QObject *parent)
     : QObject(parent)
-    , SettingsAppletInterface()
-{
-}
+    , SettingsAppletInterface() {}
 
 bool HWGeneralApplet::init()
 {
+    m_settings = new QGSettings("org.originull.hollywood.appearance", "/org/originull/hollywood/appearance/");
     setupWidget();
     loadSettings();
     return true;
-}
-
-bool HWGeneralApplet::loadSettings()
-{
-    QSettings settings(QSettings::UserScope,
-       QLatin1String("originull"), QLatin1String("hollywood"));
-
-    settings.beginGroup(QLatin1String("General"));
-    uint _app = settings.value(QLatin1String("ApperanceMode"), 0).toUInt();
-    if(_app > 2)
-        _app = 0;   // default to light mode on invalid settings
-    switch((SettingApperance)_app)
-    {
-    case SetDark:
-        m_dark->setChecked(true);
-        break;
-    case SetTwilight:
-        m_twilight->setChecked(true);
-        break;
-    case SetLight:
-    default:
-        m_light->setChecked(true);
-    }
-
-    auto acstr = settings.value(QLatin1String("AccentColor"),
-                                QLatin1String(HOLLYWOOD_ACCENT_BLUE)).toString();
-
-    auto accent_color = QColor(acstr);
-    if(!accent_color.isValid())
-        accent_color = QColor(QLatin1String(HOLLYWOOD_ACCENT_BLUE));
-
-    auto color_verify = accent_color.name().toLower();
-    if(color_verify == QLatin1String(HOLLYWOOD_ACCENT_BLUE))
-        ac_blue->setChecked(true);
-    else if(color_verify == QLatin1String(HOLLYWOOD_ACCENT_RED))
-        ac_red->setChecked(true);
-    else if(color_verify == QLatin1String(HOLLYWOOD_ACCENT_YELLOW))
-        ac_yellow->setChecked(true);
-    else if(color_verify == QLatin1String(HOLLYWOOD_ACCENT_ORANGE))
-        ac_orange->setChecked(true);
-    else if(color_verify == QLatin1String(HOLLYWOOD_ACCENT_PURPLE))
-        ac_purple->setChecked(true);
-    else if(color_verify == QLatin1String(HOLLYWOOD_ACCENT_PINK))
-        ac_pink->setChecked(true);
-    else if(color_verify == QLatin1String(HOLLYWOOD_ACCENT_GREEN))
-        ac_green->setChecked(true);
-    else if(color_verify == QLatin1String(HOLLYWOOD_ACCENT_GRAY))
-        ac_gray->setChecked(true);
-    else
-        qDebug() << "GeneralApplet: unknown accent color";
-
-    uint fontsize = settings.value(QLatin1String("FontSize"), 1).toUInt();
-    if(fontsize > 3)
-        fontsize = 1;   // default to normal font sizes
-
-    m_fontSize->setValue(fontsize);
-
-    m_currentFontSize = fontsize;
-
-    auto fontstr = settings.value("DefaultFont").toString();
-    auto monostr = settings.value("MonospaceFont").toString();
-    QFont font(fontstr);
-    if(font.family() == fontstr)
-        m_def_font->setFont(font);
-
-    QFont mono(monostr);
-    if(mono.family() == monostr)
-        m_def_font->setFont(mono);
-
-    return true;
-}
-
-bool HWGeneralApplet::saveSettings()
-{
-    QSettings settings(QSettings::UserScope,
-       QLatin1String("originull"), QLatin1String("hollywood"));
-
-    settings.beginGroup("General");
-    // Set ApperanceMode
-    if(m_light->isChecked())
-        settings.setValue(QLatin1String("ApperanceMode"), SetLight);
-    else if(m_dark->isChecked())
-        settings.setValue(QLatin1String("ApperanceMode"), SetDark);
-    else if(m_twilight->isChecked())
-        settings.setValue(QLatin1String("ApperanceMode"), SetTwilight);
-    else
-        qDebug() << "GeneralApplet: saveSettings: no selected apperance";
-
-    // Set Accent Color
-    if(ac_blue->isChecked())
-        settings.setValue(QLatin1String("AccentColor"),
-                          QLatin1String(HOLLYWOOD_ACCENT_BLUE));
-    else if(ac_red->isChecked())
-        settings.setValue(QLatin1String("AccentColor"),
-                          QLatin1String(HOLLYWOOD_ACCENT_RED));
-    else if(ac_yellow->isChecked())
-        settings.setValue(QLatin1String("AccentColor"),
-                          QLatin1String(HOLLYWOOD_ACCENT_YELLOW));
-    else if(ac_orange->isChecked())
-        settings.setValue(QLatin1String("AccentColor"),
-                          QLatin1String(HOLLYWOOD_ACCENT_ORANGE));
-    else if(ac_purple->isChecked())
-        settings.setValue(QLatin1String("AccentColor"),
-                          QLatin1String(HOLLYWOOD_ACCENT_PURPLE));
-    else if(ac_pink->isChecked())
-        settings.setValue(QLatin1String("AccentColor"),
-                          QLatin1String(HOLLYWOOD_ACCENT_PINK));
-    else if(ac_green->isChecked())
-        settings.setValue(QLatin1String("AccentColor"),
-                          QLatin1String(HOLLYWOOD_ACCENT_GREEN));
-    else if(ac_gray->isChecked())
-        settings.setValue(QLatin1String("AccentColor"),
-                          QLatin1String(HOLLYWOOD_ACCENT_GRAY));
-    else
-        qDebug() << "GeneralApplet: saveSettings: no selected accent color";
-
-    settings.setValue("DefaultFont", m_def_font->font().family());
-    settings.setValue("MonospaceFont", m_def_fixedsys->font().family());
-
-    settings.endGroup();
-    return true;
-}
-
-QString HWGeneralApplet::id() const
-{
-    return QLatin1String("org.originull.hwsettings.general");
-}
-
-QString HWGeneralApplet::name() const
-{
-    return tr("General");
-}
-
-QString HWGeneralApplet::description() const
-{
-    return tr("General Settings");
-}
-
-QIcon HWGeneralApplet::icon() const
-{
-    const QIcon mine(QIcon::fromTheme("preferences-desktop"));
-    return mine;
-}
-
-QWidget *HWGeneralApplet::applet() const
-{
-    // return a const version of our m_host applet
-    if(!m_host)
-        return nullptr;
-
-    return const_cast<QWidget*>(m_host);
-}
-
-SettingsAppletInterface::Category HWGeneralApplet::category() const
-{
-    return Personal;
-}
-
-QStringList HWGeneralApplet::searchTokens() const
-{
-    QStringList tokens;
-
-    return tokens;
-}
-
-void HWGeneralApplet::widgetUpdate()
-{
-    saveSettings();
-}
-
-void HWGeneralApplet::fontSliderValueChanged()
-{
-    if(m_currentFontSize == m_fontSize->value())
-        m_fontApply->setEnabled(false);
-    else
-        m_fontApply->setEnabled(true);
-
-    QFont font = m_fontPreview->font();
-    switch(m_fontSize->value())
-    {
-    case 3:
-        font.setPointSize(HOLLYWOOD_PT_XLARGE);
-        break;
-    case 2:
-        font.setPointSize(HOLLYWOOD_PT_LARGE);
-        break;
-    case 0:
-        font.setPointSize(HOLLYWOOD_PT_SMALL);
-        break;
-    case 1:
-    default:
-        font.setPointSize(HOLLYWOOD_PT_NORMAL);
-        break;
-    }
-
-    m_fontPreview->setFont(font);
-}
-
-void HWGeneralApplet::fontSizeApplyClicked()
-{
-    QSettings settings(QSettings::UserScope,
-       QLatin1String("originull"), QLatin1String("hollywood"));
-
-    settings.beginGroup("General");
-    settings.setValue("FontSize", m_fontSize->value());
-    m_currentFontSize = m_fontSize->value();
-    m_fontApply->setEnabled(false);
 }
 
 void HWGeneralApplet::setupWidget()
@@ -366,11 +159,10 @@ void HWGeneralApplet::setupWidget()
     mainLayout->setWidget(7, QFormLayout::LabelRole, lbl_email);
     mainLayout->setWidget(7, QFormLayout::FieldRole, m_def_fixedsys);
 
-
     // KEEP THIS LAST in the layout!
     mainLayout->setItem(8, QFormLayout::SpanningRole, vs_main);
 
-    apperance->setText(tr("Apperance:"));
+    apperance->setText(tr("Appearance:"));
     m_light->setText(tr("Light"));
     m_dark->setText(tr("Dark"));
     m_twilight->setText(tr("Twilight"));
@@ -393,14 +185,227 @@ void HWGeneralApplet::setupWidget()
     m_def_font->setEditable(false);
     m_def_fixedsys->setEditable(false);
 
+    for(auto btn : bg_apperance->buttons())
+        connect(btn, &QAbstractButton::toggled, this, [this](){
+            // Set ApperanceMode
+            if(m_light->isChecked())
+                m_settings->setValue(QLatin1String("appearanceMode"), "light");
+            else if(m_dark->isChecked())
+                m_settings->setValue(QLatin1String("appearanceMode"), "dark");
+            else if(m_twilight->isChecked())
+                m_settings->setValue(QLatin1String("appearanceMode"), "twilight");
+        });
+
+    for(auto b : bg_accentcolor->buttons())
+        connect(b, &QAbstractButton::toggled, this, [this](){
+            // Set Accent Color
+            if(ac_blue->isChecked())
+                m_settings->setValue(QLatin1String("accentColor"),
+                                     QLatin1String(HOLLYWOOD_ACCENT_BLUE));
+            else if(ac_red->isChecked())
+                m_settings->setValue(QLatin1String("accentColor"),
+                                     QLatin1String(HOLLYWOOD_ACCENT_RED));
+            else if(ac_yellow->isChecked())
+                m_settings->setValue(QLatin1String("accentColor"),
+                                     QLatin1String(HOLLYWOOD_ACCENT_YELLOW));
+            else if(ac_orange->isChecked())
+                m_settings->setValue(QLatin1String("accentColor"),
+                                     QLatin1String(HOLLYWOOD_ACCENT_ORANGE));
+            else if(ac_purple->isChecked())
+                m_settings->setValue(QLatin1String("accentColor"),
+                                     QLatin1String(HOLLYWOOD_ACCENT_PURPLE));
+            else if(ac_pink->isChecked())
+                m_settings->setValue(QLatin1String("accentColor"),
+                                     QLatin1String(HOLLYWOOD_ACCENT_PINK));
+            else if(ac_green->isChecked())
+                m_settings->setValue(QLatin1String("accentColor"),
+                                     QLatin1String(HOLLYWOOD_ACCENT_GREEN));
+            else if(ac_gray->isChecked())
+                m_settings->setValue(QLatin1String("accentColor"),
+                                     QLatin1String(HOLLYWOOD_ACCENT_GRAY));
+        });
+
+    connect(m_allowAppAccent, &QCheckBox::toggled, this, [this](bool toggled){
+        m_settings->setValue("allowAccentOverride", toggled);
+    });
+
     connect(m_fontApply, &QPushButton::clicked, this, &HWGeneralApplet::fontSizeApplyClicked);
     connect(m_fontSize, &QSlider::valueChanged, this, &HWGeneralApplet::fontSliderValueChanged);
 
-    for(auto btn : bg_apperance->buttons())
-        connect(btn, &QAbstractButton::toggled, this, &HWGeneralApplet::widgetUpdate);
+    connect(m_def_font, &QFontComboBox::currentFontChanged, this, &HWGeneralApplet::fontComboChanged);
+    connect(m_def_fixedsys, &QFontComboBox::currentFontChanged, this, &HWGeneralApplet::fontComboChanged);
 
-    for(auto b : bg_accentcolor->buttons())
-        connect(b, &QAbstractButton::toggled, this, &HWGeneralApplet::widgetUpdate);
-
+    m_host->setMinimumHeight(mainLayout->minimumHeightForWidth(m_host->width()));
+    m_host->setMaximumHeight(mainLayout->minimumHeightForWidth(m_host->width()));
 }
 
+
+bool HWGeneralApplet::loadSettings()
+{
+    auto _appstr = m_settings->value("appearanceMode").toString();
+    if(_appstr == "twilight")
+        m_twilight->setChecked(true);
+    else if(_appstr == "dark")
+        m_dark->setChecked(true);
+    else
+        m_light->setChecked(true);
+
+    auto acstr = m_settings->value("accentColor").toString();
+
+    auto accent_color = QColor(acstr);
+    if(!accent_color.isValid())
+        accent_color = QColor(QLatin1String(HOLLYWOOD_ACCENT_BLUE));
+
+    auto color_verify = accent_color.name().toLower();
+    if(color_verify == QLatin1String(HOLLYWOOD_ACCENT_BLUE))
+        ac_blue->setChecked(true);
+    else if(color_verify == QLatin1String(HOLLYWOOD_ACCENT_RED))
+        ac_red->setChecked(true);
+    else if(color_verify == QLatin1String(HOLLYWOOD_ACCENT_YELLOW))
+        ac_yellow->setChecked(true);
+    else if(color_verify == QLatin1String(HOLLYWOOD_ACCENT_ORANGE))
+        ac_orange->setChecked(true);
+    else if(color_verify == QLatin1String(HOLLYWOOD_ACCENT_PURPLE))
+        ac_purple->setChecked(true);
+    else if(color_verify == QLatin1String(HOLLYWOOD_ACCENT_PINK))
+        ac_pink->setChecked(true);
+    else if(color_verify == QLatin1String(HOLLYWOOD_ACCENT_GREEN))
+        ac_green->setChecked(true);
+    else if(color_verify == QLatin1String(HOLLYWOOD_ACCENT_GRAY))
+        ac_gray->setChecked(true);
+
+    m_allowAppAccent->setChecked(m_settings->value("allowAccentOverride").toBool());
+    auto fonsztstr = m_settings->value("fontSize").toString();
+    uint fontsize = 1;
+    if(fonsztstr == "small")
+        fontsize = 0;
+    if(fonsztstr == "large")
+        fontsize = 2;
+    if(fonsztstr == "xlarge")
+        fontsize = 3;
+
+    m_fontSize->setValue(fontsize);
+
+    m_currentFontSize = fontsize;
+
+    auto fontstr = m_settings->value("defaultFontName").toString();
+    auto monostr = m_settings->value("monospaceFontName").toString();
+    QFont font(fontstr);
+    if(font.family() == fontstr)
+        m_def_font->setFont(font);
+
+    QFont mono(monostr);
+    if(mono.family() == monostr)
+        m_def_font->setFont(mono);
+
+    return true;
+}
+
+bool HWGeneralApplet::saveSettings()
+{
+    // handled in signals
+    return true;
+}
+
+QString HWGeneralApplet::id() const
+{
+    return QLatin1String("org.originull.hwsettings.general");
+}
+
+QString HWGeneralApplet::name() const
+{
+    return tr("General");
+}
+
+QString HWGeneralApplet::description() const
+{
+    return tr("General Settings");
+}
+
+QIcon HWGeneralApplet::icon() const
+{
+    const QIcon mine(QIcon::fromTheme("preferences-desktop"));
+    return mine;
+}
+
+QWidget *HWGeneralApplet::applet() const
+{
+    // return a const version of our m_host applet
+    if(!m_host)
+        return nullptr;
+
+    return const_cast<QWidget*>(m_host);
+}
+
+SettingsAppletInterface::Category HWGeneralApplet::category() const
+{
+    return Personal;
+}
+
+QStringList HWGeneralApplet::searchTokens() const
+{
+    QStringList tokens;
+
+    return tokens;
+}
+
+void HWGeneralApplet::widgetUpdate()
+{
+    saveSettings();
+}
+
+void HWGeneralApplet::fontSliderValueChanged()
+{
+    if(m_currentFontSize == (uint)m_fontSize->value())
+        m_fontApply->setEnabled(false);
+    else
+        m_fontApply->setEnabled(true);
+
+    QFont font = m_fontPreview->font();
+    switch(m_fontSize->value())
+    {
+    case 3:
+        font.setPointSize(HOLLYWOOD_PT_XLARGE);
+        break;
+    case 2:
+        font.setPointSize(HOLLYWOOD_PT_LARGE);
+        break;
+    case 0:
+        font.setPointSize(HOLLYWOOD_PT_SMALL);
+        break;
+    case 1:
+    default:
+        font.setPointSize(HOLLYWOOD_PT_NORMAL);
+        break;
+    }
+
+    m_fontPreview->setFont(font);
+}
+
+void HWGeneralApplet::fontSizeApplyClicked()
+{
+    if(m_fontSize->value() == 0)
+        m_settings->setValue("fontSize", "small");
+    if(m_fontSize->value() == 1)
+        m_settings->setValue("fontSize", "normal");
+    if(m_fontSize->value() == 2)
+        m_settings->setValue("fontSize", "large");
+    if(m_fontSize->value() == 3)
+        m_settings->setValue("fontSize", "xlarge");
+
+    m_currentFontSize = m_fontSize->value();
+    m_fontApply->setEnabled(false);
+}
+
+void HWGeneralApplet::fontComboChanged(const QFont &f)
+{
+    auto combo = qobject_cast<QFontComboBox*>(sender());
+    if(!combo)
+        return;
+
+    if(combo == m_def_font)
+        m_settings->setValue("defaultFontName", f.family());
+
+    if(combo == m_def_fixedsys)
+        m_settings->setValue("monospaceFontName", f.family());
+}
