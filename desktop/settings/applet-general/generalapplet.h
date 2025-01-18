@@ -1,5 +1,4 @@
-#ifndef MOUSEAPPLET_H
-#define MOUSEAPPLET_H
+#pragma once
 
 #include <hollywood/appletinterface.h>
 
@@ -97,5 +96,3 @@ private:
 
     QtGSettings::QGSettings *m_settings;
 };
-
-#endif // MOUSEAPPLET_H
