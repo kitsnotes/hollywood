@@ -256,7 +256,7 @@ void HollywoodPlatformTheme::createPalettes()
     base.setHsl(base.hue(), base.saturation(), l);
     m_palette_light->setColor(QPalette::AlternateBase, base);
 
-    QColor ac = m_customAccent ? m_customAccentColor : m_accentColor;
+    QColor ac = m_customAccent && m_desktopHasCustomAccent ? m_customAccentColor : m_accentColor;
     m_palette_light->setColor(QPalette::Highlight, ac);
     int gray = qGray(ac.rgb());
     ac = QColor(gray, gray, gray);
@@ -294,7 +294,7 @@ void HollywoodPlatformTheme::createPalettes()
     baseDark.setHsl(baseDark.hue(), baseDark.saturation(), l);
     m_palette_dark->setColor(QPalette::AlternateBase, baseDark);
 
-    ac = m_customAccent ? m_customAccentColor : m_accentColor;
+    ac = m_customAccent && m_desktopHasCustomAccent ? m_customAccentColor : m_accentColor;
     m_palette_dark->setColor(QPalette::Highlight, ac);
     gray = qGray(ac.rgb());
     ac = QColor(gray, gray, gray);
@@ -403,7 +403,7 @@ void HollywoodPlatformTheme::loadDesktopFileSettings()
                 QColor test(color);
                 if(test.isValid())
                 {
-                    m_customAccent = true;
+                    m_desktopHasCustomAccent = true;
                     m_customAccentColor = QColor(color);
                     createPalettes();
                     auto palette = preferredPalette();

@@ -100,6 +100,7 @@ private:
     QString m_def_font, m_fixed_sys;
     QString m_iconTheme;
     bool m_customAccent = false;
+    bool m_desktopHasCustomAccent = false;
     QColor m_accentColor;
     QColor m_customAccentColor;
     bool m_iconColorize = true;
